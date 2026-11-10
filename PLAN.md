@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Survival redesign, draft for approval. Every name in this document is a proposal you can veto.*
+*Survival redesign: approved. The names in §13 are approved, and the decisions are recorded in §15.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine. You command the **Forge**, a kilometre-long foundry-city ship stranded in a galaxy of scrap. Its faster-than-light drive is broken. To escape, you cross the galaxy, keep your people alive, and find the parts to repair the drive.
 
@@ -21,7 +21,7 @@ The drive still works, barely. It can make short **stitches** between nearby poi
 
 You start in **the Drift**, the debris ring around the dead star **Orrin**. It is the area built in Milestones 1–3.
 
-Tone: lonely and beautiful, a little strange, with dry humour in the voices of the people you meet. This is a proposal; see the decisions in §15.
+Tone: lonely and beautiful, a little strange, with dry humour in the voices of the people you meet.
 
 ## 2. The run
 
@@ -49,7 +49,7 @@ Tone: lonely and beautiful, a little strange, with dry humour in the voices of t
 
 ### Time
 
-- The galaxy map has a **day clock**. My recommendation is that it only advances when you act (stitch, rest, repair) and is paused otherwise. This is decision 1 in §15.
+- The galaxy map has a **day clock**. It only advances when you act (stitch, rest, repair) and is paused otherwise.
 - Inside a point-of-interest map, time runs with the real-time game: 1 day = 4 minutes of play (tunable). Supplies drain while you are there.
 
 ### The Forge's stores and systems
@@ -78,10 +78,18 @@ Systems lose condition in combat and through events, and are repaired with Ore, 
 
 ### Crew and morale
 
-- **Crew** is a head count, split into roles: engineers, pilots, miners and hands. My suggestion is to start with role counts, not named individuals (decision 7).
+- **Crew** is a head count, split into roles: engineers, pilots, miners and hands. The first version uses role counts, not named individuals.
 - Every ship needs crew to fly. Building a Dart takes two pilots from the roster. If the Dart is destroyed, its crew may die, or eject in pods that Gleaners can pick up.
 - Crew needs water, air and food every day. You can recruit more at hull-towns, rescue survivors, or have them join through events.
 - **Morale** (0–100) rises with victories, good food and rest. It falls with shortages, losses and long stretches of empty space. Low morale slows work, then brings desertion and mutiny events.
+
+**Ready for named crew later.** The crew model is built so named crew members with traits can be added in a later milestone (Milestone 13) without reworking anything:
+
+- Every system talks to the crew through one interface: `count(role)`, `assign(role, n, to)`, `release(...)` and `lose(role, n, cause)`. Nothing reads the raw numbers directly.
+- The roster stores role counts today. A named crew member will be one of those counts with a name, a role and traits. Losing crew can then pick who is lost.
+- Traits will be modifiers on the same condition system that ships and upgrades already use (for example "+10% repair speed" or "−morale when hungry"). They are defined in YAML, so content packs can add new traits.
+- Ships record which crew fly them, so named pilots can follow their ship later.
+- Events and dialogs already address crew by role. They will be able to address a named crew member ("your chief engineer") once those exist.
 
 ### Consequences
 
@@ -108,7 +116,13 @@ Each component is an item defined in YAML, with recipes, prerequisites and where
 
 ### Galaxy screens
 
-- **Star chart:** a 3D view of the galaxy disc, showing regions, points, lanes, the Forge, the jump range ring, and route planning.
+- **Star chart:** a 3D view of the galaxy, using the same orbit camera as the maps. It is kept readable:
+  - the galaxy is a mostly flat disc;
+  - points carry clear labels;
+  - routes and lanes are bold;
+  - the camera pitch is limited so the disc never turns edge-on.
+
+  It shows regions, points, lanes, the Forge, the jump range ring, and route planning.
 - **Forge:** systems, condition, repairs and engineering projects.
 - **Crew:** roles, morale and the roster.
 - **Hold:** stores, cargo and relics.
@@ -138,7 +152,7 @@ The current game already builds every match from a `settings` object:
    - If you go back somewhere, it remembers what you already took.
 3. **Bring the Forge.** The Forge and its docked fleet come from the run state, not from StartingFleet. That includes hull, system damage, crew and the ships you have built. Stores go into the player's resources.
 4. **Play.** The world runs exactly as it does today: deterministic, lockstep-ready, all orders through the order queue.
-5. **Leave.** You order the Forge to **spool the Skein** (about 60 seconds, a countdown on screen) and recall your ships. Ships not docked when the drive fires are left behind.
+5. **Leave.** You order the Forge to **spool the Skein** (about 60 seconds, a countdown on screen) and recall your ships. Ships not docked when the drive fires are left behind. Leaving is always possible, but some enemies can interrupt the spool-up and force you to start again, such as a Gaunt interdictor or the Hollowhorn.
 6. **Report.** `world.report()` returns what changed:
    - resources gained and spent;
    - ships and crew lost;
@@ -203,7 +217,7 @@ The Milestone 1–3 roster stays: Forge, Gleaner, Smelter, Dart, Talon, Picket a
 - Monoliths beat destroyers.
 - Spindles and bomber swarms beat Monoliths.
 
-Every ship gets a **Crew** cost in YAML. Ships persist between points: they ride in the Forge's hangars, and hangar size is the old fleet-capacity number.
+Every ship gets a **Crew** cost in YAML. Ships persist between points: they ride in the Forge's hangars, and hangar size is the old fleet-capacity number. Losses are permanent. Battles are sized for up to about 40 ships a side.
 
 **Research becomes engineering.**
 - Hulls are unlocked by **blueprints**, which you salvage, buy or earn.
@@ -328,7 +342,7 @@ content/
 | `AsteroidFields` | **Becomes** `Deposits`, plus new `Wrecks`, `Formations`, `Nebulae`, `Encounters` and `Stations` world traits |
 | Skirmish setup in `main.js` | **Becomes** the point-of-interest generator, plus the Proving Grounds sandbox |
 | New: `src/galaxy/` | Galaxy generator, run state, travel, the day clock, consumption, systems, crew, reputation, trade, events. Deterministic and headless-testable like the simulation |
-| New: run saves | The run state is a plain snapshot between maps (JSON). Inside a map a save is the settings plus the order log, and loading replays it. Both are exact because everything is deterministic |
+| New: run saves | The run state is a plain snapshot between maps (JSON). Inside a map a save is the settings plus the order log, and loading replays it. Both are exact because everything is deterministic. **Permanent death by default:** you can always save and quit and continue later, but the save is removed when the run ends. A **free-save mode**, clearly offered when you start a new run, allows any number of saves and reloads |
 | New screens | Star chart, Forge, crew, hold, standing, log, comms and trade |
 
 Determinism stays a hard rule on both layers. It keeps saves exact, makes every system testable headless, and leaves multiplayer or co-op possible later.
@@ -389,9 +403,10 @@ New kinds of test arrive with the new layers:
 | **9** | **Diplomacy and trade** | Hailing, the comms panel (dialogs in YAML), the trade screen with standing-based prices, tribute, ceasefire and peace treaties, hiring crew and ships, buying information | Price maths; treaties enforced; every dialog validates and every branch is reachable |
 | **10** | **Events, monsters, story** | Galaxy and map events (distress beacons, ambushes, discoveries); monster behaviours (Scrapwyrm ambushes, mite infestations, the Hollowhorn); a prologue, the drive-component storylines, and the ending | Every event validates and is reachable; monster behaviour tests; a scripted run reaches the ending |
 | **11** | **Sensors, fog, engineering** | Sensor fog on maps, the Tactical Plot (Tab), galaxy scanning, blueprints and engineering projects, the Wisp scout | Hidden ships stay hidden until seen; blueprints unlock the right hulls |
-| **12** | **Polish and the first full run** | Main menu, new-run setup (seed and difficulty), a tutorial, a sound pass, a balance pass to the target run length, the AI captain, and a final README | The AI captain finishes many seeded runs headless; run length is within the target; no console errors |
+| **12** | **Polish and the first full run** | Main menu; new-run setup (seed, difficulty, voyage length, and the choice between permanent death and free saves); save and quit; a tutorial; a sound pass; a balance pass to the target run lengths; the AI captain; a final README | The AI captain finishes many seeded runs headless; run length is within the target for both voyage lengths; save, quit and continue gives an identical run; no console errors |
+| **13** | **Named crew** | Named crew members with roles and traits, built on the crew interface from Milestone 7. Traits live in YAML. Losses pick who dies; events can mention people by name | Trait modifiers apply through the condition system; role counts and named crew always agree; old saves still load |
 
-Each milestone is playable on its own. Milestones 4 and 5 run in the Proving Grounds sandbox. From Milestone 6 you play generated points. From Milestone 7 you play a whole voyage.
+Each milestone is playable on its own. Milestones 4 and 5 run in the **Proving Grounds** sandbox, which stays in the game as a testing mode. From Milestone 6 you play generated points. From Milestone 7 you play a whole voyage.
 
 **Later, as add-on packs:** new regions beyond the Shore, new races and factions, story arcs, co-op multiplayer (the engine stays lockstep-ready).
 
@@ -403,11 +418,11 @@ Each milestone is playable on its own. Milestones 4 and 5 run in the Proving Gro
 | Survival tuning: too harsh or too easy | All numbers live in YAML. The voyage simulator and the AI captain measure starvation rates and run length on many seeds |
 | Generated maps feel samey | Point types mix hand-made templates with seeded variation; formations, nebulae and events add character; regions change the palette and the mix |
 | Content packs become a second programming language | Events and dialogs stay declarative, with a fixed vocabulary of effects. New behaviour goes into code once and is then usable by every pack |
-| Performance with wrecks, formations and nebulae | Instanced meshes, the existing spatial hash, and steering that only checks obstacles near the path |
+| Performance with wrecks, formations, nebulae and battles of up to about 40 ships a side | Instanced meshes for projectiles and debris; the existing spatial hash for range checks; target scans on a timer; steering that only checks obstacles near the path |
 
-## 13. Names (proposals)
+## 13. Names (approved)
 
-| Thing | Proposal | Alternatives |
+| Thing | Name | Alternatives considered |
 | --- | --- | --- |
 | The game | Driftforge | — |
 | The drive | **Skein Drive**: it threads the Forge through folded space; short hops are *stitches* | Lanternwake Drive, Foldwright |
@@ -439,20 +454,20 @@ Each milestone is playable on its own. Milestones 4 and 5 run in the Proving Gro
   - the AI becomes faction and monster behaviour plus the AI captain;
   - the skirmish setup becomes the Proving Grounds sandbox.
 
-## 15. Decisions for you
+## 15. Decisions (answered)
 
-Each has my recommendation first.
-
-1. **Galaxy map time.** Paused, advancing only when you act (stitch, rest, repair)? Or always running in real time? *I recommend paused. Maps already supply the real-time pressure.*
-2. **Death and saves.** Permanent death (roguelike), or loadable saves? *I recommend permanent death by default: an autosave on the galaxy map, removed when the run ends. Plus an optional "Captain's Log" mode with free saves.*
-3. **Run length.** *I recommend 4–6 hours for a full run, about 60–90 game days and 25–40 points visited, with a "short voyage" setting of about 90 minutes.*
-4. **Same galaxy or random?** *I recommend a new seeded galaxy each run, with a shareable seed. Story points such as components, faction homes and Choir Blooms are placed by rules, so every run tells the same story in a different place.*
-5. **Story.** Hand-written story beats (prologue, component storylines, ending, faction arcs) plus random events? Or random events only? *I recommend both.*
-6. **Leaving a map.** Can you always leave (60 s spool, ships not aboard are lost)? Or can some enemies block or interrupt the spool? *I recommend: always possible, but some threats can interrupt it, such as a Gaunt interdictor or the Hollowhorn.*
-7. **Crew depth.** Role counts (engineers, pilots, miners, hands), or named individuals with traits? *I recommend role counts now; named officers could come in a later pack.*
-8. **Fleet between maps.** Do your ships travel with you in the Forge's hangars? *I recommend yes: hangar space caps the fleet, and losses are permanent.*
-9. **Scale of fights.** Roughly how big should battles get? *I recommend up to about 40 ships a side.*
-10. **Keep a sandbox mode?** *I recommend keeping the Proving Grounds as a developer and testing sandbox, reachable from the main menu.*
-11. **Tone.** *I recommend lonely, beautiful and a little strange, with dry humour from the people you meet.* Or darker, or lighter?
-12. **Names.** Keep the proposals in §13, or change any?
-13. **The galaxy map view.** A full 3D galaxy you orbit with the same camera? Or a flatter, chart-like map? *I recommend 3D, reusing the orbit camera and the visual style.*
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Galaxy map time | **Paused**; it moves only when you act |
+| 2 | Death and saves | **Permanent death by default**, but you can always save and quit and continue later. A **free-save mode** is offered clearly when you start a new run |
+| 3 | Run length | **4–6 hours**, plus a **short voyage** setting of about 90 minutes |
+| 4 | Same galaxy or random | **A new seeded galaxy each run**; story locations are placed by rules |
+| 5 | Story | **Hand-written story moments plus random events** |
+| 6 | Leaving a map | **Always possible**, but some enemies can interrupt the spool-up |
+| 7 | Crew depth | **Role counts for now**, designed so named crew with traits can come later (Milestone 13) |
+| 8 | Fleet between maps | **Ships travel with you**, limited by hangar space; losses are permanent |
+| 9 | Scale of fights | **Up to about 40 ships a side** |
+| 10 | Sandbox | **Keep the Proving Grounds** for testing |
+| 11 | Tone | **Lonely, beautiful and a bit strange, with dry humour** |
+| 12 | Names | **Keep all the proposals** in §13 |
+| 13 | Galaxy map view | **3D with the orbit camera, kept readable:** a mostly flat disc, clear labels and clear routes |
