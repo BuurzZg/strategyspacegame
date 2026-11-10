@@ -22,6 +22,27 @@ World:
 		Glow: ffe2c4
 		Dark: 3a0d12
 		Description: Tall, many-jointed scavengers sealed in rust-red suits. They strip what they find, and they count debts.
+	Faction@rivet:
+		InternalName: rivet
+		Name: Rivet Moot
+		Color: e8b04a
+		Glow: ffe6a0
+		Dark: 3a2a0a
+		Description: Hullborn salvage clans. Brass, lamplight, and a great deal of hammering.
+	Faction@synod:
+		InternalName: synod
+		Name: Lantern Synod
+		Color: 7fd0a0
+		Glow: d8ffe8
+		Dark: 0e3a26
+		Description: Tallowfolk Glim-renderers with green lanterns and long memories.
+	Faction@choir:
+		InternalName: choir
+		Name: The Choir
+		Color: 9fc8ff
+		Glow: f0f6ff
+		Dark: 1a2a4a
+		Description: Choirmoths. They speak in light.
 	Faction@fauna:
 		InternalName: fauna
 		Name: Drift fauna
@@ -42,3 +63,4 @@ World:
 	ProvingGrounds:
 	Formations:
 	PointLayout:
+	Diplomacy:

@@ -202,3 +202,119 @@ StillWater:
 		Count: 0-1
 		Size: 30-40
 		Color: 2a4a5a
+
+# Faction stations: the seats of their territory. Station places the station actor; the
+# faction's patrol is added from factions.yaml.
+HullTown:
+	Name: Hull-town
+	Noun: Town
+	Description: A Rivet Moot settlement built into a gutted capital ship. They trade, they repair, and they hate the Gaunt.
+	Size: 160, 160, 56
+	Sky: 6a5a3a
+	Station: hulltown
+	Wrecks:
+		Count: 4-6
+		Of: halberd, picket, gleaner, smelter
+		Salvage: 150-350
+		Clusters: 1-2
+	Deposit@ore:
+		Kind: ore
+		Fields: 1-2
+		Rocks: 6-8
+		Spread: 4-6
+		Amount: 500-900
+	Nebula:
+		Count: 1
+		Size: 30-40
+		Color: 6a5a3a
+
+SynodRefinery:
+	Name: Synod refinery
+	Noun: Refinery
+	Description: A Lantern Synod Glim works in a quiet nebula. Fuel and food for sale, and no fighting allowed.
+	Size: 160, 160, 56
+	Sky: 4a7a5a
+	Station: refinery
+	Clouds@glim:
+		Kind: glim
+		Count: 3-4
+		Size: 2800-3600
+		Amount: 500-900
+	Clouds@spores:
+		Kind: spores
+		Count: 1-2
+		Size: 2400-3000
+		Amount: 300-600
+	Nebula:
+		Count: 2
+		Size: 40-60
+		Color: 3a6a4a
+
+GauntDen:
+	Name: Gaunt den
+	Noun: Den
+	Description: A raider base in a hollowed rock, ringed with the ships they stripped. Rich salvage, for anyone who can take it.
+	Size: 176, 176, 56
+	Sky: 6a2a2a
+	Station: den
+	Wrecks:
+		Count: 9-13
+		Of: halberd, picket, gleaner, smelter, sabre, spindle
+		Salvage: 200-450
+		Clusters: 2-3
+	Deposit@ore:
+		Kind: ore
+		Fields: 1
+		Rocks: 5-7
+		Spread: 4-5
+		Amount: 500-900
+	Nebula:
+		Count: 1
+		Size: 30-40
+		Color: 7a2a2a
+
+CinderHold:
+	Name: Cinder hold
+	Noun: Hold
+	Description: A Cinder Pact outpost round the bones of another Forge. They watch you the way you would watch them.
+	Size: 160, 160, 56
+	Sky: 7a3a2a
+	Station: cinderhold
+	Deposit@ore:
+		Kind: ore
+		Fields: 2
+		Rocks: 7-10
+		Spread: 5-6
+		Amount: 700-1300
+	Deposit@ice:
+		Kind: ice
+		Fields: 1
+		Rocks: 5-7
+		Spread: 4-5
+		Amount: 400-800
+	Nebula:
+		Count: 1
+		Size: 30-40
+		Color: 6a3a2a
+
+ChoirBloom:
+	Name: Choir bloom
+	Noun: Bloom
+	Description: A gathering of Choirmoths in a bright nebula, talking in light. Glim and spores drift everywhere.
+	Size: 176, 176, 64
+	Sky: 5a6a9a
+	Station: bloom
+	Clouds@glim:
+		Kind: glim
+		Count: 3-5
+		Size: 2800-3800
+		Amount: 500-1000
+	Clouds@spores:
+		Kind: spores
+		Count: 2-4
+		Size: 2400-3400
+		Amount: 400-800
+	Nebula:
+		Count: 3
+		Size: 40-70
+		Color: 6a7aba

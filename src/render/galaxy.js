@@ -10,6 +10,7 @@ export const chartPos = (p, v = new THREE.Vector3()) => v.set(p.x * GS, p.z * GS
 
 export const TYPE_COLORS = {
   IceTail: 0xa8e4ff, LanternMist: 0xffe08a, OreReef: 0xe0a36a, ScrapShoal: 0xc9b8a6, Wreck: 0xe0705a, StillWater: 0x8fd8d0,
+  HullTown: 0xffe6a0, SynodRefinery: 0xd8ffe8, GauntDen: 0xff8a7a, CinderHold: 0xffc08a, ChoirBloom: 0xf0f6ff,
 };
 const UNKNOWN = 0x8090ac;
 
@@ -84,20 +85,23 @@ export class StarChart {
     geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
     geo.setAttribute('size', new THREE.BufferAttribute(new Float32Array(n), 1));
     geo.setAttribute('ring', new THREE.BufferAttribute(new Float32Array(n), 1));
+    geo.setAttribute('tint', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
     this.pointMat = new THREE.ShaderMaterial({
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
       uniforms: { scale: { value: 600 } },
       vertexShader: `
-        attribute vec3 color; attribute float size; attribute float ring; varying vec3 vC; varying float vR; uniform float scale;
-        void main(){ vC = color; vR = ring; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(5.0, size * scale / -mv.z); gl_Position = projectionMatrix * mv; }`,
+        attribute vec3 color; attribute float size; attribute float ring; attribute vec3 tint; varying vec3 vC; varying vec3 vT; varying float vR; uniform float scale;
+        void main(){ vC = color; vR = ring; vT = tint; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(5.0, size * scale / -mv.z); gl_Position = projectionMatrix * mv; }`,
       fragmentShader: `
-        varying vec3 vC; varying float vR;
+        varying vec3 vC; varying vec3 vT; varying float vR;
         void main(){
           float d = length(gl_PointCoord - 0.5) * 2.0;
           if (d > 1.0) discard;
+          // whose territory: a faint ring in the faction's colour
+          vec3 claim = vT * smoothstep(0.16, 0.0, abs(d - 0.66)) * 0.9;
           float core = smoothstep(0.5, 0.05, d), halo = smoothstep(1.0, 0.25, d) * 0.45;
           float ring = vR > 0.5 ? smoothstep(0.08, 0.0, abs(d - 0.82)) * 0.9 : 0.0;
-          gl_FragColor = vec4(vC * (core + halo) + vec3(1.0) * ring * 0.8 + vec3(1.0) * pow(core, 3.0) * 0.5, 1.0);
+          gl_FragColor = vec4(vC * (core + halo) + claim + vec3(1.0) * ring * 0.8 + vec3(1.0) * pow(core, 3.0) * 0.5, 1.0);
         }`,
     });
     this.points = new THREE.Points(geo, this.pointMat);
@@ -167,7 +171,7 @@ export class StarChart {
   // view: { at, known: Set, visited: {}, range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool }
   update(view) {
     const g = this.g, n = g.points.length, c = new THREE.Color();
-    const col = this.points.geometry.attributes.color, size = this.points.geometry.attributes.size, ring = this.points.geometry.attributes.ring;
+    const col = this.points.geometry.attributes.color, size = this.points.geometry.attributes.size, ring = this.points.geometry.attributes.ring, tint = this.points.geometry.attributes.tint;
     for (let i = 0; i < n; i++) {
       const p = g.points[i], known = view.known.has(i);
       c.setHex(known ? TYPE_COLORS[p.type] || 0xffffff : UNKNOWN);
@@ -175,8 +179,11 @@ export class StarChart {
       col.setXYZ(i, c.r, c.g, c.b);
       size.setX(i, (known ? 3.2 : 2.2) * (i === view.selected ? 1.5 : 1) * (p.edge && known ? 1.15 : 1));
       ring.setX(i, view.visited[i] ? 1 : 0);
+      const fc = known && p.owner ? factionColor(this.rules, p.owner) : null;
+      if (fc) { c.setHex(fc); tint.setXYZ(i, c.r, c.g, c.b); } else tint.setXYZ(i, 0, 0, 0);
+      if (known && p.seat) size.setX(i, size.getX(i) * 1.35);
     }
-    col.needsUpdate = true; size.needsUpdate = true; ring.needsUpdate = true;
+    col.needsUpdate = true; size.needsUpdate = true; ring.needsUpdate = true; tint.needsUpdate = true;
     // lanes: open ones bright, the rest faint; the Veil's lanes violet
     const lc = this.lanes.geometry.attributes.color;
     g.lanes.forEach((l, i) => {
@@ -233,6 +240,12 @@ export class StarChart {
 
   setScale(scale) { this.pointMat.uniforms.scale.value = scale; }
   dispose() { this.scene.remove(this.group); }
+}
+
+// A faction's colour on the chart: its map colour from the World actor's Faction entries.
+export function factionColor(rules, fid) {
+  for (const f of rules.actor('World').traitInfosOf('Faction')) if (f.InternalName === fid) return parseInt(f.Color, 16);
+  return 0xffffff;
 }
 
 function glowTexture(inner, outer) {

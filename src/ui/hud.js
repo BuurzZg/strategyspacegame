@@ -422,6 +422,7 @@ export class Hud {
         this.dirty = true;
       } else if (e.t === 'fire' && e.report) this.audio.play(e.report, this.near(e) * 0.8);
       else if (e.t === 'impact' && e.missile) this.audio.play('boom', this.near(e) * 0.6);
+      else if (e.t === 'provoked' || (e.t === 'warn' && e.player !== undefined)) this.audio.play('alert');
       else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
       else if (e.t === 'aboard' && e.owner === me) this.dirty = true;
       else if (e.t === 'killed') {
@@ -602,12 +603,13 @@ export class Hud {
           const name = hv.wreck ? `${hv.init.name ? `Wreck of the ${hv.init.name}` : `Wreck of a ${this.world.rules.actors.get(hv.wreck.of)?.traitInfo('Tooltip')?.Name || 'ship'}`} · ${fmtNum(hv.wreck.salvage)} salvage`
             : hv.deposit ? `${DEPOSIT_NAMES[hv.deposit.kind]} · ${fmtNum(hv.deposit.amount)} ${rn.Name.toLowerCase()}`
               : hv.rock ? 'Crystal formation'
-              : hostile ? `${tname} · ${this.world.factions.get(hv.owner.faction)?.Name || hv.owner.name}` : tname;
+              : hostile ? `${tname} · ${this.world.factions.get(hv.owner.faction)?.Name || hv.owner.name}`
+                : hv.owner.slot && hv.owner.slot.tier !== undefined ? `${tname} · ${hv.owner.name} · ${['Hostile', 'Wary', 'Neutral', 'Friendly', 'Allied'][hv.owner.slot.tier]}${this.s.viewer.isAlly(hv.owner) ? ' ally' : ''}` : tname;
           const text = action ? `${action}: ${name}` : name;
           ctx.font = '500 11px "IBM Plex Mono", monospace';
           const tw = ctx.measureText(text).width, tx = b.p.x + b.r + 6, ty = b.p.y - b.r + 10;
           ctx.fillStyle = 'rgba(5,6,11,0.72)'; ctx.fillRect(tx - 4, ty - 11, tw + 8, 15);
-          ctx.fillStyle = action === 'Attack' || hostile ? HOSTILE_CSS : action ? ORE_CSS : 'rgba(223,232,242,0.9)';
+          ctx.fillStyle = action === 'Attack' || hostile || (action && action.startsWith('Attack')) ? HOSTILE_CSS : action ? ORE_CSS : hv.owner.slot && hv.owner.slot.tier !== undefined ? rd.styleOf(hv.owner).css : 'rgba(223,232,242,0.9)';
           ctx.fillText(text, tx, ty);
         }
       }

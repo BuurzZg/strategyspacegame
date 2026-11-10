@@ -1,0 +1,9 @@
+# The faction's colours on maps, merged into the core World actor.
+World:
+	Faction@lamp:
+		InternalName: lamp
+		Name: Lamplighters
+		Color: ffd27a
+		Glow: fff4d0
+		Dark: 3a2c10
+		Description: Hullborn who keep beacons lit along the lanes.

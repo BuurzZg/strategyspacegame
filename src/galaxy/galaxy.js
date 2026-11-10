@@ -187,6 +187,38 @@ export function generateGalaxy(rules, seed) {
     p.type = 'Wreck'; p.relic = it.id;
     components[it.id] = p.id;
   }
+  // 7. Factions: their seats (stations) and the places round them they claim
+  const seats = [];
+  for (const F of Object.values(C.factions || {})) {
+    for (const [region, n] of weights(F.Seats)) {
+      for (let k = 0; k < n; k++) {
+        const cand = points.filter((p) => p.region === region && p.id !== start && !p.relic && !p.seat && p.type !== 'StillWater');
+        // spread out: as far (in lanes) from other seats as possible, then at random
+        const farOf = new Map(cand.map((p) => [p.id, seats.reduce((m, q) => Math.min(m, hopsBetween(adj, lanes, p.id, q.id, 4)), 99)]));
+        const best = cand.reduce((m, p) => Math.max(m, farOf.get(p.id)), -1);
+        const top = cand.filter((p) => farOf.get(p.id) === best);
+        if (!top.length) continue;
+        const p = top[rng.int(top.length)];
+        p.seat = true; p.owner = F.id; p.type = F.Station || p.type;
+        seats.push(p);
+      }
+    }
+  }
+  // claims spread out from the seats, a lane at a time, nearer seats first (never the start)
+  let frontier = seats.map((p) => ({ id: p.id, owner: p.owner, left: +C.factions[p.owner].Reach || 0 }));
+  while (frontier.length) {
+    const next = [];
+    for (const f of frontier) {
+      if (f.left <= 0) continue;
+      for (const li of adj[f.id]) {
+        const l = lanes[li], j = l.a === f.id ? l.b : l.a, q = points[j];
+        if (q.owner || j === start) continue;
+        q.owner = f.owner;
+        next.push({ id: j, owner: f.owner, left: f.left - 1 });
+      }
+    }
+    frontier = next;
+  }
   for (const p of points) p.name = nameFor(p);
 
   return { seed: seed | 0, points, lanes, adj, start, components, veil, regions: regions.map((R) => R.id) };
@@ -213,6 +245,18 @@ export function reach(n, lanes, from, drive) {
     }
   }
   return seen;
+}
+
+// lanes between two places, counting no further than `max`
+function hopsBetween(adj, lanes, a, b, max) {
+  if (a === b) return 0;
+  let seen = new Set([a]), ring = [a];
+  for (let d = 1; d <= max; d++) {
+    const next = [];
+    for (const i of ring) for (const li of adj[i]) { const l = lanes[li], j = l.a === i ? l.b : l.a; if (j === b) return d; if (!seen.has(j)) { seen.add(j); next.push(j); } }
+    ring = next;
+  }
+  return max + 1;
 }
 
 function hopsFrom(n, lanes, from) {

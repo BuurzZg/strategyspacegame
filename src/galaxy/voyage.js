@@ -1,6 +1,8 @@
 import { Random } from '../engine/random.js';
 import { hashMix } from '../engine/math.js';
-import { mapKinds } from '../engine/content.js';
+import { mapKinds, weights } from '../engine/content.js';
+import { CELL } from '../engine/math.js';
+import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
 import { ROLES, makeRoster, count, free, freeAll, loseAny, lose, assignFleet } from './crew.js';
@@ -33,7 +35,7 @@ export function newVoyage(rules, { seed = 1 } = {}) {
   const stores = Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 0]));
   Object.assign(stores, pairs(V.Stores));
   const s = {
-    version: 2, kind: 'voyage', seed: seed | 0,
+    version: SAVE_VERSION, kind: 'voyage', seed: seed | 0,
     day: 1, ticks: 0, at: g.start, known: [], visited: {},
     stores,
     crew: makeRoster(pairs(V.Crew)),
@@ -42,6 +44,7 @@ export function newVoyage(rules, { seed = 1 } = {}) {
     forge: { hp: rules.actor('forge').traitInfo('Health').HP },
     fleet: START_FLEET.map((type) => ({ type, hp: rules.actor(type).traitInfo('Health').HP })),
     items: {}, airless: 0, dry: false, over: null, visits: 0,
+    standing: {}, met: {},
     log: [],
   };
   assignFleet(s.crew, rules, s.fleet);
@@ -346,6 +349,38 @@ export function visitSettings(rules, s) {
   });
   const stores = {};
   for (const k of mapKinds(rules)) stores[k] = s.stores[k] | 0;
+  // who is here: the place's owner (its patrol, and its station), the template's encounters,
+  // and now and then a faction's fleet passing through a place nobody claims
+  const F = rules.content.factions, L = settings.layout, present = new Set();
+  const prng = new Random(hashMix(poiSeed(s.seed, p.id, times), 991) || 1);
+  const W = settings.space.w * CELL, D = settings.space.d * CELL;
+  const patrol = (fid, at, behaviour, delay) => {
+    const base = String(F[fid].Patrol || '').split(',').map((x) => x.trim()).filter(Boolean), ships = [];
+    for (let k = 0; k < Math.trunc((base.length * (2 + (+R.Danger || 1))) / 3); k++) ships.push(base[k % base.length]);
+    if (ships.length) L.encounters.push({ side: fid, ships, at, behaviour, delay });
+  };
+  const tierOf = (fid) => tierIndex(rules, standingOf(rules, s, fid));
+  const mood = (fid) => (tierOf(fid) === 0 ? 'hunt' : tierOf(fid) === 4 ? 'escort' : 'lurk');
+  if (p.owner && F[p.owner]) {
+    present.add(p.owner);
+    if (L.station) L.station.owner = p.owner;
+    const c = L.station ? L.station.at : [W >> 1, D >> 1, 0];
+    // the home patrol holds near the station, and hunts only if they are at war with you
+    patrol(p.owner, [c[0] + 6 * CELL, c[1] - 6 * CELL, c[2]], tierOf(p.owner) === 0 ? 'lurk' : mood(p.owner), 250);
+  } else {
+    for (const f of Object.values(F)) {
+      const wgt = weights(f.Regions).find(([r]) => r === p.region);
+      if (!wgt || prng.int(100) >= wgt[1] * 5) continue;
+      present.add(f.id);
+      patrol(f.id, [Math.trunc((W * (55 + prng.int(30))) / 100), Math.trunc((D * (15 + prng.int(70))) / 100), 0], mood(f.id), (60 + prng.int(60)) * 25);
+      break;
+    }
+  }
+  for (const e of L.encounters) if (F[e.side]) present.add(e.side);
+  const factions = [...present].sort();
+  settings.poi.owner = p.owner || '';
+  settings.poi.ownerName = p.owner && F[p.owner] ? F[p.owner].Name : '';
+  settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) : true;
   settings.voyage = { day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
   return {
     ...settings,
@@ -356,10 +391,25 @@ export function visitSettings(rules, s) {
         crew: freeAll(s.crew), buildSpeed: Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100),
         spoolPct: Math.max(100, Math.trunc(10000 / Math.max(1, 50 + (s.systems.drive >> 1)))),
       },
-      { name: 'Ashen Gaunt', faction: 'gaunt', team: 1, ships: [] },
-      { name: 'Drift fauna', faction: 'fauna', team: 2, ships: [] },
+      ...factions.map((fid, i) => ({ name: F[fid].Name, faction: fid, team: i + 1, ships: [], tier: tierOf(fid), standing: standingOf(rules, s, fid) })),
+      { name: 'Drift fauna', faction: 'fauna', team: factions.length + 1, ships: [] },
     ],
+    relations: relationsFor(rules, factions, tierOf),
   };
+}
+
+// Who fights whom on a map: you and each faction by your standing (Hostile: enemies, Allied:
+// allies, the rest neutral); factions by their own feuds; monsters against everyone.
+function relationsFor(rules, factions, tierOf) {
+  const out = [], fauna = factions.length + 1;
+  factions.forEach((fid, i) => {
+    const t = tierOf(fid);
+    out.push([0, i + 1, t === 0 ? 'enemy' : t === 4 ? 'ally' : 'neutral']);
+    factions.forEach((gid, j) => { if (j > i) out.push([i + 1, j + 1, factionsAtWar(rules, fid, gid) ? 'enemy' : 'neutral']); });
+    out.push([i + 1, fauna, 'enemy']);
+  });
+  out.push([0, fauna, 'enemy']);
+  return out;
 }
 
 // Back from a map: what the visit gained and cost becomes the voyage's, and the days spent
@@ -383,6 +433,15 @@ export function returnFromMap(rules, s, report) {
     while (wear > 0) { const k = SYSTEMS[rng.int(SYSTEMS.length)], n = Math.min(wear, 3 + rng.int(6)); s.systems[k] = Math.max(0, s.systems[k] - n); hit[k] = (hit[k] || 0) + n; wear -= n; }
     note(s, `The hull took ${hullLost}% damage. Systems hit: ${Object.entries(hit).map(([k, n]) => `${rules.content.systems[k].Name} −${n}`).join(', ')}.`, 'bad');
   }
+  // who you met there, and what they think of what you did
+  const F = rules.content.factions, st = report.standing || { changes: {}, met: [] };
+  for (const fid of st.met) if (F[fid] && meet(rules, s, fid)) note(s, `First contact with the ${F[fid].Name}. They are ${tierName(rules, s.standing[fid])} toward the Forge.`, 'story');
+  for (const [fid, c] of Object.entries(st.changes)) {
+    if (!F[fid] || !c.delta) continue;
+    const t = change(rules, s, fid, c.delta);
+    note(s, `${F[fid].Name}: ${c.delta > 0 ? '+' : ''}${c.delta} standing (${Object.entries(c.reasons).map(([why, n]) => `${why} ${n > 0 ? '+' : ''}${n}`).join(', ')}).`, c.delta < 0 ? 'bad' : 'good');
+    if (t) note(s, `The ${F[fid].Name} are now ${t.to} toward the Forge.`, 'story');
+  }
   // what was found
   for (const id of report.found || []) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); }
   // morale: losses hurt, a win helps
@@ -404,10 +463,11 @@ export function returnFromMap(rules, s, report) {
 }
 
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
+  if (s && s.kind === 'voyage' && s.version === 2) { s.standing = {}; s.met = {}; s.version = 3; } // from Milestone 7
   if (!s || s.kind !== 'voyage' || s.version !== SAVE_VERSION) throw new Error('That save is from another version of Driftforge.');
   galaxyOf(rules, s);
   return s;

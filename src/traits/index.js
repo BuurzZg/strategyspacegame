@@ -8,3 +8,4 @@ import './combat.js';
 import './sandbox.js';
 import './formation.js';
 import './poi.js';
+import './diplomacy.js';

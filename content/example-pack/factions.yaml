@@ -1,0 +1,12 @@
+# A second Hullborn faction. No Standing: you start with them where you stand with the Hullborn.
+lamp:
+	Name: Lamplighters
+	Race: hullborn
+	Description: Hullborn who keep the old beacons lit along the lanes, for anyone who pays the toll.
+	Regions: Drift 1, Middens 2
+	Seats: Middens 1
+	Reach: 1
+	Station: HullTown
+	Patrol: picket, picket, dart
+	Enemies: gaunt
+	Leave: Neutral

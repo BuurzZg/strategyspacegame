@@ -394,12 +394,12 @@ New kinds of test arrive with the new layers:
 | 5 | Formations, stances, control groups | Five formations at the slowest ship's pace; aggressive, defensive and passive stances; control groups |
 | 6 | Point-of-interest maps from data | Content packs; five place types (then Still Water); ice, salvage, Glim and spores; the Shearer and Skimmer; the hangar, recall, spooling the Skein, the visit report |
 | 7 | Galaxy map and the voyage | About 300 places in four regions (the Drift, the Middens, the Hush behind the Veil, the Shore); the star chart; stitching with Glim; the day clock; water, air, food; crew roles and morale; Forge systems and wear; the drive repair track; saves with permanent death; the voyage simulator |
+| 8 | Races, factions, reputation | Five races and five factions in YAML; territory and stations on the galaxy; faction fleets on maps acting by standing (hostile, wary, neutral, friendly, allied); firing, kills, helping and theft change standing; the standing screen; an example add-on pack adds a faction with no code |
 
 ### Next
 
 | # | Milestone | Playable result | Checks |
 | --- | --- | --- | --- |
-| **8** | **Races, factions, reputation** | The five factions in YAML; faction fleets on maps acting by standing; territory claims (stealing costs standing); stations; reputation changes from actions; the standing screen | Reputation maths; behaviour follows tier; stealing is detected; a test pack adds a faction with no code |
 | **9** | **Diplomacy and trade** | Hailing, the comms panel (dialogs in YAML), the trade screen with standing-based prices, tribute, ceasefire and peace treaties, hiring crew and ships, buying information | Price maths; treaties enforced; every dialog validates and every branch is reachable |
 | **10** | **Events, monsters, story** | Galaxy and map events (distress beacons, ambushes, discoveries); monster behaviours (Scrapwyrm ambushes, mite infestations, the Hollowhorn); a prologue, the drive-component storylines, and the ending | Every event validates and is reachable; monster behaviour tests; a scripted run reaches the ending |
 | **11** | **Sensors, fog, engineering** | Sensor fog on maps, the Tactical Plot (Tab), galaxy scanning, blueprints and engineering projects, the Wisp scout | Hidden ships stay hidden until seen; blueprints unlock the right hulls |

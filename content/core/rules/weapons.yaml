@@ -160,3 +160,19 @@ GnasherBite:
 			medium: 90
 			heavy: 70
 			capital: 60
+
+# the Choir's light: a searing beam
+MothLight:
+	ReloadDelay: 18
+	Range: 2400
+	Report: lance
+	Projectile: InstantHit
+		Beam: true
+		Color: e8f0ff
+	Warhead@hit: SpreadDamage
+		Damage: 900
+		Versus:
+			light: 100
+			medium: 80
+			heavy: 60
+			capital: 40

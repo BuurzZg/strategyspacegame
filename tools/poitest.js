@@ -38,7 +38,7 @@ async function visit(type, { fleet, seed = 5, place = 1, stores } = {}) {
     const [ex, ey] = a.spawns[0];
     for (const f of a.fields) if (isqrt((f.at[0] - ex) ** 2 + (f.at[1] - ey) ** 2) < 18 + f.spread) clearEntry = false;
   }
-  check(TYPES.length === 6, `the core pack has six place types (${TYPES.join(', ')})`);
+  check(TYPES.length === 11, `the core pack has eleven place types (${TYPES.join(', ')})`);
   check(same, 'every template gives exactly the same map for the same seed');
   check(differ === TYPES.length, 'and a different map for a different seed');
   check(clearEntry, 'no asteroid field is generated on top of the Forge\'s arrival point');
@@ -50,9 +50,10 @@ for (const type of TYPES) {
   const s = w.settings, L = s.layout;
   const count = (t) => w.actors.filter((a) => a.type === t && !a.dead).length;
   tick(25 * 8);
+  const stations = w.actors.filter((a) => a.station && !a.dead).length;
   const ok = count('wreck') === L.wrecks.length + (L.hulk ? 1 : 0) && count('cloud') === L.clouds.length && count('spire') === L.rocks.length
-    && count('asteroid') > 0 && mine().length === 7 && forge && !forge.trait('Hangar').queue.length;
-  check(ok, `${type.padEnd(12)} "${s.poi.name}": ${count('asteroid')} rocks, ${count('wreck')} wrecks, ${count('cloud')} clouds, ${count('spire')} crystal pieces, ${L.encounters.length} encounters; the fleet of 7 launched from the hangar`);
+    && (count('asteroid') > 0 || !s.fields.length) && stations === (L.station ? 1 : 0) && mine().length === 7 && forge && !forge.trait('Hangar').queue.length;
+  check(ok, `${type.padEnd(12)} "${s.poi.name}": ${count('asteroid')} rocks, ${count('wreck')} wrecks, ${count('cloud')} clouds, ${count('spire')} crystal pieces, ${L.encounters.length} encounters${L.station ? `, a ${L.station.of}` : ''}; the fleet of 7 launched from the hangar`);
 }
 
 // 3. Every resource kind can be gathered (a collector that can take two kinds picks the best

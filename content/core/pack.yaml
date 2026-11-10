@@ -10,12 +10,14 @@
 #   Items       drive components (later: relics, blueprints)
 #   Voyage      the numbers behind the galaxy map, and the Forge's systems
 #   Names       name generators
+#   Races       races, and where their factions start
+#   Factions    factions, their territory and fleets, and the reputation numbers
 
 Pack:
 	Id: core
 	Name: Driftforge
 	Version: 1
-	Rules: rules/world.yaml, rules/player.yaml, rules/defaults.yaml, rules/ships.yaml, rules/warships.yaml, rules/fauna.yaml, rules/combat.yaml, rules/deposits.yaml
+	Rules: rules/world.yaml, rules/player.yaml, rules/defaults.yaml, rules/ships.yaml, rules/warships.yaml, rules/fauna.yaml, rules/combat.yaml, rules/deposits.yaml, rules/stations.yaml
 	Weapons: rules/weapons.yaml
 	Resources: resources.yaml
 	PoiTypes: poi-types.yaml
@@ -23,3 +25,5 @@ Pack:
 	Items: items.yaml
 	Voyage: voyage.yaml
 	Names: names.yaml
+	Races: races.yaml
+	Factions: factions.yaml

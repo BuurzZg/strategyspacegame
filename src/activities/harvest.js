@@ -57,7 +57,9 @@ export class MineAsteroid extends Activity {
     if (++this.t >= c.info.MineInterval) {
       this.t = 0;
       c.kind = ast.deposit.kind;
+      const fresh = c.cargo === 0;
       c.cargo += ast.deposit.take(Math.min(c.info.MineAmount, c.info.Capacity - c.cargo), self);
+      w.emit('took', self, ast, fresh);
     }
     return c.cargo >= c.info.Capacity || ast.dead;
   }

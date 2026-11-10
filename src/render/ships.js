@@ -259,6 +259,92 @@ export function buildShip(type, style) {
       out.length = 14;
       break;
     }
+    // ---------------------------------------------------------------- faction stations
+    case 'hulltown': {
+      // a gutted capital hull with a town inside: lit windows in rows, scaffolds, beacons
+      part(box(40, 6.5, 8.5), M.hull, 0, 0, 0, body);
+      part(box(34, 2, 6), M.dark, 0, -4, 0, body);
+      part(wedge(8, 8.5, 2.5, 5.5), M.hull, 24, 0, 0, body);
+      part(box(6, 7.5, 9.5), M.dark, -22, 0, 0, body);
+      // a breach amidships, the town's lights showing through
+      part(box(7, 7, 9), M.dark, 4, 0.6, 0, body);
+      for (let i = 0; i < 18; i++) {
+        const x = -17 + i * 2, z = i % 2 ? 4.3 : -4.3;
+        part(box(0.9, 0.5, 0.2), M.light, x, 1.2 + (i % 3) * 1.2, z, body);
+        if (i % 4 === 0) part(box(0.2, 9, 0.2), M.dark, x, 2, z * 1.15, body);
+      }
+      for (const x of [-12, 0, 12]) part(box(1.2, 1.2, 1.2), M.trim, x, 4, 0, body);
+      for (const x of [-18, 18]) part(box(0.5, 0.5, 0.5), M.light, x, 4.6, 0, body);
+      out.length = 48;
+      break;
+    }
+    case 'refinery': {
+      // tall Glim tanks round a spine, hung with lanterns
+      part(cyl(1.2, 1.2, 26, 8), M.dark, 0, 0, 0, body);
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2, x = Math.cos(a) * 7, z = Math.sin(a) * 7;
+        part(cyl(3, 3, 18, 10), M.hull, x, 0, z, body);
+        part(torus(3.1, 0.25, 20), M.trim, x, 5, z, body, Math.PI / 2, 0, 0);
+        part(torus(3.1, 0.25, 20), M.trim, x, -5, z, body, Math.PI / 2, 0, 0);
+        part(box(4, 0.8, 0.8), M.dark, x / 2, 8, z / 2, body, 0, -a, 0);
+        for (const y of [-8, 0, 8]) part(G('lantern', () => new THREE.IcosahedronGeometry(0.55, 0)), M.light, x * 1.45, y, z * 1.45, body);
+      }
+      const ring = new THREE.Group(); body.add(ring);
+      part(torus(11, 0.4, 48), M.trim, 0, 0, 0, ring, Math.PI / 2, 0, 0);
+      out.spin.push({ obj: ring, speed: 0.05 });
+      out.length = 30;
+      break;
+    }
+    case 'den': {
+      // a hollowed rock bristling with grapples and stolen plating
+      if (!M.rock) M.rock = new THREE.MeshStandardMaterial({ color: 0x3a3130, roughness: 0.95, metalness: 0.1, flatShading: true });
+      const rock = part(G('den-rock', () => new THREE.IcosahedronGeometry(10, 1)), M.rock, 0, 0, 0, body);
+      rock.scale.set(1.2, 0.8, 1);
+      part(G('den-maw', () => new THREE.CylinderGeometry(4, 5, 4, 8, 1, true)), M.dark, 11, 0, 0, body, 0, 0, Math.PI / 2);
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2, b = (i % 3 - 1) * 0.5;
+        const x = Math.cos(a) * 11, y = Math.sin(b) * 7, z = Math.sin(a) * 10;
+        part(cone(0.5, 6, 4), M.dark, x, y, z, body, 0, -a, Math.PI / 2 + b);
+        if (i % 2) part(box(4, 0.3, 3), M.trim, x * 0.9, y + 2, z * 0.9, body, 0.3, -a, 0.2);
+        part(box(0.5, 0.5, 0.5), M.light, x * 0.95, y - 1, z * 0.95, body);
+      }
+      out.length = 26;
+      break;
+    }
+    case 'cinderhold': {
+      // a foundry ring round the bones of another Forge
+      part(box(24, 2.5, 4), M.dark, 0, 0, 0, body);
+      part(wedge(7, 4, 1.2, 2.4), M.dark, 15, 0, 0, body);
+      for (let i = 0; i < 6; i++) part(box(0.6, 4, 5), M.hull, -10 + i * 4, 1.2, 0, body);
+      const ring = new THREE.Group(); body.add(ring);
+      part(torus(11, 1.5, 40), M.hull, 0, 0, 0, ring, 0, Math.PI / 2, 0);
+      for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; part(box(1.5, 1.5, 1.5), M.furnace, 0, Math.cos(a) * 11, Math.sin(a) * 11, ring); }
+      out.spin.push({ obj: ring, speed: 0.08 });
+      for (const z of [-1, 1]) part(box(10, 0.6, 0.6), M.trim, 0, 3, z * 2, body);
+      out.length = 26;
+      break;
+    }
+    case 'bloom':
+    case 'moth': {
+      // Choirmoths: luminous wings turning in shells of light; a bloom is thousands of them
+      const big = type === 'bloom';
+      if (!M.wing) M.wing = new THREE.MeshStandardMaterial({ color: style.color, emissive: style.color, emissiveIntensity: 1.2, flatShading: true, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+      const n = big ? 90 : 14, R0 = big ? 9 : 1.1;
+      for (let s = 0; s < (big ? 3 : 1); s++) {
+        const shell = new THREE.Group(); body.add(shell);
+        for (let i = 0; i < n / (big ? 3 : 1); i++) {
+          const u = (i * 0.618 + s * 0.3) % 1, v = (i * 0.381 + s * 0.17) % 1;
+          const th = u * Math.PI * 2, ph = Math.acos(2 * v - 1), r = R0 * (0.6 + 0.4 * ((i * 7) % 5) / 4) * (1 + s * 0.35);
+          const w = part(G('wing', () => new THREE.PlaneGeometry(0.9, 0.5)), M.wing, Math.sin(ph) * Math.cos(th) * r, Math.cos(ph) * r * 0.8, Math.sin(ph) * Math.sin(th) * r, shell, th, ph, 0);
+          w.scale.setScalar(big ? 1.8 : 0.55);
+        }
+        out.spin.push({ obj: shell, speed: (s % 2 ? -1 : 1) * (big ? 0.15 : 0.9) });
+      }
+      if (big) part(G('bloom-core', () => new THREE.IcosahedronGeometry(2.5, 1)), M.light, 0, 0, 0, body);
+      out.nose = new THREE.Vector3(R0, 0, 0);
+      out.length = big ? 24 : 3;
+      break;
+    }
     case 'gnasher': {
       // a monster: ribbed, eyeless, all jaw; it glows where its nerves run
       if (!M.skin) {

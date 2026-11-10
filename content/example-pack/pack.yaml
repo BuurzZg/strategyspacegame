@@ -1,0 +1,9 @@
+# An example add-on pack: a new faction for an existing race, with no code. Load it after the
+# core pack (the tests do: loadRules(readText, ['core', 'example-pack'])).
+
+Pack:
+	Id: example-pack
+	Name: The Lamplighters
+	Version: 1
+	Rules: rules/world.yaml
+	Factions: factions.yaml

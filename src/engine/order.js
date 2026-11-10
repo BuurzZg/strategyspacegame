@@ -72,6 +72,11 @@ export function resolveOrder(world, player, o) {
   }
   if (F && o.n === 'Stop') { const g = F.exactGroup(subjects.filter((a) => a.mobile)); if (g) F.stop(g); }
   if (F && (o.n === 'Harvest' || o.n === 'Dock')) F.leave(subjects);
+  // attacking someone you are not at war with (a faction on the voyage) declares it
+  if (o.n === 'Attack' && target && target.actor && world.diplomacy) {
+    const them = target.actor.owner;
+    if (them !== player && !them.isNeutral && !player.isEnemy(them)) world.diplomacy.provoke(them, 'So it is war, then.', player);
+  }
   if (o.n === 'Recall') {
     // the ships come home and go aboard the Forge's hangar
     const forge = world.actors.find((a) => a.owner === player && !a.dead && a.has('Hangar'));

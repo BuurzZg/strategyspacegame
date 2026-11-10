@@ -42,6 +42,10 @@ export class World {
     this.factions = new Map(this.worldActor.traitsOf('Faction').map((f) => [f.info.InternalName, f.info]));
 
     this.players = settings.players.map((slot, i) => new Player(this, i, slot));
+    // relations between players that differ from what their teams say: 'enemy', 'neutral' or
+    // 'ally' (factions on the voyage; set from settings.relations, changed by Diplomacy)
+    this.relations = new Map();
+    for (const [a, b, r] of settings.relations || []) this.relations.set(a < b ? `${a}:${b}` : `${b}:${a}`, r);
     for (const p of this.players) p.actor = new Actor(this, rules.actor('Player'), p);
 
     for (const t of this.worldActor.traits) if (t.enabled && t.worldLoaded) t.worldLoaded();
@@ -91,6 +95,8 @@ export class World {
   runFrameEndTasks() { while (this.frameEndTasks.length) { const list = this.frameEndTasks; this.frameEndTasks = []; for (const fn of list) fn(this); } }
 
   // Simulation events (deterministic): 'killed', 'produced', ...
+  relationOf(a, b) { return this.relations.get(a.index < b.index ? `${a.index}:${b.index}` : `${b.index}:${a.index}`); }
+  setRelation(a, b, r) { this.relations.set(a.index < b.index ? `${a.index}:${b.index}` : `${b.index}:${a.index}`, r); }
   on(name, fn) { if (!this.listeners.has(name)) this.listeners.set(name, []); this.listeners.get(name).push(fn); }
   emit(name, ...args) { const l = this.listeners.get(name); if (l) for (const fn of l.slice()) fn(...args); }
   playerById(id) { return this.players.find((p) => p.id === id) || (id === 'neutral' ? this.neutral : null); }
@@ -277,6 +283,7 @@ export class World {
     h = hashMix(h, this.effects.length);
     for (const e of this.effects) { h = hashMix(h, e.x); h = hashMix(h, e.y); h = hashMix(h, e.z); }
     if (this.formations) h = this.formations.hash(h, hashMix);
+    for (const k of [...this.relations.keys()].sort()) { const r = this.relations.get(k); h = hashMix(h, k.length); h = hashMix(h, r === 'enemy' ? 1 : r === 'ally' ? 2 : 3); }
     return h >>> 0;
   }
 }

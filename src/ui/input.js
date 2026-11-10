@@ -187,6 +187,7 @@ export class Input {
     if (a.deposit && this.own().some((s) => s.collector && s.collector.canWork(a))) return VERBS[a.deposit.kind] || 'Gather';
     if (collectors && this.isMine(a) && a.has('OreDropoff') && !this.selection.includes(a)) return 'Unload here';
     if (a.health && this.isEnemy(a) && this.armed().length) return 'Attack';
+    if (a.health && this.keys.has('control') && a.owner !== this.viewer && !a.owner.isNeutral && this.armed().length) return 'Attack (declares war)';
     return null;
   }
   // ---------------------------------------------------------- formations, stances, control groups
@@ -295,7 +296,9 @@ export class Input {
       if (hit && collectors.length && this.isMine(hit) && hit.has('OreDropoff') && !collectors.includes(hit)) { this.orderCollectors('Dock', collectors, hit); return; }
       // armed ships selected: right-click an enemy to attack it
       const armed = this.armed();
-      if (hit && armed.length && hit.health && this.isEnemy(hit)) {
+      // Ctrl + right-click: attack anyone who is not yours (on the voyage, that declares war)
+      const force = e.ctrlKey && hit && hit.health && hit.owner !== this.viewer && !hit.owner.isNeutral && !hit.owner.isAlly(this.viewer);
+      if (hit && armed.length && hit.health && (this.isEnemy(hit) || force)) {
         this.issue('Attack', armed, { actor: hit });
         const v = this.renderer.views.get(hit.id);
         if (v) this.renderer.fx.marker(v.pos.x, v.pos.y, v.pos.z, 0xff5a64);

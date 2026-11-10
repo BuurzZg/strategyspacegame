@@ -1,7 +1,8 @@
 import * as THREE from '../../lib/three.module.js';
 import { OrbitCamera } from './camera.js';
 import { SpaceScene } from '../render/space.js';
-import { StarChart, chartPos, TYPE_COLORS } from '../render/galaxy.js';
+import { StarChart, chartPos, TYPE_COLORS, factionColor } from '../render/galaxy.js';
+import { standingOf, tierName, hasLeave, raceStanding, TIERS } from '../galaxy/standing.js';
 import * as V from '../galaxy/voyage.js';
 import { laneOpen } from '../galaxy/galaxy.js';
 import { ROLES, count, free } from '../galaxy/crew.js';
@@ -175,10 +176,13 @@ export class ChartScreen {
     const known = s.known.includes(id), here = id === s.at, times = s.visited[id] | 0;
     $('pc-name').textContent = known ? p.name : 'Unknown place';
     $('pc-status').textContent = here ? 'The Forge is here' : times ? `Visited${times > 1 ? ` ×${times}` : ''}` : known ? '' : 'Beyond the sensors';
-    $('pc-class').innerHTML = `<i style="background:${hex(known ? TYPE_COLORS[p.type] : 0x56637a)}"></i>${esc(R.Name)}${known ? ` · ${esc(T.Name)}` : ''}${p.edge && known ? ' · the Shore\'s edge' : ''}`;
+    const Fo = known && p.owner ? this.rules.content.factions[p.owner] : null;
+    const owned = Fo ? ` · <span style="color:${hex(factionColor(this.rules, p.owner))}">${esc(Fo.Name)}${p.seat ? '' : ' territory'}</span> <span class="t-${tierName(this.rules, standingOf(this.rules, s, p.owner))}">(${tierName(this.rules, standingOf(this.rules, s, p.owner))})</span>` : '';
+    $('pc-class').innerHTML = `<i style="background:${hex(known ? TYPE_COLORS[p.type] : 0x56637a)}"></i>${esc(R.Name)}${known ? ` · ${esc(T.Name)}` : ''}${p.edge && known ? ' · the Shore\'s edge' : ''}${owned}`;
     const t = V.target(this.rules, s);
     const relic = t && t.at === id ? `The ${this.rules.content.items[t.id].Name} is aboard: cut into the hulk with Shearers to find it. ` : '';
-    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '');
+    const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
+    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + claim;
     const stats = [], btns = [];
     let why = '';
     if (here) {
@@ -247,6 +251,19 @@ export class ChartScreen {
         h += `<tr><th style="color:${hex(C.resources[k].Color)}">${name}</th><td>${fmt(s.stores[k])}</td><td>${per ? (per > 0 ? `+${fmt(per)}` : `−${fmt(-per)}`) : '—'}</td><td>${d === undefined || d === Infinity ? '—' : `${fmt(d)} d`}</td></tr>`;
       }
       h += '</tbody></table>';
+    } else if (this.tab === 'standing') {
+      const F = C.factions;
+      h += '<p class="fp-note">Your standing with each faction, from −100 to 100. <span class="t-Hostile">Hostile</span> attack on sight; <span class="t-Wary">Wary</span> warn you off and fire if you linger; <span class="t-Neutral">Neutral</span> ignore you; <span class="t-Friendly">Friendly</span> turn on whoever attacks you near them; <span class="t-Allied">Allied</span> fight at your side. Firing on them, killing them and taking from their claims costs standing; fighting their enemies earns it.</p>';
+      for (const f of Object.values(F)) {
+        const n = standingOf(rules, s, f.id), t = tierName(rules, n), col = hex(factionColor(rules, f.id));
+        const met = s.met && s.met[f.id], race = C.races[f.Race];
+        const left = n < 0 ? 50 + n / 2 : 50, width = Math.abs(n) / 2;
+        h += `<div class="fs"><b style="color:${col}">${esc(f.Name)}</b><span class="t t-${t}">${t}</span><div class="sbar"><i style="left:${left}%;width:${width}%;background:${n < 0 ? 'var(--bad)' : 'var(--good)'}"></i></div><p>${met ? `${n > 0 ? '+' : ''}${n}` : `Not met yet: starts at ${n}`} · ${esc(race ? race.Name : f.Race)} · ${hasLeave(rules, s, f.id) ? 'leave to mine their claims' : `leave to mine from ${esc(f.Leave || 'Friendly')}`}</p></div>`;
+      }
+      h += '<h3>Races</h3><table class="ct"><tbody>';
+      for (const r of Object.values(C.races)) { const n = raceStanding(rules, s, r.id); h += `<tr><th>${esc(r.Name)}</th><td class="t-${tierName(rules, n)}">${tierName(rules, n)}</td><td>${n}</td></tr>`; }
+      h += '</tbody></table><p class="fp-note">A faction you have not met starts where you stand with its race: the average over that race\'s factions you have met.</p>';
+      void TIERS;
     } else {
       h += '<ol class="log">' + s.log.slice(-60).reverse().map((l) => `<li class="${l.kind}"><span>Day ${l.day}</span>${esc(l.text)}</li>`).join('') + '</ol>';
     }

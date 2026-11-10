@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 7, the voyage.** Start a **new voyage** from the title screen. Each one is a new seeded galaxy of about 300 places in four regions, ringed round the dead star Orrin:
+**Status: Milestone 8, factions and reputation.** Five factions claim parts of the Wrack, with stations at their seats: the Rivet Moot's hull-towns, the Lantern Synod's refineries, the Ashen Gaunt's dens, the Cinder Pact's holds and the Choir's blooms. How they treat you on a map depends on your standing with them, and what you do there changes it. See [Factions and standing](#factions-and-standing).
+
+**Milestone 7, the voyage:** Start a **new voyage** from the title screen. Each one is a new seeded galaxy of about 300 places in four regions, ringed round the dead star Orrin:
 
 - **the Drift**, where you start;
 - **the Middens**, out of reach until the drive's Threadwound Coils are mended;
@@ -30,7 +32,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-Factions and reputation come in Milestone 8; for now the Wrack holds only monsters, raiders and derelicts.
+Diplomacy and trade with the factions come in Milestone 9.
 
 ## Running the game
 
@@ -167,6 +169,37 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 | Heartstone | a derelict deep in the Shore | the final jump, from the Shore's edge |
 
 The engineers have a fix on one part at a time: the gold ring. Go in and cut into the derelict's hulk with Shearers until they find it. Then fit it from the Forge panel (ore, salvage, days and free engineers). Later milestones add other ways to get them: quests, trade and fights with factions.
+
+### Factions and standing
+
+| Faction | Race | You start | Where |
+| --- | --- | --- | --- |
+| Rivet Moot | Hullborn | Friendly (30) | hull-towns in the Drift and the Middens |
+| Lantern Synod | Tallowfolk | Neutral (0) | Glim refineries in the Middens and the Hush |
+| Ashen Gaunt | Gaunt | Hostile (−60) | dens from the Middens to the Shore |
+| Cinder Pact | Humans | Wary (−20) | holds in the Hush and on the Shore |
+| The Choir | Choirmoths | Neutral (0) | blooms in the Middens and the Hush |
+
+- **On the star chart,** a place a faction claims has a ring in its colour; its seat (a station) is drawn larger. The place card says whose it is, how they feel about you, and whether you have their leave to mine there. The **Standing** tab lists every faction and race.
+- **On a map,** a faction's ships and station behave by your tier with them:
+
+| Tier | Standing | They |
+| --- | --- | --- |
+| Hostile | −100 to −51 | attack on sight; some hunt the Forge |
+| Wary | −50 to −11 | warn you off when you come within about 1.6 km, and open fire if you stay within 900 m for 20 seconds |
+| Neutral | −10 to 24 | ignore you |
+| Friendly | 25 to 59 | turn on whoever attacks your ships near them |
+| Allied | 60 and up | fight at your side, and come to guard the Forge |
+
+- **What changes standing** (all in `content/core/factions.yaml`):
+  - firing on one of their ships: −10 a ship, and they fight back for the rest of the visit;
+  - destroying a ship: −25; a station: −60;
+  - taking ore, ice, salvage, Glim or spores from their claim without leave, where their ships or station can see it: the first load gets a warning, then −1 a load;
+  - destroying their enemies where they can see it: +2 a kill, up to +15 a visit.
+- **Leave:** the Rivet Moot, the Synod and the Cinder Pact let you mine their claims from Friendly; the Choir from Neutral; the Gaunt only if you are Allied.
+- **Declaring war:** `Ctrl` + right-click a ship you are not at war with to attack it.
+- **Races:** a faction you have not met starts where you stand with its race: the average of that race's factions you have met.
+- **Monsters** (Gnashers) have no standing and fight everyone.
 
 ### Places and leaving them
 
@@ -352,6 +385,15 @@ Runs the headless tests:
   - the Forge destroyed ends the voyage;
   - saving and loading give the identical voyage;
   - an abstract captain (no maps, fixed yields per visit) gets home on three seeds, and the test prints how long it took.
+- **Factions** (`tools/factiontest.js`): checks that:
+  - the five tiers and their bounds, starting standings, and standing never leaving −100 to 100;
+  - race standing: an unmet faction starts at the average over the race's met factions;
+  - the example pack adds a faction with no code, and the galaxy gives it a seat and territory, and its station and patrol appear on maps;
+  - each faction gets the seats it lists; stations are their faction's place type;
+  - behaviour follows the tier: Hostile fires, Wary warns then fires when you linger, Neutral ignores you until you fire, Friendly turns on your attackers, Allied comes to guard the Forge;
+  - firing, kills and helping change standing by the listed amounts;
+  - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
+  - a visit with factions is deterministic.
 - **Places** (`tools/poitest.js`): checks that:
   - every template gives exactly the same map for the same seed, a different map for a different seed, and no field on top of the Forge's arrival point;
   - every place type builds what its layout promised, and the fleet launches from the hangar;
@@ -397,6 +439,11 @@ content/core/items.yaml         the Skein Drive's four parts: where they are, wh
 content/core/voyage.yaml        every number behind the voyage (needs, life support, hydroponics,
                                 stitch costs, repairs, morale) and the Forge's systems
 content/core/names.yaml         name generators (derelicts)
+content/core/races.yaml         races, and where their factions start
+content/core/factions.yaml      factions: seats, territory, patrols, enemies, leave; and every
+                                reputation number (tiers, penalties, ranges)
+content/core/rules/stations.yaml  faction stations and Choirmoth swarms
+content/example-pack/           an example add-on: a second Hullborn faction, in YAML only
 ```
 
 Packs listed after the core pack are merged on top of it, so a pack can add a place type or change one value of an existing ship. When the game loads, every reference is checked: a place that asks for an unknown resource or ship, or a collector that gathers an unknown resource, stops it with a message naming the file.
@@ -411,11 +458,13 @@ src/engine/           deterministic core: world, actors, traits, orders, lockste
                       steering (avoid.js), weapons and projectiles (weapons.js), content packs
                       (content.js), the place generator (poi.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
-                      Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein, ...)
+                      Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
+                      Diplomacy, Station, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
-                      travel and saves (voyage.js), the crew (crew.js), practice runs (run.js)
+                      travel and saves (voyage.js), the crew (crew.js), standing (standing.js),
+                      practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
                       wrecks, combat effects, the star chart (galaxy.js)
 src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), audio

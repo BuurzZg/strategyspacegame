@@ -1,0 +1,25 @@
+# Races of the Wrack. A race can have several factions (an add-on pack can add more). Your
+# standing with a race is the average of your standings with its factions you have met; it is
+# where a faction of that race you have not met yet starts.
+#   Standing    where its factions start when you have met none of them
+
+humans:
+	Name: Humans
+	Description: Foundry people, far from home. The Meridian Hollow is one Forge's worth of them; the Cinder Pact are what another Forge's became.
+	Standing: 0
+hullborn:
+	Name: Hullborn
+	Description: Small, pale, large-eyed people born inside derelict hulls. They breathe thin air, patch their homes from scrap, and are nervous, sharp traders.
+	Standing: 25
+tallowfolk:
+	Name: Tallowfolk
+	Description: Slow, waxy-skinned and long-lived. They render Glim from nebula gas and keep their word to the letter.
+	Standing: 0
+gaunt:
+	Name: Gaunt
+	Description: Tall, many-jointed people sealed in rust-red pressure suits. They strip wrecks and ships, and respect strength and debts.
+	Standing: -50
+choirmoths:
+	Name: Choirmoths
+	Description: Not people as you know them: swarms of luminous, moth-like beings who live in nebulae and speak in light. They know what the Skein is.
+	Standing: 0

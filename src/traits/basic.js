@@ -30,6 +30,7 @@ defineTrait('Health', class Health extends Trait {
     this.hp -= amount;
     this.lastDamaged = self.world.frame;
     self.notify('damaged', { attacker, amount, by: byPlayer });
+    self.world.emit('damaged', self, attacker, amount, byPlayer);
     if (this.hp <= 0) { this.hp = 0; this.kill(attacker, byPlayer); }
   }
   heal(amount) { if (!this.self.dead) this.hp = Math.min(this.maxHp, this.hp + amount); }

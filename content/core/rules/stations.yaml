@@ -1,0 +1,180 @@
+# Faction stations, built into wrecks and rock, and the Choir's swarms. Stations never move;
+# their guns fire from where they are. Destroying one costs a great deal of standing.
+
+^Station:
+	Tooltip:
+	Valued:
+		Cost: 3000
+	Health:
+	Armor:
+		Type: capital
+	Selectable:
+	WithModel:
+	Attacks:
+		Style: turret
+	Stance:
+		Initial: defensive
+	AutoTarget:
+		ScanRange: 4200
+	LeavesWreck:
+		Pct: 25
+	Station:
+
+hulltown:
+	Inherits: ^Station
+	Tooltip:
+		Name: Hull-town
+		Class: Station
+		Role: Rivet Moot settlement
+		Description: A gutted capital ship with a town inside it. Lights in every porthole, and someone always hammering.
+	Health:
+		HP: 900000
+		Radius: 2200
+		HalfLength: 3400
+	Selectable:
+		Radius: 3600
+	WithModel:
+		Model: hulltown
+	Armament@a:
+		Weapon: PointDefence
+		Forward: 3000
+		Up: 900
+	Armament@b:
+		Weapon: PointDefence
+		Forward: -3000
+		Up: 900
+	Armament@c:
+		Weapon: PulseBattery
+		Up: 1400
+
+refinery:
+	Inherits: ^Station
+	Tooltip:
+		Name: Synod refinery
+		Class: Station
+		Role: Lantern Synod Glim works
+		Description: Tall tanks of rendered Glim, hung with green lanterns. The Synod do not allow fighting near it.
+	Health:
+		HP: 800000
+		Radius: 2600
+		HalfLength: 1200
+	Selectable:
+		Radius: 3400
+	WithModel:
+		Model: refinery
+	Armament@a:
+		Weapon: PulseBattery
+		Side: 1800
+		Up: 600
+	Armament@b:
+		Weapon: PulseBattery
+		Side: -1800
+		Up: 600
+
+den:
+	Inherits: ^Station
+	Tooltip:
+		Name: Gaunt den
+		Class: Station
+		Role: Ashen Gaunt raider base
+		Description: A hollowed rock bristling with grapples and stolen plating. It smells of rust even through a hull.
+	Health:
+		HP: 1000000
+		Radius: 2800
+		HalfLength: 0
+	Selectable:
+		Radius: 3600
+	WithModel:
+		Model: den
+	Armament@a:
+		Weapon: FlakBurst
+		Up: 1600
+	Armament@b:
+		Weapon: PulseBattery
+		Forward: 2000
+	Armament@c:
+		Weapon: PulseBattery
+		Forward: -2000
+
+cinderhold:
+	Inherits: ^Station
+	Tooltip:
+		Name: Cinder hold
+		Class: Station
+		Role: Cinder Pact outpost
+		Description: A foundry ring built round the bones of a Forge like yours. It never got home either.
+	Health:
+		HP: 1000000
+		Radius: 3000
+		HalfLength: 0
+	Selectable:
+		Radius: 3800
+	WithModel:
+		Model: cinderhold
+	Armament@a:
+		Weapon: PulseBattery
+		Side: 2600
+	Armament@b:
+		Weapon: PulseBattery
+		Side: -2600
+	Armament@c:
+		Weapon: PointDefence
+		Up: 1200
+
+bloom:
+	Inherits: ^Station
+	Tooltip:
+		Name: Choir bloom
+		Class: Gathering
+		Role: The Choir
+		Description: Thousands of Choirmoths turning slowly in the gas, talking in light.
+	Armor:
+		Type: light
+	Health:
+		HP: 500000
+		Radius: 2400
+		HalfLength: 0
+	Selectable:
+		Radius: 3200
+	WithModel:
+		Model: bloom
+	Armament@a:
+		Weapon: MothLight
+		Arc: 512
+	-LeavesWreck:
+
+moth:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Choirmoth swarm
+		Class: Swarm
+		Role: The Choir
+		Description: A cloud of luminous moth-like beings moving as one. They do not like being shot at.
+	Health:
+		HP: 7000
+		Radius: 380
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 560
+	Flight:
+		MaxSpeed: 90
+		Acceleration: 5
+		Deceleration: 5
+		TurnSpeed: 11
+		PitchSpeed: 10
+		MinSpeed: 25
+		Slip: 160
+		Bank: 30
+	WithModel:
+		Model: moth
+	Armament:
+		Weapon: MothLight
+		Forward: 200
+		Arc: 512
+	Attacks:
+		Style: standoff
+	AutoTarget:
+		ScanRange: 6000
+	Stance:
+		Initial: defensive

@@ -1,0 +1,93 @@
+# Factions: who claims the Wrack's places, and how they feel about you.
+#   Race        races.yaml
+#   Standing    where you start with them (-100 to 100); omit to start from the race standing
+#   Regions     how much of each region they claim (weights)
+#   Seats       stations in each region: places that become their Station type
+#   Reach       how many lanes out from a seat they claim
+#   Station     the place type of their seats (poi-types.yaml)
+#   Patrol      the ships they keep at places they claim (more in dangerous regions)
+#   Enemies     factions they fight on sight
+#   Leave       from this tier on, you may mine and salvage in their territory
+
+Reputation:
+	# the lowest standing of each tier
+	Tiers: Hostile -100, Wary -50, Neutral -10, Friendly 25, Allied 60
+	# per ship of theirs you open fire on, per kill, per station destroyed
+	Attack: -10
+	Kill: -25
+	StationKill: -60
+	# per load taken from their territory without leave, when they see it; the first is a warning
+	Steal: -1
+	# fighting their enemies where they can see it: per kill, up to HelpMax a visit
+	HelpKill: 2
+	HelpMax: 15
+	# cells: how far their ships and stations see theft; how near a wary faction lets you come
+	SightRange: 22
+	WarnRange: 16
+	CloseRange: 9
+	# seconds you may linger inside CloseRange of a wary faction after its warning
+	WarnTime: 20
+
+rivet:
+	Name: Rivet Moot
+	Race: hullborn
+	Standing: 30
+	Description: Hullborn salvage clans who live in gutted capital ships. Friendly, nervous, and always buying.
+	Regions: Drift 2, Middens 4, Hush 1
+	Seats: Drift 1, Middens 3, Hush 1
+	Reach: 1
+	Station: HullTown
+	Patrol: dart, dart, picket, halberd
+	Enemies: gaunt
+	Leave: Friendly
+
+synod:
+	Name: Lantern Synod
+	Race: tallowfolk
+	Standing: 0
+	Description: Tallowfolk Glim-renderers. They sell fuel and food, keep a strict code, and do not tolerate violence near their refineries.
+	Regions: Middens 2, Hush 3, Shore 1
+	Seats: Middens 1, Hush 2
+	Reach: 1
+	Station: SynodRefinery
+	Patrol: picket, halberd, halberd, spindle
+	Enemies: gaunt
+	Leave: Friendly
+
+gaunt:
+	Name: Ashen Gaunt
+	Race: gaunt
+	Standing: -60
+	Description: Raiders and wreck-strippers. They respect strength, count debts, and hold the Anchor Spindle's secrets.
+	Regions: Drift 1, Middens 2, Hush 2, Shore 4
+	Seats: Middens 1, Hush 1, Shore 2
+	Reach: 2
+	Station: GauntDen
+	Patrol: dart, dart, talon, talon, picket, halberd, sabre
+	Enemies: rivet, synod, cinder
+	Leave: Allied
+
+cinder:
+	Name: Cinder Pact
+	Race: humans
+	Standing: -20
+	Description: A league descended from another Forge that never got home. Hired ships, old charts, and an old rivalry.
+	Regions: Middens 1, Hush 2, Shore 2
+	Seats: Hush 1, Shore 1
+	Reach: 2
+	Station: CinderHold
+	Patrol: dart, talon, halberd, spindle, sabre
+	Enemies: gaunt
+	Leave: Friendly
+
+choir:
+	Name: The Choir
+	Race: choirmoths
+	Standing: 0
+	Description: Choirmoth swarms that gather in the nebulae. They speak in light, and they know what the Skein is.
+	Regions: Middens 1, Hush 4, Shore 1
+	Seats: Middens 1, Hush 2
+	Reach: 1
+	Station: ChoirBloom
+	Patrol: moth, moth, moth, moth, moth, moth
+	Leave: Neutral

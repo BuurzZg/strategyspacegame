@@ -49,7 +49,7 @@ export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness
   const reachOf = (t) => { const h = rules.actor(t).traitInfo('Health'); return h.Radius + (h.HalfLength >> 1); };
 
   const fields = [];
-  const layout = { wrecks: [], hulk: null, clouds: [], rocks: [], nebulae: [], encounters: [] };
+  const layout = { wrecks: [], hulk: null, station: null, clouds: [], rocks: [], nebulae: [], encounters: [] };
   let named = '';
   for (const node of T.nodes) {
     const [kind] = node.key.split('@');
@@ -79,6 +79,11 @@ export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness
         const p = [c[0] + rng.int(13) - 6, c[1] + rng.int(13) - 6, c[2] + rng.int(7) - 3];
         layout.wrecks.push({ at: toWorld(p), of: t, salvage: rich(roll(range(v.Salvage, [100, 300]))), yaw: rng.int(1024), pitch: rng.int(161) - 80, radius: reachOf(t) });
       }
+    } else if (kind === 'Station') {
+      // a faction's station, near the middle of the map (its owner is set by the galaxy)
+      const of = node.value, h = rules.actor(of).traitInfo('Health'), size = Math.trunc((h.Radius + h.HalfLength) / CELL) + 8;
+      taken.push({ x: W >> 1, y: D >> 1, z: 0, r: size });
+      layout.station = { of, at: toWorld([W >> 1, D >> 1, 0]), yaw: rng.int(1024) };
     } else if (kind === 'Hulk') {
       const size = +v.Size || 2600, names = list(T.Names);
       named = names.length ? names[rng.int(names.length)] : '';

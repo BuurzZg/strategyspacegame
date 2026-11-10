@@ -21,6 +21,8 @@ export class Player {
   }
   get factionInfo() { return this.world.factions.get(this.faction); }
   get isBot() { return !!this.botType; }
-  isEnemy(p) { return !!p && p !== this && !p.isNeutral && !this.isNeutral && p.team !== this.team; }
-  isAlly(p) { return !!p && (p === this || (!p.isNeutral && p.team === this.team)); }
+  // relations set on the world (the voyage's factions) override teams
+  relation(p) { return this.world.relationOf(this, p) || (p.team === this.team ? 'ally' : 'enemy'); }
+  isEnemy(p) { return !!p && p !== this && !p.isNeutral && !this.isNeutral && this.relation(p) === 'enemy'; }
+  isAlly(p) { return !!p && (p === this || (!p.isNeutral && !this.isNeutral && this.relation(p) === 'ally')); }
 }

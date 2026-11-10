@@ -41,6 +41,10 @@ defineTrait('PointLayout', class extends Trait {
     const at = (p) => ({ x: p[0], y: p[1], z: p[2] });
     for (const k of L.wrecks) w.createActor('wreck', w.neutral, { ...at(k.at), yaw: k.yaw, pitch: k.pitch, of: k.of, salvage: k.salvage, ...shape(k.of) });
     if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, relic: L.hulk.relic || '', relicAt: L.hulk.relicAt | 0, ...shape(L.hulk.of) });
+    if (L.station) {
+      const owner = w.players.find((p) => p.faction === L.station.owner) || w.neutral;
+      this.station = w.createActor(L.station.of, owner, { ...at(L.station.at), yaw: L.station.yaw }).id;
+    }
     for (const c of L.clouds) w.createActor('cloud', w.neutral, { ...at(c.at), kind: c.kind, amount: c.amount, radius: c.radius });
     for (const r of L.rocks) w.createActor('spire', w.neutral, { ...at(r.at), yaw: w.rng.int(1024), radius: r.radius, shape: r.shape });
     for (const e of L.encounters) {
@@ -53,7 +57,7 @@ defineTrait('PointLayout', class extends Trait {
         const yaw = angleOf(((w.bounds.x0 + w.bounds.x1) >> 1) - x, ((w.bounds.y0 + w.bounds.y1) >> 1) - y);
         return w.createActor(type, side, { x, y, z: e.at[2], yaw }).id;
       });
-      this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' });
+      this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' && e.behaviour !== 'escort' });
     }
   }
   logOf(p) { if (!this.log.has(p.index)) this.log.set(p.index, { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {} }); return this.log.get(p.index); }
@@ -62,10 +66,19 @@ defineTrait('PointLayout', class extends Trait {
     for (const e of this.encounters) {
       if (e.done || w.frame < e.delay) continue;
       e.done = true;
-      const forge = w.actors.find((a) => a.owner === w.players[0] && a.has('Hangar') && !a.dead);
-      if (!forge) continue;
-      for (const id of e.ids) { const a = w.actorById.get(id); if (a && !a.dead && a.attack) a.queueActivity(new AttackMove(forge.x, forge.y, forge.z), false); }
-      w.fx({ t: 'encounter', side: e.side, x: e.at[0], y: e.at[1], z: e.at[2] });
+      const me = w.players[0], side = w.players.find((p) => p.faction === e.side);
+      const forge = w.actors.find((a) => a.owner === me && a.has('Hangar') && !a.dead);
+      if (!forge || !side) continue;
+      // hunters come for the Forge only if they are its enemies; allies come to guard it
+      const ally = side.isAlly(me);
+      if (!me.isEnemy(side) && !ally) continue;
+      for (const id of e.ids) {
+        const a = w.actorById.get(id);
+        if (!a || a.dead || !a.attack) continue;
+        if (ally) a.queueActivity(new AttackMove(forge.x + 6 * CELL, forge.y + 6 * CELL, forge.z), false);
+        else a.queueActivity(new AttackMove(forge.x, forge.y, forge.z), false);
+      }
+      if (!ally) w.fx({ t: 'encounter', side: e.side, x: e.at[0], y: e.at[1], z: e.at[2] });
     }
   }
 }, {});
@@ -176,6 +189,7 @@ export function visitReport(w, player, { forgeLost = false } = {}) {
     kills,
     found: [...log.found],
     crew: { lost, saved: { ...log.crewSaved } },
+    standing: w.diplomacy && player === w.players[0] ? w.diplomacy.report() : { changes: {}, met: [] },
     stores,
     forge: forge ? { hp: forge.health.hp, maxHp: forge.health.maxHp } : null,
     ships: {
