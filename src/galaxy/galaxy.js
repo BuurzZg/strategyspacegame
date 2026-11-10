@@ -43,8 +43,10 @@ export function tiers(rules) {
   return order.map((_, i) => driveOf(rules, order.slice(0, i)));
 }
 
-export function generateGalaxy(rules, seed) {
-  const C = rules.content, regions = Object.values(C.regions);
+// short: a short voyage, about 120 places (each region's Short* values)
+export function generateGalaxy(rules, seed, { short = false } = {}) {
+  const C = rules.content;
+  const regions = Object.values(C.regions).map((R) => (short ? { ...R, Ring: R.ShortRing || R.Ring, Points: R.ShortPoints || R.Points, Veil: R.ShortVeil || R.Veil, Edge: R.ShortEdge || R.Edge } : R));
   const rng = new Random(hashMix(0x2545f491, seed | 0) || 1);
   let veil = null;
   // no lane longer than the fully mended drive can stitch
@@ -185,7 +187,8 @@ export function generateGalaxy(rules, seed) {
     cand.sort((m, n) => n.r - m.r || m.id - n.id);
     const deep = cand.slice(0, Math.max(1, Math.trunc(cand.length / 3)));
     deep.sort((m, n) => hops[m.id] - hops[n.id] || m.id - n.id);
-    const lo = Math.trunc(deep.length / 3), hi = Math.max(lo + 1, Math.trunc((deep.length * 2) / 3));
+    // (on a short voyage, the nearer third)
+    const lo = short ? 0 : Math.trunc(deep.length / 3), hi = Math.max(lo + 1, Math.trunc((deep.length * (short ? 1 : 2)) / 3));
     const p = deep[lo + rng.int(hi - lo)];
     p.type = 'Wreck'; p.relic = it.id;
     components[it.id] = p.id;
@@ -195,7 +198,8 @@ export function generateGalaxy(rules, seed) {
   const seats = [];
   for (const F of Object.values(C.factions || {})) {
     for (const [region, n] of weights(F.Seats)) {
-      for (let k = 0; k < n; k++) {
+      // a short voyage's smaller galaxy has half the stations
+      for (let k = 0; k < (short ? Math.ceil(n / 2) : n); k++) {
         const cand = points.filter((p) => p.region === region && p.id !== start && !p.relic && !p.seat && p.type !== 'StillWater');
         // spread out: as far (in lanes) from other seats as possible, then at random
         const farOf = new Map(cand.map((p) => [p.id, seats.reduce((m, q) => Math.min(m, hopsBetween(adj, lanes, p.id, q.id, 4)), 99)]));
@@ -225,7 +229,7 @@ export function generateGalaxy(rules, seed) {
   }
   for (const p of points) p.name = nameFor(p);
 
-  return { seed: seed | 0, points, lanes, adj, start, components, veil, regions: regions.map((R) => R.id) };
+  return { seed: seed | 0, short, points, lanes, adj, start, components, veil, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
 }
 
 // lanes per place: arrays of lane indices
@@ -298,9 +302,10 @@ export function route(galaxy, rules, from, to, drive) {
   const lanesOut = [], hops = [];
   for (let j = to; j !== from;) { const l = galaxy.lanes[prev[j]]; lanesOut.unshift(prev[j]); hops.unshift(j); j = l.a === j ? l.b : l.a; }
   let len = 0, glim = 0, days = 0;
-  for (const li of lanesOut) { const l = galaxy.lanes[li]; len += l.len; glim += stitchGlim(V, l.len); days += stitchDays(V, l.len); }
+  for (const li of lanesOut) { const l = galaxy.lanes[li]; len += l.len; glim += stitchGlim(V, l.len); days += stitchDays(V, l.len, !!galaxy.short); }
   return { hops, lanes: lanesOut, len, glim, days };
 }
 
 export const stitchGlim = (V, len) => Math.trunc((len * +V.GlimPer10 + 9) / 10);
-export const stitchDays = (V, len) => 1 + Math.trunc(len / +V.DaySpan);
+// a short voyage's stitches are quicker (ShortDaySpan)
+export const stitchDays = (V, len, short = false) => 1 + Math.trunc(len / +(short && V.ShortDaySpan ? V.ShortDaySpan : V.DaySpan));

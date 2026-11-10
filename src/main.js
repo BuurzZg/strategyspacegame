@@ -13,6 +13,7 @@ import { newRun, visitSettings, applyReport } from './galaxy/run.js';
 import * as V from './galaxy/voyage.js';
 import { ChartScreen } from './ui/chart.js';
 import { CommsPanel } from './ui/comms.js';
+import { replayInto } from './engine/replay.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -25,10 +26,11 @@ renderer.toneMappingExposure = 1.1;
 const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 20000);
 const audio = new Audio();
 const hud = new Hud();
+hud.audio = audio; // hint cards and toasts can play before any map has been visited
 let rules = null, run = null, session = null, input = null, acc = 0;
 // the voyage (galaxy map) and its star chart screen, when one is open
 let voyage = null, chart = null;
-const SAVE_KEY = 'driftforge.voyage';
+const SAVE_KEY = 'driftforge.voyage', SLOTS_KEY = 'driftforge.saves';
 // behind the start screen: just the sky, turning slowly
 let menu = null;
 
@@ -116,29 +118,100 @@ function showLauncher() {
   session = null;
   closeChart();
   const saved = readSave();
+  const sv = saved && saved.voyage;
   hud.showLauncher(true, {
     rules, run,
-    save: saved ? { day: saved.day, place: V.galaxyOf(rules, saved).points[saved.at].name } : null,
-    onContinue: () => { voyage = readSave(); if (voyage) startChart(); },
-    onNewVoyage: (seed) => newVoyage(seed),
+    save: sv ? { day: sv.day, place: V.galaxyOf(rules, sv).points[sv.at].name, inMap: !!saved.map, saves: sv.saves } : null,
+    onContinue: () => { const d = readSave(); if (d) loadData(d); },
+    onNewVoyage: (o) => newVoyage(o),
+    slots: listSlots(),
+    onLoad: (name) => { const d = readSlot(name); if (d) loadData(d); },
+    onDelete: (name) => deleteSlot(name),
     onVisit: (type, seed) => startVisit(type, seed),
     onGrounds: () => startProvingGrounds(false),
     onNewRun: () => { run = null; showLauncher(); },
   });
 }
 
-// ---------------------------------------------------------------- the voyage
-// Saved after every action on the chart and every visit. Permanent death: the save is removed
-// when the voyage ends. (A visit in progress is not saved: continuing goes back to the chart
-// as it was before going in.)
-function readSave() {
-  try { const t = localStorage.getItem(SAVE_KEY); return t ? V.loadVoyage(rules, t) : null; } catch (e) { console.warn(e); return null; }
+// ---------------------------------------------------------------- the voyage and saving
+// A save is { voyage, map? }: the voyage, and when saved in the middle of a map, the map's order
+// log up to that frame (the map is rebuilt from the voyage and replayed, exactly). The voyage
+// autosaves after every action on the chart and every visit. Permanent death: one save, removed
+// when the voyage ends. Free saves: named saves as well, kept whatever happens.
+function snapshot() {
+  const data = { voyage: JSON.parse(V.saveVoyage(voyage)) };
+  if (session && session.onVoyage && !session.world.report) data.map = { frames: session.om.replay.frames.slice(), frame: session.world.frame };
+  return data;
 }
-function writeSave() { try { if (voyage && !voyage.over) localStorage.setItem(SAVE_KEY, V.saveVoyage(voyage)); } catch (e) { console.warn(e); } }
-function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { void e; } }
+function parseSave(t) {
+  if (!t) return null;
+  const d = JSON.parse(t);
+  const raw = d && d.kind === 'voyage' ? { voyage: d } : d; // saves from before Milestone 12 held only the voyage
+  raw.voyage = V.loadVoyage(rules, JSON.stringify(raw.voyage));
+  return raw;
+}
+function readSave() { try { return parseSave(localStorage.getItem(SAVE_KEY)); } catch (e) { console.warn(e); return null; } }
+function writeSave(withMap = false) {
+  try {
+    if (!voyage || voyage.over) return;
+    const d = snapshot();
+    if (!withMap) delete d.map;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+  } catch (e) { console.warn(e); }
+}
+function deleteSave() { try { if (!voyage || voyage.saves !== 'free') localStorage.removeItem(SAVE_KEY); } catch (e) { void e; } }
+function slotsAll() { try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '{}'); } catch (e) { return {}; } }
+function listSlots() { return Object.entries(slotsAll()).map(([name, x]) => ({ name, ...x, data: undefined })).sort((a, b) => b.when - a.when); }
+function readSlot(name) { const x = slotsAll()[name]; try { return x ? parseSave(JSON.stringify(x.data)) : null; } catch (e) { console.warn(e); return null; } }
+function deleteSlot(name) { const all = slotsAll(); delete all[name]; localStorage.setItem(SLOTS_KEY, JSON.stringify(all)); }
+function saveSlot() {
+  const g = V.galaxyOf(rules, voyage), place = g.points[voyage.at].name;
+  const name = window.prompt('Name this save', `Day ${voyage.day}, ${place}`);
+  if (!name) return false;
+  const all = slotsAll();
+  all[name] = { when: Date.now(), day: voyage.day, place, inMap: !!(session && session.onVoyage), data: snapshot() };
+  try { localStorage.setItem(SLOTS_KEY, JSON.stringify(all)); hud.toast(`Saved: ${name}`, 'good'); return true; } catch (e) { hud.toast('Could not save: storage is full', 'bad'); return false; }
+}
+function loadData(d) {
+  voyage = d.voyage;
+  hud.saveMode = voyage.saves;
+  if (d.map) resumeMap(d.map); else startChart();
+}
+// Back into a map saved part-way: rebuild it from the voyage and replay its orders.
+function resumeMap(m) {
+  const settings = V.visitSettings(rules, voyage);
+  startSession(settings, { place: settings.poi.name, onVoyage: true });
+  replayInto(session.world, m.frames, m.frame);
+  const om = session.om;
+  om.replay.frames = m.frames.slice();
+  om.sentUpTo = m.frame;
+  om.store(m.frame, om.local, []);
+  const forge = input.forge();
+  if (forge) { input.setSelection([forge], false); input.followSelection(); }
+  hud.toast('Back where you left off', 'info');
+}
+// guided first voyage: each hint card once
+function hint(when) {
+  if (!voyage || !voyage.guided || voyage.over) return;
+  for (const h of Object.values(rules.content.hints || {})) {
+    if (h.When !== when || voyage.hints.includes(h.id)) continue;
+    voyage.hints.push(h.id);
+    hud.showHint(h.Title, h.Text);
+    return;
+  }
+}
+hud.hintFn = hint;
+hud.onMapSave = () => {
+  if (!voyage) return;
+  if (voyage.saves === 'free') { saveSlot(); return; }
+  writeSave(true);
+  showLauncher();
+};
 
-function newVoyage(seed) {
-  voyage = V.newVoyage(rules, { seed: Number.isFinite(seed) ? seed : (Math.random() * 1e9) | 0 });
+function newVoyage(o = {}) {
+  const seed = Number.isFinite(o.seed) ? o.seed : (Math.random() * 1e9) | 0;
+  voyage = V.newVoyage(rules, { seed, length: o.length || 'full', saves: o.saves || 'permadeath', guided: !!o.guided });
+  hud.saveMode = voyage.saves;
   writeSave();
   startChart();
 }
@@ -149,10 +222,11 @@ function startChart() {
   closeChart();
   hud.showLauncher(false);
   chart = new ChartScreen({
-    canvas, camera, rules, voyage, audio, hud, comms: hud.comms,
+    canvas, camera, rules, voyage, audio, hud, comms: hud.comms, hint,
     onGoIn: () => goIn(),
     onChange: () => (voyage.over ? deleteSave() : writeSave()),
     onQuit: () => { writeSave(); showLauncher(); },
+    onSave: () => saveSlot(),
     onEnd: (what) => { deleteSave(); if (what === 'new') newVoyage(); else showLauncher(); },
   });
   resize();
@@ -161,6 +235,7 @@ function goIn() {
   writeSave();
   const settings = V.visitSettings(rules, voyage);
   startSession(settings, { place: settings.poi.name, onVoyage: true });
+  hint('map');
 }
 
 // When the Forge stitches away (or is destroyed): let the flash play, then the report; its
@@ -248,8 +323,8 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
     const poi = params.get('poi') || (rules.content.poiTypes[hash] ? hash : '');
     if (params.has('grounds') || hash === 'grounds' || hash === 'fleet' || params.get('fleet') === 'test') startProvingGrounds(hash === 'fleet' || params.get('fleet') === 'test');
     else if (poi && rules.content.poiTypes[poi]) startVisit(poi, params.has('seed') ? parseInt(params.get('seed'), 10) : undefined);
-    // #voyage or ?voyage=seed: straight onto the star chart with a new voyage
-    else if (hash === 'voyage' || params.has('voyage')) newVoyage(parseInt(params.get('voyage'), 10));
+    // #voyage or ?voyage=seed (&short, &guided): straight onto the star chart with a new voyage
+    else if (hash === 'voyage' || params.has('voyage')) newVoyage({ seed: parseInt(params.get('voyage'), 10), length: params.has('short') ? 'short' : 'full', guided: params.has('guided') });
     else showLauncher();
     requestAnimationFrame(frame);
   } catch (e) {
@@ -263,5 +338,5 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 window.driftforge = {
   get session() { return session; }, get world() { return session && session.world; }, get input() { return input; },
   get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; },
-  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V,
+  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData,
 };

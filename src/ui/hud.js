@@ -58,6 +58,8 @@ export class Hud {
     if (!this.world.settings.sandbox && this.groundsOpen) this.toggleGrounds(false);
     const voyage = this.world.settings.mode === 'poi';
     $('skein').hidden = !voyage;
+    $('btn-mapsave').hidden = !session.onVoyage;
+    $('btn-mapsave').textContent = this.saveMode === 'free' ? 'Save…' : 'Save and quit';
     document.body.classList.toggle('voyage', voyage);
     $('help-intro').innerHTML = voyage
       ? 'Gather what the Forge needs, build what you must, and leave before the place turns on you. <b>Recall</b> your ships and <b>spool the Skein</b> (bottom right) to go on to the next place.'
@@ -79,6 +81,7 @@ export class Hud {
   // ---------------------------------------------------------------- leaving: the Skein Drive
   skeinPanel() {
     $('btn-hail').addEventListener('click', () => this.hail());
+    $('btn-mapsave').addEventListener('click', () => { if (this.onMapSave) this.onMapSave(); });
     $('btn-recall').addEventListener('click', () => {
       const ships = this.input.world.actors.filter((a) => a.owner === this.s.viewer && a.mobile && !a.dead && !a.has('Hangar'));
       if (ships.length) { this.input.issue('Recall', ships); this.audio.play('order'); this.toast(`Recalling ${ships.length} ship${ships.length > 1 ? 's' : ''}`, 'info'); }
@@ -88,7 +91,7 @@ export class Hud {
       const f = this.forge();
       if (!f) return;
       if (f.skein.spooling) this.input.issue('CancelSpool', [f]);
-      else { this.input.issue('SpoolSkein', [f]); this.audio.play('alert'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); }
+      else { this.input.issue('SpoolSkein', [f]); this.audio.play('alert'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); this.hint('spool'); }
     });
   }
   // On the voyage: the day, and how long water, food and air will last at today's rate.
@@ -173,6 +176,7 @@ export class Hud {
     ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
     $('report-next').textContent = next;
     $('report').hidden = false;
+    this.hint('report');
     $('report-next').onclick = () => { $('report').hidden = true; onContinue(); };
     $('report-next').focus();
   }
@@ -182,16 +186,32 @@ export class Hud {
     $('launcher').hidden = !open;
     document.body.classList.toggle('at-launcher', open);
     if (!open) return;
-    const { rules, run, onVisit, onGrounds, onNewRun, save, onContinue, onNewVoyage } = opts;
+    const { rules, run, onVisit, onGrounds, onNewRun, save, onContinue, onNewVoyage, slots = [], onLoad, onDelete } = opts;
     const res = rules.content.resources, types = rules.content.poiTypes;
     $('launch-seed').value = '';
+    $('setup').hidden = true; $('slots').hidden = true;
     $('voyage-continue').hidden = !save;
-    if (save) $('voyage-continue').textContent = `Continue: day ${save.day}, ${save.place}`;
+    if (save) $('voyage-continue').textContent = `Continue: day ${save.day}, ${save.place}${save.inMap ? ' (on a map)' : ''}`;
     $('voyage-continue').onclick = onContinue;
-    $('voyage-new').onclick = () => {
-      if (save && !window.confirm('Start a new voyage? The saved one will be lost.')) return;
+    $('voyage-new').onclick = () => { $('setup').hidden = false; $('slots').hidden = true; };
+    $('setup-back').onclick = () => { $('setup').hidden = true; };
+    $('setup-start').onclick = () => {
+      const pick = (n) => document.querySelector(`input[name="${n}"]:checked`).value;
+      if (save && save.saves !== 'free' && !window.confirm('Start a new voyage? The voyage you have now will be lost.')) return;
       const v = $('voyage-seed').value.trim();
-      onNewVoyage(v ? parseInt(v, 10) || 0 : undefined);
+      onNewVoyage({ seed: v ? parseInt(v, 10) || 0 : undefined, length: pick('length'), saves: pick('saves'), guided: $('setup-guided').checked });
+    };
+    // named saves (free-save voyages)
+    $('voyage-load').hidden = !slots.length;
+    const listSlots = () => {
+      $('slot-list').innerHTML = slots.map((x) => `<li><b>${esc(x.name)}</b><span>Day ${x.day}, ${esc(x.place)}${x.inMap ? ' (on a map)' : ''} · ${new Date(x.when).toLocaleString()}</span><button type="button" data-load="${esc(x.name)}">Load</button><button type="button" data-del="${esc(x.name)}">Delete</button></li>`).join('') || '<li>No saves.</li>';
+    };
+    $('voyage-load').onclick = () => { listSlots(); $('slots').hidden = false; $('setup').hidden = true; };
+    $('slots-back').onclick = () => { $('slots').hidden = true; };
+    $('slot-list').onclick = (e) => {
+      const l = e.target.closest('[data-load]'), d = e.target.closest('[data-del]');
+      if (l) onLoad(l.dataset.load);
+      else if (d && window.confirm(`Delete the save "${d.dataset.del}"?`)) { onDelete(d.dataset.del); const i = slots.findIndex((x) => x.name === d.dataset.del); if (i >= 0) slots.splice(i, 1); listSlots(); $('voyage-load').hidden = !slots.length; }
     };
     $('title-practice').open = !!run;
     $('launch-head').textContent = run ? `Practice, visit ${run.visits + 1}: where next?` : 'Pick a place';
@@ -265,8 +285,18 @@ export class Hud {
     $('help').hidden = !this.helpOpen;
     if (this.helpOpen) { if (this.buildOpen) this.toggleBuild(false); if (this.groundsOpen) this.toggleGrounds(false); }
   }
+  // A hint card (a guided first voyage); `ok` runs when it is dismissed.
+  showHint(title, text) {
+    $('hint-title').textContent = title; $('hint-text').textContent = text;
+    $('hint').hidden = false;
+    $('hint-ok').onclick = () => { $('hint').hidden = true; };
+    this.audio.play('hint');
+  }
+  hint(when) { if (this.hintFn) this.hintFn(when); }
+
   toggleBuild(force) {
     this.buildOpen = force !== undefined ? force : !this.buildOpen;
+    if (this.buildOpen) this.hint('build');
     $('build').hidden = !this.buildOpen;
     $('btn-build').setAttribute('aria-pressed', String(this.buildOpen));
     if (this.buildOpen) { if (this.helpOpen) this.toggleHelp(false); if (this.groundsOpen) this.toggleGrounds(false); }
@@ -447,6 +477,7 @@ export class Hud {
       } else if (e.t === 'fire' && e.report) this.audio.play(e.report, this.near(e) * 0.8);
       else if (e.t === 'impact' && e.missile) this.audio.play('boom', this.near(e) * 0.6);
       else if (e.t === 'provoked' || (e.t === 'warn' && e.player !== undefined)) this.audio.play('alert');
+      else if (e.t === 'rankup' && e.owner === me) this.audio.play('rankup');
       else if (e.t === 'surface') { this.toast('Something surfaces from the rocks!', 'bad'); this.audio.play('alert'); }
       else if (e.t === 'interdicted') this.audio.play('alert');
       else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
@@ -555,6 +586,10 @@ export class Hud {
       }
       const crew = a.info.traitInfo('Crew');
       if (crew && crew.Count) stats.push(['Crew', `${crew.Count} ${crew.Count === 1 ? crew.Role.replace(/s$/, '') : crew.Role}`]);
+      if (this.world.ranks && a.mobile && !a.has('Hangar') && this.input.isMine(a)) {
+        const R = this.world.ranks, next = R.steps[a.rank | 0];
+        stats.push(['Rank', `${R.nameOf(a.rank) || 'Green'}${a.rank ? ` (+${R.bonus * a.rank}%)` : ''}`], ['Experience', next ? `${a.xp | 0} / ${next[1]}` : `${a.xp | 0}`]);
+      }
       const dropoff = a.trait('OreDropoff');
       if (dropoff) stats.push(['Docked', `${dropoff.slots.filter(Boolean).length} of ${dropoff.slots.length}`]);
       if (q) {
@@ -674,6 +709,8 @@ export class Hud {
       if (!v) continue;
       const b = this.drawBrackets(ctx, v, a.deposit && !a.wreck ? ORE_CSS : rd.styleOf(a.owner).css, true);
       if (!b || a.wreck || a.rock) continue;
+      // veterans: a chevron per rank above the bracket
+      if (a.rank) { ctx.strokeStyle = '#ffd778'; ctx.lineWidth = 1.5; for (let i = 0; i < a.rank; i++) { const cy = b.p.y - b.r - 8 - i * 4; ctx.beginPath(); ctx.moveTo(b.p.x - 5, cy + 3); ctx.lineTo(b.p.x, cy); ctx.lineTo(b.p.x + 5, cy + 3); ctx.stroke(); } }
       const gn = inp.isMine(a) ? inp.groupNumberOf(a) : 0;
       if (gn) { ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.fillStyle = rd.styleOf(a.owner).css; ctx.fillText(String(gn), b.p.x - b.r - 2, b.p.y - b.r - 4); }
       const w = Math.max(18, Math.min(b.r * 1.4, 120));

@@ -63,6 +63,12 @@ export class Audio {
       case 'explode': this.burst(0.5, 0.35 * v, 1800); this.tone('sine', 90, 40, 0.4, 0.25 * v); break;
       case 'storm': this.burst(2.5, 0.18 * v, 700, 0.7); this.burst(2.0, 0.08 * v, 4000, 1.5, 'bandpass'); break;
       case 'comm': this.tone('sine', 1320, 1320, 0.05, 0.06 * v); this.tone('sine', 1760, 1760, 0.05, 0.05 * v, 0.07); break;
+      // the voyage
+      case 'rankup': [523, 659, 784, 1046].forEach((f, i) => this.tone('triangle', f, f, 0.14, 0.09 * v, i * 0.07)); break;
+      case 'stitch': this.tone('sine', 180, 1400, 0.55, 0.1 * v); this.burst(0.6, 0.08 * v, 2600, 1.2, 'bandpass'); this.tone('sine', 1400, 300, 0.4, 0.05 * v, 0.5); break;
+      case 'event': [392, 523, 659].forEach((f, i) => this.tone('sine', f, f * 1.01, 0.5, 0.06 * v, i * 0.12)); break;
+      case 'deal': this.tone('triangle', 880, 1320, 0.08, 0.09 * v); this.tone('triangle', 1320, 1760, 0.1, 0.07 * v, 0.08); break;
+      case 'hint': this.tone('sine', 988, 988, 0.08, 0.05 * v); this.tone('sine', 1319, 1319, 0.12, 0.05 * v, 0.09); break;
       case 'objective': [659, 880].forEach((f, i) => this.tone('triangle', f, f, 0.16, 0.1 * v, i * 0.1)); break;
       case 'collapse': this.burst(1.2, 0.5 * v, 1200); this.tone('sine', 70, 30, 1.0, 0.35 * v); break;
       // weapons and destruction

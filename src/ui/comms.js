@@ -43,7 +43,7 @@ export class CommsPanel {
     $('comms-notes').innerHTML = '';
     $('comms').hidden = false;
     this.showDialog(o.start || C.dialogOf(this.rules, o.fid).Start);
-    this.audio.play('select');
+    this.audio.play(o.fid ? 'comm' : 'event');
   }
   close() {
     if (!this.o) return;
@@ -132,7 +132,7 @@ export class CommsPanel {
     const { s, pointId, onDeal } = this.o.trade;
     const r = C.deal(this.rules, s, this.o.fid, pointId, this.buy, this.sell);
     if (!r.ok) { this.audio.play('error'); return; }
-    this.audio.play('deposit');
+    this.audio.play('deal');
     const got = Object.entries(this.buy).filter(([, n]) => n > 0).map(([g, n]) => `${n} ${g.replace('ship:', '')}`).join(', ');
     $('comms-notes').insertAdjacentHTML('beforeend', `<li>Deal: ${esc(got)} for goods worth ${fmt(r.pay)}.</li>`);
     this.buy = {}; this.sell = {};

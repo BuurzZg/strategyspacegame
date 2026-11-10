@@ -21,9 +21,9 @@ export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => 
   }
 }
 
-export function captain(rules, seed, { events = false } = {}) {
+export function captain(rules, seed, { events = false, length = 'full' } = {}) {
   const VY = rules.content.voyage;
-  const s = V.newVoyage(rules, { seed });
+  const s = V.newVoyage(rules, { seed, length });
   const g = V.galaxyOf(rules, s);
   const order = ['coils', 'lens', 'spindle', 'heartstone'];
   const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
@@ -92,3 +92,8 @@ export function captain(rules, seed, { events = false } = {}) {
   }
   return { s, visits, stitches };
 }
+
+// Estimated play time of a captain's run, in minutes: a map visit (two and a half days of
+// gathering, ten minutes, plus launching, building, recalling and spooling), and time on the
+// chart for each stitch and each day of the voyage.
+export function playMinutes(r) { return r.visits * 15 + r.stitches * 0.75 + r.s.day * 0.1; }

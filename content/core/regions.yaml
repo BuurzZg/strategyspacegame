@@ -14,11 +14,15 @@
 #   Types       point-of-interest types, with weights
 #   Color       on the star chart
 #   Names       first words of place names (the second word comes from the place type)
+#   ShortRing, ShortPoints, ShortVeil, ShortEdge   the same, for a short voyage (about 120
+#               places; the gaps between regions stay the same width)
 
 Drift:
 	Name: The Drift
 	Description: The debris ring round the dead star Orrin. Home, as much as anywhere is now.
 	Ring: 40, 320
+	ShortRing: 40, 200
+	ShortPoints: 26
 	Points: 60
 	Spacing: 44
 	Danger: 1
@@ -30,6 +34,8 @@ Middens:
 	Name: The Middens
 	Description: Banks of the old dead, swept into heaps by tides nobody remembers. Busy, for the Wrack.
 	Ring: 432, 655
+	ShortRing: 312, 430
+	ShortPoints: 36
 	Points: 86
 	Spacing: 50
 	Danger: 2
@@ -42,6 +48,9 @@ Hush:
 	Description: Behind the Veil, where the nebulae swallow radio and the stars look further away than they are.
 	Ring: 740, 915
 	Veil: 662, 732
+	ShortRing: 515, 615
+	ShortVeil: 437, 507
+	ShortPoints: 36
 	Points: 90
 	Spacing: 54
 	Danger: 3
@@ -54,6 +63,9 @@ Shore:
 	Description: The Wrack's outer edge, where the scrap thins out and the dark beyond begins. Nothing out here is friendly.
 	Ring: 1075, 1240
 	Edge: 1185
+	ShortRing: 775, 880
+	ShortEdge: 850
+	ShortPoints: 32
 	Points: 84
 	Spacing: 64
 	Danger: 4

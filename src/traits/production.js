@@ -115,10 +115,12 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
 
   tick() {
     if (!this.queue.length) return;
+    // speed in percent: below 100 some ticks do nothing, above it some count twice
     this.acc += this.speed;
-    if (this.acc < 100) return;
-    this.acc -= 100;
-    if (++this.progress < this.duration(this.queue[0])) return;
+    let steps = 0;
+    while (this.acc >= 100) { this.acc -= 100; steps++; }
+    this.progress += steps;
+    if (this.progress < this.duration(this.queue[0])) return;
     const type = this.queue.shift();
     this.progress = 0;
     this.launch(type);
@@ -135,6 +137,7 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     const pose = bay ? bay.pose(side) : { x: self.x, y: self.y, z: self.z, yaw: self.yaw };
     const unit = w.createActor(type, self.owner, pose);
     if (from) {
+      if (from.xp && w.ranks) w.ranks.set(unit, from.xp);
       if (unit.health && from.hp) unit.health.hp = Math.max(1, Math.min(unit.health.maxHp, from.hp));
       if (unit.collector && from.cargo) { unit.collector.cargo = from.cargo; unit.collector.kind = from.kind; }
       w.fx({ t: 'ready', actor: unit.id, type, owner: self.owner.index, x: pose.x, y: pose.y, z: pose.z, hangar: true });

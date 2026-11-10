@@ -13,8 +13,8 @@ coils:
 	Region: Drift
 	Range: 150
 	Install:
-		Ore: 300
-		Salvage: 200
+		Ore: 700
+		Salvage: 700
 		Days: 2
 		Engineers: 10
 
@@ -25,8 +25,8 @@ lens:
 	Region: Middens
 	Veil: true
 	Install:
-		Ore: 300
-		Salvage: 400
+		Ore: 900
+		Salvage: 1300
 		Days: 3
 		Engineers: 14
 
@@ -37,8 +37,8 @@ spindle:
 	Region: Hush
 	Range: 134
 	Install:
-		Ore: 500
-		Salvage: 600
+		Ore: 1300
+		Salvage: 1900
 		Days: 3
 		Engineers: 18
 
@@ -49,8 +49,8 @@ heartstone:
 	Region: Shore
 	FinalJump: true
 	Install:
-		Ore: 600
-		Salvage: 800
+		Ore: 1700
+		Salvage: 2500
 		Days: 4
 		Engineers: 20
 
@@ -77,7 +77,10 @@ bp-sabre:
 
 # Engineering projects: upgrades to the Forge, built from the Forge panel.
 #   Capacity (fleet capacity), FoodPct (hydroponics output), SensorPct (sensor range on the
-#   chart and on maps), GlimPct (Glim per stitch), HullPct (the Forge's hull)
+#   chart and on maps), GlimPct (Glim per stitch), HullPct (the Forge's hull), Heal (percent of
+#   their hull ships aboard mend each day), BuildPct (foundry speed), ForgeDamagePct (the
+#   Forge's own guns), LaunchPct (time between launches from the hangar)
+#   Requires: another project that must be built first
 hangar:
 	Name: Expanded hangar
 	Kind: project
@@ -128,3 +131,65 @@ plating:
 		Salvage: 800
 		Days: 5
 		Engineers: 18
+second-hangar:
+	Name: Second hangar
+	Kind: project
+	Requires: hangar
+	Description: A whole new hangar deck where the ore holds were. Room for ten more capacity of ships.
+	Capacity: 10
+	Install:
+		Ore: 1600
+		Salvage: 900
+		Days: 6
+		Engineers: 20
+repair-bays:
+	Name: Repair bays
+	Kind: project
+	Description: Cradles and welders in the hangar. Ships aboard mend much faster between places.
+	Heal: 15
+	Install:
+		Ore: 500
+		Salvage: 400
+		Days: 3
+		Engineers: 12
+foundry-line:
+	Name: Foundry line
+	Kind: project
+	Description: A second casting line in the foundry. Ships are built a third faster.
+	BuildPct: 130
+	Install:
+		Ore: 800
+		Salvage: 500
+		Days: 4
+		Engineers: 16
+fire-control:
+	Name: Fire control
+	Kind: project
+	Description: A proper fire-control room for the Forge's own turrets. They hit four tenths harder.
+	ForgeDamagePct: 140
+	Install:
+		Ore: 700
+		Salvage: 600
+		Days: 3
+		Engineers: 12
+launch-rails:
+	Name: Launch rails
+	Kind: project
+	Description: Magnetic rails in the bays. The fleet launches twice as fast on arrival.
+	LaunchPct: 50
+	Install:
+		Ore: 400
+		Salvage: 300
+		Days: 2
+		Engineers: 8
+heavy-plating:
+	Name: Heavy plating
+	Kind: project
+	Requires: plating
+	Description: A second skin over the first. A quarter more hull again.
+	HullPct: 125
+	Install:
+		Ore: 1800
+		Salvage: 1200
+		Days: 6
+		Engineers: 22

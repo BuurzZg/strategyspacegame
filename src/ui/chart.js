@@ -21,8 +21,8 @@ const DRAG = 5;
 const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores']];
 
 export class ChartScreen {
-  constructor({ canvas, camera, rules, voyage, audio, hud, comms, onGoIn, onQuit, onChange, onEnd }) {
-    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, onGoIn, onQuit, onChange, onEnd });
+  constructor({ canvas, camera, rules, voyage, audio, hud, comms, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
+    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
     const B = 140 / (1 / 256);
@@ -52,7 +52,7 @@ export class ChartScreen {
   pumpEvents() {
     const s = this.s, rules = this.rules;
     if (!this.comms || this.comms.isOpen) return;
-    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); return; }
+    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); else if (!s.over) this.hint('chart'); return; }
     const ev = rules.content.events[s.queue[0]];
     if (!ev) { s.queue.shift(); this.pumpEvents(); return; }
     this.comms.open({
@@ -119,6 +119,9 @@ export class ChartScreen {
     this.on($('fp-body'), 'click', (e) => this.panelClick(e));
     this.on($('pc-btns'), 'click', (e) => this.cardClick(e));
     this.on($('chart-quit'), 'click', () => this.onQuit());
+    this.on($('chart-save'), 'click', () => { if (this.onSave) this.onSave(); });
+    $('chart-save').hidden = this.s.saves !== 'free';
+    $('chart-quit').textContent = this.s.saves === 'free' ? 'Quit to title' : 'Save and quit';
     this.on($('chart-helpbtn'), 'click', () => $('chart-help').classList.toggle('open'));
   }
 
@@ -137,6 +140,7 @@ export class ChartScreen {
 
   select(id) {
     this.selected = id;
+    if (id !== this.s.at) this.hint('place');
     this.audio.play('select');
     this.refreshCard();
     this.refreshChart();
@@ -156,7 +160,7 @@ export class ChartScreen {
     const b = e.target.closest('button[data-act]');
     if (!b || b.disabled) return;
     const a = b.dataset.act, id = this.selected;
-    if (a === 'stitch') { if (this.act(V.stitch, id).ok) { this.selected = this.s.at; this.orbit.focusOn(chartPos(this.g.points[this.s.at])); this.refresh(); this.audio.play('alert'); } }
+    if (a === 'stitch') { if (this.act(V.stitch, id).ok) { this.selected = this.s.at; this.orbit.focusOn(chartPos(this.g.points[this.s.at])); this.refresh(); this.audio.play('stitch'); } }
     else if (a === 'drift') { if (this.act(V.drift, id).ok) { this.selected = this.s.at; this.refresh(); } }
     else if (a === 'rest') this.act(V.rest);
     else if (a === 'scan') this.act(V.scan);
@@ -200,6 +204,7 @@ export class ChartScreen {
     const region = this.rules.content.regions[this.g.points[s.at].region];
     $('chart-day').textContent = `Day ${s.day} · ${region.Name}`;
     const days = { ice: left.ice, food: left.food, air: left.air };
+    if (Math.min(left.ice, left.food, left.air) < 7 && !(this.comms && this.comms.isOpen)) this.hint('low');
     $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
       const d = days[k], warn = d !== undefined && d < 3 ? 'bad' : d !== undefined && d < 7 ? 'warn' : '';
       return `<div class="cs ${warn}" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k])}</b>${d !== undefined ? `<span class="cs-d">${d === Infinity ? '' : `${fmt(d)} d`}</span>` : ''}</div>`;
@@ -222,6 +227,7 @@ export class ChartScreen {
     let why = '';
     if (here) {
       btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
+      if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');
       if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, false, p.seat ? 'Talk, trade and hire at their station' : 'Talk to them']);
       btns.push(['rest', p.type === 'StillWater' ? 'Rest a day (still water: twice the rest)' : 'Rest a day', false, 'Morale rises; the crew still eat, drink and breathe']);
       const sp = V.scanPlan(this.rules, s);
@@ -288,8 +294,12 @@ export class ChartScreen {
       h += `<h3>Crew: ${count(s.crew)}</h3><table class="ct"><thead><tr><th></th><th>Aboard</th><th>Flying</th><th>Free</th></tr></thead><tbody>`;
       for (const r of ROLES) h += `<tr><th>${r[0].toUpperCase() + r.slice(1)}</th><td>${s.crew.roles[r]}</td><td>${s.crew.assigned[r]}</td><td>${free(s.crew, r)}</td></tr>`;
       h += '</tbody></table><p class="fp-note">Every ship needs crew: building one takes them from the free crew. When a ship is destroyed, half its crew get away in pods.</p>';
-      const fleet = s.fleet.reduce((mm, e) => { mm[e.type] = (mm[e.type] || 0) + 1; return mm; }, {});
-      h += `<h3>Hangar</h3><p class="fp-note">${Object.entries(fleet).map(([t, n]) => `${n} × ${esc(rules.actor(t).traitInfo('Tooltip').Name)}`).join(', ') || 'Empty'}</p>`;
+      h += '<h3>Hangar</h3><table class="ct"><tbody>';
+      for (const e of [...s.fleet].sort((a, b) => (b.xp | 0) - (a.xp | 0))) {
+        const max = V.shipMaxHp(rules, e), rk = V.rankName(rules, e.xp);
+        h += `<tr><th>${esc(rules.actor(e.type).traitInfo('Tooltip').Name)}</th><td class="${rk ? 'rk' : ''}">${rk || 'Green'}</td><td>${e.xp | 0} xp</td><td>${Math.trunc(((e.hp | 0) * 100) / max)}%</td></tr>`;
+      }
+      h += `</tbody></table><p class="fp-note">${s.fleet.length ? 'Ships earn experience for every kill and every fight they come home from; ranks add 10% damage and hull each. Ships aboard mend a little every day.' : 'Empty.'}</p>`;
     } else if (this.tab === 'hold') {
       const f = V.forecast(rules, s), n = V.needs(rules, s), left = V.daysLeft(rules, s);
       h += `<p class="fp-note">${n.crew} crew need ${n.water} water, ${n.food} food and ${n.air} air a day. Life support makes air from water; the hydroponics grow food from water, and much faster with spores.</p><table class="ct"><thead><tr><th></th><th>Aboard</th><th>A day</th><th>Lasts</th></tr></thead><tbody>`;
@@ -359,7 +369,7 @@ export class ChartScreen {
     ctx.textAlign = 'center';
     ctx.font = '600 11px "IBM Plex Sans", sans-serif';
     for (const R of Object.values(this.rules.content.regions)) {
-      const [r0, r1] = String(R.Ring).split(',').map(Number), rm = (r0 + r1) / 2;
+      const [r0, r1] = this.g.rings ? this.g.rings[R.id] : String(R.Ring).split(',').map(Number), rm = (r0 + r1) / 2;
       const a = -Math.PI / 2 + 0.35;
       const q = proj({ x: Math.cos(a) * rm, y: Math.sin(a) * rm, z: 0 });
       if (!q) continue;

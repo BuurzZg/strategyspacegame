@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -53,6 +53,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.treaties = trade.has('Treaties') ? nodesToObject(trade.get('Treaties').nodes) : {};
   rules.content.dialogs = Object.fromEntries([...mergeFiles(data.Dialogs)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
   rules.content.events = Object.fromEntries([...mergeFiles(data.Events)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
+  rules.content.hints = Object.fromEntries([...mergeFiles(data.Hints)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);

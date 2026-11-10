@@ -5,7 +5,15 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 11, sensors, fog and engineering.** Maps on the voyage have sensor fog: you see other ships only within your own ships' sensor range, and they see you the same way. Press `Tab` for the Tactical Plot. Build the new Wisp scout to see further. Some hulls need blueprints, and engineering projects upgrade the Forge. See [Sensors, blueprints and engineering](#sensors-blueprints-and-engineering).
+**Status: Milestone 12, the first full run.** Start a new voyage from the title screen and choose:
+
+- **the length:** a full voyage (about 300 places, four to six hours) or a short one (about 120 places, an hour and a half);
+- **saving:** permanent death (save and quit any time; the save is gone when the voyage ends) or free saves (named saves, anywhere);
+- **a guided first voyage:** hint cards at the right moments.
+
+You can save on a map as well as on the star chart; loading a map rebuilds it and replays your orders exactly. The Forge is your base: upgrade it with eleven engineering projects. Ships that survive earn experience and ranks, which they keep in the hangar from place to place. See [Starting a voyage and saving](#starting-a-voyage-and-saving) and [Veterans and the Forge](#veterans-and-the-forge).
+
+**Milestone 11, sensors, fog and engineering:** Maps on the voyage have sensor fog: you see other ships only within your own ships' sensor range, and they see you the same way. Press `Tab` for the Tactical Plot. Build the new Wisp scout to see further. Some hulls need blueprints, and engineering projects upgrade the Forge. See [Sensors, blueprints and engineering](#sensors-blueprints-and-engineering).
 
 **Milestone 10, events, monsters and the story:** A voyage now opens with a prologue, and each drive part has its story: arriving at its derelict, finding it, fitting it. The ending plays when the Forge jumps home. Random events happen out there: distress calls (some are lures), drifting pods, comet storms, strange signals, stowaways, spore blooms. On maps, Scrapwyrms lie buried in rock fields, rust mites hatch from infested wrecks, and the Hollowhorn's song shakes a spooling Skein loose. See [Events and monsters](#events-and-monsters).
 
@@ -38,7 +46,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-The first full run (main menu, run setup with permanent death or free saves, a tutorial, the AI captain) comes in Milestone 12.
+Named crew members with traits come in Milestone 13.
 
 ## Running the game
 
@@ -57,7 +65,7 @@ Opening `index.html` straight from disk (`file://`) does not work, because brows
 
 | Option | Effect |
 | --- | --- |
-| `?voyage=5` or `#voyage` | Skips the title and starts a new voyage (with that galaxy seed) |
+| `?voyage=5` or `#voyage` | Skips the title and starts a new voyage (with that galaxy seed; add `&short` for a short voyage, `&guided` for hint cards) |
 | `?poi=OreReef&seed=12` or `#OreReef` | Skips the start screen and goes straight to a place (`ScrapShoal`, `OreReef`, `IceTail`, `LanternMist`, `Wreck`), with an optional seed |
 | `?grounds` or `#grounds` | Skips the start screen and opens the Proving Grounds |
 | `?fleet=test` or `#fleet` | The Proving Grounds, with four Darts and a second Halberd added at the start, so you can try group moves and box selection |
@@ -127,6 +135,39 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Rally point:** new ships fly to it and spread into a grid around it. With no rally point they wait beside the bay they left. The lilac beacon and its dashed line show while the Forge is selected or the panel is open.
 - **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
 - **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
+
+### Starting a voyage and saving
+
+- **New voyage** opens the setup:
+  - **Full voyage:** about 300 places, four to six hours.
+  - **Short voyage:** about 120 places in the same four regions, with the drive's parts nearer each other, fuller stores at the start, cheaper fitting and one-day stitches. About an hour and a half.
+  - **Permanent death:** one save. Save and quit any time, on the chart or on a map; the save is removed when the voyage ends.
+  - **Free saves:** **Save…** (on the chart and on maps) makes a named save, and **Load a save** on the title screen lists them. The voyage also autosaves, so **Continue** always works.
+  - **Guide me through my first voyage:** short hint cards the first time each thing comes up (the chart, planning a stitch, going in, the foundry, spooling, the report, running low, a faction's claim).
+  - **Galaxy seed:** blank for a random one.
+- **Saving on a map** stores the voyage and the map's orders so far. Loading rebuilds the map from the voyage and replays the orders, so it comes back exactly as it was.
+- There is no difficulty setting. The pressure is survival (water, food, air, Glim) and what is out there.
+
+### Veterans and the Forge
+
+- **Ranks:** a ship earns experience for every enemy it destroys (more for bigger ones), and a point each time it comes home from a visit where it fought. Ranks: **Seasoned** (4), **Veteran** (10), **Elite** (20); each adds 10% damage and hull. Chevrons over the selection brackets show the rank; the selection card shows it with the experience; the **Crew** tab lists the hangar with ranks and hull.
+- **The hangar carries them:** recall a ship and it keeps its experience and damage until the next place. Lose it and the rank is gone with it.
+- **Mending:** ships aboard mend 5% of their hull a day; repair bays make it 20%.
+- **Forge upgrades** (the Forge tab, Engineering), built with ore, salvage, days and free engineers:
+
+| Upgrade | What it does | Needs |
+| --- | --- | --- |
+| Expanded hangar | +10 fleet capacity | |
+| Second hangar | +10 more | Expanded hangar |
+| Repair bays | Ships aboard mend 20% a day instead of 5% | |
+| Foundry line | Ships are built 30% faster | |
+| Fire control | The Forge's own guns do 40% more damage | |
+| Launch rails | The fleet launches twice as fast on arrival | |
+| Hydroponic racks | Hydroponics grow 50% more | |
+| Long-range array | Sensors reach 50% further | |
+| Glim recycler | Stitches cost 20% less Glim | |
+| Armoured plating | +25% hull | |
+| Heavy plating | +25% hull again | Armoured plating |
 
 ### The voyage: the star chart
 
@@ -231,6 +272,8 @@ The engineers have a fix on one part at a time: the gold ring. Go in and cut int
 - **Threats:** if your armed ships frighten them, they hand over goods (−10 standing); if not, it costs you (−15), and on a map they open fire.
 
 ### Sensors, blueprints and engineering
+
+(The table of upgrades is under [Veterans and the Forge](#veterans-and-the-forge).)
 
 - **Sensor fog** (maps on the voyage, and practice): you see other ships and stations only within sensor range of one of your own. Most ships see about 900 m, a Halberd 1.1 km, a Sabre 1.2 km, the Forge 1.6 km, a Wisp 2.6 km. Inside a nebula, seeing and being seen both happen at half range. What cannot be seen cannot be targeted, by you or by anyone else. A faint red diamond marks where a hostile was last seen.
 - **The Tactical Plot** (`Tab`): the whole map from above. It shows your ships and their sensor reach, what you can see, last-seen marks, deposits, wrecks and nebulae. Click to look there.
@@ -460,6 +503,16 @@ Runs the headless tests:
   - firing, kills and helping change standing by the listed amounts;
   - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
   - a visit with factions is deterministic.
+- **Veterans and upgrades** (`tools/ranktest.js`): checks that:
+  - kills earn experience and ranks, and a rank adds 10% hull and 10% damage;
+  - experience comes home in the hangar (plus a point for fighting) and launches on the next map;
+  - ships aboard mend 5% a day, 20% with repair bays;
+  - an upgrade that needs another is refused until that is built;
+  - two hangars give 50 capacity; launch rails and the foundry line are faster; fire control is set.
+- **Whole runs** (`tools/runtest.js`): checks that:
+  - the AI captain (`tools/captain.js`, answering every event) gets home on eight seeds of each length;
+  - most runs take four to six hours (full) and one to two hours (short) of estimated play. The estimate is 15 minutes per map visit, three quarters of a minute per stitch and a tenth of a minute per day. The captain plays lean, visiting only when it needs to;
+  - saving on frame 1,100 of a map, loading and playing on gives exactly the same game as playing straight through.
 - **Fog and engineering** (`tools/fogtest.js`): checks that:
   - a ship beyond sensor range is hidden and untargetable until one of yours comes close, then hidden again with its last position remembered;
   - fog works for monsters too;
@@ -537,6 +590,7 @@ content/core/trade.yaml         values, price rules and treaty lengths
 content/core/dialogs/*.yaml     comms trees, one per faction (the format is documented at the top
                                 of rivet.yaml)
 content/core/events/*.yaml      story and galaxy events (the format is at the top of story.yaml)
+content/core/hints.yaml         hint cards for a guided first voyage
 content/example-pack/           an example add-on: a second Hullborn faction, in YAML only
 ```
 
@@ -548,12 +602,12 @@ Packs listed after the core pack are merged on top of it, so a pack can add a pl
 index.html            page, styles and HUD markup
 lib/                  three.js (vendored, r160)
 content/core/          the core content pack (see above)
-src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer maths,
+src/engine/           deterministic core: world, actors, traits, orders, lockstep, replays (replay.js), integer maths,
                       steering (avoid.js), weapons and projectiles (weapons.js), content packs
                       (content.js), the place generator (poi.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
-                      Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, ...)
+                      Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, Ranks, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,

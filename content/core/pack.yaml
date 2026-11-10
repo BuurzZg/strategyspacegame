@@ -33,3 +33,4 @@ Pack:
 	Trade: trade.yaml
 	Dialogs: dialogs/rivet.yaml, dialogs/synod.yaml, dialogs/gaunt.yaml, dialogs/cinder.yaml, dialogs/choir.yaml
 	Events: events/story.yaml, events/galaxy.yaml
+	Hints: hints.yaml

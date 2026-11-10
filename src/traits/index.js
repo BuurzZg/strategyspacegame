@@ -11,3 +11,4 @@ import './poi.js';
 import './diplomacy.js';
 import './monsters.js';
 import './sensors.js';
+import './ranks.js';

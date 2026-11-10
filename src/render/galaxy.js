@@ -42,7 +42,7 @@ export class StarChart {
   makeRings() {
     // faint circles at the inner edge of each region, in its colour
     for (const R of Object.values(this.rules.content.regions)) {
-      const [r0] = String(R.Ring).split(',').map(Number);
+      const [r0] = this.g.rings ? this.g.rings[R.id] : String(R.Ring).split(',').map(Number);
       if (r0 < 80) continue;
       const pts = [];
       for (let i = 0; i <= 128; i++) { const a = (i / 128) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r0 * GS, 0, Math.sin(a) * r0 * GS)); }

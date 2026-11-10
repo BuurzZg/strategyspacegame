@@ -147,7 +147,14 @@ defineWarhead('SpreadDamage', {
     const hit = (a, pct) => {
       if (!a.health || a.dead || !owner.isEnemy(a.owner)) return;
       const versus = wh.Versus[a.trait('Armor')?.info.Type] ?? 100;
-      const dmg = Math.trunc((((wh.Damage * versus) / 100) * pct) / 100);
+      let dmg = Math.trunc((((wh.Damage * versus) / 100) * pct) / 100);
+      if (firer) {
+        // veterans hit harder; so does a Forge with fire control (engineering)
+        if (firer.rank && world.ranks) dmg = Math.trunc((dmg * world.ranks.pct(firer.rank)) / 100);
+        const fc = firer.owner.slot && firer.owner.slot.forgeDamagePct;
+        if (fc && firer.has('Hangar')) dmg = Math.trunc((dmg * fc) / 100);
+        firer.fought = true;
+      }
       if (dmg > 0) a.health.damage(firer, dmg, owner);
     };
     if (wh.Spread <= 0) { if (direct) hit(direct, 100); return; }

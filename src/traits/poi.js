@@ -99,7 +99,8 @@ defineTrait('Hangar', class Hangar extends Trait {
   }
   tick() {
     if (!this.queue.length || --this.timer > 0) return;
-    this.timer = this.info.LaunchInterval;
+    // launch rails (engineering) halve the interval
+    this.timer = Math.max(1, Math.trunc((this.info.LaunchInterval * ((this.self.owner.slot || {}).launchPct || 100)) / 100));
     const e = this.queue.shift();
     const q = this.self.trait('ProductionQueue');
     if (!q || !this.world.rules.actors.has(e.type)) return;
@@ -114,7 +115,8 @@ defineTrait('Hangar', class Hangar extends Trait {
       w.fx({ t: 'deposit', owner: ship.owner.index, kind: c.kind, amount: c.cargo, x: ship.x, y: ship.y, z: ship.z });
       c.cargo = 0;
     }
-    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '' });
+    const xp = (ship.xp | 0) + (ship.fought ? 1 : 0);
+    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '', xp });
     w.fx({ t: 'aboard', actor: ship.id, type: ship.type, owner: ship.owner.index, x: ship.x, y: ship.y, z: ship.z });
     if (w.formations) w.formations.leave([ship]);
     ship.dead = true; // not destroyed: it is aboard (its DockHangar activity ends this tick)

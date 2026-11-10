@@ -1,0 +1,38 @@
+# Hint cards for a guided first voyage (chosen when a voyage starts). Each shows once, the
+# first time its moment comes:
+#   chart (the star chart, after the prologue), place (picking another place on the chart),
+#   map (going in), build (the production panel on a map), spool (spooling the Skein),
+#   report (a visit's report), low (a store under a week), faction (at a place a faction holds)
+
+Chart:
+	When: chart
+	Title: The star chart
+	Text: Time stands still here until you act. The teal ring is how far the drive can stitch; teal lanes are stitches it can make now. The gold ring marks the drive part the engineers have a fix on: that is where you are going, one stitch at a time. Watch water, food and air in the top bar.
+Place:
+	When: place
+	Title: Planning a stitch
+	Text: The card shows the route: how many stitches, how many days, how much Glim, and how much water you will have when you get there. Every day the crew drink, eat and breathe, on the chart and on maps alike.
+Map:
+	When: map
+	Title: Going in
+	Text: Your fleet launches from the Forge's hangar. Gleaners mine ore and ice, Shearers cut salvage from wrecks, Skimmers fill up in Glim and spore clouds; they all work on their own. When you are done, Recall all (bottom right), then Spool the Skein. Ships still outside when it fires are lost.
+Build:
+	When: build
+	Title: The foundry
+	Text: Every ship costs ore, fleet capacity and crew from the free crew. Some hulls need blueprints first. Ships that survive earn experience and ranks, and keep them in the hangar from place to place.
+Spool:
+	When: spool
+	Title: Leaving
+	Text: A minute to spool. Get everyone aboard before it fires. Some things, like the Hollowhorn's song, shake a spooling Skein loose: get clear of them first.
+Report:
+	When: report
+	Title: The report
+	Text: What you gathered, spent and lost, and how long you were there: every four minutes on a map is a day of water, food and air. Then back to the chart.
+Low:
+	When: low
+	Title: Running low
+	Text: A store will run out within a week. Ice Tails are the best water; Lantern Mists have Glim and the spores that make food grow. Traders sell both, if they like you.
+Faction:
+	When: faction
+	Title: Somebody's claim
+	Text: This place belongs to a faction. Hail them (C) to talk, trade, hire, or make a treaty. Mining here without their leave costs standing, if they see it.

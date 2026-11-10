@@ -27,17 +27,20 @@ const num = (V, k) => +V[k] | 0;
 
 const galaxies = new Map();
 export function galaxyOf(rules, s) {
-  const key = s.seed | 0;
-  if (!galaxies.has(key)) { galaxies.clear(); galaxies.set(key, generateGalaxy(rules, key)); }
+  const key = `${s.seed | 0}:${s.length === 'short' ? 's' : 'f'}`;
+  if (!galaxies.has(key)) { galaxies.clear(); galaxies.set(key, generateGalaxy(rules, s.seed | 0, { short: s.length === 'short' })); }
   return galaxies.get(key);
 }
 
-export function newVoyage(rules, { seed = 1 } = {}) {
-  const V = rules.content.voyage, g = galaxyOf(rules, { seed });
+// length: 'full' (4 to 6 hours) or 'short' (about 90 minutes); saves: 'permadeath' or 'free';
+// guided: hint cards for a first voyage
+export function newVoyage(rules, { seed = 1, length = 'full', saves = 'permadeath', guided = false } = {}) {
+  const V = rules.content.voyage, g = galaxyOf(rules, { seed, length });
   const stores = Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 0]));
   Object.assign(stores, pairs(V.Stores));
+  if (length === 'short' && V.ShortStores) Object.assign(stores, pairs(V.ShortStores));
   const s = {
-    version: SAVE_VERSION, kind: 'voyage', seed: seed | 0,
+    version: SAVE_VERSION, kind: 'voyage', seed: seed | 0, length, saves, guided, hints: [],
     day: 1, ticks: 0, at: g.start, known: [], visited: {},
     stores,
     crew: makeRoster(pairs(V.Crew)),
@@ -82,14 +85,26 @@ export function note(s, text, kind = 'info') { s.log.push({ day: s.day, text, ki
 // ---------------------------------------------------------------- the Forge
 // Engineering projects fitted: percent bonuses multiply (FoodPct, SensorPct, GlimPct, HullPct),
 // Capacity adds.
+const ADDITIVE = ['Capacity', 'Heal'];
 export function projectBonus(rules, s, key) {
-  let v = key === 'Capacity' ? 0 : 100;
+  let v = ADDITIVE.includes(key) ? 0 : 100;
   for (const [id, st] of Object.entries(s.items)) {
     const it = rules.content.items[id];
     if (st !== 'installed' || !it || it.Kind !== 'project' || it[key] === undefined) continue;
-    v = key === 'Capacity' ? v + (+it[key] | 0) : Math.trunc((v * +it[key]) / 100);
+    v = ADDITIVE.includes(key) ? v + (+it[key] | 0) : Math.trunc((v * +it[key]) / 100);
   }
   return v;
+}
+// A ship's full hull at its rank (veterancy)
+export function shipMaxHp(rules, e) {
+  const V = rules.content.voyage, steps = weights(V.Ranks || 'Seasoned 4, Veteran 10, Elite 20');
+  let r = 0; steps.forEach(([, n], i) => { if ((e.xp | 0) >= n) r = i + 1; });
+  return Math.trunc((rules.actor(e.type).traitInfo('Health').HP * (100 + (V.RankBonus === undefined ? 10 : +V.RankBonus) * r)) / 100);
+}
+export function rankName(rules, xp) {
+  const steps = weights(rules.content.voyage.Ranks || 'Seasoned 4, Veteran 10, Elite 20');
+  let name = ''; for (const [n, at] of steps) if ((xp | 0) >= at) name = n;
+  return name;
 }
 export const forgeMaxHp = (rules, s) => Math.trunc((rules.actor('forge').traitInfo('Health').HP * projectBonus(rules, s, 'HullPct')) / 100);
 export const stitchCost = (rules, s, len) => Math.trunc((stitchGlim(rules.content.voyage, len) * projectBonus(rules, s, 'GlimPct') + 99) / 100);
@@ -175,6 +190,9 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
   st.air = Math.max(0, Math.min(num(V, 'AirTank'), st.air + air - need.air));
   st.glim = Math.max(0, st.glim - num(V, 'ReactorGlim'));
   if (dry) return;
+  // ships aboard mend (more with repair bays)
+  const heal = num(V, 'FleetHeal') + projectBonus(rules, s, 'Heal');
+  for (const e of s.fleet) { const max = shipMaxHp(rules, e); e.hp = Math.min(max, (e.hp | 0) + Math.trunc((max * heal) / 100)); }
 
   // the consequences, rung by rung
   s.airless = breathless ? s.airless + 1 : 0;
@@ -247,7 +265,7 @@ export function stitch(rules, s, to) {
   for (let i = 0; i < p.route.hops.length; i++) {
     const l = g.lanes[p.route.lanes[i]];
     s.stores.glim -= stitchCost(rules, s, l.len);
-    passDays(rules, s, stitchDays(V, l.len));
+    passDays(rules, s, stitchDays(V, l.len, s.length === 'short'));
     if (s.over) return { ok: true };
     s.at = p.route.hops[i];
     reveal(rules, s);
@@ -376,9 +394,13 @@ export function installPlan(rules, s, id) {
   if (!it || !I) return no('That cannot be fitted.');
   if (s.items[id] === 'installed') return no(it.Kind === 'project' ? 'Already built.' : 'Already fitted.');
   if (it.Kind !== 'project' && s.items[id] !== 'found') return no('Not found yet.');
-  if (s.stores.ore < +I.Ore || s.stores.salvage < +I.Salvage) return no(`Fitting it takes ${I.Ore} ore and ${I.Salvage} salvage.`);
+  if (it.Requires && s.items[it.Requires] !== 'installed') return no(`Build the ${rules.content.items[it.Requires]?.Name || it.Requires} first.`);
+  // drive parts cost less on a short voyage
+  const pct = it.Kind === 'drive' && s.length === 'short' ? num(rules.content.voyage, 'ShortInstallPct') || 100 : 100;
+  const ore = Math.trunc((+I.Ore * pct) / 100), salvage = Math.trunc((+I.Salvage * pct) / 100);
+  if (s.stores.ore < ore || s.stores.salvage < salvage) return no(`Fitting it takes ${ore} ore and ${salvage} salvage.`);
   if (free(s.crew, 'engineers') < +I.Engineers) return no(`Fitting it takes ${I.Engineers} free engineers.`);
-  return { ok: true, days: Math.max(1, Math.trunc((+I.Days * 100) / workPct(rules, s))), ore: +I.Ore, salvage: +I.Salvage };
+  return { ok: true, days: Math.max(1, Math.trunc((+I.Days * 100) / workPct(rules, s))), ore, salvage };
 }
 export function install(rules, s, id) {
   if (s.over) return no('The voyage is over.');
@@ -481,7 +503,8 @@ export function visitSettings(rules, s) {
     players: [
       {
         name: 'You', faction: 'meridian', client: 0, ships: ['forge'], stores, hangar: s.fleet.map((e) => ({ ...e })), forgeHp: s.forge.hp,
-        crew: freeAll(s.crew), buildSpeed: Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100),
+        crew: freeAll(s.crew), buildSpeed: Math.trunc((Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100) * projectBonus(rules, s, 'BuildPct')) / 100),
+        forgeDamagePct: projectBonus(rules, s, 'ForgeDamagePct'), launchPct: projectBonus(rules, s, 'LaunchPct'),
         blueprints: [...(s.blueprints || [])], capacityBonus: projectBonus(rules, s, 'Capacity'), sensorPct: projectBonus(rules, s, 'SensorPct'), forgeHpPct: projectBonus(rules, s, 'HullPct'),
         spoolPct: Math.max(100, Math.trunc(10000 / Math.max(1, 50 + (s.systems.drive >> 1)))),
       },
@@ -513,7 +536,7 @@ export function returnFromMap(rules, s, report) {
   for (const [k, st] of Object.entries(report.stores)) s.stores[k] = st.end;
   const maxHp = forgeMaxHp(rules, s), hpBefore = s.forge.hp;
   s.forge.hp = report.forge ? report.forge.hp : 0;
-  s.fleet = report.ships.aboard.map((e) => ({ type: e.type, hp: e.hp }));
+  s.fleet = report.ships.aboard.map((e) => ({ type: e.type, hp: e.hp, xp: e.xp | 0 }));
   // crew lost with ships destroyed or left behind
   const lost = report.crew ? report.crew.lost : {};
   for (const r of ROLES) if (lost[r]) lose(s.crew, r, lost[r]);
