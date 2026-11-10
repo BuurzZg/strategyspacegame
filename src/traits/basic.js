@@ -12,6 +12,8 @@ defineTrait('WithModel', class extends Trait {}, { Model: '', Scale: 100 });
 defineTrait('Faction', class extends Trait {}, { InternalName: '', Name: '', Color: 'ffffff', Glow: 'ffffff', Dark: '000000', Description: '' });
 
 // ---------------------------------------------------------------- Health
+// Radius: the hull's half-width. HalfLength > 0 makes the hull a capsule: a line along the
+// nose, HalfLength each way from the centre, with Radius around it (long hulls like the Forge).
 defineTrait('Health', class Health extends Trait {
   created() {
     this.hp = this.info.HP;
@@ -39,7 +41,7 @@ defineTrait('Health', class Health extends Trait {
     world.emit('killed', self, attacker, byPlayer);
     world.addFrameEndTask((w) => w.removeActor(self));
   }
-}, { HP: 10000, Radius: 512 });
+}, { HP: 10000, Radius: 512, HalfLength: 0 });
 
 // ---------------------------------------------------------------- world: starting fleets
 // Each player starts at settings.spawns[spawn] (cells; [x, y, z]) facing the centre of the map.
@@ -55,12 +57,13 @@ defineTrait('StartingFleet', class extends Trait {
       const cx = Math.trunc((b.x0 + b.x1) / 2), cy = Math.trunc((b.y0 + b.y1) / 2);
       const x0 = sx * CELL, y0 = sy * CELL, z0 = sz * CELL;
       const yaw = x0 === cx && y0 === cy ? 0 : angleOf(cx - x0, cy - y0);
-      const ships = [...this.info.Ships, ...(p.index === 0 ? extra : [])];
+      const ships = [...(w.settings.startingShips || this.info.Ships), ...(p.index === 0 ? extra : [])];
       if (!ships.length) continue;
       const flagship = w.createActor(ships[0], p, { x: x0, y: y0, z: z0, yaw });
-      // escorts line up ahead of a big flagship, or beside a small one
-      const big = flagship.health && flagship.health.info.Radius > 2 * CELL;
-      const f = big ? flagship.health.info.Radius + 3 * CELL : 0;
+      // escorts line up ahead of a big flagship (clear of its whole hull), or beside a small one
+      const reach = flagship.health ? flagship.health.info.Radius + flagship.health.info.HalfLength : 0;
+      const big = reach > 2 * CELL;
+      const f = big ? reach + 3 * CELL : 0;
       ships.slice(1).forEach((type, j) => {
         const i = big ? j : j + 1;
         const side = i === 0 ? 0 : (i % 2 ? 1 : -1) * Math.ceil(i / 2);

@@ -1,7 +1,8 @@
 import * as THREE from '../../lib/three.module.js';
 
 // The backdrop: a procedural nebula skybox, a starfield, the dying star Orrin, the lights,
-// and drifting rock clusters as landmarks. Everything is generated here; no asset files.
+// and the distant debris of the Drift ring outside the play area. Everything is generated
+// here; no asset files. (Mineable asteroids are actors, drawn by the world renderer.)
 //
 // Render space: three.js X = sim x, Y = sim z (up), Z = sim y. 1 render unit = 256 world units.
 export const R = 1 / 256;
@@ -120,7 +121,8 @@ export class SpaceScene {
     this.key = key;
   }
 
-  // Inert rock clusters and wreckage: landmarks that make distance and height readable.
+  // The Drift ring: big inert rock clusters scattered outside the play area, so the edges of
+  // the battlefield have depth. Nothing inside the bounds is scenery: every rock there is ore.
   makeLandmarks(bounds, seed) {
     const rand = rng(seed * 101 + 3);
     const geo = new THREE.IcosahedronGeometry(1, 1);
@@ -131,20 +133,22 @@ export class SpaceScene {
       p.setXYZ(i, v.x, v.y, v.z);
     }
     geo.computeVertexNormals();
-    const mat = new THREE.MeshStandardMaterial({ color: 0x5c5560, roughness: 0.95, metalness: 0.05, flatShading: true });
+    const mat = new THREE.MeshStandardMaterial({ color: 0x3e3b47, roughness: 0.97, metalness: 0.04, flatShading: true });
     const W = (bounds.x1 - bounds.x0) * R, D = (bounds.y1 - bounds.y0) * R, H = (bounds.z1 - bounds.z0) * R;
-    const clusters = 9, per = 26;
+    const clusters = 16, per = 30;
     const mesh = new THREE.InstancedMesh(geo, mat, clusters * per);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3(), e = new THREE.Euler();
     let k = 0;
+    const mx = W / 2, mz = D / 2, ring = Math.max(W, D) * 0.5;
     for (let c = 0; c < clusters; c++) {
-      const cx = W * (0.1 + rand() * 0.8), cz = D * (0.1 + rand() * 0.8), cy = (rand() - 0.5) * H * 0.7;
+      const ang = (c / clusters) * Math.PI * 2 + rand() * 0.3, dist = ring * (1.35 + rand() * 0.5);
+      const cx = mx + Math.cos(ang) * dist, cz = mz + Math.sin(ang) * dist, cy = (rand() - 0.5) * H * 1.2;
       for (let i = 0; i < per; i++) {
-        const r = Math.pow(rand(), 0.6) * 38;
+        const r = Math.pow(rand(), 0.6) * 70;
         const a = rand() * Math.PI * 2, b = (rand() - 0.5) * 0.9;
         v.set(cx + Math.cos(a) * r, cy + Math.sin(b) * r * 0.6, cz + Math.sin(a) * r);
         e.set(rand() * 6, rand() * 6, rand() * 6); q.setFromEuler(e);
-        const sz = rand() < 0.1 ? 4 + rand() * 6 : 0.6 + rand() * 2.4;
+        const sz = rand() < 0.15 ? 10 + rand() * 18 : 2 + rand() * 6;
         s.set(sz, sz * (0.6 + rand() * 0.5), sz * (0.7 + rand() * 0.6));
         m.compose(v, q, s);
         mesh.setMatrixAt(k++, m);

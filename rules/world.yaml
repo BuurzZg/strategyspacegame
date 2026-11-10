@@ -23,4 +23,5 @@ World:
 		Dark: 2a2e38
 		Description: Abandoned hulks drifting in the ring.
 	StartingFleet:
-		Ships: forge, halberd, dart, dart
+		Ships: forge, halberd, dart, dart, gleaner, gleaner
+	AsteroidFields:

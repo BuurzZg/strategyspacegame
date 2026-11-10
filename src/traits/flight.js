@@ -16,11 +16,11 @@ defineTrait('Flight', class Flight extends Trait {
     this.self.mobile = this;
     this.speed = 0; this.pspeed = 0;
     this.moving = false;
-    this.launching = false; // set by the Launch activity while clearing a bay
+    this.ghost = false;     // set each tick by Launch and Dock: no crowding while threading a hull
     this.shoved = -1;       // last frame crowding pushed this ship
     this.goal = null; // last commanded destination, for UI
   }
-  savePrev() { this.pspeed = this.speed; this.moving = false; this.launching = false; }
+  savePrev() { this.pspeed = this.speed; this.moving = false; this.ghost = false; }
 
   // Advance one tick toward (tx, ty, tz). Returns true when the ship has arrived and stopped.
   flyToward(tx, ty, tz) {
@@ -64,6 +64,23 @@ defineTrait('Flight', class Flight extends Trait {
     w.clampToBounds(self);
     this.moving = true;
     return false;
+  }
+
+  // Stay on station and point the nose at (tx, ty, tz): brake to a stop, turning on the spot.
+  hold(tx, ty, tz) {
+    const self = this.self, info = this.info;
+    const dx = tx - self.x, dy = ty - self.y, dz = tz - self.z, h = isqrt(dx * dx + dy * dy);
+    if (h > 0) self.yaw = turnToward(self.yaw, angleOf(dx, dy), info.TurnSpeed);
+    self.pitch = approach(self.pitch, clamp(pitchOf(h, dz), -info.MaxPitch, info.MaxPitch), info.PitchSpeed);
+    if (this.speed > 0) {
+      this.speed = Math.max(0, this.speed - info.Deceleration);
+      const f = dirVec(self.yaw, self.pitch);
+      self.x += Math.trunc((f[0] * this.speed) / 1024);
+      self.y += Math.trunc((f[1] * this.speed) / 1024);
+      self.z += Math.trunc((f[2] * this.speed) / 1024);
+      this.world.clampToBounds(self);
+      this.moving = true;
+    }
   }
 
   // No orders: coast to a stop along the nose and level out slowly.

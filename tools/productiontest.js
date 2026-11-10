@@ -12,7 +12,8 @@ const run = (w, n) => { for (let i = 0; i < n; i++) w.tick(); };
 const order = (w, name, subjects, target, extra) => w.resolveOrder(makeOrder(name, subjects, target, extra), w.players[0]);
 const settle = (w, ships, limit = 25 * 120) => { let f = 0; for (; f < limit && ships.some((s) => s.activity || s.mobile.speed > 0); f++) w.tick(); return f; };
 async function setup(extra = {}) {
-  const w = await makeWorld({ players: [player], ...extra });
+  // the Milestone 2 starting fleet: these checks are about production, not mining
+  const w = await makeWorld({ players: [player], startingShips: ['forge', 'halberd', 'dart', 'dart'], ...extra });
   const forge = w.actors.find((a) => a.type === 'forge');
   const built = [], at = [];
   // where each ship appeared, in the builder's own frame: forward along its nose, out to port
@@ -42,9 +43,9 @@ async function setup(extra = {}) {
   check(Math.abs(at[0].fwd - bay.Forward) <= 2 && Math.abs(at[0].port - bay.Side) <= 2, `it appears in the port bay mouth (forward ${at[0].fwd}, port ${at[0].port})`);
   check(Math.abs(d.x - forge.x - (at[0].fwd * COS(forge.yaw) - at[0].port * SIN(forge.yaw)) / 1024) <= 2, 'and is not pushed out of the bay on its first tick');
   let launching = 0;
-  for (let i = 0; i < 25 * 10 && d.activity && d.activity.constructor.name === 'Launch'; i++) { w.tick(); if (d.mobile.launching) launching++; }
-  const clear = dist3(d.x, d.y, d.z, forge.x, forge.y, forge.z);
-  check(launching > 0 && clear >= forge.health.info.Radius + d.health.info.Radius, `it flies clear of the hull first (${(launching / 25).toFixed(1)} s, ${(clear / CELL).toFixed(1)} cells from the Forge's centre)`);
+  for (let i = 0; i < 25 * 10 && d.activity && d.activity.constructor.name === 'Launch'; i++) { w.tick(); if (d.mobile.ghost) launching++; }
+  const clear = w.edgeDist(d, forge) - d.health.info.Radius;
+  check(launching > 0 && clear >= bay.Clearance, `it flies clear of the hull first (${(launching / 25).toFixed(1)} s as a ghost, then ${clear} units off the plating)`);
   const goal = d.mobile.goal;
   const f = settle(w, [d]);
   check(dist3(d.x, d.y, d.z, goal.x, goal.y, goal.z) === 0 && !d.activity, `then stops at its muster slot beside the bay (${(f / 25).toFixed(1)} s later)`);

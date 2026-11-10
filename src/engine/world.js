@@ -2,7 +2,7 @@ import { Actor } from './actor.js';
 import { Random } from './random.js';
 import { Player } from './player.js';
 import { resolveOrder } from './order.js';
-import { CELL, isqrt, distSq3, hashMix, clamp } from './math.js';
+import { CELL, isqrt, distSq3, hashMix, clamp, dirVec } from './math.js';
 
 // The simulation. Everything here must be deterministic: integer state, seeded RNG,
 // iteration in actor-id order. Rendering and UI only read from it, and only change it
@@ -32,6 +32,8 @@ export class World {
     this.unitHash = new Map();
     this.hashStamp = -1;
     this.gameOver = false;
+    this.fields = []; // asteroid fields, filled by the AsteroidFields world trait
+    this.maxHalfLength = 0;
 
     this.neutral = new Player(this, -1, { name: 'Neutral', faction: 'neutral', team: -1 });
     this.neutral.isNeutral = true;
@@ -108,9 +110,11 @@ export class World {
   rebuildUnitHash() {
     this.hashStamp = this.frame;
     this.unitHash.clear();
+    this.maxHalfLength = 0;
     const s = this.hashSize;
     for (const a of this.actors) {
       if (!a.mobile || a.dead) continue;
+      if (a.health && a.health.info.HalfLength > this.maxHalfLength) this.maxHalfLength = a.health.info.HalfLength;
       const k = this.key(Math.floor(a.x / s), Math.floor(a.y / s), Math.floor(a.z / s) + 512);
       let b = this.unitHash.get(k);
       if (!b) this.unitHash.set(k, (b = []));
@@ -132,9 +136,19 @@ export class World {
     return out;
   }
 
-  // Distance from a point to the surface of an actor (bounding sphere).
+  // Closest point to (x, y, z) on an actor's hull axis. Most hulls are spheres, so that is
+  // their centre; a capsule hull (Health.HalfLength) has a line along its nose.
+  hullAxisPoint(t, x, y, z) {
+    const hl = t.health ? t.health.info.HalfLength : 0;
+    if (!hl) return [t.x, t.y, t.z];
+    const f = dirVec(t.yaw, t.pitch);
+    const s = clamp(Math.trunc(((x - t.x) * f[0] + (y - t.y) * f[1] + (z - t.z) * f[2]) / 1024), -hl, hl);
+    return [t.x + Math.trunc((f[0] * s) / 1024), t.y + Math.trunc((f[1] * s) / 1024), t.z + Math.trunc((f[2] * s) / 1024)];
+  }
+  // Distance from a point to the surface of an actor's hull or asteroid (0 inside it).
   edgeDistPoint(x, y, z, t) {
-    const d = isqrt(distSq3(x, y, z, t.x, t.y, t.z)) - (t.health ? t.health.info.Radius : 0);
+    const [cx, cy, cz] = this.hullAxisPoint(t, x, y, z);
+    const d = isqrt(distSq3(x, y, z, cx, cy, cz)) - (t.health ? t.health.info.Radius : t.asteroid ? t.asteroid.radius() : 0);
     return d < 0 ? 0 : d;
   }
   edgeDist(a, t) { return this.edgeDistPoint(a.x, a.y, a.z, t); }
@@ -179,19 +193,22 @@ export class World {
   }
 
   // Push overlapping ships apart (3D). Ships that are flying push idle ships of their own side.
+  // Capsule hulls touch at the closest point on their axis. Ghosts (launching, docking) are skipped.
   resolveCrowding() {
     const tmp = [];
     for (const a of this.actors) {
-      if (!a.mobile || a.dead) continue;
-      const ra = a.health.info.Radius;
-      this.unitsInSphere(a.x, a.y, a.z, ra + 4 * CELL, tmp);
+      if (!a.mobile || a.dead || a.mobile.ghost) continue;
+      const ra = a.health.info.Radius, ha = a.health.info.HalfLength;
+      this.unitsInSphere(a.x, a.y, a.z, ra + ha + this.maxHalfLength + 4 * CELL, tmp);
       for (const b of tmp) {
-        if (b.id <= a.id || !b.mobile || b.dead || a.mobile.launching || b.mobile.launching) continue;
-        const rb = b.health.info.Radius;
+        if (b.id <= a.id || !b.mobile || b.dead || b.mobile.ghost) continue;
+        const rb = b.health.info.Radius, hb = b.health.info.HalfLength;
+        const [ax, ay, az] = ha ? this.hullAxisPoint(a, b.x, b.y, b.z) : [a.x, a.y, a.z];
+        const [bx, by, bz] = hb ? this.hullAxisPoint(b, ax, ay, az) : [b.x, b.y, b.z];
         const min = ((ra + rb) * 90) / 100;
-        const d2 = distSq3(a.x, a.y, a.z, b.x, b.y, b.z);
+        const d2 = distSq3(ax, ay, az, bx, by, bz);
         if (d2 >= min * min) continue;
-        let ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z, d = isqrt(d2);
+        let ux = bx - ax, uy = by - ay, uz = bz - az, d = isqrt(d2);
         if (d === 0) { ux = ((a.id * 37) % 7) - 3 || 1; uy = ((b.id * 53) % 7) - 3; uz = ((a.id + b.id) % 5) - 2; d = isqrt(ux * ux + uy * uy + uz * uz); }
         const push = (min - (d2 === 0 ? 0 : d)) >> 1;
         let wa = 50, wb = 50;
@@ -200,12 +217,34 @@ export class World {
           if (am && !bm) { wa = 15; wb = 85; } else if (bm && !am) { wa = 85; wb = 15; }
         }
         // A huge hull (the Forge) is never shoved by the small ships around it.
-        if (ra > 4 * rb) { wa = 0; wb = 100; } else if (rb > 4 * ra) { wa = 100; wb = 0; }
+        const sa = ra + ha, sb = rb + hb;
+        if (sa > 4 * sb) { wa = 0; wb = 100; } else if (sb > 4 * sa) { wa = 100; wb = 0; }
         if (wa) a.mobile.shoved = this.frame;
         if (wb) b.mobile.shoved = this.frame;
         a.x -= Math.trunc((ux * push * wa) / (d * 50)); a.y -= Math.trunc((uy * push * wa) / (d * 50)); a.z -= Math.trunc((uz * push * wa) / (d * 50));
         b.x += Math.trunc((ux * push * wb) / (d * 50)); b.y += Math.trunc((uy * push * wb) / (d * 50)); b.z += Math.trunc((uz * push * wb) / (d * 50));
         this.clampToBounds(a); this.clampToBounds(b);
+      }
+    }
+    // Asteroids are solid: ships that drift into one are pushed back out to its surface.
+    for (const t of this.traitsOfType('Asteroid')) {
+      const s = t.self;
+      if (s.dead) continue;
+      const r = t.radius();
+      this.unitsInSphere(s.x, s.y, s.z, r + this.maxHalfLength + 4 * CELL, tmp);
+      for (const b of tmp) {
+        if (b.dead || b.mobile.ghost) continue;
+        const rb = b.health.info.Radius, hb = b.health.info.HalfLength;
+        const [bx, by, bz] = hb ? this.hullAxisPoint(b, s.x, s.y, s.z) : [b.x, b.y, b.z];
+        const min = r + Math.trunc((rb * 80) / 100);
+        const d2 = distSq3(s.x, s.y, s.z, bx, by, bz);
+        if (d2 >= min * min) continue;
+        let ux = bx - s.x, uy = by - s.y, uz = bz - s.z, d = isqrt(d2);
+        if (d === 0) { ux = 0; uy = 0; uz = 1; d = 1; }
+        const push = min - (d2 === 0 ? 0 : d);
+        b.x += Math.trunc((ux * push) / d); b.y += Math.trunc((uy * push) / d); b.z += Math.trunc((uz * push) / d);
+        b.mobile.shoved = this.frame;
+        this.clampToBounds(b);
       }
     }
   }
@@ -219,6 +258,8 @@ export class World {
       h = hashMix(h, a.yaw); h = hashMix(h, a.pitch);
       if (a.mobile) h = hashMix(h, a.mobile.speed);
       if (a.health) h = hashMix(h, a.health.hp);
+      if (a.asteroid) h = hashMix(h, a.asteroid.ore);
+      if (a.collector) h = hashMix(h, a.collector.cargo);
     }
     for (const p of this.players) h = hashMix(h, p.resources ? p.resources.cash : 0);
     for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }

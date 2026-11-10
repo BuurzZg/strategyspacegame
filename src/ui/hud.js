@@ -1,5 +1,6 @@
 import { R } from '../render/space.js';
 import { CELL } from '../engine/math.js';
+import { fieldOre } from '../traits/economy.js';
 
 // HUD: an overlay canvas for in-world marks (selection brackets, box select, move readout)
 // plus DOM panels (resources, selection card, production panel, controls card, toasts).
@@ -11,6 +12,7 @@ const fmtDist = (units) => { const m = Math.abs(units) * M_PER_UNIT; return m >=
 const fmtAlt = (units) => `${units >= 0 ? '+' : '−'}${fmtDist(units)}`;
 const fmtNum = (n) => Math.round(n).toLocaleString('en-US');
 const fmtTime = (ticks) => { const s = Math.ceil(ticks / TICKS_PER_S); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s} s`; };
+const ORE_CSS = '#ffb070';
 const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
 export class Hud {
@@ -23,6 +25,7 @@ export class Hud {
     this.buildOpen = false;
     this.queueSig = null;
     this.toasts = [];
+    this.deposits = []; // [frame, amount] for the ore-per-minute readout
   }
   attach(session, input) {
     this.s = session; this.input = input; this.world = session.world; this.renderer = session.renderer; this.audio = input.audio;
@@ -169,7 +172,13 @@ export class Hud {
     const me = this.s.viewer.index;
     for (const e of events) {
       if (e.t === 'notify' && e.player === me) { this.toast(e.text, e.kind); if (e.kind === 'bad') this.audio.play('error'); }
-      else if (e.t === 'ready' && e.owner === me) {
+      else if (e.t === 'deposit' && e.owner === me) {
+        this.deposits.push([e.frame, e.amount]);
+        const el = $('res-ore');
+        el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+        this.audio.play('deposit');
+        this.dirty = true;
+      } else if (e.t === 'ready' && e.owner === me) {
         this.toast(`${this.world.rules.actor(e.type).traitInfo('Tooltip').Name} launched`, 'good');
         this.audio.play('ready');
         this.dirty = true;
@@ -181,6 +190,11 @@ export class Hud {
   refresh() {
     const p = this.s.viewer;
     $('res-ore').textContent = fmtNum(p.resources.cash);
+    // ore delivered over the last minute of game time
+    const since = this.world.frame - 60 * TICKS_PER_S;
+    while (this.deposits.length && this.deposits[0][0] < since) this.deposits.shift();
+    const rate = this.deposits.reduce((s, d) => s + d[1], 0);
+    $('res-rate').textContent = rate ? `+${fmtNum(rate)}/min` : '';
     const used = p.capacity.used(), cap = p.capacity.cap();
     $('res-cap').textContent = `${used} / ${cap}`;
     $('res-cap').classList.toggle('full', used >= cap);
@@ -195,12 +209,25 @@ export class Hud {
     const card = $('sel');
     if (!sel.length) { card.hidden = true; return; }
     card.hidden = false;
+    if (sel.length === 1 && sel[0].asteroid) {
+      const t = sel[0].asteroid, field = this.world.fields[t.field];
+      $('sel-name').textContent = 'Asteroid';
+      $('sel-class').textContent = field ? `Ore body · ${field.name}` : 'Ore body';
+      $('sel-desc').textContent = this.input.own().some((s) => s.collector) ? 'Right-click it with Gleaners selected to mine it.' : 'Select Gleaners, then right-click it to mine it.';
+      $('sel-status').textContent = '';
+      $('sel-stats').innerHTML = [
+        ['Ore', `${fmtNum(t.ore)} / ${fmtNum(t.maxOre)}`],
+        ['Size', `${fmtNum(t.radius() * 2 * M_PER_UNIT)} m`],
+        ...(field ? [['Field ore', fmtNum(fieldOre(field))]] : []),
+      ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+      return;
+    }
     if (sel.length === 1) {
       const a = sel[0], tt = a.info.traitInfo('Tooltip'), f = a.mobile, q = a.trait('ProductionQueue');
       const speed = f ? Math.round(f.speed * TICKS_PER_S * M_PER_UNIT) : 0;
       const heading = Math.round((a.yaw / 1024) * 360);
       let status = 'Holding';
-      if (a.activity) status = a.activity.label === 'Launching' ? 'Launching' : 'Under way';
+      if (a.activity) status = a.activity.label === 'Moving' ? 'Under way' : a.activity.label;
       else if (f && f.speed > 0) status = 'Coasting';
       $('sel-name').textContent = tt.Name;
       $('sel-class').textContent = `${tt.Class} · ${tt.Role}`;
@@ -211,13 +238,20 @@ export class Hud {
         ['Heading', `${String(heading).padStart(3, '0')}°`],
         ['Hull', `${Math.ceil((a.health.hp / a.health.maxHp) * 100)}%`],
       ];
+      if (a.collector) {
+        const c = a.collector;
+        if (!a.activity && !c.auto) status = 'Holding (right-click a rock to mine)';
+        stats.push(['Hold', `${c.cargo} / ${c.info.Capacity} ore`]);
+      }
+      const dropoff = a.trait('OreDropoff');
+      if (dropoff) stats.push(['Docked', `${dropoff.slots.filter(Boolean).length} of ${dropoff.slots.length}`]);
       if (q) {
         const cur = q.queue[0];
         if (cur && status === 'Holding') status = 'Building';
         stats.push(['Building', cur ? `${this.world.rules.actor(cur).traitInfo('Tooltip').Name} ${Math.floor((q.progress / q.duration(cur)) * 100)}%` : 'Idle']);
-      } else stats.splice(3, 0, ['Pitch', `${Math.round((a.pitch / 1024) * 360)}°`]);
+      } else if (!dropoff) stats.splice(3, 0, ['Pitch', `${Math.round((a.pitch / 1024) * 360)}°`]);
       $('sel-status').textContent = status;
-      $('sel-stats').innerHTML = stats.map(([k, v]) => `<div${k === 'Building' ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+      $('sel-stats').innerHTML = stats.map(([k, v]) => `<div${k === 'Building' || k === 'Hold' ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     } else {
       const counts = {};
       for (const a of sel) { const n = a.info.traitInfo('Tooltip').Name; counts[n] = (counts[n] || 0) + 1; }
@@ -226,7 +260,8 @@ export class Hud {
       $('sel-desc').textContent = '';
       $('sel-status').textContent = sel.some((a) => a.activity) ? 'Under way' : 'Holding';
       const z = sel.reduce((s, a) => s + a.z, 0) / sel.length;
-      $('sel-stats').innerHTML = `<div><dt>Mean altitude</dt><dd>${fmtAlt(z)}</dd></div>`;
+      const cargo = sel.filter((a) => a.collector).reduce((s, a) => s + a.collector.cargo, 0);
+      $('sel-stats').innerHTML = `<div><dt>Mean altitude</dt><dd>${fmtAlt(z)}</dd></div>` + (sel.some((a) => a.collector) ? `<div><dt>Ore aboard</dt><dd>${fmtNum(cargo)}</dd></div>` : '');
     }
   }
 
@@ -254,18 +289,36 @@ export class Hud {
     for (const a of inp.selection) {
       const v = rd.views.get(a.id);
       if (!v) continue;
-      const b = this.drawBrackets(ctx, v, rd.styleOf(a.owner).css, true);
+      const b = this.drawBrackets(ctx, v, a.asteroid ? ORE_CSS : rd.styleOf(a.owner).css, true);
       if (!b) continue;
-      const f = a.health.hp / a.health.maxHp, w = Math.max(18, Math.min(b.r * 1.4, 120));
-      ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, b.p.y + b.r + 5, w + 2, 4);
-      ctx.fillStyle = f > 0.6 ? '#7cf2a8' : f > 0.3 ? '#ffb547' : '#ff5a64'; ctx.fillRect(b.p.x - w / 2, b.p.y + b.r + 6, w * f, 2);
+      const w = Math.max(18, Math.min(b.r * 1.4, 120));
+      const bar = (y, f, color) => { ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = color; ctx.fillRect(b.p.x - w / 2, y, w * f, 2); };
+      if (a.asteroid) { bar(b.p.y + b.r + 6, a.asteroid.ore / a.asteroid.maxOre, ORE_CSS); continue; }
+      const f = a.health.hp / a.health.maxHp;
+      bar(b.p.y + b.r + 6, f, f > 0.6 ? '#7cf2a8' : f > 0.3 ? '#ffb547' : '#ff5a64');
+      if (a.collector && a.collector.cargo > 0) bar(b.p.y + b.r + 10, a.collector.cargo / a.collector.info.Capacity, ORE_CSS);
     }
-    if (inp.hover && !inp.selection.includes(inp.hover)) {
-      const v = rd.views.get(inp.hover.id);
+    this.drawFieldLabels(ctx);
+    const hv = inp.hover;
+    if (hv && !inp.selection.includes(hv)) {
+      const v = rd.views.get(hv.id);
+      const action = inp.hoverAction(hv);
       if (v) {
-        const b = this.drawBrackets(ctx, v, 'rgba(223,232,242,0.6)', false);
-        if (b) { ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.fillStyle = 'rgba(223,232,242,0.85)'; ctx.fillText(inp.hover.info.traitInfo('Tooltip').Name, b.p.x + b.r + 6, b.p.y - b.r + 10); }
+        const b = this.drawBrackets(ctx, v, action ? ORE_CSS : 'rgba(223,232,242,0.6)', !!action);
+        if (b) {
+          const name = hv.asteroid ? `Asteroid · ${fmtNum(hv.asteroid.ore)} ore` : hv.info.traitInfo('Tooltip').Name;
+          const text = action ? `${action}: ${name}` : name;
+          ctx.font = '500 11px "IBM Plex Mono", monospace';
+          const tw = ctx.measureText(text).width, tx = b.p.x + b.r + 6, ty = b.p.y - b.r + 10;
+          ctx.fillStyle = 'rgba(5,6,11,0.72)'; ctx.fillRect(tx - 4, ty - 11, tw + 8, 15);
+          ctx.fillStyle = action ? ORE_CSS : 'rgba(223,232,242,0.9)';
+          ctx.fillText(text, tx, ty);
+        }
       }
+    } else if (hv && inp.hoverAction(hv)) {
+      // hovering something already selected that still takes an order (e.g. the Forge with Gleaners)
+      const v = rd.views.get(hv.id), b = v && inp.project(v.pos);
+      if (b && b.z < 1) { ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.fillStyle = ORE_CSS; ctx.fillText(inp.hoverAction(hv), b.x + 12, b.y - 12); }
     }
     const box = inp.box;
     if (box && box.active) {
@@ -292,6 +345,29 @@ export class Hud {
         ctx.fillStyle = '#ffb547'; ctx.fillText(lines[1], x + 7, y + 31);
       }
     }
+  }
+
+  // Field names and their remaining ore, at each field's centre; they fade out as you fly in.
+  drawFieldLabels(ctx) {
+    const inp = this.input, cam = this.s.camera;
+    ctx.font = '500 11px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    for (const f of this.world.fields) {
+      const ore = fieldOre(f);
+      const pos = { x: f.x * R, y: f.z * R, z: f.y * R };
+      this.tmpV ||= cam.position.clone();
+      this.tmpV.set(pos.x, pos.y + (f.spread * R) / 3 + 4, pos.z);
+      const p = inp.project(this.tmpV);
+      if (p.z > 1) continue;
+      const dist = cam.position.distanceTo(this.tmpV);
+      const alpha = Math.max(0, Math.min(1, (dist - 40) / 80)) * (ore ? 0.85 : 0.4);
+      if (alpha <= 0.02) continue;
+      ctx.fillStyle = `rgba(217,165,119,${alpha})`;
+      ctx.fillText(f.name.toUpperCase(), p.x, p.y);
+      ctx.fillStyle = `rgba(223,232,242,${alpha * 0.8})`;
+      ctx.fillText(ore ? `${fmtNum(ore)} ore` : 'mined out', p.x, p.y + 14);
+    }
+    ctx.textAlign = 'start';
   }
 
   // Does a screen rectangle overlap a visible HUD panel?

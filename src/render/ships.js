@@ -141,6 +141,50 @@ export function buildShip(type, style) {
       out.length = 44;
       break;
     }
+    case 'gleaner': {
+      // collector: a deep hold behind a small cab, scoop arms reaching forward under the nose
+      part(box(1.7, 0.95, 1.25), M.hull, -0.3, 0.05, 0, body);
+      part(box(1.2, 0.12, 0.9), M.dark, -0.35, 0.58, 0, body);
+      // ore gauge on the hold roof: grows with the cargo (the renderer scales it)
+      out.gauge = part(box(1.1, 0.06, 0.5), M.furnace, -0.35, 0.65, 0, body);
+      part(box(0.7, 0.55, 0.85), M.hull, 0.8, -0.05, 0, body);
+      part(box(0.32, 0.22, 0.7), M.light, 1.1, 0.12, 0, body);
+      part(box(0.25, 0.5, 0.9), M.dark, 1.2, -0.42, 0, body);
+      for (const z of [-1, 1]) {
+        part(box(1.1, 0.16, 0.16), M.trim, 1.35, -0.5, z * 0.42, body, 0, z * 0.12, 0);
+        part(box(0.3, 0.14, 0.3), M.dark, 1.85, -0.5, z * 0.36, body);
+        part(cyl(0.17, 0.22, 0.4, 6), M.dark, -1.3, 0, z * 0.36, body, 0, 0, Math.PI / 2);
+        out.engines.push({ pos: new THREE.Vector3(-1.55, 0, z * 0.36), size: 0.5 });
+      }
+      out.nose = new THREE.Vector3(1.95, -0.45, 0);
+      out.length = 3.4;
+      break;
+    }
+    case 'smelter': {
+      // mobile refinery: a broad barge, an intake ring at the bow, a glowing crucible on top,
+      // dock clamps reaching out from both flanks
+      part(box(9, 2.4, 4.4), M.hull, -0.4, 0, 0, body);
+      part(box(7, 0.8, 3.2), M.dark, -0.8, -1.5, 0, body);
+      part(wedge(3, 4.4, 2.2, 2.2), M.hull, 5.6, -0.1, 0, body);
+      part(torus(1.15, 0.28, 24), M.trim, 7.2, -0.1, 0, body, 0, Math.PI / 2, 0);
+      part(cyl(1.0, 1.0, 0.1, 16), M.furnace, 7.05, -0.1, 0, body, 0, 0, Math.PI / 2);
+      part(cyl(1.5, 1.8, 2.0, 10), M.dark, 0.8, 2.1, 0, body);
+      part(cyl(1.28, 1.28, 0.12, 10), M.furnace, 0.8, 3.12, 0, body);
+      for (const z of [-0.9, 0.9]) {
+        part(cyl(0.25, 0.32, 1.8, 6), M.dark, -2.8, 2.0, z, body);
+        part(cyl(0.2, 0.2, 0.06, 6), M.furnace, -2.8, 2.93, z, body);
+      }
+      for (const z of [-1, 1]) {
+        part(box(1.6, 0.35, 1.3), M.trim, 0, 0, z * 2.85, body);
+        part(box(1.6, 0.08, 0.08), M.light, 0, 0.22, z * 3.45, body);
+        part(box(8, 0.14, 0.06), M.trim, -0.6, 0.9, z * 2.22, body);
+        part(cyl(0.6, 0.75, 1.4, 8), M.hull, -5.2, -0.2, z * 1.2, body, 0, 0, Math.PI / 2);
+        part(cyl(0.5, 0.5, 0.08, 8), M.engine, -5.92, -0.2, z * 1.2, body, 0, 0, Math.PI / 2);
+        out.engines.push({ pos: new THREE.Vector3(-6.05, -0.2, z * 1.2), size: 1.6 });
+      }
+      out.length = 13;
+      break;
+    }
     case 'talon': {
       // bomber: blunt fuselage over a delta wing, plasma charge pod slung underneath
       part(box(2.2, 0.42, 0.62), M.hull, 0, 0, 0, body);

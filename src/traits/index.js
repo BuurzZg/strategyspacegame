@@ -3,3 +3,4 @@ import './basic.js';
 import './player.js';
 import './flight.js';
 import './production.js';
+import './economy.js';

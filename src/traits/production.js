@@ -114,8 +114,9 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     w.emit('produced', unit, self);
     if (!unit.mobile) return;
     unit.mobile.speed = Math.min(unit.mobile.info.MaxSpeed, bay ? bay.info.LaunchSpeed : 0);
-    unit.mobile.launching = true; // no crowding on the spawn tick either
+    unit.mobile.ghost = true; // no crowding on the spawn tick either
     unit.queueActivity(new Launch(self.id, bay ? bay.info.Clearance : CELL));
+    if (unit.collector) return; // it starts mining as soon as it is clear
     const dest = this.destination(n, side);
     unit.mobile.goal = dest;
     unit.queueActivity(new FlyTo(dest.x, dest.y, dest.z));

@@ -1,5 +1,6 @@
-# Ships. Costs are ore; BuildDuration is in ticks (25 per second).
-# Fleet capacity: the Forge provides 30. Fighters use 1-2, corvettes 3, frigates 6.
+# Ships and asteroids. Costs are ore; BuildDuration is in ticks (25 per second).
+# Fleet capacity: the Forge provides 30. Gleaners use 1, fighters 1-2, corvettes 3,
+# the Smelter 4, frigates 6.
 
 # ------------------------------------------------------------------ mothership
 forge:
@@ -11,7 +12,8 @@ forge:
 		Description: A kilometre of furnaces, hangars and crew decks. It builds your fleet. If it falls, so do your people.
 	Health:
 		HP: 2400000
-		Radius: 5400
+		Radius: 1450
+		HalfLength: 4900
 	Armor:
 		Type: capital
 	Selectable:
@@ -44,6 +46,101 @@ forge:
 	ProvidesCapacity:
 		Amount: 30
 	ProvidesPrerequisite:
+	# Gleaners unload into the furnace maw on top of the prow, three at a time.
+	OreDropoff:
+		Slots: 3
+		Forward: 4600
+		Up: 620
+		Spacing: 420
+		ApproachForward: 1800
+		ApproachUp: 1200
+
+# ------------------------------------------------------------------ utility
+gleaner:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Gleaner
+		Class: Utility
+		Role: Ore collector
+		Description: A stubby hauler with scoop arms and a deep hold. It mines on its own and brings the ore home.
+	Valued:
+		Cost: 100
+	Buildable:
+		Queue: Forge
+		BuildDuration: 300
+		BuildPaletteOrder: 1
+	ConsumesCapacity:
+		Amount: 1
+	Health:
+		HP: 16000
+		Radius: 300
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 480
+	Flight:
+		MaxSpeed: 70
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 9
+		PitchSpeed: 8
+		MinSpeed: 20
+		Slip: 160
+		Bank: 25
+	WithModel:
+		Model: gleaner
+	# 100 ore per trip: 2 ore every 5 ticks is 10 s of mining; unloading takes under a second.
+	Collector:
+		Capacity: 100
+		MineAmount: 2
+		MineInterval: 5
+		MineRange: 600
+		UnloadAmount: 5
+
+smelter:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Smelter
+		Class: Utility
+		Role: Mobile refinery
+		Description: A slow ore barge with its own furnace. Park it by a distant field and your Gleaners unload there instead of flying home.
+	Valued:
+		Cost: 600
+	Buildable:
+		Queue: Forge
+		BuildDuration: 1000
+		BuildPaletteOrder: 2
+	ConsumesCapacity:
+		Amount: 4
+	Health:
+		HP: 90000
+		Radius: 700
+		HalfLength: 900
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 1700
+	Flight:
+		MaxSpeed: 28
+		Acceleration: 1
+		Deceleration: 1
+		TurnSpeed: 3
+		PitchSpeed: 2
+		TurnInPlace: true
+		Slip: 160
+		ArriveRadius: 100
+		Bank: 8
+	WithModel:
+		Model: smelter
+	# a dock clamp on each flank
+	OreDropoff:
+		Slots: 2
+		Mirror: true
+		Side: 1150
+		Up: 0
+		Spacing: 0
+		ApproachOut: 1600
+		ApproachUp: 400
 
 # ------------------------------------------------------------------ fighters
 dart:
@@ -183,3 +280,15 @@ halberd:
 		Bank: 18
 	WithModel:
 		Model: halberd
+
+# ------------------------------------------------------------------ the Drift
+# Field rocks are placed by the AsteroidFields world trait, which sets each one's ore and size.
+asteroid:
+	Tooltip:
+		Name: Asteroid
+		Class: Ore body
+		Role: Mineable
+		Description: A shard of one of Orrin's broken moons, threaded with ore.
+	Asteroid:
+	WithModel:
+		Model: asteroid

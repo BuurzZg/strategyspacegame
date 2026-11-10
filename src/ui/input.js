@@ -74,7 +74,9 @@ export class Input {
       if (p.z > 1 || p.z < -1) continue;
       const rpx = Math.max(10, this.screenRadius(v.pos, v.radius));
       const d = Math.hypot(p.x - x, p.y - y);
-      if (d < rpx && d - rpx < bs) { bs = d - rpx; best = v.actor; }
+      // closest to its own centre, relative to its size: a Gleaner sitting on the Forge's prow
+      // wins over the Forge around it
+      if (d < rpx && d / rpx < bs) { bs = d / rpx; best = v.actor; }
     }
     return best;
   }
@@ -152,6 +154,21 @@ export class Input {
     if (!this.orbit.follow) this.followSelection();
     this.hud.firstOrder();
   }
+  orderCollectors(name, collectors, target) {
+    this.issue(name, collectors, { actor: target });
+    const v = this.renderer.views.get(target.id);
+    if (v) this.renderer.fx.marker(v.pos.x, v.pos.y, v.pos.z, 0xffb070);
+    this.audio.play('order');
+    this.hud.firstOrder();
+  }
+  // What a right-click on `a` would do with the current selection (for the hover label).
+  hoverAction(a) {
+    if (!a) return null;
+    const collectors = this.own().some((s) => s.collector);
+    if (collectors && a.asteroid) return 'Mine';
+    if (collectors && this.isMine(a) && a.has('OreDropoff') && !this.selection.includes(a)) return 'Unload here';
+    return null;
+  }
   selectForge() {
     const f = this.forge();
     if (!f) return;
@@ -193,6 +210,10 @@ export class Input {
     } else if (e.button === 2 && !st.moved) {
       if (this.move) { this.cancelMove(); return; }
       const hit = this.pick(e.clientX, e.clientY);
+      const collectors = this.own().filter((a) => a.collector);
+      // collectors selected: right-click a rock to mine it, or the Forge / a Smelter to unload now
+      if (hit && collectors.length && hit.asteroid) { this.orderCollectors('Harvest', collectors, hit); return; }
+      if (hit && collectors.length && this.isMine(hit) && hit.has('OreDropoff') && !collectors.includes(hit)) { this.orderCollectors('Dock', collectors, hit); return; }
       if (hit && this.isMine(hit)) { if (!this.selection.includes(hit)) this.setSelection([hit]); return; }
       if (this.own().some((a) => a.mobile)) { this.beginMove(); this.updateMove(); }
     }

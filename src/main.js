@@ -38,7 +38,7 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-// Milestone 2 sandbox: your Forge and escorts in an empty stretch of the Drift.
+// Milestone 3 sandbox: your Forge, escorts and Gleaners beside four asteroid fields.
 function startSkirmish(rules) {
   const seed = parseInt(params.get('seed'), 10) || 7;
   const test = params.get('fleet') === 'test' || location.hash === '#fleet'; // the hash form works where query strings can't
@@ -46,6 +46,13 @@ function startSkirmish(rules) {
     seed, latency: 1, mode: 'skirmish',
     space: { w: 192, d: 192, h: 64 },
     spawns: [[70, 96, 0]],
+    // asteroid fields, near to far from the Forge (cells); the far one is rich, and worth a Smelter
+    fields: [
+      { name: 'Tessel Shoal', at: [92, 82, 3], count: 9, spread: 5, ore: [500, 1100] },
+      { name: 'Marrow Bank', at: [62, 128, -5], count: 10, spread: 6, ore: [700, 1400] },
+      { name: 'Halvard Reach', at: [118, 118, 8], count: 11, spread: 7, ore: [800, 1700] },
+      { name: 'Ostrel Deep', at: [158, 44, -8], count: 13, spread: 8, ore: [1400, 2400] },
+    ],
     players: [{ name: 'You', faction: params.get('faction') === 'cinder' ? 'cinder' : 'meridian', client: 0 }],
     extraShips: test ? ['dart', 'dart', 'halberd', 'dart', 'dart'] : [],
   };

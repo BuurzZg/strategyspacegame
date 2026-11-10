@@ -53,7 +53,11 @@ kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; bor
 .res-item { display: flex; align-items: baseline; gap: 7px; }
 .res-k { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .res-item b { font: 500 15px var(--f-mono); font-variant-numeric: tabular-nums; }
-#res-ore { color: var(--ore); }
+#res-ore { color: var(--ore); display: inline-block; }
+#res-ore.bump { animation: bump 0.6s ease-out; }
+@keyframes bump { 0% { transform: translateY(-2px); color: #ffe0b8; text-shadow: 0 0 10px rgba(255, 176, 112, 0.8); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #res-ore.bump { animation: none; } }
+#res-rate { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 7ch; }
 #res-cap.full { color: var(--height); }
 .top-btns { margin-left: auto; display: flex; gap: 8px; }
 .top-btns button { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
@@ -170,9 +174,9 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 
   <header id="top">
     <div class="brand">DRIFT<b>FORGE</b></div>
-    <span class="tag">Milestone 2 · forge and production</span>
+    <span class="tag">Milestone 3 · collectors and mining</span>
     <div id="res" aria-label="Resources">
-      <div class="res-item" title="Ore in the bank"><span class="res-k">Ore</span><b id="res-ore">0</b></div>
+      <div class="res-item" title="Ore in the bank, and how much your Gleaners delivered in the last minute"><span class="res-k">Ore</span><b id="res-ore">0</b><span id="res-rate"></span></div>
       <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
     </div>
     <div class="top-btns">
@@ -210,7 +214,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
   <aside id="help" aria-label="Controls">
     <button id="help-close" type="button" aria-label="Close controls">×</button>
     <h2>Your Forge</h2>
-    <p>The Forge is your mothership, and it builds your fleet. Press <kbd>B</kbd> to open production and pick a hull. New ships launch from the bays on its flanks.</p>
+    <p>The Forge is your mothership, and it builds your fleet from ore. Your two Gleaners are already mining the nearest field. Press <kbd>B</kbd> to build more Gleaners, or warships.</p>
     <h3>Camera</h3>
     <dl>
       <dt><kbd>Right-drag</kbd></dt><dd>Rotate around the focus</dd>
@@ -236,6 +240,13 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Right-click</kbd> a hull</dt><dd>Remove one from the queue</dd>
       <dt><kbd>Click</kbd> in the queue</dt><dd>Cancel that ship, full refund</dd>
       <dt><kbd>R</kbd></dt><dd>Place the <span class="r">rally point</span> with the disc</dd>
+    </dl>
+    <h3>Mining</h3>
+    <dl>
+      <dt>Gleaners</dt><dd>Mine on their own; unload at the nearest Forge or Smelter</dd>
+      <dt><kbd>Right-click</kbd> a rock</dt><dd>Gleaners mine that rock</dd>
+      <dt><kbd>Right-click</kbd> the Forge</dt><dd>Gleaners unload now</dd>
+      <dt>Smelter</dt><dd>Mobile refinery: park it by a far field</dd>
     </dl>
     <h3>Plotting a move</h3>
     <dl>

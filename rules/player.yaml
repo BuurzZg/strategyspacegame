@@ -2,7 +2,7 @@
 
 Player:
 	PlayerResources:
-		Cash: 2500
+		Cash: 1500
 	FleetCapacity:
 		Max: 200
 	TechTree:
