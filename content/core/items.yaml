@@ -1,4 +1,5 @@
-# Items: the Skein Drive's four components (relics and blueprints come later).
+# Items: the Skein Drive's four components, blueprints for hulls you cannot build yet, and
+# engineering projects (Forge upgrades).
 #   Region      where the generator hides it: in a derelict, deep in that region
 #   Range       the drive's stitch range becomes this percent of what it was
 #   Veil        lets the drive stitch through the Veil's nebula wall
@@ -52,3 +53,78 @@ heartstone:
 		Salvage: 800
 		Days: 4
 		Engineers: 20
+
+# Blueprints: a hull you can build once you have one. Found by cutting up wrecks of that hull
+# (half its salvage), bought from factions, or given in events. Start lists the hulls you can
+# build from the beginning.
+Blueprints:
+	Start: dart, picket, halberd, gleaner, shearer, skimmer, smelter, wisp
+bp-talon:
+	Name: Talon blueprint
+	Kind: blueprint
+	Unlocks: talon
+	Description: How to build a delta-winged bomber that cracks frigates.
+bp-spindle:
+	Name: Spindle blueprint
+	Kind: blueprint
+	Unlocks: spindle
+	Description: How to build a lance frigate that hurts capital hulls from far away.
+bp-sabre:
+	Name: Sabre blueprint
+	Kind: blueprint
+	Unlocks: sabre
+	Description: How to build a destroyer with torpedoes and two pulse batteries.
+
+# Engineering projects: upgrades to the Forge, built from the Forge panel.
+#   Capacity (fleet capacity), FoodPct (hydroponics output), SensorPct (sensor range on the
+#   chart and on maps), GlimPct (Glim per stitch), HullPct (the Forge's hull)
+hangar:
+	Name: Expanded hangar
+	Kind: project
+	Description: Gut two cargo decks and fit them as bays. Room for ten more capacity of ships.
+	Capacity: 10
+	Install:
+		Ore: 900
+		Salvage: 500
+		Days: 4
+		Engineers: 16
+racks:
+	Name: Hydroponic racks
+	Kind: project
+	Description: Stack the grow beds three high. The hydroponics grow half as much again.
+	FoodPct: 150
+	Install:
+		Ore: 400
+		Salvage: 300
+		Days: 3
+		Engineers: 10
+array:
+	Name: Long-range array
+	Kind: project
+	Description: A second sensor dish on the spine. The Forge sees half again as far, on the chart and on maps.
+	SensorPct: 150
+	Install:
+		Ore: 500
+		Salvage: 400
+		Days: 3
+		Engineers: 12
+recycler:
+	Name: Glim recycler
+	Kind: project
+	Description: Catch what the Skein spills on every stitch. Stitches cost a fifth less Glim.
+	GlimPct: 80
+	Install:
+		Ore: 600
+		Salvage: 600
+		Days: 4
+		Engineers: 14
+plating:
+	Name: Armoured plating
+	Kind: project
+	Description: Salvaged plate welded over the Forge's flanks. A quarter more hull.
+	HullPct: 125
+	Install:
+		Ore: 1200
+		Salvage: 800
+		Days: 5
+		Engineers: 18

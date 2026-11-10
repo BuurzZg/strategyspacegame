@@ -78,7 +78,7 @@ export class Input {
   pick(x, y) {
     let best = null, bs = Infinity;
     for (const v of this.renderer.views.values()) {
-      if (v.actor.dead || v.actor.burrowed) continue;
+      if (v.actor.dead || v.actor.burrowed || v.hidden) continue;
       const p = this.project(v.pos);
       if (p.z > 1 || p.z < -1) continue;
       const rpx = Math.max(10, this.screenRadius(v.pos, v.radius));
@@ -260,6 +260,12 @@ export class Input {
   down(e) {
     this.mx = e.clientX; this.my = e.clientY;
     this.audio.init();
+    // the Tactical Plot: a click looks there, and closes it
+    if (this.hud.plotOpen) {
+      if (e.button === 0) { const p = this.hud.plotToWorld(e.clientX, e.clientY); this.orbit.focusOn(new THREE.Vector3(p.x * R, this.orbit.focusT.y, p.y * R)); }
+      this.hud.togglePlot(false);
+      return;
+    }
     this.buttons.set(e.button, { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false });
     if (e.button === 0 && !this.move) this.box = { x: e.clientX, y: e.clientY, shift: e.shiftKey, active: false };
     this.canvas.setPointerCapture?.(e.pointerId);
@@ -349,6 +355,7 @@ export class Input {
     if (this.hud.comms && this.hud.comms.isOpen) { if (this.hud.comms.key(e.key)) e.preventDefault(); return; }
     const k = e.key.toLowerCase();
     if (k === 'c' && !e.ctrlKey && !e.metaKey) { this.hud.hail(); return; }
+    if (k === 'tab') { e.preventDefault(); this.hud.togglePlot(); return; }
     if (k === 'shift' && !this.keys.has('shift') && this.move) { this.move.anchorY = null; }
     this.keys.add(k);
     if (k === 'escape') { if (this.move) this.cancelMove(); else if (this.hud.buildOpen) this.hud.toggleBuild(false); else this.setSelection([], false); return; }

@@ -206,6 +206,7 @@ defineTrait('Wreck', class Wreck extends Trait {
     this.salvage -= t;
     this.taken += t;
     if (this.infested && this.taken >= 30 && by) this.hatch(by);
+    if (by && !this.bpGiven && this.taken * 2 >= this.maxAmount) this.blueprint(by);
     if (this.relic && this.taken >= this.relicAt && by) {
       const w = this.world, id = this.relic, name = w.rules.content.items?.[id]?.Name || id;
       this.relic = '';
@@ -220,6 +221,19 @@ defineTrait('Wreck', class Wreck extends Trait {
       w.addFrameEndTask((ww) => ww.removeActor(self));
     }
     return t;
+  }
+  // A wreck of a hull its cutters' side cannot build yet gives up the blueprint, half-way cut.
+  blueprint(by) {
+    this.bpGiven = true;
+    const w = this.world, known = (by.owner.slot || {}).blueprints;
+    if (!known || known.includes(this.of)) return;
+    const bp = Object.values(w.rules.content.items || {}).find((it) => it.Kind === 'blueprint' && it.Unlocks === this.of);
+    if (!bp || !w.point) return;
+    const found = w.point.logOf(by.owner).found;
+    if (found.includes(bp.id)) return;
+    found.push(bp.id);
+    w.notify(by.owner, `The cutters found the plans of the ${w.rules.actor(this.of).traitInfo('Tooltip').Name} in the wreck: the ${bp.Name}.`, 'good');
+    w.fx({ t: 'relic', id: bp.id, name: bp.Name, owner: by.owner.index, actor: this.self.id, x: this.self.x, y: this.self.y, z: this.self.z });
   }
   hatch(by) {
     const w = this.world, s = this.self;

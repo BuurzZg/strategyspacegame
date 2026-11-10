@@ -47,7 +47,7 @@ rivet:
 	Enemies: gaunt
 	Leave: Friendly
 	# trade: what they sell (and how much they have), what they want, crew and ships for hire, information
-	Sells: food 600, ice 800, salvage 400
+	Sells: food 600, ice 800, salvage 400, bp-talon 1
 	Wants: ore, glim
 	Hires: hands 12, miners 6, engineers 4
 	Ships: dart, picket, gleaner, shearer
@@ -84,7 +84,7 @@ gaunt:
 	Patrol: dart, dart, talon, talon, picket, halberd, sabre
 	Enemies: rivet, synod, cinder
 	Leave: Allied
-	Sells: salvage 1200, ore 800
+	Sells: salvage 1200, ore 800, bp-talon 1
 	Wants: glim, food
 	Ships: dart, talon
 	Dialog: gaunt
@@ -101,7 +101,7 @@ cinder:
 	Patrol: dart, talon, halberd, spindle, sabre
 	Enemies: gaunt
 	Leave: Friendly
-	Sells: ore 1200, ice 600
+	Sells: ore 1200, ice 600, bp-spindle 1, bp-sabre 1
 	Wants: salvage, spores
 	Hires: pilots 6, hands 8
 	Ships: talon, halberd, spindle

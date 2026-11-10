@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 10, events, monsters and the story.** A voyage now opens with a prologue, and each drive part has its story: arriving at its derelict, finding it, fitting it. The ending plays when the Forge jumps home. Random events happen out there: distress calls (some are lures), drifting pods, comet storms, strange signals, stowaways, spore blooms. On maps, Scrapwyrms lie buried in rock fields, rust mites hatch from infested wrecks, and the Hollowhorn's song shakes a spooling Skein loose. See [Events and monsters](#events-and-monsters).
+**Status: Milestone 11, sensors, fog and engineering.** Maps on the voyage have sensor fog: you see other ships only within your own ships' sensor range, and they see you the same way. Press `Tab` for the Tactical Plot. Build the new Wisp scout to see further. Some hulls need blueprints, and engineering projects upgrade the Forge. See [Sensors, blueprints and engineering](#sensors-blueprints-and-engineering).
+
+**Milestone 10, events, monsters and the story:** A voyage now opens with a prologue, and each drive part has its story: arriving at its derelict, finding it, fitting it. The ending plays when the Forge jumps home. Random events happen out there: distress calls (some are lures), drifting pods, comet storms, strange signals, stowaways, spore blooms. On maps, Scrapwyrms lie buried in rock fields, rust mites hatch from infested wrecks, and the Hollowhorn's song shakes a spooling Skein loose. See [Events and monsters](#events-and-monsters).
 
 **Milestone 9, diplomacy and trade:** Hail a faction where it holds the Forge's place, or hail one of its ships or stations on a map: talk, trade, hire crew and ships, buy charts, pay tribute, and make or break treaties. See [Comms and trade](#comms-and-trade).
 
@@ -36,7 +38,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-Sensors, fog and engineering (blueprints) come in Milestone 11.
+The first full run (main menu, run setup with permanent death or free saves, a tutorial, the AI captain) comes in Milestone 12.
 
 ## Running the game
 
@@ -227,6 +229,26 @@ The engineers have a fix on one part at a time: the gold ring. Go in and cut int
 
   Firing on a faction while a treaty holds breaks it: −40 standing, and war for the rest of the visit.
 - **Threats:** if your armed ships frighten them, they hand over goods (−10 standing); if not, it costs you (−15), and on a map they open fire.
+
+### Sensors, blueprints and engineering
+
+- **Sensor fog** (maps on the voyage, and practice): you see other ships and stations only within sensor range of one of your own. Most ships see about 900 m, a Halberd 1.1 km, a Sabre 1.2 km, the Forge 1.6 km, a Wisp 2.6 km. Inside a nebula, seeing and being seen both happen at half range. What cannot be seen cannot be targeted, by you or by anyone else. A faint red diamond marks where a hostile was last seen.
+- **The Tactical Plot** (`Tab`): the whole map from above. It shows your ships and their sensor reach, what you can see, last-seen marks, deposits, wrecks and nebulae. Click to look there.
+- **The Wisp:** a fast, unarmed scout (80 ore, 1 pilot) with three times a warship's sensor range.
+- **Deep scan** (star chart, at the Forge's place): a day and 40 Glim to reveal every place within twice the sensor range.
+- **Blueprints:** the foundry starts able to build Darts, Pickets, Halberds, Gleaners, Shearers, Skimmers, Smelters and Wisps. **Talons, Spindles and Sabres need blueprints:**
+  - cut half the salvage out of a wreck of that hull;
+  - buy one (Rivet Moot and Ashen Gaunt: Talon; Cinder Pact: Spindle and Sabre);
+  - or find one in an old archive.
+- **Engineering projects** (the Forge tab), built with ore, salvage, days and free engineers:
+
+| Project | What it does |
+| --- | --- |
+| Expanded hangar | +10 fleet capacity |
+| Hydroponic racks | Hydroponics grow 50% more |
+| Long-range array | Sensors reach 50% further, on the chart and on maps |
+| Glim recycler | Stitches cost 20% less Glim |
+| Armoured plating | The Forge's hull is 25% stronger |
 
 ### Events and monsters
 
@@ -438,6 +460,14 @@ Runs the headless tests:
   - firing, kills and helping change standing by the listed amounts;
   - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
   - a visit with factions is deterministic.
+- **Fog and engineering** (`tools/fogtest.js`): checks that:
+  - a ship beyond sensor range is hidden and untargetable until one of yours comes close, then hidden again with its last position remembered;
+  - fog works for monsters too;
+  - nebulae halve sensor range, and a Wisp sees three times as far;
+  - blueprints: Talons are refused without one; cutting a Talon wreck finds it and the next map can build them; the Cinder Pact sell a Sabre blueprint, once;
+  - all five engineering projects change what they say, on the chart and on maps;
+  - a deep scan reveals places;
+  - fog is deterministic.
 - **Events** (`tools/eventtest.js`): checks that:
   - all 25 events validate and can happen somewhere, and every node and choice in them can be reached;
   - the prologue opens a voyage and happens once; each drive part's storyline fires on arriving, finding and fitting;
@@ -523,7 +553,7 @@ src/engine/           deterministic core: world, actors, traits, orders, lockste
                       (content.js), the place generator (poi.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
-                      Diplomacy, Station, Burrows, Interdicts, ...)
+                      Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,

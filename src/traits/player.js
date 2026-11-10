@@ -50,6 +50,8 @@ defineTrait('FleetCapacity', class extends Trait {
   cap() {
     let c = 0;
     for (const t of this.world.enabledTraits('ProvidesCapacity', this.self.owner)) c += t.info.Amount;
+    // an expanded hangar (engineering, from the voyage)
+    c += (this.self.owner.slot && this.self.owner.slot.capacityBonus) | 0;
     return Math.min(this.info.Max, c);
   }
   used() {

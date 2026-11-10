@@ -19,6 +19,8 @@
 	LeavesWreck:
 		Pct: 25
 	Station:
+	Sensors:
+		Range: 14000
 
 hulltown:
 	Inherits: ^Station

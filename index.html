@@ -260,6 +260,7 @@ body.at-launcher #top, body.at-launcher #cgroups, body.at-launcher #toasts, body
 #title-practice summary:hover { color: var(--text); }
 
 /* the star chart */
+body.plotting #sel, body.plotting #fleetbar, body.plotting #cgroups, body.plotting #build, body.plotting #help { display: none !important; }
 body.at-chart #top, body.at-chart #sel, body.at-chart #build, body.at-chart #grounds, body.at-chart #help, body.at-chart #fleetbar,
 body.at-chart #cgroups, body.at-chart #move-hint, body.at-chart #skein { display: none !important; }
 #chart-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: linear-gradient(to bottom, rgba(5, 6, 11, 0.92), rgba(5, 6, 11, 0)); pointer-events: none; flex-wrap: wrap; }
@@ -585,6 +586,8 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
       <dt><kbd>Double-click</kbd></dt><dd>Select and focus</dd>
       <dt><kbd>Ctrl A</kbd></dt><dd>Select all ships</dd>
       <dt><kbd>Backspace</kbd></dt><dd>All stop</dd>
+      <dt><kbd>Tab</kbd></dt><dd>Tactical Plot: the whole map from above, with what your sensors can see</dd>
+      <dt><kbd>C</kbd></dt><dd>Hail the faction ship or station you have selected</dd>
       <dt><kbd>Home</kbd></dt><dd>Select and focus the Forge</dd>
     </dl>
     <h3>Production</h3>

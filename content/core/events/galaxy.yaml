@@ -141,3 +141,25 @@ HollowhornSong:
 		Choice@ok:
 			Text: Keep the Forge well clear of it when we leave.
 			Do: close
+
+OldArchive:
+	When: arrive
+	Chance: 10
+	If: type Wreck, day >= 10
+	Title: An archive
+	Start: archive
+	Node@archive:
+		Say: The wreck's data core is still warm. Most of it is personal letters, which the crew read anyway. Some of it is engineering drawings.
+		Choice@read:
+			Text: Copy the drawings.
+			Do: roll 50 talon spindle
+	Node@talon:
+		Say: Plans for a bomber with a delta wing: a Talon, or near enough. The foundry can make it.
+		Choice@ok:
+			Text: Good.
+			Do: item bp-talon found, close
+	Node@spindle:
+		Say: Plans for a long, thin frigate built round a lance: a Spindle. The foundry can make it.
+		Choice@ok:
+			Text: Good.
+			Do: item bp-spindle found, close

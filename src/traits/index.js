@@ -10,3 +10,4 @@ import './formation.js';
 import './poi.js';
 import './diplomacy.js';
 import './monsters.js';
+import './sensors.js';

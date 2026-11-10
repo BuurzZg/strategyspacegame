@@ -10,3 +10,6 @@
 	Flight:
 	WithModel:
 	Stance:
+	# how far it sees on a map with sensor fog (world units; nebulae halve it)
+	Sensors:
+		Range: 9000

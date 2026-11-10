@@ -578,6 +578,75 @@ export class Hud {
   }
 
   // ---------------------------------------------------------------- overlay
+  // Sensor fog: where hostiles were last seen, fading with age.
+  drawLastSeen(ctx) {
+    const w = this.world, me = this.s.viewer;
+    if (!w.shroud || !w.shroud.on || !me.lastSeen) return;
+    const v3 = this.tmpV ||= this.renderer.tmp.clone();
+    ctx.font = '600 10px "IBM Plex Mono", monospace';
+    for (const [id, e] of me.lastSeen) {
+      if (me.seen.has(id) || !me.isEnemy(w.players[e.owner])) continue;
+      const age = (w.frame - e.frame) / 25;
+      if (age > 90) continue;
+      v3.set(e.x * R, e.z * R, e.y * R);
+      const p = this.input.project(v3);
+      if (p.z > 1 || p.z < -1) continue;
+      ctx.strokeStyle = `rgba(255,90,100,${Math.max(0.15, 0.7 - age / 120)})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - 6); ctx.lineTo(p.x + 6, p.y); ctx.lineTo(p.x, p.y + 6); ctx.lineTo(p.x - 6, p.y); ctx.closePath(); ctx.stroke();
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fillText('?', p.x + 9, p.y + 4);
+    }
+  }
+
+  // ---------------------------------------------------------------- the Tactical Plot (Tab)
+  // The whole map from above: your ships and their sensor reach, what you can see, where
+  // hostiles were last seen, deposits and nebulae. Click to move the camera there.
+  togglePlot(open = !this.plotOpen) { this.plotOpen = open; document.body.classList.toggle('plotting', open); }
+  plotRect() {
+    const W = window.innerWidth, H = window.innerHeight, b = this.world.bounds;
+    const bw = b.x1 - b.x0, bh = b.y1 - b.y0, size = Math.min(W - 120, H - 140), k = size / Math.max(bw, bh);
+    return { x: (W - bw * k) / 2, y: (H - bh * k) / 2 + 10, w: bw * k, h: bh * k, k, b };
+  }
+  plotToWorld(px, py) { const r = this.plotRect(); return { x: r.b.x0 + (px - r.x) / r.k, y: r.b.y1 - (py - r.y) / r.k }; }
+  drawPlot(ctx) {
+    const w = this.world, me = this.s.viewer, r = this.plotRect(), rd = this.renderer;
+    const X = (x) => r.x + (x - r.b.x0) * r.k, Y = (y) => r.y + (r.b.y1 - y) * r.k;
+    ctx.fillStyle = 'rgba(5,6,11,0.88)'; ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    ctx.strokeStyle = 'rgba(95,227,208,0.35)'; ctx.lineWidth = 1; ctx.strokeRect(r.x, r.y, r.w, r.h);
+    // grid every 20 cells (2 km)
+    ctx.strokeStyle = 'rgba(127,142,163,0.12)';
+    for (let gx = r.b.x0; gx <= r.b.x1; gx += 20 * CELL) { ctx.beginPath(); ctx.moveTo(X(gx), r.y); ctx.lineTo(X(gx), r.y + r.h); ctx.stroke(); }
+    for (let gy = r.b.y0; gy <= r.b.y1; gy += 20 * CELL) { ctx.beginPath(); ctx.moveTo(r.x, Y(gy)); ctx.lineTo(r.x + r.w, Y(gy)); ctx.stroke(); }
+    for (const n of w.nebulae || []) { ctx.fillStyle = `#${n.color}22`; ctx.beginPath(); ctx.arc(X(n.at[0]), Y(n.at[1]), n.radius * r.k, 0, Math.PI * 2); ctx.fill(); }
+    const fog = w.shroud && w.shroud.on;
+    for (const a of w.actors) {
+      if (a.dead) continue;
+      const x = X(a.x), y = Y(a.y);
+      if (a.deposit && !a.wreck) { ctx.fillStyle = a.cloud ? 'rgba(255,240,176,0.35)' : 'rgba(217,165,119,0.45)'; ctx.fillRect(x - 1.5, y - 1.5, 3, 3); continue; }
+      if (a.wreck) { ctx.fillStyle = 'rgba(201,184,166,0.45)'; ctx.fillRect(x - 2, y - 2, 4, 4); continue; }
+      if (!a.health || a.burrowed) continue;
+      if (a.owner === me) {
+        const s = a.info.traitInfo('Sensors');
+        if (fog && s) { ctx.strokeStyle = 'rgba(95,227,208,0.10)'; ctx.beginPath(); ctx.arc(x, y, ((s.Range * (me.sensorPct || 100)) / 100) * r.k, 0, Math.PI * 2); ctx.stroke(); }
+        ctx.fillStyle = '#5fe3d0'; const z = a.has('Hangar') ? 5 : 2.5; ctx.fillRect(x - z, y - z, z * 2, z * 2);
+        continue;
+      }
+      if (fog && !w.shroud.visible(me, a)) continue;
+      ctx.fillStyle = me.isEnemy(a.owner) ? '#ff5a64' : rd.styleOf(a.owner).css;
+      ctx.beginPath(); ctx.arc(x, y, a.station ? 6 : 3, 0, Math.PI * 2); ctx.fill();
+    }
+    if (fog) for (const [id, e] of me.lastSeen) {
+      if (me.seen.has(id) || !me.isEnemy(w.players[e.owner])) continue;
+      ctx.strokeStyle = 'rgba(255,90,100,0.6)'; ctx.strokeRect(X(e.x) - 3, Y(e.y) - 3, 6, 6);
+    }
+    // where the camera is looking
+    const f = this.s.orbit.focus;
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(X(f.x / R), Y(f.z / R), 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.font = '600 11px "IBM Plex Sans", sans-serif'; ctx.fillStyle = '#7f8ea3';
+    ctx.fillText('TACTICAL PLOT  ·  click to look there  ·  Tab to close', r.x, r.y - 10);
+  }
+
   drawBrackets(ctx, v, color, strong) {
     const inp = this.input;
     const p = inp.project(v.pos);
@@ -598,6 +667,8 @@ export class Hud {
     const ctx = this.ctx, inp = this.input, rd = this.renderer;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.overlay.width, this.overlay.height);
+    this.drawLastSeen(ctx);
+    if (this.plotOpen) { this.drawPlot(ctx); return; }
     for (const a of inp.selection) {
       const v = rd.views.get(a.id);
       if (!v) continue;

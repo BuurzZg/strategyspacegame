@@ -48,6 +48,7 @@ export function newVoyage(rules, { seed = 1 } = {}) {
     items: {}, airless: 0, dry: false, over: null, visits: 0,
     standing: {}, met: {}, treaties: [], flags: [], stock: {},
     queue: [], seen: [], ahead: [], rolls: 0,
+    blueprints: [...(rules.content.blueprintStart || [])],
     log: [],
   };
   assignFleet(s.crew, rules, s.fleet);
@@ -79,6 +80,20 @@ function signalNote(rules, s) {
 export function note(s, text, kind = 'info') { s.log.push({ day: s.day, text, kind }); if (s.log.length > 400) s.log.splice(0, s.log.length - 400); }
 
 // ---------------------------------------------------------------- the Forge
+// Engineering projects fitted: percent bonuses multiply (FoodPct, SensorPct, GlimPct, HullPct),
+// Capacity adds.
+export function projectBonus(rules, s, key) {
+  let v = key === 'Capacity' ? 0 : 100;
+  for (const [id, st] of Object.entries(s.items)) {
+    const it = rules.content.items[id];
+    if (st !== 'installed' || !it || it.Kind !== 'project' || it[key] === undefined) continue;
+    v = key === 'Capacity' ? v + (+it[key] | 0) : Math.trunc((v * +it[key]) / 100);
+  }
+  return v;
+}
+export const forgeMaxHp = (rules, s) => Math.trunc((rules.actor('forge').traitInfo('Health').HP * projectBonus(rules, s, 'HullPct')) / 100);
+export const stitchCost = (rules, s, len) => Math.trunc((stitchGlim(rules.content.voyage, len) * projectBonus(rules, s, 'GlimPct') + 99) / 100);
+
 // A system's working output in percent: its condition, slowed by a damaged reactor.
 export function output(s, sys) {
   const c = s.systems[sys] | 0;
@@ -94,7 +109,7 @@ export function drive(rules, s) {
   const c = s.systems.drive | 0;
   return { ...d, range: c <= 0 ? 0 : Math.trunc((d.range * (50 + (c >> 1))) / 100) };
 }
-export const sensorRange = (rules, s) => Math.trunc((num(rules.content.voyage, 'SensorRange') * (40 + Math.trunc((output(s, 'sensors') * 60) / 100))) / 100);
+export const sensorRange = (rules, s) => Math.trunc((Math.trunc((num(rules.content.voyage, 'SensorRange') * projectBonus(rules, s, 'SensorPct')) / 100) * (40 + Math.trunc((output(s, 'sensors') * 60) / 100))) / 100);
 
 // Places within sensor range of the Forge become known (their type shows on the chart).
 export function reveal(rules, s) {
@@ -147,7 +162,7 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
   if (airWater(air) > st.ice) air = Math.trunc((st.ice * 100) / Math.max(1, num(V, 'WaterPerAir')));
   st.ice -= airWater(air);
   // hydroponics: food from water, more with spores
-  let food = Math.trunc((num(V, 'FoodPerDay') * output(s, 'hydro')) / 100);
+  let food = Math.trunc((Math.trunc((num(V, 'FoodPerDay') * projectBonus(rules, s, 'FoodPct')) / 100) * output(s, 'hydro')) / 100);
   const foodWater = (f) => Math.trunc((f * num(V, 'WaterPerFood') + 99) / 100);
   if (foodWater(food) > st.ice) food = Math.trunc((st.ice * 100) / Math.max(1, num(V, 'WaterPerFood')));
   st.ice -= foodWater(food);
@@ -211,6 +226,7 @@ export function plan(rules, s, to) {
   const d = drive(rules, s);
   if (d.range <= 0) return no('The Skein Drive is wrecked. Repair it to stitch.');
   const r = route(g, rules, s.at, to, d);
+  if (r) r.glim = r.lanes.reduce((t, li) => t + stitchCost(rules, s, g.lanes[li].len), 0);
   if (!r) {
     if (!d.veil && route(g, rules, s.at, to, { range: d.range, veil: true })) return no('The Veil is in the way: the drive cannot stitch through it yet.');
     const full = route(g, rules, s.at, to, { range: 1000, veil: true });
@@ -230,7 +246,7 @@ export function stitch(rules, s, to) {
   const g = galaxyOf(rules, s), V = rules.content.voyage;
   for (let i = 0; i < p.route.hops.length; i++) {
     const l = g.lanes[p.route.lanes[i]];
-    s.stores.glim -= stitchGlim(V, l.len);
+    s.stores.glim -= stitchCost(rules, s, l.len);
     passDays(rules, s, stitchDays(V, l.len));
     if (s.over) return { ok: true };
     s.at = p.route.hops[i];
@@ -281,6 +297,38 @@ export function eventChoice(rules, s, effects) {
 }
 export { eventContext };
 
+// A blueprint: a hull you can now build.
+export function learn(rules, s, id) {
+  const it = rules.content.items[id];
+  if (!it || it.Kind !== 'blueprint') return false;
+  s.blueprints ||= [];
+  if (s.blueprints.includes(it.Unlocks)) return false;
+  s.blueprints.push(it.Unlocks);
+  note(s, `Learned: the ${it.Name}. The foundry can build ${rules.actor(it.Unlocks).traitInfo('Tooltip').Name}s now.`, 'good');
+  return true;
+}
+
+// A day spent with every sensor turned outward: places within twice the sensor range become known.
+export function scanPlan(rules, s) {
+  const glim = num(rules.content.voyage, 'ScanGlim');
+  if (s.stores.glim < glim) return no(`Scanning takes ${glim} Glim.`);
+  if (s.systems.sensors <= 0) return no('The sensors are wrecked.');
+  return { ok: true, glim, range: sensorRange(rules, s) * 2 };
+}
+export function scan(rules, s) {
+  if (s.over) return no('The voyage is over.');
+  const p = scanPlan(rules, s);
+  if (!p.ok) return p;
+  s.stores.glim -= p.glim;
+  const g = galaxyOf(rules, s), here = g.points[s.at], known = new Set(s.known);
+  let n = 0;
+  for (const q of g.points) if (!known.has(q.id) && (q.x - here.x) * (q.x - here.x) + (q.y - here.y) * (q.y - here.y) <= p.range * p.range) { known.add(q.id); n++; }
+  s.known = [...known].sort((a, b) => a - b);
+  dayTick(rules, s);
+  note(s, `A day's deep scan: ${n} places newly known.`, 'info');
+  return { ok: true, found: n };
+}
+
 export function rest(rules, s) {
   if (s.over) return no('The voyage is over.');
   const still = galaxyOf(rules, s).points[s.at].type === 'StillWater';
@@ -295,7 +343,7 @@ export function repairPlan(rules, s, sys) {
   const V = rules.content.voyage, eng = free(s.crew, 'engineers'), pct = workPct(rules, s);
   if (eng <= 0) return no('No engineers are free.');
   if (sys === 'hull') {
-    const max = rules.actor('forge').traitInfo('Health').HP, missing = Math.trunc(((max - s.forge.hp) * 100) / max);
+    const max = forgeMaxHp(rules, s), missing = Math.trunc(((max - s.forge.hp) * 100) / max);
     if (missing <= 0) return no('The hull is sound.');
     let p = Math.max(1, Math.trunc((eng * num(V, 'HullPer10Engineers') * pct) / 1000));
     p = Math.min(p, missing, Math.trunc(s.stores.ore / Math.max(1, num(V, 'HullOre'))), Math.trunc(s.stores.salvage / Math.max(1, num(V, 'HullSalvage'))));
@@ -315,7 +363,7 @@ export function repair(rules, s, sys) {
   const p = repairPlan(rules, s, sys);
   if (!p.ok) return p;
   s.stores.ore -= p.ore; s.stores.salvage -= p.salvage;
-  if (sys === 'hull') { const max = rules.actor('forge').traitInfo('Health').HP; s.forge.hp = Math.min(max, s.forge.hp + Math.trunc((max * p.points) / 100)); }
+  if (sys === 'hull') { const max = forgeMaxHp(rules, s); s.forge.hp = Math.min(max, s.forge.hp + Math.trunc((max * p.points) / 100)); }
   else s.systems[sys] += p.points;
   dayTick(rules, s);
   const name = sys === 'hull' ? 'the hull' : rules.content.systems[sys].Name;
@@ -325,7 +373,9 @@ export function repair(rules, s, sys) {
 
 export function installPlan(rules, s, id) {
   const it = rules.content.items[id], I = it && it.Install;
-  if (!it || s.items[id] !== 'found') return no(s.items[id] === 'installed' ? 'Already fitted.' : 'Not found yet.');
+  if (!it || !I) return no('That cannot be fitted.');
+  if (s.items[id] === 'installed') return no(it.Kind === 'project' ? 'Already built.' : 'Already fitted.');
+  if (it.Kind !== 'project' && s.items[id] !== 'found') return no('Not found yet.');
   if (s.stores.ore < +I.Ore || s.stores.salvage < +I.Salvage) return no(`Fitting it takes ${I.Ore} ore and ${I.Salvage} salvage.`);
   if (free(s.crew, 'engineers') < +I.Engineers) return no(`Fitting it takes ${I.Engineers} free engineers.`);
   return { ok: true, days: Math.max(1, Math.trunc((+I.Days * 100) / workPct(rules, s))), ore: +I.Ore, salvage: +I.Salvage };
@@ -339,6 +389,11 @@ export function install(rules, s, id) {
   if (s.over) return { ok: true };
   s.items[id] = 'installed';
   reveal(rules, s);
+  if (rules.content.items[id].Kind === 'project') {
+    if (rules.content.items[id].HullPct) s.forge.hp = Math.trunc((s.forge.hp * +rules.content.items[id].HullPct) / 100);
+    note(s, `${rules.content.items[id].Name} built after ${p.days} days' work.`, 'good');
+    return { ok: true };
+  }
   note(s, `${rules.content.items[id].Name} fitted to the Skein Drive after ${p.days} days' work.`, 'story');
   signalNote(rules, s);
   trigger(rules, s, galaxyOf(rules, s), 'install', { item: id });
@@ -422,10 +477,12 @@ export function visitSettings(rules, s) {
   return {
     ...settings,
     latency: 1,
+    fog: true,
     players: [
       {
         name: 'You', faction: 'meridian', client: 0, ships: ['forge'], stores, hangar: s.fleet.map((e) => ({ ...e })), forgeHp: s.forge.hp,
         crew: freeAll(s.crew), buildSpeed: Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100),
+        blueprints: [...(s.blueprints || [])], capacityBonus: projectBonus(rules, s, 'Capacity'), sensorPct: projectBonus(rules, s, 'SensorPct'), forgeHpPct: projectBonus(rules, s, 'HullPct'),
         spoolPct: Math.max(100, Math.trunc(10000 / Math.max(1, 50 + (s.systems.drive >> 1)))),
       },
       ...factions.map((fid, i) => ({ name: F[fid].Name, faction: fid, team: i + 1, ships: [], tier: tierOf(fid), standing: standingOf(rules, s, fid) })),
@@ -454,7 +511,7 @@ function relationsFor(rules, factions, tierOf) {
 export function returnFromMap(rules, s, report) {
   const V = rules.content.voyage, g = galaxyOf(rules, s), p = g.points[s.at];
   for (const [k, st] of Object.entries(report.stores)) s.stores[k] = st.end;
-  const maxHp = rules.actor('forge').traitInfo('Health').HP, hpBefore = s.forge.hp;
+  const maxHp = forgeMaxHp(rules, s), hpBefore = s.forge.hp;
   s.forge.hp = report.forge ? report.forge.hp : 0;
   s.fleet = report.ships.aboard.map((e) => ({ type: e.type, hp: e.hp }));
   // crew lost with ships destroyed or left behind
@@ -486,7 +543,8 @@ export function returnFromMap(rules, s, report) {
   for (const f of st.flags || []) s.flags = [...new Set([...(s.flags || []), f])];
   for (const what of st.reveals || []) note(s, revealPlaces(rules, s, galaxyOf(rules, s), what), 'info');
   // what was found
-  for (const id of report.found || []) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); trigger(rules, s, galaxyOf(rules, s), 'found', { item: id }); }
+  for (const id of report.found || []) if (rules.content.items[id]?.Kind === 'blueprint') learn(rules, s, id);
+  for (const id of (report.found || []).filter((x) => rules.content.items[x]?.Kind !== 'blueprint')) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); trigger(rules, s, galaxyOf(rules, s), 'found', { item: id }); }
   // whatever was waiting here has been met
   s.ahead = (s.ahead || []).filter((a) => a.at !== p.id);
   // morale: losses hurt, a win helps
@@ -514,6 +572,8 @@ export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
   if (s && s.kind === 'voyage' && s.version === 2) { s.standing = {}; s.met = {}; s.version = 3; } // from Milestone 7
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
+  // from Milestone 10: everything could be built then, so keep it that way
+  if (s && s.kind === 'voyage' && !s.blueprints) s.blueprints = [...new Set([...(rules.content.blueprintStart || []), ...Object.values(rules.content.items).filter((i) => i.Kind === 'blueprint').map((i) => i.Unlocks)])];
   if (!s || s.kind !== 'voyage' || s.version !== SAVE_VERSION) throw new Error('That save is from another version of Driftforge.');
   galaxyOf(rules, s);
   return s;

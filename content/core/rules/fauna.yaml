@@ -37,6 +37,8 @@ gnasher:
 	AutoTarget:
 		ScanRange: 9000
 		Leash: 30000
+	Sensors:
+		Range: 12000
 
 # A Scrapwyrm lies buried in a rock field and strikes at whatever comes close; after a while
 # with nothing to bite it burrows again.

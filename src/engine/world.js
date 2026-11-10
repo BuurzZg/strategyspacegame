@@ -162,7 +162,10 @@ export class World {
   edgeDist(a, t) { return this.edgeDistPoint(a.x, a.y, a.z, t); }
 
   // Fog of war arrives with sensors (milestone 7); until then everything is visible.
-  canSee(player, a) { return !a || !a.burrowed || a.owner === player; }
+  canSee(player, a) {
+    if (a && a.burrowed && a.owner !== player) return false;
+    return this.shroud ? this.shroud.visible(player, a) : true;
+  }
 
   // Group move without formations: every ship keeps its offset from the group centre,
   // pulled in a little so a scattered group tightens up.
@@ -283,6 +286,7 @@ export class World {
     h = hashMix(h, this.effects.length);
     for (const e of this.effects) { h = hashMix(h, e.x); h = hashMix(h, e.y); h = hashMix(h, e.z); }
     if (this.formations) h = this.formations.hash(h, hashMix);
+    for (const p of this.players) if (p.seen) h = hashMix(h, p.seen.size);
     for (const k of [...this.relations.keys()].sort()) { const r = this.relations.get(k); h = hashMix(h, k.length); h = hashMix(h, r === 'enemy' ? 1 : r === 'ally' ? 2 : 3); }
     return h >>> 0;
   }

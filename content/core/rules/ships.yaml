@@ -264,6 +264,43 @@ dart:
 	WithModel:
 		Model: dart
 
+# The Wisp: a scout. No guns, a great deal of sensor, and very fast.
+wisp:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Wisp
+		Class: Scout
+		Role: Sensor picket
+		Description: A thin hull wrapped round a sensor dish. It sees three times as far as a warship, and runs from everything.
+	Valued:
+		Cost: 80
+	Buildable:
+		Queue: Forge
+		BuildDuration: 225
+		BuildPaletteOrder: 9
+	ConsumesCapacity:
+		Amount: 1
+	Health:
+		HP: 5000
+		Radius: 240
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 400
+	Flight:
+		MaxSpeed: 160
+		Acceleration: 7
+		Deceleration: 7
+		TurnSpeed: 14
+		PitchSpeed: 12
+		MinSpeed: 30
+		Slip: 90
+		Bank: 50
+	WithModel:
+		Model: wisp
+	Sensors:
+		Range: 26000
+
 talon:
 	Inherits: ^Ship
 	Tooltip:

@@ -93,6 +93,8 @@ defineTrait('Hangar', class Hangar extends Trait {
     this.aboard = []; // { type, hp, cargo, kind }
     this.queue = (slot.hangar || []).map((e) => (typeof e === 'string' ? { type: e } : { ...e }));
     this.timer = 1;
+    // armoured plating (engineering, from the voyage) raises the Forge's hull
+    if (slot.forgeHpPct && this.self.health) this.self.health.maxHp = Math.trunc((this.self.health.maxHp * slot.forgeHpPct) / 100);
     if (slot.forgeHp && this.self.health) this.self.health.hp = Math.max(1, Math.min(this.self.health.maxHp, slot.forgeHp | 0));
   }
   tick() {

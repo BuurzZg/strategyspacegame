@@ -39,7 +39,8 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
     resources: Object.fromEntries([...mergeFiles(data.Resources)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]).sort((a, b) => (+a[1].Order || 99) - (+b[1].Order || 99))),
     poiTypes: Object.fromEntries([...mergeFiles(data.PoiTypes)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }])),
     regions: Object.fromEntries([...mergeFiles(data.Regions)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }])),
-    items: Object.fromEntries([...mergeFiles(data.Items)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }])),
+    items: Object.fromEntries([...mergeFiles(data.Items)].filter(([k]) => k !== 'Blueprints').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }])),
+    blueprintStart: (([...mergeFiles(data.Items)].find(([k]) => k === 'Blueprints') || [null, { nodes: [] }])[1].nodes.find((n) => n.key === 'Start')?.value || '').split(',').map((s) => s.trim()).filter(Boolean),
   };
   const voyage = new Map(mergeFiles(data.Voyage));
   rules.content.voyage = voyage.has('Voyage') ? nodesToObject(voyage.get('Voyage').nodes) : {};

@@ -6,7 +6,7 @@
 #   Wants       what they pay for goods they want, and for goods they do not, as percent of Value
 
 Trade:
-	Value: ore 1, ice 1, salvage 2, glim 3, spores 2, food 2, hands 40, miners 50, pilots 60, engineers 80, chart 400, survey 250
+	Value: ore 1, ice 1, salvage 2, glim 3, spores 2, food 2, hands 40, miners 50, pilots 60, engineers 80, chart 400, survey 250, bp-talon 900, bp-spindle 1100, bp-sabre 1500
 	Standing: Hostile 30, Wary 30, Neutral 10, Friendly 0, Allied -30
 	Scarce: 50
 	Wants: 70

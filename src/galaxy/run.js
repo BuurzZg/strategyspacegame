@@ -25,6 +25,7 @@ export function visitSettings(rules, run, { type, place = run.visits + 1, seed }
   return {
     ...s,
     latency: 1,
+    fog: true,
     players: [
       { name: 'You', faction: 'meridian', client: 0, ships: ['forge'], stores: { ...run.stores }, hangar: run.fleet.map((e) => ({ ...e })), forgeHp: run.forge.hp },
       { name: 'Ashen Gaunt', faction: 'gaunt', team: 1, ships: [] },

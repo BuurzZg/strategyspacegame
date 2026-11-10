@@ -51,7 +51,7 @@ export function captain(rules, seed, { events = false } = {}) {
     return best;
   };
   // where water and Glim can be had
-  const SUPPLY = { IceTail: ['IceTail'], LanternMist: ['LanternMist', 'SynodRefinery', 'ChoirBloom', 'HollowhornGrounds'] };
+  const SUPPLY = { IceTail: ['IceTail'], LanternMist: ['LanternMist', 'SynodRefinery', 'ChoirBloom'] };
   const type = (t) => (p) => (SUPPLY[t] || [t]).includes(p.type);
   const settle = () => { if (events) resolveEvents(rules, s); else s.queue = []; };
   settle();

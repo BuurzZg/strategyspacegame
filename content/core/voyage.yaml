@@ -37,6 +37,8 @@ Voyage:
 	DaySpan: 90
 	# drifting without Glim, at sub-light: days per 10 spans
 	DriftDaysPer10: 1
+	# a day's deep scan from the chart: Glim it costs (it sees twice the sensor range)
+	ScanGlim: 40
 	# the reactor's daily draw of Glim
 	ReactorGlim: 3
 	# sensors: how far the chart reveals what a place is (spans, at full condition)

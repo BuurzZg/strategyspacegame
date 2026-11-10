@@ -102,6 +102,7 @@ export class CommsPanel {
   label(g) {
     if (g.startsWith('ship:')) { const t = this.rules.actor(g.slice(5)), c = t.traitInfo('Crew'); return `${t.traitInfo('Tooltip').Name}${c && c.Count ? ` <span class="sub">with ${c.Count} ${c.Role}</span>` : ''}`; }
     if (ROLES.includes(g)) return g[0].toUpperCase() + g.slice(1);
+    if (g.startsWith('bp-')) return esc(this.rules.content.items[g]?.Name || g);
     return esc(this.rules.content.resources[g]?.Name || g);
   }
   renderTrade() {

@@ -397,12 +397,12 @@ New kinds of test arrive with the new layers:
 | 8 | Races, factions, reputation | Five races and five factions in YAML; territory and stations on the galaxy; faction fleets on maps acting by standing (hostile, wary, neutral, friendly, allied); firing, kills, helping and theft change standing; the standing screen; an example add-on pack adds a faction with no code |
 | 9 | Diplomacy and trade | Hailing from the chart and on maps; comms dialogs in YAML with a fixed vocabulary of conditions and effects; barter trade with prices from value, standing, stock and wants; hiring crew and crewed ships; buying surveys and charts; tribute, ceasefire, peace and leave treaties, enforced on maps and broken by firing; threats |
 | 10 | Events, monsters, story | 25 events in YAML (the prologue, each drive part's arrival, discovery and fitting, the Hush, the Shore, the ending; distress calls that may be lures, pods, comet storms, signals, stowaways, spore blooms); Scrapwyrms that lie buried in rock fields and ambush; rust mites that hatch from infested wrecks; the Hollowhorn, whose song shakes a spooling Skein loose; the Choir and the Gaunt as other routes to the Lens and the Spindle |
+| 11 | Sensors, fog, engineering | Sensor fog on voyage maps (unseen ships cannot be seen or targeted by anyone; nebulae halve sensor range; last-seen markers); the Tactical Plot (Tab); the Wisp scout; deep scans on the chart; blueprints (Talon, Spindle and Sabre start locked: found by cutting wrecks of that hull, bought, or given in events); five engineering projects |
 
 ### Next
 
 | # | Milestone | Playable result | Checks |
 | --- | --- | --- | --- |
-| **11** | **Sensors, fog, engineering** | Sensor fog on maps, the Tactical Plot (Tab), galaxy scanning, blueprints and engineering projects, the Wisp scout | Hidden ships stay hidden until seen; blueprints unlock the right hulls |
 | **12** | **Polish and the first full run** | Main menu; new-run setup (seed, difficulty, voyage length, and the choice between permanent death and free saves); save and quit; a tutorial; a sound pass; a balance pass to the target run lengths; the AI captain; a final README | The AI captain finishes many seeded runs headless; run length is within the target for both voyage lengths; save, quit and continue gives an identical run; no console errors |
 | **13** | **Named crew** | Named crew members with roles and traits, built on the crew interface from Milestone 7. Traits live in YAML. Losses pick who dies; events can mention people by name | Trait modifiers apply through the condition system; role counts and named crew always agree; old saves still load |
 

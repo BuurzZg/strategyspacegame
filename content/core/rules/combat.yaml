@@ -136,3 +136,20 @@ wreck:
 	Wreck:
 	WithModel:
 		Model: wreck
+
+# sensors: bigger hulls carry bigger arrays
+forge:
+	Sensors:
+		Range: 16000
+halberd:
+	Sensors:
+		Range: 11000
+sabre:
+	Sensors:
+		Range: 12000
+wisp:
+	Crew:
+		Count: 1
+		Role: pilots
+	Stance:
+		Initial: passive

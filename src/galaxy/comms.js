@@ -195,11 +195,22 @@ function applyEventEffect(rules, s, galaxy, e, out) {
     else s.systems[e.system] = Math.max(0, s.systems[e.system] - e.n);
     out.notes.push(`${e.system === 'hull' ? 'Hull' : sys[e.system].Name} −${e.n}%.`);
   } else if (e.op === 'morale') { s.morale = Math.max(0, Math.min(100, s.morale + e.n)); out.notes.push(`Morale ${e.n > 0 ? '+' : ''}${e.n}.`); }
-  else if (e.op === 'item') { if (!s.items[e.item]) { s.items[e.item] = 'found'; out.notes.push(`The ${rules.content.items[e.item].Name} is aboard.`); out.found = e.item; } }
+  else if (e.op === 'item') {
+    if (rules.content.items[e.item]?.Kind === 'blueprint') { if (learnBlueprint(rules, s, e.item)) out.notes.push(`Learned: the ${rules.content.items[e.item].Name}.`); }
+    else if (!s.items[e.item]) { s.items[e.item] = 'found'; out.notes.push(`The ${rules.content.items[e.item].Name} is aboard.`); out.found = e.item; }
+  }
   else if (e.op === 'days') { out.days = (out.days || 0) + e.n; }
   else if (e.op === 'ambush') { (s.ahead ||= []).push({ at: s.at, side: e.side, ships: e.ships, delay: e.delay, behaviour: e.behaviour || 'hunt' }); }
   else if (e.op === 'roll') { out.goto = rollFor(s, e.chance) ? e.yes : e.no; }
   else if (e.op === 'fstanding') { const t = change(rules, s, e.fid, e.n); out.notes.push(`${rules.content.factions[e.fid].Name}: ${e.n > 0 ? '+' : ''}${e.n} standing.`); if (t) out.notes.push(`The ${rules.content.factions[e.fid].Name} are now ${t.to} toward the Forge.`); }
+}
+export function learnBlueprint(rules, s, id) {
+  const it = rules.content.items[id];
+  if (!it || it.Kind !== 'blueprint') return false;
+  s.blueprints ||= [];
+  if (s.blueprints.includes(it.Unlocks)) return false;
+  s.blueprints.push(it.Unlocks);
+  return true;
 }
 function lossFrom(s, n) {
   let left = n;
@@ -298,6 +309,7 @@ export function quote(rules, s, fid, pointId, buy, sell) {
   for (const [g, n] of Object.entries(buy)) {
     if (n <= 0) continue;
     if ((goods[g] | 0) < n) why.push(`They have only ${goods[g] | 0} ${g.replace('ship:', '')}.`);
+    if (g.startsWith('bp-') && (s.blueprints || []).includes(rules.content.items[g]?.Unlocks)) why.push('You already have that blueprint.');
     // price rises as their stock runs down: each unit at the price for the stock left
     for (let i = 0; i < n; i++) cost += buyPrice(rules, tier, g, (goods[g] | 0) - i, max[g] | 0);
   }
@@ -330,6 +342,7 @@ export function deal(rules, s, fid, pointId, buy, sell) {
     if (n <= 0) continue;
     goods[g] -= n;
     if (ROLES.includes(g)) s.crew.roles[g] += n;
+    else if (g.startsWith('bp-')) learnBlueprint(rules, s, g);
     else if (g.startsWith('ship:')) {
       const t = g.slice(5), info = rules.actor(t), crew = info.traitInfo('Crew');
       for (let i = 0; i < n; i++) s.fleet.push({ type: t, hp: info.traitInfo('Health').HP });

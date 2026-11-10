@@ -66,6 +66,8 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     const info = this.rules.actors.get(type);
     const b = info && info.traitInfo('Buildable');
     if (!b || !b.Queue.includes(this.info.Type)) return 'The Forge cannot build that';
+    const known = (this.self.owner.slot || {}).blueprints;
+    if (known && !known.includes(type)) return 'No blueprint for it yet';
     const p = this.self.owner;
     const miss = p.tech ? p.tech.missing(b.Prerequisites) : null;
     if (miss) return `Requires ${miss}`;

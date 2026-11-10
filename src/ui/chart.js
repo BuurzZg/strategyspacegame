@@ -159,6 +159,7 @@ export class ChartScreen {
     if (a === 'stitch') { if (this.act(V.stitch, id).ok) { this.selected = this.s.at; this.orbit.focusOn(chartPos(this.g.points[this.s.at])); this.refresh(); this.audio.play('alert'); } }
     else if (a === 'drift') { if (this.act(V.drift, id).ok) { this.selected = this.s.at; this.refresh(); } }
     else if (a === 'rest') this.act(V.rest);
+    else if (a === 'scan') this.act(V.scan);
     else if (a === 'home') this.act(V.jumpHome);
     else if (a === 'go') this.onGoIn();
     else if (a === 'hail') this.hail(this.g.points[this.s.at].owner);
@@ -223,6 +224,8 @@ export class ChartScreen {
       btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, false, p.seat ? 'Talk, trade and hire at their station' : 'Talk to them']);
       btns.push(['rest', p.type === 'StillWater' ? 'Rest a day (still water: twice the rest)' : 'Rest a day', false, 'Morale rises; the crew still eat, drink and breathe']);
+      const sp = V.scanPlan(this.rules, s);
+      btns.push(['scan', `Deep scan: a day, ${this.rules.content.voyage.ScanGlim} Glim`, !sp.ok, sp.ok ? `Places within ${sp.range} spans become known` : sp.why]);
       const home = V.canJumpHome(this.rules, s);
       if (V.drive(this.rules, s).finalJump) { btns.push(['home', 'Make the final jump', !home.ok, home.why || 'Home']); if (!home.ok) why = home.why; }
       const d = V.daysLeft(this.rules, s);
@@ -261,6 +264,15 @@ export class ChartScreen {
       }
       h += '</ul>';
       if (d.finalJump) { const hj = V.canJumpHome(rules, s); h += `<button type="button" class="big" data-act="home" ${hj.ok ? '' : 'disabled'}>Make the final jump</button>${hj.ok ? '' : `<p class="why">${esc(hj.why)}</p>`}`; }
+      h += '<h3>Engineering</h3><ul class="items">';
+      for (const it of Object.values(C.items)) {
+        if (it.Kind !== 'project') continue;
+        const built = s.items[it.id] === 'installed', pl = built ? null : V.installPlan(rules, s, it.id), I = it.Install;
+        h += `<li class="${built ? 'installed' : 'found'}"><div><b>${esc(it.Name)}</b><span>${built ? 'Built' : ''}</span></div><p>${esc(it.Description)}</p>`;
+        if (!built) h += `<button type="button" data-act="install" data-k="${it.id}" ${pl.ok ? '' : 'disabled'} title="${esc(pl.ok ? '' : pl.why)}">Build: ${I.Ore} ore, ${I.Salvage} salvage, ${pl.days || I.Days} days, ${I.Engineers} engineers</button>`;
+        h += '</li>';
+      }
+      h += `</ul><h3>Blueprints</h3><p class="fp-note">The foundry can build: ${(s.blueprints || []).map((t) => esc(rules.actor(t).traitInfo('Tooltip').Name)).join(', ')}. Others come from cutting up wrecks of that hull, from traders, or from luck.</p>`;
       h += '<h3>Systems</h3><div class="sys">';
       const maxHp = rules.actor('forge').traitInfo('Health').HP;
       const rows = [['hull', 'Hull', Math.trunc((s.forge.hp * 100) / maxHp), 'The Forge\'s hull. At zero, everything ends.'], ...V.SYSTEMS.map((k) => [k, C.systems[k].Name, s.systems[k], C.systems[k].Description])];
