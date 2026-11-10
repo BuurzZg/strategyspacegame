@@ -390,15 +390,15 @@ New kinds of test arrive with the new layers:
 | 1 | Camera and 3D movement | Orbit camera; movement disc with height line; the flight model |
 | 2 | Forge and production | The Forge, a production queue, launch bays, rally points, fleet capacity |
 | 3 | Collectors and mining | Asteroid fields, Gleaners, docking, the Smelter, ore income; capsule hulls; steering round obstacles (since added) |
+| 4 | Combat | Projectiles, beams, missiles, flak; armour and the versus table; wrecks; the Proving Grounds spawner; the balance matrix |
+| 5 | Formations, stances, control groups | Five formations at the slowest ship's pace; aggressive, defensive and passive stances; control groups |
+| 6 | Point-of-interest maps from data | Content packs; five place types (then Still Water); ice, salvage, Glim and spores; the Shearer and Skimmer; the hangar, recall, spooling the Skein, the visit report |
+| 7 | Galaxy map and the voyage | About 300 places in four regions (the Drift, the Middens, the Hush behind the Veil, the Shore); the star chart; stitching with Glim; the day clock; water, air, food; crew roles and morale; Forge systems and wear; the drive repair track; saves with permanent death; the voyage simulator |
 
 ### Next
 
 | # | Milestone | Playable result | Checks |
 | --- | --- | --- | --- |
-| **4** | **Combat** | Weapons (projectiles, beams, missiles, flak), health, armour, the versus table, explosions, wrecks that stay behind. A sandbox spawner and a hostile test fleet (Gaunt raiders) plus a monster pack (Gnashers). Ships get a Crew value (shown, not used yet). | Balance matrix: each counter wins its matchup; kills, damage and wreck creation are deterministic |
-| **5** | **Formations, stances, control groups** | Formation and stance bars, groups that hold their shape in 3D, control groups. Fights get bigger now, so this comes early | Ships hold their slots within tolerance; Passive ships never fire |
-| **6** | **Point-of-interest maps from data** | The core content pack and the generator. Five point types (Scrap Shoal, Ore Reef, Ice Tail, Lantern Mist, Wreck). New resources (ice, salvage, Glim, spores), the Shearer and the Skimmer, wrecks, formations and nebulae. Arriving, spooling the Skein to leave, and an end-of-visit report. A launcher to pick a type and a seed | Generation is deterministic; every template validates; the report accounts for every resource; ships left behind are lost |
-| **7** | **Galaxy map and the voyage** | A seeded galaxy (about 300 points, four regions), the star chart, stitching with Glim, the day clock, water, air and food, crew roles and morale, Forge systems and damage, the consequence ladder and game over. The run state flows in and out of maps; the drive repair track; saving on the galaxy map. Monsters and derelicts only | Voyage simulator: consumption maths, the starvation ladder, connectivity, components reachable, save/load identical |
 | **8** | **Races, factions, reputation** | The five factions in YAML; faction fleets on maps acting by standing; territory claims (stealing costs standing); stations; reputation changes from actions; the standing screen | Reputation maths; behaviour follows tier; stealing is detected; a test pack adds a faction with no code |
 | **9** | **Diplomacy and trade** | Hailing, the comms panel (dialogs in YAML), the trade screen with standing-based prices, tribute, ceasefire and peace treaties, hiring crew and ships, buying information | Price maths; treaties enforced; every dialog validates and every branch is reachable |
 | **10** | **Events, monsters, story** | Galaxy and map events (distress beacons, ambushes, discoveries); monster behaviours (Scrapwyrm ambushes, mite infestations, the Hollowhorn); a prologue, the drive-component storylines, and the ending | Every event validates and is reachable; monster behaviour tests; a scripted run reaches the ending |

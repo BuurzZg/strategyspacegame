@@ -18,7 +18,9 @@ export const STAR_DIR = new THREE.Vector3(-0.62, 0.32, -0.71).normalize();
 
 export class SpaceScene {
   // sky: an optional hex tint for the nebula backdrop (each kind of place has its own)
-  constructor(scene, bounds, seed = 7, sky = '') {
+  // opts: { landmarks: false } leaves out the big distant rocks, { sun: false } the star (the
+  // star chart draws its own Orrin)
+  constructor(scene, bounds, seed = 7, sky = '', opts = {}) {
     this.sky = sky;
     this.scene = scene;
     this.group = new THREE.Group();
@@ -27,8 +29,9 @@ export class SpaceScene {
     this.stars = this.makeStars(seed);
     this.sun = this.makeSun();
     this.makeLights();
-    this.rocks = this.makeLandmarks(bounds, seed);
-    this.sky.add(this.stars, this.sun);
+    this.rocks = opts.landmarks === false ? [] : this.makeLandmarks(bounds, seed);
+    this.sky.add(this.stars);
+    if (opts.sun !== false) this.sky.add(this.sun);
     this.group.add(this.sky);
   }
 

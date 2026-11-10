@@ -65,6 +65,8 @@ export class Hud {
     $('report').hidden = true;
     const poi = this.world.settings.poi;
     $('place').textContent = poi ? poi.name : 'Proving Grounds';
+    $('place').classList.remove('warn');
+    this.dayShown = -1;
     if (poi) this.toast(`Arrived: ${poi.name}`, 'info');
   }
 
@@ -88,6 +90,22 @@ export class Hud {
       else { this.input.issue('SpoolSkein', [f]); this.audio.play('alert'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); }
     });
   }
+  // On the voyage: the day, and how long water, food and air will last at today's rate.
+  refreshDay() {
+    const v = this.world.settings.voyage, poi = this.world.settings.poi;
+    if (!v || !poi) return;
+    const gone = Math.trunc((v.ticks + this.world.frame) / v.dayTicks), day = v.day + gone;
+    if (day === this.dayShown) return;
+    this.dayShown = day;
+    const p = this.s.viewer, ice = (p.resources.amounts.ice | 0) + v.forecast.ice * gone;
+    const left = (have, rate) => (rate >= 0 ? Infinity : Math.max(0, Math.trunc(have / -rate)));
+    const d = { water: left(ice, v.forecast.ice), food: left(v.stores.food + v.forecast.food * gone, v.forecast.food), air: left(v.stores.air + v.forecast.air * gone, v.forecast.air) };
+    const worst = Object.entries(d).sort((a, b) => a[1] - b[1])[0];
+    $('place').textContent = `${poi.name} · Day ${day}${worst[1] < 10 ? ` · ${worst[0]} ${worst[1]} d` : ''}`;
+    $('place').classList.toggle('warn', worst[1] < 4);
+    if (gone > 0 && worst[1] < 4) this.toast(`Day ${day}: ${worst[1] ? `${worst[0]} for ${worst[1]} more day${worst[1] > 1 ? 's' : ''}` : `the ${worst[0]} is gone`}`, 'bad');
+  }
+
   refreshSkein() {
     if ($('skein').hidden) return;
     const f = this.forge(), w = this.world;
@@ -106,7 +124,7 @@ export class Hud {
   }
 
   // ---------------------------------------------------------------- the report
-  showReport(r, onContinue) {
+  showReport(r, onContinue, { next = 'Choose the next place' } = {}) {
     const res = this.world.rules.content.resources;
     const name = (t) => this.world.rules.actors.get(t)?.traitInfo('Tooltip')?.Name || t;
     const list = (m) => Object.entries(m).map(([t, n]) => `${n} × ${name(t)}`).join(', ') || 'none';
@@ -116,8 +134,10 @@ export class Hud {
     }).join('');
     const aboard = r.ships.aboard.reduce((m, e) => { m[e.type] = (m[e.type] || 0) + 1; return m; }, {});
     const lost = Object.values(r.ships.destroyed).reduce((a, b) => a + b, 0), behind = Object.values(r.ships.leftBehind).reduce((a, b) => a + b, 0);
-    $('report-title').textContent = `Leaving ${r.place ? r.place.name : 'this place'}`;
-    $('report-sub').textContent = `${Math.floor(r.seconds / 60)} min ${r.seconds % 60} s here. ${lost + behind ? `${lost + behind} ship${lost + behind > 1 ? 's' : ''} did not come home.` : 'Everyone came home.'}`;
+    $('report-title').textContent = r.forgeLost ? `The Forge is lost at ${r.place ? r.place.name : 'this place'}` : `Leaving ${r.place ? r.place.name : 'this place'}`;
+    const crewLost = r.crew ? Object.values(r.crew.lost).reduce((a, b) => a + b, 0) : 0;
+    const found = (r.found || []).map((id) => this.world.rules.content.items[id]?.Name || id);
+    $('report-sub').textContent = `${Math.floor(r.seconds / 60)} min ${r.seconds % 60} s here${r.ticks ? ` (${(r.ticks / 6000).toFixed(1)} days)` : ''}. ${lost + behind ? `${lost + behind} ship${lost + behind > 1 ? 's' : ''} did not come home${crewLost ? `, and ${crewLost} crew with them` : ''}.` : 'Everyone came home.'}${found.length ? ` Found: the ${found.join(' and the ')}.` : ''}`;
     $('report-stores').innerHTML = `<thead><tr><th></th><th>Arrived with</th><th>Gathered</th><th>Spent</th><th>Leaving with</th></tr></thead><tbody>${rows}</tbody>`;
     $('report-ships').innerHTML = [
       ['Aboard', list(aboard)],
@@ -127,6 +147,7 @@ export class Hud {
       ['In the holds', Object.entries(r.ships.aboard.reduce((m, e) => { if (e.cargo) m[e.kind] = (m[e.kind] || 0) + e.cargo; return m; }, {})).map(([k, n]) => `${fmtNum(n)} ${res[k] ? res[k].Name.toLowerCase() : k}`).join(', ') || 'empty'],
       ['Forge hull', r.forge ? `${Math.ceil((r.forge.hp / r.forge.maxHp) * 100)}%` : '—'],
     ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    $('report-next').textContent = next;
     $('report').hidden = false;
     $('report-next').onclick = () => { $('report').hidden = true; onContinue(); };
     $('report-next').focus();
@@ -137,13 +158,20 @@ export class Hud {
     $('launcher').hidden = !open;
     document.body.classList.toggle('at-launcher', open);
     if (!open) return;
-    const { rules, run, onVisit, onGrounds, onNewRun } = opts;
+    const { rules, run, onVisit, onGrounds, onNewRun, save, onContinue, onNewVoyage } = opts;
     const res = rules.content.resources, types = rules.content.poiTypes;
     $('launch-seed').value = '';
-    $('launch-head').textContent = run ? `Visit ${run.visits + 1}: where next?` : 'Where do you take the Forge first?';
-    $('launch-intro').textContent = run
-      ? 'The Skein is quiet for now. Pick the next place to stitch to.'
-      : 'The Skein Drive tore loose mid-jump and threw the Forge into the Wrack. It can still make short stitches. Choose a place to start gathering what you need.';
+    $('voyage-continue').hidden = !save;
+    if (save) $('voyage-continue').textContent = `Continue: day ${save.day}, ${save.place}`;
+    $('voyage-continue').onclick = onContinue;
+    $('voyage-new').onclick = () => {
+      if (save && !window.confirm('Start a new voyage? The saved one will be lost.')) return;
+      const v = $('voyage-seed').value.trim();
+      onNewVoyage(v ? parseInt(v, 10) || 0 : undefined);
+    };
+    $('title-practice').open = !!run;
+    $('launch-head').textContent = run ? `Practice, visit ${run.visits + 1}: where next?` : 'Pick a place';
+    $('launch-intro').textContent = 'Practice skips the star chart: pick any kind of place, play it, leave, and pick another. Stores and fleet carry over; there is no day clock.';
     $('launch-run').hidden = !run;
     if (run) {
       const fleet = run.fleet.reduce((m, e) => { m[e.type] = (m[e.type] || 0) + 1; return m; }, {});
@@ -285,7 +313,7 @@ export class Hud {
       btn.innerHTML = `
         <span class="bi-name">${esc(tt.Name)}<span class="bi-count"></span></span>
         <span class="bi-role">${esc(tt.Role)}</span>
-        <span class="bi-stats"><span class="bi-ore" title="Ore">${fmtNum(info.traitInfo('Valued').Cost)}</span><span title="Build time">${fmtTime(b.BuildDuration)}</span><span title="Fleet capacity">cap ${info.traitInfo('ConsumesCapacity')?.Amount || 0}</span></span>
+        <span class="bi-stats"><span class="bi-ore" title="Ore">${fmtNum(info.traitInfo('Valued').Cost)}</span><span title="Build time">${fmtTime(b.BuildDuration)}</span><span title="Fleet capacity">cap ${info.traitInfo('ConsumesCapacity')?.Amount || 0}</span>${info.traitInfo('Crew')?.Count ? `<span title="Crew it takes from the free crew">${info.traitInfo('Crew').Count} ${info.traitInfo('Crew').Role}</span>` : ''}</span>
         <span class="bi-why"></span>`;
       btn.title = `${tt.Name}: ${tt.Description}`;
       // blur after a click so Space/Enter can't queue it again by accident
@@ -417,6 +445,7 @@ export class Hud {
   refresh() {
     const p = this.s.viewer;
     for (const k in p.resources.amounts) { const el = $(`res-${k}`); if (el) el.textContent = fmtNum(p.resources.amounts[k]); }
+    this.refreshDay();
     this.refreshSkein();
     // ore delivered over the last minute of game time
     const since = this.world.frame - 60 * TICKS_PER_S;

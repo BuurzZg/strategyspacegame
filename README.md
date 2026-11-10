@@ -5,17 +5,18 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 6, places built from data.** The game opens on a start screen. Pick a place to take the Forge to:
+**Status: Milestone 7, the voyage.** Start a **new voyage** from the title screen. Each one is a new seeded galaxy of about 300 places in four regions, ringed round the dead star Orrin:
 
-- **Scrap Shoal:** ore rocks, dead ships, and sometimes something living in the wrecks;
-- **Ore Reef:** rich ore among crystal arches and spires;
-- **Ice Tail:** the debris trail of a broken comet, the best place for water;
-- **Lantern Mist:** a Glim nebula with fuel and spore drifts, and things that hunt in the haze;
-- **Wreck:** one giant derelict and the debris of whatever killed it.
+- **the Drift**, where you start;
+- **the Middens**, out of reach until the drive's Threadwound Coils are mended;
+- **the Hush**, behind the Veil, a nebula wall only the Stillwater Lens can stitch through;
+- **the Shore**, the Wrack's outer edge, which needs the Anchor Spindle's long stitches. From its edge, with the Heartstone fitted, the Forge can jump home.
 
-Every place is generated from a template and a seed, so the same seed always gives the same map. The fleet launches from the Forge's hangar when it arrives. Gather what you can, then recall your ships and spool the Skein Drive to leave. A report shows what the visit gained and cost, and the run carries on to the next place with the stores and ships you left with.
+On the **star chart**, time stands still until you act. Every stitch costs Glim and days, and every day the crew drink, eat and breathe. Go in to a place to play it: gather, build, fight, then recall your ships and spool the Skein to leave. Find the drive's four parts in derelicts, fit them, and get to the Shore before the water, food or air runs out.
 
-The **Proving Grounds** sandbox is still on the start screen, with a panel to call in enemies.
+Places come from templates and a seed: **Scrap Shoal**, **Ore Reef**, **Ice Tail** (water), **Lantern Mist** (Glim and spores), **Wreck**, and **Still Water** (a quiet place to rest). Deeper regions are more dangerous; a place visited again yields less.
+
+**Practice** (a single place, no day clock) and the **Proving Grounds** sandbox are still on the title screen.
 
 Warships fight with:
 - autocannons and plasma charges (fighters);
@@ -29,7 +30,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-The galaxy map, and the survival needs (water, air, food, fuel), come in Milestone 7.
+Factions and reputation come in Milestone 8; for now the Wrack holds only monsters, raiders and derelicts.
 
 ## Running the game
 
@@ -48,6 +49,7 @@ Opening `index.html` straight from disk (`file://`) does not work, because brows
 
 | Option | Effect |
 | --- | --- |
+| `?voyage=5` or `#voyage` | Skips the title and starts a new voyage (with that galaxy seed) |
 | `?poi=OreReef&seed=12` or `#OreReef` | Skips the start screen and goes straight to a place (`ScrapShoal`, `OreReef`, `IceTail`, `LanternMist`, `Wreck`), with an optional seed |
 | `?grounds` or `#grounds` | Skips the start screen and opens the Proving Grounds |
 | `?fleet=test` or `#fleet` | The Proving Grounds, with four Darts and a second Halberd added at the start, so you can try group moves and box selection |
@@ -118,10 +120,58 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
 - **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
 
+### The voyage: the star chart
+
+The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed in its colour, and the Veil is a band of violet haze.
+
+| Input | Action |
+| --- | --- |
+| Click a place | Its card: what is known, and the route there |
+| `Enter` | The card's first action: stitch there, or go in |
+| Right-drag, scroll | Rotate, zoom |
+| Drag, `W A S D` | Pan |
+| `F` or `Home` | Back to the Forge |
+
+- **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
+- **The card** shows the route (stitches, days, Glim, distance) and what you will have on arrival. With no Glim, the Forge can **drift** one lane at sub-light, slowly. At the Forge's place, **Go in** plays the map, and **Rest a day** raises morale (twice as much in still water).
+- **The top bar** shows the day, the stores (water, food and air with the days they will last), the crew and morale.
+- **The Forge panel:**
+  - **Forge:** the Skein Drive's reach and its four parts, with **Fit it**; the hull and six systems (drive, reactor, life support, hydroponics, foundry, sensors), each with **Repair** (a day's work by the free engineers, for ore and salvage);
+  - **Crew:** morale, and engineers, pilots, miners and hands (aboard, flying ships, free);
+  - **Hold:** every store, its change per day, and how long it lasts;
+  - **Log:** what has happened.
+- **Save and quit** at any time. **Permanent death:** the save is removed when the voyage ends. (A visit in progress is not saved: continuing returns to the chart as it was before going in.)
+
+### Staying alive
+
+- **Every day** (each stitch takes one to three; on a map, one day passes every four minutes) 150 crew need 90 water, 120 food and 150 air.
+- **Life support** makes air from water. The **hydroponics** grow food from water, and much faster with **spores**. Ice from Ice Tails is the water.
+- **Glim** runs the drive: about 6 per 10 spans of stitch, and a little each day for the reactor. Lantern Mists are full of it.
+- **When things run short:**
+  1. a store under three days' need lowers morale;
+  2. with no water, no air or food is made;
+  3. with no food, 2% of the crew die each day;
+  4. with no air, 8% die each day, and three days without air ends the voyage.
+- **The voyage also ends** if the crew reaches zero or the Forge is destroyed on a map.
+- **Morale** drifts toward how things are. Below 30, work is slower; below 15, people take the pods and leave.
+- **The Forge's systems** wear down when its hull is damaged on a map. A damaged reactor slows everything; a damaged drive reaches less far and spools slower; a damaged foundry builds slower.
+- **Crew:** building a ship takes its crew from the free crew. When a ship is destroyed, half its crew get away in pods; ships left behind take all theirs.
+
+### The drive's parts
+
+| Part | Where | Opens |
+| --- | --- | --- |
+| Threadwound Coils | a derelict in the Drift | stitches of 150 spans: the Middens |
+| Stillwater Lens | a derelict in the Middens | stitches through the Veil: the Hush |
+| Anchor Spindle | a derelict in the Hush | stitches of 200 spans: the Shore |
+| Heartstone | a derelict deep in the Shore | the final jump, from the Shore's edge |
+
+The engineers have a fix on one part at a time: the gold ring. Go in and cut into the derelict's hulk with Shearers until they find it. Then fit it from the Forge panel (ore, salvage, days and free engineers). Later milestones add other ways to get them: quests, trade and fights with factions.
+
 ### Places and leaving them
 
 - **Arriving:** the Forge stitches in near one edge of the map. Its ships launch from the bays one by one, keeping the hull damage and cargo they had when they came aboard.
-- **The top bar** shows the place's name and your five stores.
+- **The top bar** shows the place's name, the day on the voyage, how long the scarcest of water, food and air will last (when under ten days), and your five map stores.
 - **Hovering or selecting** a rock, cloud or wreck shows what it holds. Field labels show how much is left in each field.
 - **Hostiles:** some places have Ashen Gaunt raiders or a Gnasher pack. Some lurk and pounce on whatever comes close. Others hunt: after a while they come for the Forge, and a warning shows under the top bar.
 
@@ -292,6 +342,16 @@ Runs the headless tests:
   - stances work: Passive never fires and flees, Defensive fires without chasing, and Aggressive chases;
   - an advancing wedge destroys an enemy in its path and re-forms;
   - two identical runs give the same sync hash.
+- **The voyage** (`tools/voyagetest.js`): checks that:
+  - the galaxy is the same for the same seed, about 300 places in four regions, every place reachable;
+  - each region opens at its own drive level, all of it, and not before; each part lies where the drive that can fetch it reaches;
+  - one day's water, food, air and Glim exactly; the starvation ladder (no food, no water then no air, low stores, no crew);
+  - stitching (Glim and days), range, the Veil, a damaged or wrecked drive, drifting without Glim;
+  - repairs, fitting a part, the final jump;
+  - on a map: building takes crew, a relic found by cutting a hulk, pods, ships left behind, days passing, system wear, places yielding less when visited again;
+  - the Forge destroyed ends the voyage;
+  - saving and loading give the identical voyage;
+  - an abstract captain (no maps, fixed yields per visit) gets home on three seeds, and the test prints how long it took.
 - **Places** (`tools/poitest.js`): checks that:
   - every template gives exactly the same map for the same seed, a different map for a different seed, and no field on top of the Forge's arrival point;
   - every place type builds what its layout promised, and the fleet launches from the hangar;
@@ -331,6 +391,12 @@ content/core/resources.yaml     the five resources: name, description, colour, o
 content/core/poi-types.yaml     place templates: size, sky, rock fields, wrecks, the hulk, clouds,
                                 crystal formations, nebulae, encounters and names (the format is
                                 documented at the top of the file)
+content/core/regions.yaml       the galaxy's regions: rings, place counts, danger, the Veil, the
+                                Shore's edge, place-type weights, names
+content/core/items.yaml         the Skein Drive's four parts: where they are, what they open, fitting costs
+content/core/voyage.yaml        every number behind the voyage (needs, life support, hydroponics,
+                                stitch costs, repairs, morale) and the Forge's systems
+content/core/names.yaml         name generators (derelicts)
 ```
 
 Packs listed after the core pack are merged on top of it, so a pack can add a place type or change one value of an existing ship. When the game loads, every reference is checked: a place that asks for an unknown resource or ship, or a collector that gathers an unknown resource, stops it with a message naming the file.
@@ -348,10 +414,11 @@ src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Aster
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
-src/galaxy/           the run: stores, fleet and visits carried from place to place (run.js)
+src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
+                      travel and saves (voyage.js), the crew (crew.js), practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
-                      wrecks, combat effects
-src/ui/               orbit camera, movement disc, input, HUD, audio
+                      wrecks, combat effects, the star chart (galaxy.js)
+src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), audio
 tools/                dev server, headless tests, determinism lint
 ```
 

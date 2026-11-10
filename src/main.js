@@ -10,6 +10,8 @@ import { Input } from './ui/input.js';
 import { Hud } from './ui/hud.js';
 import { Audio } from './ui/audio.js';
 import { newRun, visitSettings, applyReport } from './galaxy/run.js';
+import * as V from './galaxy/voyage.js';
+import { ChartScreen } from './ui/chart.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -23,6 +25,9 @@ const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 20000);
 const audio = new Audio();
 const hud = new Hud();
 let rules = null, run = null, session = null, input = null, acc = 0;
+// the voyage (galaxy map) and its star chart screen, when one is open
+let voyage = null, chart = null;
+const SAVE_KEY = 'driftforge.voyage';
 // behind the start screen: just the sky, turning slowly
 let menu = null;
 
@@ -43,7 +48,8 @@ window.addEventListener('resize', resize);
 
 // ---------------------------------------------------------------- sessions
 // One map at a time: a point of interest on the voyage, or the Proving Grounds sandbox.
-function startSession(settings, { place = '' } = {}) {
+function startSession(settings, { place = '', onVoyage = false } = {}) {
+  closeChart();
   if (input) input.dispose();
   const scene = new THREE.Scene();
   const world = new World(rules, settings);
@@ -55,7 +61,7 @@ function startSession(settings, { place = '' } = {}) {
   const b = world.bounds;
   const renderBounds = { x0: b.x0 * R, x1: b.x1 * R, y0: b.z0 * R, y1: b.z1 * R, z0: b.y0 * R, z1: b.y1 * R };
   orbit.bounds = renderBounds;
-  session = { world, om, viewer, scene, space, camera, orbit, renderer: rd, renderBounds, speed: 1, place, reported: false };
+  session = { world, om, viewer, scene, space, camera, orbit, renderer: rd, renderBounds, speed: 1, place, reported: false, onVoyage };
   input = new Input(canvas, session, hud, audio);
   hud.attach(session, input);
   rd.syncViews();
@@ -107,20 +113,71 @@ function startVisit(type, seed) {
 function showLauncher() {
   if (input) { input.dispose(); input = null; }
   session = null;
+  closeChart();
+  const saved = readSave();
   hud.showLauncher(true, {
     rules, run,
+    save: saved ? { day: saved.day, place: V.galaxyOf(rules, saved).points[saved.at].name } : null,
+    onContinue: () => { voyage = readSave(); if (voyage) startChart(); },
+    onNewVoyage: (seed) => newVoyage(seed),
     onVisit: (type, seed) => startVisit(type, seed),
     onGrounds: () => startProvingGrounds(false),
     onNewRun: () => { run = null; showLauncher(); },
   });
 }
 
-// When the Forge stitches away: let the flash play, then the report; its button goes on.
+// ---------------------------------------------------------------- the voyage
+// Saved after every action on the chart and every visit. Permanent death: the save is removed
+// when the voyage ends. (A visit in progress is not saved: continuing goes back to the chart
+// as it was before going in.)
+function readSave() {
+  try { const t = localStorage.getItem(SAVE_KEY); return t ? V.loadVoyage(rules, t) : null; } catch (e) { console.warn(e); return null; }
+}
+function writeSave() { try { if (voyage && !voyage.over) localStorage.setItem(SAVE_KEY, V.saveVoyage(voyage)); } catch (e) { console.warn(e); } }
+function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { void e; } }
+
+function newVoyage(seed) {
+  voyage = V.newVoyage(rules, { seed: Number.isFinite(seed) ? seed : (Math.random() * 1e9) | 0 });
+  writeSave();
+  startChart();
+}
+function closeChart() { if (chart) { chart.dispose(); chart = null; } }
+function startChart() {
+  if (input) { input.dispose(); input = null; }
+  session = null;
+  closeChart();
+  hud.showLauncher(false);
+  chart = new ChartScreen({
+    canvas, camera, rules, voyage, audio, hud,
+    onGoIn: () => goIn(),
+    onChange: () => (voyage.over ? deleteSave() : writeSave()),
+    onQuit: () => { writeSave(); showLauncher(); },
+    onEnd: (what) => { deleteSave(); if (what === 'new') newVoyage(); else showLauncher(); },
+  });
+  resize();
+  if (voyage.over) chart.showEnd();
+}
+function goIn() {
+  writeSave();
+  const settings = V.visitSettings(rules, voyage);
+  startSession(settings, { place: settings.poi.name, onVoyage: true });
+}
+
+// When the Forge stitches away (or is destroyed): let the flash play, then the report; its
+// button goes back to the star chart (or, for practice, the start screen).
 function checkDeparture() {
   const w = session.world;
   if (!w.report || session.reported) return;
   session.reported = true;
   const report = w.report;
+  if (session.onVoyage) {
+    setTimeout(() => hud.showReport(report, () => {
+      V.returnFromMap(rules, voyage, report);
+      if (voyage.over) deleteSave(); else writeSave();
+      startChart();
+    }, { next: report.forgeLost ? 'The end' : 'Back to the star chart' }), report.forgeLost ? 2400 : 1600);
+    return;
+  }
   setTimeout(() => hud.showReport(report, () => { run = applyReport(run, report); showLauncher(); }), 1600);
 }
 
@@ -150,6 +207,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now; elapsed += dt;
+  if (chart) { chart.frame(dt, renderer); return; }
   if (!session) {
     if (!menu) { menu = { scene: new THREE.Scene() }; menu.space = new SpaceScene(menu.scene, { x0: 0, y0: 0, z0: -32 * 1024, x1: 192 * 1024, y1: 192 * 1024, z1: 32 * 1024 }, 23); }
     const c = 96 * 1024 * R;
@@ -189,6 +247,8 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
     const poi = params.get('poi') || (rules.content.poiTypes[hash] ? hash : '');
     if (params.has('grounds') || hash === 'grounds' || hash === 'fleet' || params.get('fleet') === 'test') startProvingGrounds(hash === 'fleet' || params.get('fleet') === 'test');
     else if (poi && rules.content.poiTypes[poi]) startVisit(poi, params.has('seed') ? parseInt(params.get('seed'), 10) : undefined);
+    // #voyage or ?voyage=seed: straight onto the star chart with a new voyage
+    else if (hash === 'voyage' || params.has('voyage')) newVoyage(parseInt(params.get('voyage'), 10));
     else showLauncher();
     requestAnimationFrame(frame);
   } catch (e) {
@@ -201,6 +261,6 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 // Console helpers (also used by the browser tests)
 window.driftforge = {
   get session() { return session; }, get world() { return session && session.world; }, get input() { return input; },
-  get run() { return run; }, get rules() { return rules; },
-  startVisit, startProvingGrounds, showLauncher,
+  get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; },
+  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V,
 };

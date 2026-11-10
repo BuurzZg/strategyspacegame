@@ -47,7 +47,26 @@ export function newVoyage(rules, { seed = 1 } = {}) {
   assignFleet(s.crew, rules, s.fleet);
   reveal(rules, s);
   note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
+  signalNote(rules, s);
   return s;
+}
+
+// The drive component the engineers can get a fix on now: the first one not yet fitted.
+// { id, at } (at: place id), or null when the drive is whole.
+export function target(rules, s) {
+  const g = galaxyOf(rules, s);
+  for (const it of Object.values(rules.content.items)) {
+    if (it.Kind !== 'drive' || s.items[it.id] === 'installed') continue;
+    return { id: it.id, at: s.items[it.id] === 'found' ? -1 : g.components[it.id] ?? -1 };
+  }
+  return null;
+}
+function signalNote(rules, s) {
+  const t = target(rules, s), g = galaxyOf(rules, s);
+  if (!t || t.at < 0) return;
+  const p = g.points[t.at];
+  if (!s.known.includes(p.id)) { s.known.push(p.id); s.known.sort((a, b) => a - b); }
+  note(s, `The engineers have a fix on the ${rules.content.items[t.id].Name}: it is aboard the ${p.name}, in ${rules.content.regions[p.region].Name}.`, 'story');
 }
 
 export function note(s, text, kind = 'info') { s.log.push({ day: s.day, text, kind }); if (s.log.length > 400) s.log.splice(0, s.log.length - 400); }
@@ -293,6 +312,8 @@ export function install(rules, s, id) {
   s.items[id] = 'installed';
   reveal(rules, s);
   note(s, `${rules.content.items[id].Name} fitted to the Skein Drive after ${p.days} days' work.`, 'story');
+  signalNote(rules, s);
+  if (!target(rules, s)) note(s, 'The drive is whole. From the Shore\'s edge, the Forge can make the long jump home.', 'story');
   return { ok: true };
 }
 
@@ -325,7 +346,7 @@ export function visitSettings(rules, s) {
   });
   const stores = {};
   for (const k of mapKinds(rules)) stores[k] = s.stores[k] | 0;
-  settings.voyage = { day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: forecast(rules, s) };
+  settings.voyage = { day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
   return {
     ...settings,
     latency: 1,
@@ -371,7 +392,7 @@ export function returnFromMap(rules, s, report) {
   s.visited[p.id] = (s.visited[p.id] | 0) + 1;
   s.visits++;
   const lostCrew = sum(lost);
-  note(s, `Left ${p.name} after ${Math.trunc(report.ticks / num(V, 'DayTicks') * 10) / 10} days.${shipsLost ? ` ${shipsLost} ship${shipsLost > 1 ? 's' : ''} lost${lostCrew ? `, and ${lostCrew} crew` : ''}.` : ''}`, shipsLost ? 'bad' : 'info');
+  note(s, `Left ${p.name} after ${(report.ticks / num(V, 'DayTicks')).toFixed(1)} days.${shipsLost ? ` ${shipsLost} ship${shipsLost > 1 ? 's' : ''} lost${lostCrew ? `, and ${lostCrew} crew` : ''}.` : ''}`, shipsLost ? 'bad' : 'info');
   if (!report.forge) { end(s, 'forge', `The Forge was destroyed at ${p.name}.`); return s; }
   // the days spent there
   s.ticks += report.ticks | 0;

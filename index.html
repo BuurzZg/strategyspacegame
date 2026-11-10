@@ -49,6 +49,7 @@ kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; bor
 }
 .brand { font: 700 17px var(--f-display); letter-spacing: 0.34em; color: var(--text); }
 .brand b { color: var(--accent); font-weight: 700; }
+.tag.warn { color: var(--bad); border-color: var(--bad); }
 .tag { font: 500 11px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; }
 #res { display: flex; gap: 18px; margin-left: 6px; }
 .res-item { display: flex; align-items: baseline; gap: 7px; }
@@ -250,6 +251,92 @@ body.voyage #build, body.voyage #help { max-height: calc(100% - 290px); }
 body.at-launcher #top, body.at-launcher #cgroups, body.at-launcher #toasts, body.at-launcher #sel, body.at-launcher #skein, body.at-launcher #build, body.at-launcher #grounds { display: none; }
 .modal:not([hidden]) ~ #help, .modal:not([hidden]) ~ #fleetbar, .modal:not([hidden]) ~ #cgroups, .modal:not([hidden]) ~ #move-hint { display: none; }
 
+/* the title */
+.title-intro { font-size: 15px; color: var(--text) !important; }
+.title-note { font-size: 12px; }
+.launch-row button.primary, #title-voyage button.primary { background: color-mix(in srgb, var(--accent) 14%, #0d131e); border-color: var(--accent); font-weight: 600; padding: 8px 16px; }
+#title-practice { margin-top: 18px; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+#title-practice summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+#title-practice summary:hover { color: var(--text); }
+
+/* the star chart */
+body.at-chart #top, body.at-chart #sel, body.at-chart #build, body.at-chart #grounds, body.at-chart #help, body.at-chart #fleetbar,
+body.at-chart #cgroups, body.at-chart #move-hint, body.at-chart #skein { display: none !important; }
+#chart-top { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px; padding: 10px 16px; background: linear-gradient(to bottom, rgba(5, 6, 11, 0.92), rgba(5, 6, 11, 0)); pointer-events: none; flex-wrap: wrap; }
+#chart-top .top-btns button { pointer-events: auto; }
+#chart-stores { display: flex; gap: 14px; flex-wrap: wrap; }
+.cs { display: flex; align-items: baseline; gap: 6px; }
+.cs-k { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.cs b { font: 500 14px var(--f-mono); font-variant-numeric: tabular-nums; }
+.cs-d { font: 11px var(--f-mono); color: var(--muted); }
+.cs.warn b, .cs.warn .cs-d { color: var(--height); }
+.cs.bad b, .cs.bad .cs-d { color: var(--bad); }
+#pcard { position: absolute; left: 16px; bottom: 16px; width: min(380px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 12px 14px; }
+#pcard header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+#pc-name { margin: 0; font: 700 18px var(--f-display); letter-spacing: 0.05em; }
+#pc-status { font: 500 11px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+#pc-class { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+#pc-class i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 0; }
+#pc-desc { margin: 8px 0 0; font-size: 13px; }
+#pc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 6px 12px; margin: 10px 0 0; }
+#pc-stats div { display: flex; flex-direction: column; }
+#pc-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+#pc-btns button, #fp-body button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 6px 11px; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+#pc-btns button:first-child { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, #0d131e); font-weight: 600; }
+#pc-btns button:hover:not(:disabled), #fp-body button:hover:not(:disabled) { border-color: var(--accent); }
+#pc-btns button:disabled, #fp-body button:disabled { opacity: 0.45; cursor: default; }
+#pc-why, #fp-body .why { margin: 6px 0 0; font-size: 12px; color: var(--height); }
+#pc-why:empty { display: none; }
+#fpanel { position: absolute; right: 16px; top: 64px; width: min(360px, calc(100vw - 32px)); max-height: calc(100% - 90px); display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); }
+#chart-tabs { display: flex; border-bottom: 1px solid var(--line); }
+#chart-tabs button { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 6px; font: 600 11px var(--f-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+#chart-tabs button[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); }
+#fp-body { overflow-y: auto; padding: 4px 14px 14px; }
+#fp-body h3 { margin: 12px 0 6px; font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.fp-note { margin: 4px 0 8px; font-size: 12.5px; color: var(--muted); }
+.fp-note b { color: var(--text); }
+.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.items li { border: 1px solid var(--line-soft); padding: 7px 9px; }
+.items li > div { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.items li span { font: 11px var(--f-mono); color: var(--muted); }
+.items li.installed span { color: var(--good); }
+.items li.found { border-color: #ffd77866; }
+.items li.found span { color: #ffd778; }
+.items li p { margin: 3px 0 6px; font-size: 12px; color: var(--muted); }
+.items li.missing b { color: var(--muted); }
+button.big { width: 100%; justify-content: center; margin-top: 8px; border-color: #ffd778 !important; color: #ffd778; font-weight: 600; }
+.sys { display: grid; gap: 5px; }
+.sr { display: grid; grid-template-columns: 96px 1fr 40px auto; gap: 8px; align-items: center; font-size: 13px; }
+.sr b { font: 500 12px var(--f-mono); text-align: right; }
+.sr button { padding: 2px 8px !important; font-size: 12px !important; }
+.bar { height: 6px; background: #121a28; }
+.bar i { display: block; height: 100%; }
+.ct { width: 100%; border-collapse: collapse; font: 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+.ct th, .ct td { padding: 3px 6px; text-align: right; border-bottom: 1px solid var(--line-soft); }
+.ct thead th { font: 600 10px var(--f-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.ct tbody th { text-align: left; font: 13px var(--f-body); }
+.log { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; }
+.log span { display: block; font: 10px var(--f-mono); color: var(--muted); letter-spacing: 0.08em; }
+.log li.bad, .log li.end { color: #ffb0b5; }
+.log li.story { color: #ffe3a8; }
+#chart-help { position: absolute; right: 392px; top: 64px; width: 300px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; display: none; pointer-events: none; font-size: 13px; }
+#chart-help.open { display: block; }
+#chart-help h2 { margin: 0 0 4px; font: 600 13px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; }
+#chart-help p { color: var(--muted); margin: 6px 0; }
+#chart-help dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 8px 0; }
+#chart-help dd { font: 13px var(--f-body); }
+#chart-help dt { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text); }
+.v { color: #c9a7ff; } .g { color: #ffd778; }
+#ce-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 16px; }
+#ce-stats div { display: flex; flex-direction: column; }
+#chart-end .modal-card { width: min(560px, 100%); border-top: 3px solid #ffd778; }
+#ce-title { font-size: 22px !important; }
+@media (max-width: 760px) {
+  #fpanel { top: auto; bottom: 16px; max-height: 40vh; }
+  #pcard { bottom: calc(40vh + 28px); }
+  #chart-help { right: 16px; }
+}
+
 #boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
 
 @media (max-width: 760px) {
@@ -342,14 +429,72 @@ body.at-launcher #top, body.at-launcher #cgroups, body.at-launcher #toasts, body
   <div id="launcher" class="modal" hidden>
     <div class="modal-card">
       <h1>DRIFT<b>FORGE</b></h1>
-      <h2 id="launch-head"></h2>
-      <p id="launch-intro"></p>
-      <div id="launch-run" hidden></div>
-      <div id="launch-places" class="places"></div>
-      <div class="launch-row">
-        <label>Seed <input id="launch-seed" type="text" inputmode="numeric" placeholder="random" aria-label="Seed for the place (blank for random)"></label>
-        <button id="launch-grounds" type="button">Proving Grounds (sandbox)</button>
-        <button id="launch-new" type="button" hidden>Start a new run</button>
+      <div id="title-voyage">
+        <p class="title-intro">The Skein Drive tore loose mid-jump and threw the Forge into the Wrack, a galaxy of scrap. It can still make short stitches. Mend it, keep your people alive, and get home from the Shore.</p>
+        <div class="launch-row">
+          <button id="voyage-continue" type="button" class="primary" hidden></button>
+          <button id="voyage-new" type="button" class="primary">New voyage</button>
+          <label>Galaxy seed <input id="voyage-seed" type="text" inputmode="numeric" placeholder="random" aria-label="Seed for the galaxy (blank for random)"></label>
+        </div>
+        <p id="voyage-note" class="title-note">Permanent death: you can always save and quit, but the save is gone when the voyage ends.</p>
+      </div>
+      <details id="title-practice">
+        <summary>Practice: a single place, or the Proving Grounds</summary>
+        <h2 id="launch-head"></h2>
+        <p id="launch-intro"></p>
+        <div id="launch-run" hidden></div>
+        <div id="launch-places" class="places"></div>
+        <div class="launch-row">
+          <label>Seed <input id="launch-seed" type="text" inputmode="numeric" placeholder="random" aria-label="Seed for the place (blank for random)"></label>
+          <button id="launch-grounds" type="button">Proving Grounds (sandbox)</button>
+          <button id="launch-new" type="button" hidden>Reset practice</button>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div id="chart" hidden>
+    <header id="chart-top">
+      <div class="brand">DRIFT<b>FORGE</b></div>
+      <span class="tag" id="chart-day"></span>
+      <div id="chart-stores" aria-label="Stores"></div>
+      <div class="top-btns">
+        <button id="chart-helpbtn" type="button">Controls <kbd>H</kbd></button>
+        <button id="chart-quit" type="button">Save and quit</button>
+      </div>
+    </header>
+    <section id="pcard" aria-label="Selected place">
+      <header><h2 id="pc-name"></h2><span id="pc-status"></span></header>
+      <p id="pc-class"></p>
+      <p id="pc-desc"></p>
+      <dl id="pc-stats"></dl>
+      <div id="pc-btns"></div>
+      <p id="pc-why"></p>
+    </section>
+    <aside id="fpanel" aria-label="The Forge">
+      <div id="chart-tabs" role="tablist">
+        <button type="button" data-tab="forge">Forge</button><button type="button" data-tab="crew">Crew</button><button type="button" data-tab="hold">Hold</button><button type="button" data-tab="log">Log</button>
+      </div>
+      <div id="fp-body"></div>
+    </aside>
+    <aside id="chart-help" aria-label="Star chart controls">
+      <h2>The star chart</h2>
+      <p>Time stands still here until you act. Every stitch, day of rest or repair, and every four minutes on a map, the crew drink, eat and breathe.</p>
+      <dl>
+        <dt><kbd>Click</kbd> a place</dt><dd>See what is known, and the route there</dd>
+        <dt><kbd>Enter</kbd></dt><dd>The card's first action: stitch there, or go in</dd>
+        <dt><kbd>Right-drag</kbd> <kbd>Scroll</kbd></dt><dd>Rotate, zoom</dd>
+        <dt><kbd>Drag</kbd> <kbd>W A S D</kbd></dt><dd>Pan</dd>
+        <dt><kbd>F</kbd> <kbd>Home</kbd></dt><dd>Back to the Forge</dd>
+      </dl>
+      <p><span class="a">Teal lanes</span> the drive can stitch now; the teal ring is its reach, the dashed ring the sensors'. <span class="v">Violet</span> is the Veil. The <span class="g">gold ring</span> marks the drive part the engineers have a fix on.</p>
+    </aside>
+    <div id="chart-end" class="modal" hidden role="dialog" aria-labelledby="ce-title">
+      <div class="modal-card">
+        <h2 id="ce-title"></h2>
+        <p id="ce-text"></p>
+        <dl id="ce-stats"></dl>
+        <div class="launch-row"><button id="ce-new" type="button" class="primary">New voyage</button><button id="ce-title-btn" type="button">Title</button></div>
       </div>
     </div>
   </div>

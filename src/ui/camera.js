@@ -14,13 +14,14 @@ export class OrbitCamera {
     this.pitch = this.pitchT = 0.42;
     this.dist = this.distT = 46;
     this.minDist = 5; this.maxDist = 1100;
+    this.minPitch = -1.45; this.maxPitch = 1.45;
     this.follow = null;
     this.bounds = null;
     this.right = new THREE.Vector3(); this.up = new THREE.Vector3(); this.fwd = new THREE.Vector3();
   }
   rotate(dx, dy) {
     this.yawT += dx * 0.0055;
-    this.pitchT = Math.max(-1.45, Math.min(1.45, this.pitchT + dy * 0.0055));
+    this.pitchT = Math.max(this.minPitch, Math.min(this.maxPitch, this.pitchT + dy * 0.0055));
   }
   zoom(delta) { this.distT = Math.max(this.minDist, Math.min(this.maxDist, this.distT * Math.exp(delta * 0.0011))); }
   pan(dx, dy) {
