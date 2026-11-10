@@ -46,7 +46,7 @@ Hush:
 	Spacing: 54
 	Danger: 3
 	Color: c9a7ff
-	Types: LanternMist 4, IceTail 2, OreReef 2, ScrapShoal 2, Wreck 2, StillWater 2
+	Types: LanternMist 4, IceTail 2, OreReef 2, ScrapShoal 2, Wreck 2, StillWater 2, HollowhornGrounds 1
 	Names: Lull, Vesper, Murmur, Candle, Hollow, Pale, Sable, Linnet, Wren, Moth, Ember, Gloam, Hearth, Sorrow, Lantern, Velvet, Dusk, Ashen, Whisper, Still, Nocturne, Faint
 
 Shore:
@@ -58,5 +58,5 @@ Shore:
 	Spacing: 64
 	Danger: 4
 	Color: ff9a6a
-	Types: Wreck 3, ScrapShoal 2, IceTail 2, LanternMist 2, OreReef 1, StillWater 1
+	Types: Wreck 3, ScrapShoal 2, IceTail 2, LanternMist 2, OreReef 1, StillWater 1, HollowhornGrounds 1
 	Names: Last, Farthing, Breaker, Tidewrack, Strand, Undertow, Brine, Gull, Jetsam, Flotsam, Spindrift, Lowwater, Farewell, Harbour, Cairn, Beacon, Outer, Margin, Sounding, Wake

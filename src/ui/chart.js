@@ -44,6 +44,24 @@ export class ChartScreen {
     document.body.classList.add('at-chart');
     $('chart').hidden = false;
     this.refresh();
+    this.pumpEvents();
+  }
+
+  // Events waiting in the voyage's queue, one at a time; when the voyage has ended, the end
+  // screen comes after them.
+  pumpEvents() {
+    const s = this.s, rules = this.rules;
+    if (!this.comms || this.comms.isOpen) return;
+    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); return; }
+    const ev = rules.content.events[s.queue[0]];
+    if (!ev) { s.queue.shift(); this.pumpEvents(); return; }
+    this.comms.open({
+      title: ev.Title, dialog: ev, start: ev.Start,
+      context: () => V.eventContext(rules, s, this.g, ev),
+      apply: (effects) => { const r = V.eventChoice(rules, s, effects); this.onChange(s); this.refresh(); return r; },
+      trade: null,
+      onClose: () => { s.queue.shift(); this.onChange(s); this.refresh(); this.pumpEvents(); },
+    });
   }
 
   on(t, ev, fn, o) { t.addEventListener(ev, fn, o); this.listeners.push([t, ev, fn, o]); }
@@ -130,8 +148,8 @@ export class ChartScreen {
     if (!r.ok) { this.hud.toast(r.why, 'bad'); this.audio.play('error'); return r; }
     this.audio.play('order');
     this.onChange(this.s);
-    if (this.s.over) { this.refresh(); this.showEnd(); return r; }
     this.refresh();
+    this.pumpEvents();
     return r;
   }
   cardClick(e) {
@@ -154,7 +172,7 @@ export class ChartScreen {
       context: () => CM.chartContext(rules, s, g, fid),
       apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
       trade: { s, pointId: s.at, onDeal: () => { this.onChange(s); this.refresh(); } },
-      onClose: () => this.refresh(),
+      onClose: () => { this.refresh(); this.pumpEvents(); },
     });
   }
   panelClick(e) {

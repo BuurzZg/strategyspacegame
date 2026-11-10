@@ -447,6 +447,8 @@ export class Hud {
       } else if (e.t === 'fire' && e.report) this.audio.play(e.report, this.near(e) * 0.8);
       else if (e.t === 'impact' && e.missile) this.audio.play('boom', this.near(e) * 0.6);
       else if (e.t === 'provoked' || (e.t === 'warn' && e.player !== undefined)) this.audio.play('alert');
+      else if (e.t === 'surface') { this.toast('Something surfaces from the rocks!', 'bad'); this.audio.play('alert'); }
+      else if (e.t === 'interdicted') this.audio.play('alert');
       else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
       else if (e.t === 'aboard' && e.owner === me) this.dirty = true;
       else if (e.t === 'killed') {

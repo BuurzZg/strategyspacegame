@@ -156,7 +156,6 @@ function startChart() {
     onEnd: (what) => { deleteSave(); if (what === 'new') newVoyage(); else showLauncher(); },
   });
   resize();
-  if (voyage.over) chart.showEnd();
 }
 function goIn() {
   writeSave();

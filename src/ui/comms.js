@@ -24,16 +24,25 @@ export class CommsPanel {
   }
   get isOpen() { return !!this.o; }
 
+  // o.fid: a faction's dialog; or o.title and o.dialog (an event) with o.start
   open(o) {
     this.o = o;
-    const F = this.rules.content.factions[o.fid], ctx = o.context();
-    $('comms-who').textContent = F.Name;
-    $('comms-who').style.color = hex(factionColor(this.rules, o.fid));
-    $('comms-tier').textContent = TIERS[ctx.tier];
-    $('comms-tier').className = `t-${TIERS[ctx.tier]}`;
+    const ctx = o.context();
+    if (o.fid) {
+      const F = this.rules.content.factions[o.fid];
+      $('comms-who').textContent = F.Name;
+      $('comms-who').style.color = hex(factionColor(this.rules, o.fid));
+      $('comms-tier').textContent = TIERS[ctx.tier];
+      $('comms-tier').className = `t-${TIERS[ctx.tier]}`;
+    } else {
+      $('comms-who').textContent = o.title || '';
+      $('comms-who').style.color = '';
+      $('comms-tier').textContent = '';
+    }
+    $('comms').classList.toggle('event', !o.fid);
     $('comms-notes').innerHTML = '';
     $('comms').hidden = false;
-    this.showDialog(C.dialogOf(this.rules, o.fid).Start);
+    this.showDialog(o.start || C.dialogOf(this.rules, o.fid).Start);
     this.audio.play('select');
   }
   close() {
@@ -65,12 +74,13 @@ export class CommsPanel {
     for (const n of r.notes || []) $('comms-notes').insertAdjacentHTML('beforeend', `<li>${esc(n)}</li>`);
     this.audio.play('order');
     if (r.open && this.o.trade) return this.showTrade(r.open);
+    if (r.goto) return this.showDialog(r.goto);
     if (r.close || (!c.goto && !r.open)) return this.close();
     this.showDialog(c.goto);
   }
   key(k) {
     if (!this.o) return false;
-    if (k === 'Escape') { this.close(); return true; }
+    if (k === 'Escape' && this.o.fid) { this.close(); return true; } // events must be answered
     const n = +k;
     if (n >= 1 && n <= 9 && !$('comms-dialog').hidden && this.view.choices[n - 1]) { this.pick(this.view.choices[n - 1].id); return true; }
     return false;

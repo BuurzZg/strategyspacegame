@@ -173,19 +173,23 @@ export function generateGalaxy(rules, seed) {
 
   // 6. The drive components, each in a derelict deep in its region.
   const adj = adjacency(points.length, lanes);
-  const hops = hopsFrom(points.length, lanes, start);
   const components = {};
+  let from = start;
   for (const it of Object.values(C.items)) {
     if (!it.Region) continue;
     const cand = points.filter((p) => p.region === it.Region && p.id !== start && !p.relic);
     if (!cand.length) continue;
-    // deep: the outer third by distance from Orrin, and far from the start by lanes
-    cand.sort((m, n) => n.r - m.r || hops[n.id] - hops[m.id] || m.id - n.id);
+    // deep in its region: the outer third by distance from Orrin; of those, one a fair way
+    // (by lanes) from the last part, but not the far side of the ring
+    const hops = hopsFrom(points.length, lanes, from);
+    cand.sort((m, n) => n.r - m.r || m.id - n.id);
     const deep = cand.slice(0, Math.max(1, Math.trunc(cand.length / 3)));
-    deep.sort((m, n) => hops[n.id] - hops[m.id] || m.id - n.id);
-    const p = deep[rng.int(Math.max(1, Math.trunc(deep.length / 2)))];
+    deep.sort((m, n) => hops[m.id] - hops[n.id] || m.id - n.id);
+    const lo = Math.trunc(deep.length / 3), hi = Math.max(lo + 1, Math.trunc((deep.length * 2) / 3));
+    const p = deep[lo + rng.int(hi - lo)];
     p.type = 'Wreck'; p.relic = it.id;
     components[it.id] = p.id;
+    from = p.id;
   }
   // 7. Factions: their seats (stations) and the places round them they claim
   const seats = [];

@@ -176,3 +176,63 @@ MothLight:
 			medium: 80
 			heavy: 60
 			capital: 40
+
+WyrmBite:
+	ReloadDelay: 30
+	Range: 1600
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: d8c0a0
+	Warhead@hit: SpreadDamage
+		Damage: 9000
+		Versus:
+			light: 100
+			medium: 100
+			heavy: 80
+			capital: 60
+
+MiteGnaw:
+	ReloadDelay: 12
+	Range: 500
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: c86a3a
+	Warhead@hit: SpreadDamage
+		Damage: 250
+		Versus:
+			light: 100
+			medium: 100
+			heavy: 100
+			capital: 100
+
+HornRam:
+	ReloadDelay: 60
+	Range: 3000
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: e0d0ff
+	Warhead@hit: SpreadDamage
+		Damage: 40000
+		Versus:
+			light: 100
+			medium: 100
+			heavy: 100
+			capital: 100
+
+HornSong:
+	ReloadDelay: 50
+	Range: 9000
+	Report: lance
+	Projectile: InstantHit
+		Beam: true
+		Color: b8a0ff
+	Warhead@hit: SpreadDamage
+		Damage: 2500
+		Versus:
+			light: 100
+			medium: 80
+			heavy: 60
+			capital: 40

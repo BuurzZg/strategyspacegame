@@ -14,6 +14,8 @@
 #   Encounter@name          hostiles: Side (gaunt, fauna), Ships, Count (groups), Chance (%),
 #                           Behaviour (lurk: wait and pounce on what comes close; hunt: come for
 #                           the Forge after Delay seconds), Delay
+#                           (burrow: a Scrapwyrm, buried in a rock field until something comes close)
+#   Mites (under Wrecks)    percent of the wrecks that are infested with rust mites
 #   Names                   for named places (a Hulk's ship): picked from this list
 #   Noun                    the second word of a place's name on the star chart (Marrow Reef)
 
@@ -40,6 +42,7 @@ ScrapShoal:
 		Of: halberd, picket, spindle, gleaner, smelter, sabre
 		Salvage: 120-450
 		Clusters: 2-3
+		Mites: 30
 	Clouds@glim:
 		Kind: glim
 		Count: 0-1
@@ -55,6 +58,12 @@ ScrapShoal:
 		Count: 1
 		Chance: 50
 		Behaviour: lurk
+	Encounter@wyrm:
+		Side: fauna
+		Ships: wyrm
+		Count: 1
+		Chance: 35
+		Behaviour: burrow
 
 OreReef:
 	Name: Ore Reef
@@ -318,3 +327,35 @@ ChoirBloom:
 		Count: 3
 		Size: 40-70
 		Color: 6a7aba
+
+HollowhornGrounds:
+	Name: Hollowhorn Grounds
+	Noun: Grounds
+	Description: A leviathan's feeding grounds: thick with Glim and ice, and with the Hollowhorn itself, singing.
+	Size: 208, 208, 72
+	Sky: 3a2a6a
+	Clouds@glim:
+		Kind: glim
+		Count: 5-7
+		Size: 3200-4200
+		Amount: 900-1600
+	Deposit@ice:
+		Kind: ice
+		Fields: 2-3
+		Rocks: 8-11
+		Spread: 5-7
+		Amount: 900-1800
+	Wrecks:
+		Count: 5-8
+		Of: halberd, sabre, spindle, smelter
+		Salvage: 300-600
+		Clusters: 2
+	Nebula:
+		Count: 3
+		Size: 50-70
+		Color: 4a3a8a
+	Encounter@hollowhorn:
+		Side: fauna
+		Ships: hollowhorn
+		Count: 1
+		Behaviour: lurk

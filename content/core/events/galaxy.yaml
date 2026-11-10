@@ -1,0 +1,143 @@
+# Things that happen out there.
+
+DistressCall:
+	When: arrive
+	Chance: 8
+	Once: false
+	If: day >= 3, not type StillWater
+	Title: A distress call
+	Start: call
+	Node@call:
+		Say: A weak signal on an old band: a lifeboat, its air nearly gone, somewhere in the rocks here. It could be survivors. Out here, it could be anything.
+		Choice@help:
+			Text: Send a boat.
+			Do: roll 65 rescued trap
+		Choice@leave:
+			Text: Not our business.
+			Do: morale -3, close
+	Node@rescued:
+		Say: Six Hullborn salvagers, thin and grateful, who have been living on recycled air for a week. They ask to stay aboard. They are very good with their hands.
+		Choice@ok:
+			Text: Welcome aboard.
+			Do: crew hands 6, morale 4, close
+	Node@trap:
+		Say: The lifeboat is empty, and its beacon is wired to something else. A lure. Whoever set it will be waiting when the Forge goes in.
+		Choice@ok:
+			Text: Then we'll be ready.
+			Do: ambush gaunt dart+dart+talon+talon 40, close
+
+DriftingPod:
+	When: travel
+	Chance: 9
+	Once: false
+	Title: A drifting pod
+	Start: pod
+	Node@pod:
+		Say: Halfway through the stitch the sensors catch a cargo pod, tumbling slowly. Its markings are a Forge's, but not yours.
+		Choice@open:
+			Text: Bring it in and open it.
+			Do: roll 60 food pilots
+		Choice@leave:
+			Text: Leave it.
+			Do: close
+	Node@food:
+		Say: Sealed rations, still good. Someone's emergency stores.
+		Choice@ok:
+			Text: Into the hold.
+			Do: give food 250, close
+	Node@pilots:
+		Say: Two pilots in cold sleep, from a Forge called Ashgrove. They wake confused, and then very quiet, when they understand where they are. They will fly for you.
+		Choice@ok:
+			Text: We'll find them a ship.
+			Do: crew pilots 2, morale 2, close
+
+CometStorm:
+	When: travel
+	Chance: 7
+	Once: false
+	If: day >= 5
+	Title: Comet storm
+	Start: storm
+	Node@storm:
+		Say: The stitch comes out in the tail of a broken comet: ice and grit at a thousand metres a second.
+		Choice@through:
+			Text: Push straight through.
+			Do: damage sensors 8, damage hull 3, close
+		Choice@wait:
+			Text: Wait for it to pass.
+			Do: days 1, close
+
+StrangeSignal:
+	When: travel
+	Chance: 7
+	Once: false
+	Title: A strange signal
+	Start: sig
+	Node@sig:
+		Say: For a moment, mid-stitch, the sensors pick up a pattern of beacons: someone's old survey, still broadcasting.
+		Choice@record:
+			Text: Record everything.
+			Do: reveal survey, close
+
+QuietDays:
+	When: day
+	Chance: 12
+	Once: false
+	Title: A quiet day
+	Start: quiet
+	Node@quiet:
+		Say: Someone has set up a music night in the hydroponics bay. The tomatoes do not seem to mind.
+		Choice@ok:
+			Text: Good.
+			Do: morale 4, close
+
+Stowaways:
+	When: arrive
+	Chance: 6
+	If: region Middens
+	Title: Stowaways
+	Start: found
+	Node@found:
+		Say: The hands find four Hullborn hiding in a Gleaner bay, very young and very hungry. Their clan is the Rivet Moot.
+		Choice@keep:
+			Text: Let them stay and work.
+			Do: crew hands 4, close
+		Choice@return:
+			Text: Send word to the Moot that we have them.
+			Do: faction rivet 6, close
+
+WyrmSign:
+	When: arrive
+	Chance: 18
+	If: type OreReef, day >= 4
+	Title: The rocks move
+	Start: sign
+	Node@sign:
+		Say: The long-range scan of the reef comes back wrong: one of the rock fields is not where it was a minute ago. The miners have a word for that. Scrapwyrm.
+		Choice@ok:
+			Text: Noted. Keep the Gleaners close.
+			Do: monster wyrm, close
+
+SporeBloom:
+	When: arrive
+	Chance: 12
+	Once: false
+	If: type LanternMist
+	Title: A spore bloom
+	Start: bloom
+	Node@bloom:
+		Say: The mist here is blooming: clouds of spores drift right past the hull, thick enough to scoop.
+		Choice@ok:
+			Text: Open the intakes.
+			Do: give spores 150, close
+
+HollowhornSong:
+	When: arrive
+	If: type HollowhornGrounds
+	Title: A song
+	Start: song
+	Node@song:
+		Say: Something is singing. Not on the radio: in the hull, in the deck plates, in your teeth. The navigators say the source is the size of the Forge. They are not joking. While it sings, the Skein cannot hold a spool.
+		Choice@ok:
+			Text: Keep the Forge well clear of it when we leave.
+			Do: close

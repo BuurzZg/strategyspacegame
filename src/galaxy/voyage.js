@@ -3,7 +3,8 @@ import { hashMix } from '../engine/math.js';
 import { mapKinds, weights } from '../engine/content.js';
 import { CELL } from '../engine/math.js';
 import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
-import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces } from './comms.js';
+import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart } from './comms.js';
+import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
 import { ROLES, makeRoster, count, free, freeAll, loseAny, lose, assignFleet } from './crew.js';
@@ -46,12 +47,14 @@ export function newVoyage(rules, { seed = 1 } = {}) {
     fleet: START_FLEET.map((type) => ({ type, hp: rules.actor(type).traitInfo('Health').HP })),
     items: {}, airless: 0, dry: false, over: null, visits: 0,
     standing: {}, met: {}, treaties: [], flags: [], stock: {},
+    queue: [], seen: [], ahead: [], rolls: 0,
     log: [],
   };
   assignFleet(s.crew, rules, s.fleet);
   reveal(rules, s);
   note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
   signalNote(rules, s);
+  trigger(rules, s, g, 'start');
   return s;
 }
 
@@ -234,6 +237,7 @@ export function stitch(rules, s, to) {
     reveal(rules, s);
   }
   note(s, `Stitched to ${g.points[s.at].name}: ${p.route.hops.length} stitch${p.route.hops.length > 1 ? 'es' : ''}, ${p.route.days} days, ${p.route.glim} Glim.`, 'travel');
+  arrived(rules, s, true);
   return { ok: true };
 }
 
@@ -255,13 +259,33 @@ export function drift(rules, s, to) {
   s.at = to;
   reveal(rules, s);
   note(s, `Drifted to ${galaxyOf(rules, s).points[to].name} at sub-light: ${p.days} days.`, 'travel');
+  arrived(rules, s, false);
   return { ok: true };
 }
+
+// Arriving somewhere: whatever was waiting at the last place is gone, and events may happen.
+function arrived(rules, s, stitched) {
+  const g = galaxyOf(rules, s);
+  s.ahead = (s.ahead || []).filter((a) => a.at === s.at);
+  if (stitched) trigger(rules, s, g, 'travel');
+  trigger(rules, s, g, 'arrive');
+}
+
+// An event's choice, on the star chart: its effects on the voyage (time passing, drive parts
+// found). Returns what the panel needs: { close, goto, notes }.
+export function eventChoice(rules, s, effects) {
+  const g = galaxyOf(rules, s), r = applyOnChart(rules, s, g, null, effects);
+  if (r.days) passDays(rules, s, r.days);
+  if (r.found) trigger(rules, s, g, 'found', { item: r.found });
+  return r;
+}
+export { eventContext };
 
 export function rest(rules, s) {
   if (s.over) return no('The voyage is over.');
   const still = galaxyOf(rules, s).points[s.at].type === 'StillWater';
   dayTick(rules, s, { rest: still ? 2 : 1 }); // a quiet place: twice the rest
+  trigger(rules, s, galaxyOf(rules, s), 'day');
   note(s, still ? 'A day of rest in still water.' : 'A day of rest.', 'info');
   return { ok: true };
 }
@@ -317,6 +341,7 @@ export function install(rules, s, id) {
   reveal(rules, s);
   note(s, `${rules.content.items[id].Name} fitted to the Skein Drive after ${p.days} days' work.`, 'story');
   signalNote(rules, s);
+  trigger(rules, s, galaxyOf(rules, s), 'install', { item: id });
   if (!target(rules, s)) note(s, 'The drive is whole. From the Shore\'s edge, the Forge can make the long jump home.', 'story');
   return { ok: true };
 }
@@ -334,6 +359,7 @@ export function jumpHome(rules, s) {
   s.over = { reason: 'home', day: s.day, text: 'The Skein pulls tight, and the Wrack falls away behind the Forge.' };
   s.won = true;
   note(s, s.over.text, 'end');
+  trigger(rules, s, galaxyOf(rules, s), 'home');
   return { ok: true };
 }
 
@@ -378,6 +404,12 @@ export function visitSettings(rules, s) {
       patrol(f.id, [Math.trunc((W * (55 + prng.int(30))) / 100), Math.trunc((D * (15 + prng.int(70))) / 100), 0], mood(f.id), (60 + prng.int(60)) * 25);
       break;
     }
+  }
+  for (const a of s.ahead || []) {
+    if (a.at !== p.id) continue;
+    const c = [Math.trunc((W * (60 + prng.int(25))) / 100), Math.trunc((D * (20 + prng.int(60))) / 100), 0];
+    const at = a.behaviour === 'burrow' && settings.fields.length ? settings.fields[prng.int(settings.fields.length)].at.map((v) => v * CELL) : c;
+    L.encounters.push({ side: a.side, ships: [...a.ships], at, behaviour: a.behaviour || 'hunt', delay: (a.delay | 0) * 25 });
   }
   for (const e of L.encounters) if (F[e.side]) present.add(e.side);
   const factions = [...present].sort();
@@ -454,7 +486,9 @@ export function returnFromMap(rules, s, report) {
   for (const f of st.flags || []) s.flags = [...new Set([...(s.flags || []), f])];
   for (const what of st.reveals || []) note(s, revealPlaces(rules, s, galaxyOf(rules, s), what), 'info');
   // what was found
-  for (const id of report.found || []) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); }
+  for (const id of report.found || []) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); trigger(rules, s, galaxyOf(rules, s), 'found', { item: id }); }
+  // whatever was waiting here has been met
+  s.ahead = (s.ahead || []).filter((a) => a.at !== p.id);
   // morale: losses hurt, a win helps
   const shipsLost = sum(report.ships.destroyed) + sum(report.ships.leftBehind);
   if (shipsLost) s.morale = Math.max(0, s.morale - Math.min(15, shipsLost * num(V, 'MoraleLoss')));
@@ -479,7 +513,7 @@ export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
   if (s && s.kind === 'voyage' && s.version === 2) { s.standing = {}; s.met = {}; s.version = 3; } // from Milestone 7
-  if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; } // from Milestone 8
+  if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   if (!s || s.kind !== 'voyage' || s.version !== SAVE_VERSION) throw new Error('That save is from another version of Driftforge.');
   galaxyOf(rules, s);
   return s;

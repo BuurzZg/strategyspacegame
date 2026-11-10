@@ -75,6 +75,7 @@ defineTrait('Attacks', class Attacks extends Trait {
     return out.map((p) => p[1]);
   }
   tick() {
+    if (this.self.burrowed) return; // buried monsters neither scan nor shoot
     const arms = this.arms;
     if (!arms.some((a) => a.cooldown === 0)) return;
     const w = this.world;
@@ -132,6 +133,7 @@ defineTrait('Stance', class Stance extends Trait {
 defineTrait('AutoTarget', class AutoTarget extends Trait {
   created() { this.timer = (this.self.id * 3) % this.info.ScanInterval; }
   tick() {
+    if (this.self.burrowed) return; // buried monsters neither scan nor shoot
     const self = this.self;
     if (!self.attack || --this.timer > 0) return;
     this.timer = this.info.ScanInterval;
@@ -192,6 +194,8 @@ defineTrait('Wreck', class Wreck extends Trait {
     this.vx = i.vx | 0; this.vy = i.vy | 0; this.vz = i.vz | 0;
     // a drive component sealed inside: found once cutters have taken relicAt salvage
     this.relic = i.relic || ''; this.relicAt = i.relicAt | 0; this.taken = 0;
+    // rust mites: an infested wreck hatches a swarm when it is first cut into
+    this.infested = !!i.infested;
   }
   radius() { return this.size; }
   get amount() { return this.salvage; }
@@ -201,6 +205,7 @@ defineTrait('Wreck', class Wreck extends Trait {
     const t = Math.min(n, this.salvage);
     this.salvage -= t;
     this.taken += t;
+    if (this.infested && this.taken >= 30 && by) this.hatch(by);
     if (this.relic && this.taken >= this.relicAt && by) {
       const w = this.world, id = this.relic, name = w.rules.content.items?.[id]?.Name || id;
       this.relic = '';
@@ -215,6 +220,15 @@ defineTrait('Wreck', class Wreck extends Trait {
       w.addFrameEndTask((ww) => ww.removeActor(self));
     }
     return t;
+  }
+  hatch(by) {
+    const w = this.world, s = this.self;
+    this.infested = false;
+    const fauna = w.players.find((p) => p.faction === 'fauna');
+    if (!fauna || !w.rules.actors.has('mites')) return;
+    for (let i = 0; i < 4; i++) w.createActor('mites', fauna, { x: s.x + (i - 2) * 500, y: s.y + ((i & 1) ? 600 : -600), z: s.z + 300, yaw: (i * 256) & 1023 });
+    w.fx({ t: 'hatch', actor: s.id, x: s.x, y: s.y, z: s.z });
+    w.notify(by.owner, 'Rust mites pour out of the wreck!', 'bad');
   }
   tick() {
     if (!this.vx && !this.vy && !this.vz) return;

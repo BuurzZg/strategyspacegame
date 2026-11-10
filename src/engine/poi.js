@@ -77,7 +77,7 @@ export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness
       for (let i = 0; i < count; i++) {
         const c = centres[i % clusters], t = of[rng.int(of.length)];
         const p = [c[0] + rng.int(13) - 6, c[1] + rng.int(13) - 6, c[2] + rng.int(7) - 3];
-        layout.wrecks.push({ at: toWorld(p), of: t, salvage: rich(roll(range(v.Salvage, [100, 300]))), yaw: rng.int(1024), pitch: rng.int(161) - 80, radius: reachOf(t) });
+        layout.wrecks.push({ infested: rng.int(100) < (+v.Mites || 0), at: toWorld(p), of: t, salvage: rich(roll(range(v.Salvage, [100, 300]))), yaw: rng.int(1024), pitch: rng.int(161) - 80, radius: reachOf(t) });
       }
     } else if (kind === 'Station') {
       // a faction's station, near the middle of the map (its owner is set by the galaxy)
@@ -119,8 +119,9 @@ export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness
       const base = list(v.Ships), ships = [];
       for (let k = 0; k < Math.trunc((base.length * (2 + danger)) / 3); k++) ships.push(base[k % base.length]);
       for (let i = 0; i < count; i++) {
+        const field = v.Behaviour === 'burrow' && fields.length ? fields[rng.int(fields.length)] : null;
         layout.encounters.push({
-          side: v.Side, ships, at: toWorld(place(6, { farFromEntry: 45 })),
+          side: v.Side, ships, at: field ? toWorld(field.at) : toWorld(place(6, { farFromEntry: 45 })),
           behaviour: v.Behaviour || 'lurk', delay: roll(range(v.Delay, [0, 0])) * 25,
         });
       }

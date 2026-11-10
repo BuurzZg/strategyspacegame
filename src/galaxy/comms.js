@@ -31,6 +31,14 @@ export function parseCond(text) {
   if (w[0] === 'has' && w[1] && +w[2] > 0) return { op: 'has', store: w[1], n: +w[2] };
   if (w[0] === 'flag' && w[1]) return { op: 'flag', flag: w[1], want: true };
   if (w[0] === 'not' && w[1] === 'flag' && w[2]) return { op: 'flag', flag: w[2], want: false };
+  // voyage conditions (events, and dialogs on the star chart)
+  if (w[0] === 'region' && w[1]) return { op: 'region', region: w[1] };
+  if (w[0] === 'type' && w[1]) return { op: 'type', type: w[1], want: true };
+  if (w[0] === 'not' && w[1] === 'type' && w[2]) return { op: 'type', type: w[2], want: false };
+  if (w[0] === 'day' && w[1] === '>=' && +w[2] >= 0) return { op: 'day', n: +w[2] };
+  if (w[0] === 'item' && w[1] && ['missing', 'found', 'installed'].includes(w[2])) return { op: 'item', item: w[1], state: w[2] };
+  if (w[0] === 'here' && w[1] === 'relic' && w[2]) return { op: 'relic', item: w[2] };
+  if (w[0] === 'crew' && w[1] === '>=' && +w[2] >= 0) return { op: 'crew', n: +w[2] };
   return { op: 'bad', text };
 }
 export function parseEffect(text) {
@@ -42,6 +50,18 @@ export function parseEffect(text) {
     case 'treaty': return TREATIES.includes(w[1]) ? { op: 'treaty', kind: w[1] } : { op: 'bad', text };
     case 'reveal': return w[1] === 'survey' || w[1] === 'chart' ? { op: 'reveal', what: w[1] } : { op: 'bad', text };
     case 'flag': return w[1] ? { op: 'flag', flag: w[1] } : { op: 'bad', text };
+    // events
+    case 'give': return w[1] && +w[2] > 0 ? { op: 'give', store: w[1], n: +w[2] } : { op: 'bad', text };
+    case 'crew': return ROLES.includes(w[1]) && +w[2] > 0 ? { op: 'crew', role: w[1], n: +w[2] } : { op: 'bad', text };
+    case 'lose': return (w[1] === 'crew' || ROLES.includes(w[1])) && +w[2] > 0 ? { op: 'lose', role: w[1], n: +w[2] } : { op: 'bad', text };
+    case 'damage': return (w[1] === 'hull' || ['drive', 'reactor', 'life', 'hydro', 'foundry', 'sensors'].includes(w[1])) && +w[2] > 0 ? { op: 'damage', system: w[1], n: +w[2] } : { op: 'bad', text };
+    case 'morale': return Number.isFinite(+w[1]) ? { op: 'morale', n: +w[1] } : { op: 'bad', text };
+    case 'item': return w[1] && w[2] === 'found' ? { op: 'item', item: w[1] } : { op: 'bad', text };
+    case 'days': return +w[1] > 0 ? { op: 'days', n: +w[1] } : { op: 'bad', text };
+    case 'ambush': return w[1] && w[2] ? { op: 'ambush', side: w[1], ships: w[2].split('+'), delay: +w[3] || 60 } : { op: 'bad', text };
+    case 'monster': return w[1] ? { op: 'ambush', side: 'fauna', ships: w[1].split('+'), delay: +w[2] || 0, behaviour: w[1] === 'wyrm' ? 'burrow' : 'hunt' } : { op: 'bad', text };
+    case 'roll': return +w[1] > 0 && w[2] && w[3] ? { op: 'roll', chance: +w[1], yes: w[2], no: w[3] } : { op: 'bad', text };
+    case 'faction': return w[1] && Number.isFinite(+w[2]) ? { op: 'fstanding', fid: w[1], n: +w[2] } : { op: 'bad', text };
     default: return { op: 'bad', text };
   }
 }
@@ -66,7 +86,8 @@ export function lintDialog(rules, d) {
       for (const x of list(c.If)) { const p = parseCond(x); if (p.op === 'bad') errs.push(`${where}: unknown condition "${x}"`); else if (p.op === 'has' && !stores.includes(p.store)) errs.push(`${where}: unknown store "${p.store}"`); }
       for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'bad') errs.push(`${where}: unknown effect "${x}"`); else if (p.op === 'pay' && !stores.includes(p.store)) errs.push(`${where}: unknown store "${p.store}"`); }
       if (c.Goto && !d[nodeKey(c.Goto)]) errs.push(`${where}: Goto "${c.Goto}" is not a node`);
-      if (!c.Goto && !list(c.Do).some((x) => ['close', 'trade', 'hire'].includes(x.trim().split(/\s+/)[0]))) errs.push(`${where}: neither Goto nor close, trade or hire`);
+      for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'roll') for (const n of [p.yes, p.no]) if (!d[nodeKey(n)]) errs.push(`${where}: roll goes to "${n}", which is not a node`); if (p.op === 'item' && !rules.content.items[p.item]) errs.push(`${where}: unknown item "${p.item}"`); if (p.op === 'fstanding' && !rules.content.factions[p.fid]) errs.push(`${where}: unknown faction "${p.fid}"`); if (p.op === 'ambush' && p.side !== 'fauna' && !rules.content.factions[p.side]) errs.push(`${where}: unknown side "${p.side}"`); if (p.op === 'ambush') for (const t of p.ships) if (!rules.actors.has(t)) errs.push(`${where}: unknown ship "${t}"`); }
+      if (!c.Goto && !list(c.Do).some((x) => ['close', 'trade', 'hire', 'roll'].includes(x.trim().split(/\s+/)[0]))) errs.push(`${where}: neither Goto nor close, trade, hire or roll`);
     }
   }
   return errs;
@@ -84,14 +105,23 @@ function holds(ctx, c) {
     case 'treaty': return ctx.treaties.includes(c.kind) === c.want;
     case 'has': return (ctx.stores[c.store] | 0) >= c.n;
     case 'flag': return ctx.flags.has(c.flag) === c.want;
+    // voyage conditions: only on the star chart (ctx.s), never on a map
+    case 'region': return !!ctx.s && ctx.point && ctx.point.region === c.region;
+    case 'type': return !!ctx.s && ctx.point && (ctx.point.type === c.type) === c.want;
+    case 'day': return !!ctx.s && ctx.s.day >= c.n;
+    case 'item': { if (!ctx.s) return false; const st = ctx.s.items[c.item]; return c.state === 'missing' ? !st : st === c.state; }
+    case 'relic': return !!ctx.s && ctx.point && ctx.point.relic === c.item;
+    case 'crew': return !!ctx.s && ROLES.reduce((t, r) => t + ctx.s.crew.roles[r], 0) >= c.n;
     default: return false;
   }
 }
 const fill = (ctx, t) => String(t).replace(/\{place\}/g, ctx.place || '').replace(/\{region\}/g, ctx.region || '').replace(/\{faction\}/g, ctx.factionName || '');
 
+export const conditionsHold = (ctx, conds) => conds.every((c) => holds(ctx, c));
+
 // What the node says, and the choices on offer: { say, choices: [{ id, text, ok, why, effects, goto }] }
 export function nodeView(ctx, nodeId) {
-  const d = dialogOf(ctx.rules, ctx.fid), node = d && d[nodeKey(nodeId)];
+  const d = ctx.dialog || dialogOf(ctx.rules, ctx.fid), node = d && d[nodeKey(nodeId)];
   if (!node) return null;
   const say = node[`Say@${TIERS[ctx.tier]}`] || node.Say;
   const choices = [];
@@ -124,6 +154,7 @@ export function breakTreaties(rules, s, fid) {
 export function chartContext(rules, s, galaxy, fid) {
   const p = galaxy.points[s.at];
   return {
+    s, point: p,
     rules, fid, factionName: rules.content.factions[fid].Name,
     tier: tierIndex(rules, standingOf(rules, s, fid)), station: !!p.seat && p.owner === fid, where: 'chart', atWar: false,
     treaties: activeTreaties(s, fid), flags: new Set(s.flags || []), stores: s.stores,
@@ -136,7 +167,7 @@ export function applyOnChart(rules, s, galaxy, fid, effects) {
   const out = { open: null, close: false, notes: [] }, F = rules.content.factions[fid];
   for (const e of effects) {
     if (e.op === 'pay') { s.stores[e.store] = Math.max(0, (s.stores[e.store] | 0) - e.n); out.notes.push(`Paid ${e.n} ${e.store}.`); }
-    else if (e.op === 'standing') { const t = change(rules, s, fid, e.n); out.notes.push(`${F.Name}: ${e.n > 0 ? '+' : ''}${e.n} standing.`); if (t) out.notes.push(`The ${F.Name} are now ${t.to} toward the Forge.`); }
+    else if (e.op === 'standing') { if (!fid) continue; const t = change(rules, s, fid, e.n); out.notes.push(`${F.Name}: ${e.n > 0 ? '+' : ''}${e.n} standing.`); if (t) out.notes.push(`The ${F.Name} are now ${t.to} toward the Forge.`); }
     else if (e.op === 'treaty') { const d = addTreaty(rules, s, fid, e.kind); out.notes.push(`${e.kind} with the ${F.Name} for ${d} days.`); }
     else if (e.op === 'ceasefire') { const d = addTreaty(rules, s, fid, 'Ceasefire'); out.notes.push(`Ceasefire with the ${F.Name} for ${d} days.`); }
     else if (e.op === 'flag') { s.flags = [...new Set([...(s.flags || []), e.flag])]; }
@@ -144,8 +175,42 @@ export function applyOnChart(rules, s, galaxy, fid, effects) {
     else if (e.op === 'threaten') out.notes.push(threatenOnChart(rules, s, galaxy, fid));
     else if (e.op === 'trade' || e.op === 'hire') out.open = e.op;
     else if (e.op === 'close') out.close = true;
+    else applyEventEffect(rules, s, galaxy, e, out);
   }
   return out;
+}
+
+// Effects that events use (and dialogs may): goods and crew gained or lost, damage, morale,
+// a drive part, time passing, an ambush or a monster waiting on the next map here, a roll.
+function applyEventEffect(rules, s, galaxy, e, out) {
+  const sys = rules.content.systems, maxHp = rules.actor('forge').traitInfo('Health').HP;
+  if (e.op === 'give') { s.stores[e.store] = (s.stores[e.store] | 0) + e.n; out.notes.push(`+${e.n} ${rules.content.resources[e.store]?.Name || e.store}.`); }
+  else if (e.op === 'crew') { s.crew.roles[e.role] += e.n; out.notes.push(`${e.n} ${e.role} join the crew.`); }
+  else if (e.op === 'lose') {
+    let n = e.n;
+    if (e.role === 'crew') { const lost = lossFrom(s, n); n = lost; } else n = Math.min(n, s.crew.roles[e.role]), s.crew.roles[e.role] -= n, s.crew.assigned[e.role] = Math.min(s.crew.assigned[e.role], s.crew.roles[e.role]);
+    out.notes.push(`${n} of the crew lost.`);
+  } else if (e.op === 'damage') {
+    if (e.system === 'hull') s.forge.hp = Math.max(1, s.forge.hp - Math.trunc((maxHp * e.n) / 100));
+    else s.systems[e.system] = Math.max(0, s.systems[e.system] - e.n);
+    out.notes.push(`${e.system === 'hull' ? 'Hull' : sys[e.system].Name} −${e.n}%.`);
+  } else if (e.op === 'morale') { s.morale = Math.max(0, Math.min(100, s.morale + e.n)); out.notes.push(`Morale ${e.n > 0 ? '+' : ''}${e.n}.`); }
+  else if (e.op === 'item') { if (!s.items[e.item]) { s.items[e.item] = 'found'; out.notes.push(`The ${rules.content.items[e.item].Name} is aboard.`); out.found = e.item; } }
+  else if (e.op === 'days') { out.days = (out.days || 0) + e.n; }
+  else if (e.op === 'ambush') { (s.ahead ||= []).push({ at: s.at, side: e.side, ships: e.ships, delay: e.delay, behaviour: e.behaviour || 'hunt' }); }
+  else if (e.op === 'roll') { out.goto = rollFor(s, e.chance) ? e.yes : e.no; }
+  else if (e.op === 'fstanding') { const t = change(rules, s, e.fid, e.n); out.notes.push(`${rules.content.factions[e.fid].Name}: ${e.n > 0 ? '+' : ''}${e.n} standing.`); if (t) out.notes.push(`The ${rules.content.factions[e.fid].Name} are now ${t.to} toward the Forge.`); }
+}
+function lossFrom(s, n) {
+  let left = n;
+  for (const r of ROLES) { const k = Math.min(left, Math.max(0, s.crew.roles[r] - s.crew.assigned[r])); s.crew.roles[r] -= k; left -= k; }
+  return n - left;
+}
+// A deterministic roll: the same voyage, day and place give the same result.
+function rollFor(s, chance) {
+  let h = (s.seed ^ Math.imul(s.day, 0x9e3779b1) ^ Math.imul(s.at + 1, 0x85ebca77) ^ Math.imul((s.rolls = (s.rolls | 0) + 1), 0xc2b2ae3d)) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  return (h % 100) < chance;
 }
 
 export function reveal(rules, s, galaxy, what) {

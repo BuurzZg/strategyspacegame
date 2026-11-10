@@ -10,6 +10,7 @@ import { makeOrder } from '../src/engine/order.js';
 import { generateGalaxy, tiers, reach, route, stitchGlim, stitchDays } from '../src/galaxy/galaxy.js';
 import * as V from '../src/galaxy/voyage.js';
 import { count, free } from '../src/galaxy/crew.js';
+import { captain as runCaptain } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
@@ -184,8 +185,10 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   // revisiting: the place yields less
   const s2 = clone(s);
   const again = V.visitSettings(rules, s2);
-  const ore = (st) => st.fields.reduce((m, f) => m + f.ore[1], 0);
-  check(ore(again) < ore(settings) && !again.layout.hulk.relic, `a place visited again yields less (${ore(settings)} → ${ore(again)} top ore per rock across fields), and the relic is gone`);
+  const T = rules.content.poiTypes[g.points[s.at].type];
+  const tmax = Math.max(...T.nodes.filter((n) => n.key.startsWith('Deposit')).map((n) => +String(n.nodes.find((c) => c.key === 'Amount').value).split('-').pop()));
+  const top = Math.max(...again.fields.map((f) => f.ore[1]));
+  check(top <= Math.trunc((tmax * (100 - +VY.RevisitPct)) / 100) && !again.layout.hulk.relic, `a place visited again yields less (rocks up to ${top} ore, from up to ${tmax}), and the relic is gone`);
 }
 
 // 7. The Forge destroyed ends the run
@@ -224,73 +227,11 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
 // 9. The abstract captain: plays the galaxy layer to the end with simple rules, and visits that
 // yield what a short stay at that kind of place would (no maps are played). It shows the voyage
 // can be won, and roughly how long it takes.
-function captain(seed) {
-  const s = V.newVoyage(rules, { seed });
-  const g = V.galaxyOf(rules, s);
-  const order = ['coils', 'lens', 'spindle', 'heartstone'];
-  const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 } };
-  let visits = 0, stitches = 0, goal = null;
-  const visit = () => {
-    const p = g.points[s.at], times = s.visited[p.id] | 0, rich = Math.max(+VY.RevisitFloor, 100 - times * +VY.RevisitPct);
-    const stores = {};
-    for (const [k, n] of Object.entries(s.stores)) stores[k] = { start: n, end: n + Math.trunc(((YIELD[p.type][k] || 0) * rich) / 100), changes: {} };
-    const found = p.relic && !s.items[p.relic] ? [p.relic] : [];
-    V.returnFromMap(rules, s, { stores, forge: { hp: s.forge.hp }, ships: { aboard: s.fleet, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0 });
-    visits++;
-  };
-  // the nearest place (fewest days) that fits, which the Glim aboard can reach
-  const nearest = (pred) => {
-    let best = null;
-    for (const p of g.points) {
-      if (!pred(p)) continue;
-      if (p.id === s.at) return { id: p.id, days: 0 };
-      const pl = V.plan(rules, s, p.id);
-      if (pl.ok && (!best || pl.route.days < best.days || (pl.route.days === best.days && pl.route.glim < best.glim))) best = { id: p.id, days: pl.route.days, glim: pl.route.glim };
-    }
-    return best;
-  };
-  const type = (t) => (p) => p.type === t && (s.visited[p.id] | 0) < 3;
-  for (let guard = 0; !s.over && guard < 600; guard++) {
-    const next = order.find((id) => s.items[id] !== 'installed');
-    const left = V.daysLeft(rules, s), here = g.points[s.at];
-    // supplies first, checked at every stop
-    const lowGlim = s.stores.glim < 600 || (s.stores.food < 900 && s.stores.spores < 100);
-    // keep a supply run going once started, unless water gets desperate
-    // enough water for the trip to the goal and a margin, or at least twelve days
-    const trip = goal && goal.days ? goal.days + 6 : 12;
-    const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.max(12, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
-    if (urgent) {
-      // at a supply place: stay (visit again) until the stores are well up
-      if (type(urgent)(here)) { visit(); if (urgent !== 'IceTail' || V.daysLeft(rules, s).ice >= Math.max(20, trip) || !type(urgent)(here)) goal = null; continue; }
-      if (!goal || goal.kind !== urgent) { const n = nearest(type(urgent)); if (n) goal = { ...n, kind: urgent }; }
-    }
-    if (!urgent && next && s.items[next] === 'found') {
-      if (V.install(rules, s, next).ok) { goal = null; continue; }
-      if (here.type === 'Wreck' || here.type === 'ScrapShoal') { visit(); continue; }
-      if (!goal) { const n = nearest((p) => p.type === 'Wreck' || p.type === 'ScrapShoal'); if (n) goal = { ...n, kind: 'salvage' }; }
-    }
-    if (!goal) {
-      const n = next ? nearest((p) => p.id === g.components[next]) : nearest((p) => p.edge);
-      if (n) goal = { ...n, kind: next || 'home' };
-      else { const m = nearest(type('LanternMist')) || nearest(type('IceTail')); if (!m) break; goal = { ...m, kind: 'any' }; }
-    }
-    if (s.at === goal.id) {
-      if (!next && here.edge) { V.jumpHome(rules, s); break; }
-      visit(); goal = null; continue;
-    }
-    const pl = V.plan(rules, s, goal.id);
-    if (!pl.ok) { goal = null; continue; }
-    // one stitch at a time
-    V.stitch(rules, s, pl.route.hops[0]);
-    stitches++;
-  }
-  return { s, visits, stitches };
-}
 {
   const rows = [];
   let allWon = true;
   for (const seed of [1, 2, 3]) {
-    const { s, visits, stitches } = captain(seed);
+    const { s, visits, stitches } = runCaptain(rules, seed);
     if (!s.won) allWon = false;
     // a rough play time: ten minutes a map, half a minute per stitch on the chart
     rows.push(`seed ${seed}: ${s.won ? 'home' : `lost (${s.over ? s.over.reason : 'stuck'})`} on day ${s.day}, ${visits} visits, ${stitches} stitches, ~${Math.round((visits * 10 + stitches * 0.5) / 6) / 10} h, crew ${count(s.crew)}`);

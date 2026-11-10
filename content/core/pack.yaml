@@ -14,6 +14,7 @@
 #   Factions    factions, their territory and fleets, and the reputation numbers
 #   Trade       values, prices and treaties
 #   Dialogs     comms trees, one per faction
+#   Events      story and galaxy events
 
 Pack:
 	Id: core
@@ -31,3 +32,4 @@ Pack:
 	Factions: factions.yaml
 	Trade: trade.yaml
 	Dialogs: dialogs/rivet.yaml, dialogs/synod.yaml, dialogs/gaunt.yaml, dialogs/cinder.yaml, dialogs/choir.yaml
+	Events: events/story.yaml, events/galaxy.yaml

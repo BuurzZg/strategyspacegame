@@ -78,7 +78,7 @@ export class Input {
   pick(x, y) {
     let best = null, bs = Infinity;
     for (const v of this.renderer.views.values()) {
-      if (v.actor.dead) continue;
+      if (v.actor.dead || v.actor.burrowed) continue;
       const p = this.project(v.pos);
       if (p.z > 1 || p.z < -1) continue;
       const rpx = Math.max(10, this.screenRadius(v.pos, v.radius));

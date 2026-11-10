@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 9, diplomacy and trade.** Hail a faction where it holds the Forge's place, or hail one of its ships or stations on a map: talk, trade, hire crew and ships, buy charts, pay tribute, and make or break treaties. See [Comms and trade](#comms-and-trade).
+**Status: Milestone 10, events, monsters and the story.** A voyage now opens with a prologue, and each drive part has its story: arriving at its derelict, finding it, fitting it. The ending plays when the Forge jumps home. Random events happen out there: distress calls (some are lures), drifting pods, comet storms, strange signals, stowaways, spore blooms. On maps, Scrapwyrms lie buried in rock fields, rust mites hatch from infested wrecks, and the Hollowhorn's song shakes a spooling Skein loose. See [Events and monsters](#events-and-monsters).
+
+**Milestone 9, diplomacy and trade:** Hail a faction where it holds the Forge's place, or hail one of its ships or stations on a map: talk, trade, hire crew and ships, buy charts, pay tribute, and make or break treaties. See [Comms and trade](#comms-and-trade).
 
 **Milestone 8, factions and reputation:** Five factions claim parts of the Wrack, with stations at their seats: the Rivet Moot's hull-towns, the Lantern Synod's refineries, the Ashen Gaunt's dens, the Cinder Pact's holds and the Choir's blooms. How they treat you on a map depends on your standing with them, and what you do there changes it. See [Factions and standing](#factions-and-standing).
 
@@ -34,7 +36,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-Events, monsters and the story come in Milestone 10.
+Sensors, fog and engineering (blueprints) come in Milestone 11.
 
 ## Running the game
 
@@ -225,6 +227,23 @@ The engineers have a fix on one part at a time: the gold ring. Go in and cut int
 
   Firing on a faction while a treaty holds breaks it: −40 standing, and war for the rest of the visit.
 - **Threats:** if your armed ships frighten them, they hand over goods (−10 standing); if not, it costs you (−15), and on a map they open fire.
+
+### Events and monsters
+
+- **Events** show on the star chart as a panel with a gold edge, and must be answered. They happen:
+  - at the start of a voyage (the prologue);
+  - on arriving somewhere;
+  - during a stitch;
+  - on a day of rest;
+  - on finding or fitting a drive part;
+  - at the final jump (the ending).
+
+  Story events happen once. A trigger brings at most one chance event, decided by the voyage's seed, the day and the place.
+- Some events leave something waiting **on the next map at that place**: a distress call that was a lure (Ashen Gaunt hunters), or a sign of a Scrapwyrm. Stitch away and it is gone.
+- **Scrapwyrm:** lies buried in a rock field, unseen and untargetable, until a ship comes within about 600 m; then it surfaces and bites. Alone for 30 seconds, it burrows again. Some Scrap Shoals have one.
+- **Rust mites:** some wrecks in Scrap Shoals are infested. Cutting one hatches four swarms that chew on hulls.
+- **The Hollowhorn:** a leviathan the size of a Forge, in the Hollowhorn Grounds of the Hush and the Shore (rich in Glim and ice). While it is within about 2.6 km of the Forge, its song shakes a spooling Skein loose and the spool starts again. Lead it away or get clear of it before you leave.
+- **Other ways to the drive's parts:** once the Choir have told you about the Skein and you are Friendly, they will part with a Stillwater Lens at one of their blooms. The Ashen Gaunt, if you are Neutral with them and the Lens is fitted, sell an Anchor Spindle at their dens.
 
 ### Places and leaving them
 
@@ -419,6 +438,14 @@ Runs the headless tests:
   - firing, kills and helping change standing by the listed amounts;
   - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
   - a visit with factions is deterministic.
+- **Events** (`tools/eventtest.js`): checks that:
+  - all 25 events validate and can happen somewhere, and every node and choice in them can be reached;
+  - the prologue opens a voyage and happens once; each drive part's storyline fires on arriving, finding and fitting;
+  - chance events are deterministic and never more than one at a time;
+  - a distress call can be a lure, with hunters waiting on the next map; a Scrapwyrm sign buries one in a field; waiting out a storm costs a day; leaving drops what was waiting;
+  - the Scrapwyrm hides, strikes and burrows again; rust mites hatch from a cut wreck and chew on the fleet; the Hollowhorn's song stops a spool while it is near;
+  - the Choir and the Gaunt routes to the Lens and the Spindle;
+  - a scripted voyage that answers every event hears the prologue, every part's story and the ending.
 - **Comms** (`tools/commstest.js`): checks that:
   - every dialog validates, and every node and every one of the 66 choices can be reached in some situation;
   - conditions gate choices, and choices you cannot pay for are refused;
@@ -479,6 +506,7 @@ content/core/rules/stations.yaml  faction stations and Choirmoth swarms
 content/core/trade.yaml         values, price rules and treaty lengths
 content/core/dialogs/*.yaml     comms trees, one per faction (the format is documented at the top
                                 of rivet.yaml)
+content/core/events/*.yaml      story and galaxy events (the format is at the top of story.yaml)
 content/example-pack/           an example add-on: a second Hullborn faction, in YAML only
 ```
 
@@ -495,18 +523,18 @@ src/engine/           deterministic core: world, actors, traits, orders, lockste
                       (content.js), the place generator (poi.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
-                      Diplomacy, Station, ...)
+                      Diplomacy, Station, Burrows, Interdicts, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
                       travel and saves (voyage.js), the crew (crew.js), standing (standing.js),
-                      comms, dialogs, trade and treaties (comms.js),
+                      comms, dialogs, trade and treaties (comms.js), events (events.js),
                       practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
                       wrecks, combat effects, the star chart (galaxy.js)
 src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), the
                       comms and trade panel (comms.js), audio
-tools/                dev server, headless tests, determinism lint
+tools/                dev server, headless tests, the abstract captain (captain.js), determinism lint
 ```
 
 The simulation uses integer maths only: 1024 world units per cell and 1024 angle units per turn, with z pointing up.

@@ -90,6 +90,7 @@ export class WorldRenderer {
       const a = v.actor, m = v.model;
       this.renderPos(a, alpha, v.pos);
       m.root.position.copy(v.pos);
+      if (a.burrowed !== undefined) m.root.visible = !a.burrowed; // a buried Scrapwyrm cannot be seen
       const yaw = lerpAngle(a.pyaw, a.yaw, alpha), pitch = a.ppitch + (a.pitch - a.ppitch) * alpha;
       m.root.rotation.set(0, -toRad(yaw), toRad(pitch));
       // bank into turns (visual only)

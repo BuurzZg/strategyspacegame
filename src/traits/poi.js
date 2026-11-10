@@ -1,5 +1,5 @@
 import { defineTrait, Trait } from '../engine/traits.js';
-import { CELL, angleOf, sin as SIN, cos as COS } from '../engine/math.js';
+import { CELL, angleOf, distSq3, sin as SIN, cos as COS } from '../engine/math.js';
 import { AttackMove } from '../activities/attack.js';
 
 // ---------------------------------------------------------------- the place
@@ -39,7 +39,7 @@ defineTrait('PointLayout', class extends Trait {
     if (!L) return;
     const shape = (type) => { const h = w.rules.actor(type).traitInfo('Health'); return { radius: h.Radius, halfLength: h.HalfLength, model: w.rules.actor(type).traitInfo('WithModel')?.Model || type }; };
     const at = (p) => ({ x: p[0], y: p[1], z: p[2] });
-    for (const k of L.wrecks) w.createActor('wreck', w.neutral, { ...at(k.at), yaw: k.yaw, pitch: k.pitch, of: k.of, salvage: k.salvage, ...shape(k.of) });
+    for (const k of L.wrecks) w.createActor('wreck', w.neutral, { ...at(k.at), yaw: k.yaw, pitch: k.pitch, of: k.of, salvage: k.salvage, infested: !!k.infested, ...shape(k.of) });
     if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, relic: L.hulk.relic || '', relicAt: L.hulk.relicAt | 0, ...shape(L.hulk.of) });
     if (L.station) {
       const owner = w.players.find((p) => p.faction === L.station.owner) || w.neutral;
@@ -145,6 +145,12 @@ defineTrait('Skein', class Skein extends Trait {
   }
   tick() {
     if (this.spool < 0) return;
+    // something that interdicts (the Hollowhorn's song) shakes a spooling Skein loose
+    if (this.world.frame % 25 === 0 && this.spool > 0) {
+      const w = this.world, self = this.self;
+      const by = w.actors.find((a) => { const I = !a.dead && self.owner.isEnemy(a.owner) && a.info.traitInfo('Interdicts'); return I && distSq3(a.x, a.y, a.z, self.x, self.y, self.z) <= I.Range * I.Range; });
+      if (by) { this.spool = 0; w.notify(self.owner, `${by.info.traitInfo('Tooltip').Name}'s song shakes the Skein loose. Spooling from the start.`, 'bad'); w.fx({ t: 'interdicted', actor: self.id, by: by.id, x: self.x, y: self.y, z: self.z }); }
+    }
     if (++this.spool < this.time) return;
     const w = this.world, self = this.self;
     this.spool = -1;

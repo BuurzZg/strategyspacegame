@@ -12,6 +12,10 @@ choir:
 			Text: What do you know of the Skein?
 			If: tier >= Neutral, not flag choir-skein
 			Goto: skein
+		Choice@lens:
+			Text: The lens you spoke of. Do you have one?
+			If: flag choir-skein, item lens missing, tier >= Friendly, where chart
+			Goto: lens
 		Choice@chart:
 			Text: Show us where the places are.
 			If: tier >= Neutral
@@ -32,6 +36,14 @@ choir:
 		Choice@thanks:
 			Text: Thank you.
 			Do: flag choir-skein, standing 2
+			Goto: hello
+	Node@lens:
+		Say: [The swarm folds in on itself, and opens around something clear and heavy.] WE KEPT ONE. IT SEES THROUGH. GLIM FOR IT: NINE HUNDRED. WE WILL BE ON THE OTHER SIDE OF THE VEIL.
+		Choice@buy:
+			Text: Nine hundred Glim.
+			Do: pay glim 900, item lens found, standing 3, close
+		Choice@back:
+			Text: Not yet.
 			Goto: hello
 	Node@chart:
 		Say: [Light pours over the comms screen and becomes a map.] WATER FOR THE SHOWING. THREE HUNDRED.

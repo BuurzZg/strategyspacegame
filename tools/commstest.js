@@ -21,8 +21,10 @@ const F = rules.content.factions;
   check(!errs.length, `all ${Object.keys(rules.content.dialogs).length} dialogs validate${errs.length ? `: ${errs.join('; ')}` : ''}`);
   const flags = new Set(); for (const d of Object.values(rules.content.dialogs)) for (const [k, n] of Object.entries(d)) if (k.startsWith('Node@')) for (const [ck, c] of Object.entries(n)) if (ck.startsWith('Choice@')) for (const x of String(c.If || '').split(',')) { const p = C.parseCond(x); if (p.op === 'flag') flags.add(p.flag); }
   const contexts = [];
-  for (let tier = 0; tier < 5; tier++) for (const station of [true, false]) for (const where of ['chart', 'map']) for (const atWar of [false, true]) for (const treaties of [[], C.TREATIES]) for (const fl of [new Set(), flags])
-    contexts.push({ rules, tier, station, where, atWar, treaties, flags: fl, stores: Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 99999])), place: 'Here', region: 'There' });
+  // on the star chart, dialogs can also ask about the voyage (which drive parts you have)
+  const v0 = V.newVoyage(rules, { seed: 1 }), v1 = { ...v0, items: { coils: 'installed', lens: 'installed' } };
+  for (let tier = 0; tier < 5; tier++) for (const station of [true, false]) for (const where of ['chart', 'map']) for (const atWar of [false, true]) for (const treaties of [[], C.TREATIES]) for (const fl of [new Set(), flags]) for (const vs of [null, v0, v1])
+    contexts.push({ rules, tier, station, where, atWar, treaties, flags: fl, stores: Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 99999])), place: 'Here', region: 'There', s: where === 'chart' ? vs : null, point: vs ? V.galaxyOf(rules, vs).points[vs.at] : null });
   let unreached = [];
   let total = 0;
   for (const fid of Object.keys(F)) {

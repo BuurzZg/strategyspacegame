@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -51,6 +51,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.trade = trade.has('Trade') ? nodesToObject(trade.get('Trade').nodes) : {};
   rules.content.treaties = trade.has('Treaties') ? nodesToObject(trade.get('Treaties').nodes) : {};
   rules.content.dialogs = Object.fromEntries([...mergeFiles(data.Dialogs)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
+  rules.content.events = Object.fromEntries([...mergeFiles(data.Events)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
@@ -82,6 +83,11 @@ export function lintContent(rules) {
   }
   const { races = {}, factions = {}, regions = {} } = rules.content;
   for (const d of Object.values(rules.content.dialogs || {})) errs.push(...lintDialog(rules, d));
+  for (const e of Object.values(rules.content.events || {})) {
+    errs.push(...lintDialog(rules, e));
+    if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
+    if (e.Item && !rules.content.items[e.Item]) errs.push(`events: ${e.id}.Item: unknown item "${e.Item}"`);
+  }
   for (const [id, f] of Object.entries(factions)) {
     if (f.Dialog && !(rules.content.dialogs || {})[f.Dialog]) errs.push(`factions: ${id}.Dialog: no dialog "${f.Dialog}"`);
     if (!races[f.Race]) errs.push(`factions: ${id}.Race: unknown race "${f.Race}"`);

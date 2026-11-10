@@ -37,3 +37,124 @@ gnasher:
 	AutoTarget:
 		ScanRange: 9000
 		Leash: 30000
+
+# A Scrapwyrm lies buried in a rock field and strikes at whatever comes close; after a while
+# with nothing to bite it burrows again.
+wyrm:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Scrapwyrm
+		Class: Monster
+		Role: Ambusher
+		Description: A long, plated burrower that lives in rock fields and eats what it catches. You rarely see one until it moves.
+	Health:
+		HP: 70000
+		Radius: 700
+		HalfLength: 900
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 1400
+	Flight:
+		MaxSpeed: 70
+		Acceleration: 4
+		Deceleration: 6
+		TurnSpeed: 7
+		PitchSpeed: 6
+		MinSpeed: 0
+		Slip: 120
+		Bank: 30
+	WithModel:
+		Model: wyrm
+	Armament:
+		Weapon: WyrmBite
+		Forward: 1400
+		Arc: 120
+	Attacks:
+		Style: standoff
+	AutoTarget:
+		ScanRange: 7000
+		Leash: 14000
+	Burrows:
+		StrikeRange: 6000
+		Rest: 750
+
+# Rust mites: a swarm that hatches from an infested wreck when it is cut, and eats hulls.
+mites:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Rust mites
+		Class: Monster
+		Role: Swarm
+		Description: A cloud of rust-coloured mites the size of fists. They chew through plating, slowly, and there are always more of them.
+	Health:
+		HP: 3000
+		Radius: 260
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 420
+	Flight:
+		MaxSpeed: 60
+		Acceleration: 4
+		Deceleration: 4
+		TurnSpeed: 10
+		PitchSpeed: 10
+		MinSpeed: 10
+		Slip: 160
+		Bank: 10
+	WithModel:
+		Model: mites
+	Armament:
+		Weapon: MiteGnaw
+		Forward: 200
+		Arc: 512
+	Attacks:
+		Style: standoff
+		StandoffPct: 30
+	AutoTarget:
+		ScanRange: 8000
+		Leash: 40000
+
+# The Hollowhorn: a leviathan. Slow, enormous, and its roar shakes a spooling Skein loose.
+hollowhorn:
+	Inherits: ^Ship
+	Tooltip:
+		Name: The Hollowhorn
+		Class: Leviathan
+		Role: Monster
+		Description: Something the size of a Forge that has lived in the Wrack longer than anything else. Its horn is hollow, and it sings through it.
+	Health:
+		HP: 1500000
+		Radius: 3000
+		HalfLength: 6000
+	Armor:
+		Type: capital
+	Selectable:
+		Radius: 8000
+	Flight:
+		MaxSpeed: 22
+		Acceleration: 1
+		Deceleration: 1
+		TurnSpeed: 2
+		PitchSpeed: 2
+		MinSpeed: 0
+		Slip: 80
+		Bank: 8
+	WithModel:
+		Model: hollowhorn
+	Armament@ram:
+		Weapon: HornRam
+		Forward: 7000
+		Arc: 80
+	Armament@song:
+		Weapon: HornSong
+		Forward: 6000
+		Arc: 512
+	Attacks:
+		Style: standoff
+	AutoTarget:
+		ScanRange: 12000
+		Leash: 60000
+	Interdicts:
+		Range: 26000

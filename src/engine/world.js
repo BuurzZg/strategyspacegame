@@ -162,7 +162,7 @@ export class World {
   edgeDist(a, t) { return this.edgeDistPoint(a.x, a.y, a.z, t); }
 
   // Fog of war arrives with sensors (milestone 7); until then everything is visible.
-  canSee() { return true; }
+  canSee(player, a) { return !a || !a.burrowed || a.owner === player; }
 
   // Group move without formations: every ship keeps its offset from the group centre,
   // pulled in a little so a scattered group tightens up.

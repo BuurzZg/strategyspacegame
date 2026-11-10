@@ -17,6 +17,10 @@ gaunt:
 			Text: We'd buy a hull or two.
 			If: station, tier >= Friendly, where chart
 			Do: hire
+		Choice@spindle:
+			Text: They say the Gaunt know where to find an Anchor Spindle.
+			If: station, tier >= Neutral, item spindle missing, item lens installed, where chart
+			Goto: spindle
 		Choice@threaten:
 			Text: Leave now, or we make wrecks of you.
 			Do: threaten, close
@@ -37,6 +41,14 @@ gaunt:
 			Do: pay food 600, treaty Tribute, standing 10, close
 		Choice@back:
 			Text: No.
+			Goto: hello
+	Node@spindle:
+		Say: Know where? We have one. We cut it out of a wreck nobody else could get near. Fifteen hundred salvage, Forge, and it is yours. Or go and cut your own.
+		Choice@buy:
+			Text: Fifteen hundred salvage.
+			Do: pay salvage 1500, item spindle found, standing 5, close
+		Choice@back:
+			Text: We'll cut our own.
 			Goto: hello
 	Node@ceasefire:
 		Say: Pay first. Two hundred and fifty salvage. Then we stop.

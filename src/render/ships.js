@@ -345,6 +345,55 @@ export function buildShip(type, style) {
       out.length = big ? 24 : 3;
       break;
     }
+    case 'wyrm': {
+      // a Scrapwyrm: a long chain of plated segments, a blunt head full of grinders
+      if (!M.plate) {
+        M.plate = new THREE.MeshStandardMaterial({ color: 0x9a8670, roughness: 0.85, metalness: 0.35, flatShading: true });
+        M.maw = new THREE.MeshStandardMaterial({ color: 0xffb070, emissive: 0xff6a20, emissiveIntensity: 1.4, flatShading: true });
+      }
+      for (let i = 0; i < 9; i++) {
+        const seg = part(G('wy-seg', () => new THREE.DodecahedronGeometry(1.4, 0)), M.plate, 4 - i * 1.6, Math.sin(i * 0.8) * 0.5, Math.cos(i * 0.7) * 0.6, body);
+        seg.scale.setScalar(1.1 - i * 0.07);
+        if (i % 2 === 0) part(cone(0.35, 1.3, 4), M.plate, 4 - i * 1.6, 1.4, 0, body);
+      }
+      part(G('wy-head', () => new THREE.IcosahedronGeometry(1.8, 0)), M.plate, 6, 0, 0, body).scale.set(1.3, 0.9, 1);
+      part(torus(0.9, 0.25, 12), M.maw, 7.8, 0, 0, body, 0, Math.PI / 2, 0);
+      out.nose = new THREE.Vector3(8, 0, 0);
+      out.length = 16;
+      break;
+    }
+    case 'mites': {
+      // rust mites: a buzzing knot of rust-coloured specks
+      if (!M.mite) M.mite = new THREE.MeshStandardMaterial({ color: 0xa8582a, emissive: 0x6a2a10, emissiveIntensity: 0.8, flatShading: true });
+      const swarm = new THREE.Group(); body.add(swarm);
+      for (let i = 0; i < 26; i++) {
+        const u = (i * 0.618) % 1, v = (i * 0.381) % 1, th = u * Math.PI * 2, ph = Math.acos(2 * v - 1), r = 0.4 + ((i * 7) % 5) * 0.12;
+        part(G('mite', () => new THREE.TetrahedronGeometry(0.16, 0)), M.mite, Math.sin(ph) * Math.cos(th) * r, Math.cos(ph) * r, Math.sin(ph) * Math.sin(th) * r, swarm, th, ph, 0);
+      }
+      out.spin.push({ obj: swarm, speed: 2.4 });
+      out.nose = new THREE.Vector3(0.8, 0, 0);
+      out.length = 2;
+      break;
+    }
+    case 'hollowhorn': {
+      // the Hollowhorn: a pale leviathan with a long hollow horn and fins like sails
+      if (!M.hide) {
+        M.hide = new THREE.MeshStandardMaterial({ color: 0x8a8098, roughness: 0.8, metalness: 0.1, flatShading: true });
+        M.song = new THREE.MeshStandardMaterial({ color: 0xd8c8ff, emissive: 0x8a6aff, emissiveIntensity: 1.8, flatShading: true });
+      }
+      const bodyM = part(G('hh-body', () => new THREE.IcosahedronGeometry(8, 1)), M.hide, 0, 0, 0, body);
+      bodyM.scale.set(5.2, 1.6, 1.9);
+      part(G('hh-head', () => new THREE.IcosahedronGeometry(6, 1)), M.hide, 34, 1, 0, body).scale.set(1.6, 1, 1.1);
+      part(G('hh-horn', () => new THREE.CylinderGeometry(0.6, 3.2, 26, 10, 1, true)), M.hide, 54, 3, 0, body, 0, 0, -Math.PI / 2 + 0.08);
+      part(torus(0.8, 0.3, 14), M.song, 67, 3.8, 0, body, 0, Math.PI / 2, 0);
+      for (const z of [-1, 1]) part(wedge(22, 10, 1, 0.8), M.hide, -6, 0, z * 13, body, 0, z * 0.3, z * 0.15);
+      part(wedge(14, 6, 0.5, 0.8), M.hide, -6, 11, 0, body, 0, 0, Math.PI / 2);
+      for (let i = 0; i < 6; i++) part(box(1.2, 0.3, 0.3), M.song, 26 - i * 9, 2.6 + Math.sin(i) * 0.6, 0, body);
+      part(cone(4, 16, 6), M.hide, -46, 0, 0, body, 0, 0, Math.PI / 2);
+      out.nose = new THREE.Vector3(68, 3.8, 0);
+      out.length = 120;
+      break;
+    }
     case 'gnasher': {
       // a monster: ribbed, eyeless, all jaw; it glows where its nerves run
       if (!M.skin) {
