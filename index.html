@@ -168,6 +168,24 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 .h { color: var(--height); }
 .a { color: var(--accent); }
 
+/* fleet orders: formation and stance, bottom centre (the move hint takes this spot while plotting) */
+#fleetbar {
+  position: absolute; left: 424px; right: max(16px, env(safe-area-inset-right, 0px)); margin-inline: auto; width: fit-content; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: var(--panel); border: 1px solid var(--line); padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center;
+}
+.fb-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fb-k { font: 600 10px var(--f-body); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.fb-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.fb-btns button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 4px 9px; font-size: 12px; }
+.fb-btns button:hover:not(:disabled) { border-color: var(--accent); }
+.fb-btns button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, #0d131e); }
+.fb-btns button:disabled { opacity: 0.4; cursor: default; }
+#cgroups { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: 56px; display: flex; gap: 4px; }
+#cgroups button { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 3px 7px; display: flex; gap: 6px; align-items: baseline; font: 12px var(--f-mono); }
+#cgroups button:hover { border-color: var(--accent); }
+#cgroups b { color: var(--accent); font-weight: 600; }
+#cgroups span { color: var(--muted); }
+
 /* centred in the space to the right of the selection card */
 #move-hint {
   position: absolute; left: 424px; right: max(16px, env(safe-area-inset-right, 0px)); margin-inline: auto; width: fit-content; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
@@ -182,6 +200,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
   .brand { letter-spacing: 0.2em; }
   .tag { display: none; }
   #move-hint { bottom: auto; top: 54px; left: 16px; right: 16px; }
+  #fleetbar { left: 16px; right: 16px; bottom: auto; top: 90px; }
 }
 </style>
 <!--DF:STYLE-END-->
@@ -194,7 +213,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 
   <header id="top">
     <div class="brand">DRIFT<b>FORGE</b></div>
-    <span class="tag">Milestone 4 · combat · Proving Grounds</span>
+    <span class="tag">Milestone 5 · formations · Proving Grounds</span>
     <div id="res" aria-label="Resources">
       <div class="res-item" title="Ore in the bank, and how much your Gleaners delivered in the last minute"><span class="res-k">Ore</span><b id="res-ore">0</b><span id="res-rate"></span></div>
       <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
@@ -286,6 +305,13 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Right-click</kbd> the Forge</dt><dd>Gleaners unload now</dd>
       <dt>Smelter</dt><dd>Mobile refinery: park it by a far field</dd>
     </dl>
+    <h3>Fleet orders</h3>
+    <dl>
+      <dt><kbd>T</kbd></dt><dd>Cycle formation: Wall, Sphere, Wedge, Column, Ring, Loose</dd>
+      <dt><kbd>V</kbd></dt><dd>Cycle stance: Aggressive, Defensive, Passive</dd>
+      <dt><kbd>Ctrl</kbd> + <kbd>1</kbd>–<kbd>9</kbd></dt><dd>Make a control group (or right-click its chip)</dd>
+      <dt><kbd>1</kbd>–<kbd>9</kbd></dt><dd>Select it; press twice to jump to it</dd>
+    </dl>
     <h3>Combat</h3>
     <dl>
       <dt><kbd>Right-click</kbd> an enemy</dt><dd>Selected warships <span class="x">attack</span> it</dd>
@@ -302,6 +328,12 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Right-click</kbd> <kbd>Esc</kbd></dt><dd>Cancel</dd>
     </dl>
   </aside>
+
+  <div id="fleetbar" hidden aria-label="Fleet orders">
+    <div class="fb-group"><span class="fb-k">Formation <kbd>T</kbd></span><div id="fb-formation" class="fb-btns"></div></div>
+    <div class="fb-group"><span class="fb-k">Stance <kbd>V</kbd></span><div id="fb-stance" class="fb-btns"></div></div>
+  </div>
+  <div id="cgroups" aria-label="Control groups"></div>
 
   <div id="move-hint" hidden>
     <b id="move-title">Plot course</b>

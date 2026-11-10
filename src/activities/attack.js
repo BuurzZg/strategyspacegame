@@ -91,7 +91,7 @@ export class AttackMove extends Activity {
       if (!this.fight.run(self)) return false;
       this.fight = null;
     }
-    if (--this.scan <= 0) {
+    if (--this.scan <= 0 && !(self.stance && self.stance.mode === 'passive')) {
       this.scan = 8;
       const auto = self.trait('AutoTarget');
       const t = auto ? auto.acquire(auto.info.ScanRange) : null;

@@ -1,5 +1,5 @@
 import { defineTrait, Trait } from '../engine/traits.js';
-import { angleOf, angleDiff, turnToward, approach, pitchOf, dirVec, isqrt, clamp, distSq3 } from '../engine/math.js';
+import { CELL, angleOf, angleDiff, turnToward, approach, pitchOf, dirVec, isqrt, clamp, distSq3 } from '../engine/math.js';
 import { planRoute } from '../engine/avoid.js';
 import { FlyTo } from '../activities/fly.js';
 
@@ -92,6 +92,36 @@ defineTrait('Flight', class Flight extends Trait {
     w.clampToBounds(self);
     this.moving = true;
     return false;
+  }
+
+  // Formation flying: hold a slot that moves with velocity (vx, vy, vz) per tick. Far from
+  // the slot, fly to it the normal way; close in, match the anchor's motion plus a gentle
+  // pull toward the slot (manoeuvring thrusters), nose along the motion, or along `faceYaw`
+  // when barely moving.
+  keepStation(tx, ty, tz, vx, vy, vz, faceYaw) {
+    const self = this.self, info = this.info;
+    const ex = tx - self.x, ey = ty - self.y, ez = tz - self.z;
+    if (ex * ex + ey * ey + ez * ez > 25 * CELL * CELL) { this.flyToward(tx, ty, tz); return; }
+    let wx = vx + (ex >> 3), wy = vy + (ey >> 3), wz = vz + (ez >> 3);
+    let w = isqrt(wx * wx + wy * wy + wz * wz);
+    const cap = info.MaxSpeed;
+    if (w > cap) { wx = Math.trunc((wx * cap) / w); wy = Math.trunc((wy * cap) / w); wz = Math.trunc((wz * cap) / w); w = cap; }
+    this.speed = this.speed < w ? Math.min(w, this.speed + info.Acceleration * 2) : Math.max(w, this.speed - info.Deceleration * 2);
+    if (w > 0 && this.speed > 0) {
+      self.x += Math.trunc((wx * this.speed) / w);
+      self.y += Math.trunc((wy * this.speed) / w);
+      self.z += Math.trunc((wz * this.speed) / w);
+    }
+    const h = isqrt(wx * wx + wy * wy);
+    if (w > 10 && h > 4) {
+      self.yaw = turnToward(self.yaw, angleOf(wx, wy), info.TurnSpeed);
+      self.pitch = approach(self.pitch, clamp(pitchOf(h, wz), -info.MaxPitch, info.MaxPitch), info.PitchSpeed);
+    } else {
+      self.yaw = turnToward(self.yaw, faceYaw, info.TurnSpeed);
+      self.pitch = approach(self.pitch, 0, info.PitchSpeed);
+    }
+    this.world.clampToBounds(self);
+    this.moving = this.speed > 0;
   }
 
   // Stay on station and point the nose at (tx, ty, tz): brake to a stop, turning on the spot.

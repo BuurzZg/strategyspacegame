@@ -5,7 +5,7 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 4, combat, in the Proving Grounds.** The game opens in the Proving Grounds, a testing sandbox. You get the Forge, its escorts, Gleaners mining four asteroid fields, and a panel to call in enemies.
+**Status: Milestone 5, formations and stances, in the Proving Grounds.** The game opens in the Proving Grounds, a testing sandbox. You get the Forge, its escorts, Gleaners mining four asteroid fields, and a panel to call in enemies.
 
 Warships fight with:
 - autocannons and plasma charges (fighters);
@@ -14,6 +14,8 @@ Warships fight with:
 - torpedoes (destroyers).
 
 Each counters something and is countered by something else. Bigger ships leave wrecks behind.
+
+Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 The galaxy map and the survival voyage come in later milestones.
 
@@ -79,7 +81,7 @@ After you give a move order, the camera follows the selected ships. Panning brea
 
 A readout beside the marker shows the distance and the target altitude. One grid cell is 100 m.
 
-Groups keep their spacing when they move. Proper formations arrive in Milestone 5.
+A group of ships that isn't in a formation keeps its rough shape when it moves. To fly in a proper shape, give it a formation (below).
 
 Ships steer round asteroids and round hulls much bigger than their own, such as the Forge and the Smelter, instead of flying through them. Each ship plans a detour past the first thing in its way and re-checks the route every third of a second.
 
@@ -118,6 +120,33 @@ You start with 1,500 ore and two Gleaners. Both start mining as soon as the game
 | Right-click the Forge or a Smelter | Come back and unload now, then carry on mining |
 
 One Gleaner on the nearest field brings in about 180 ore a minute. The far field, Ostrel Deep, is the richest, but the round trip from the Forge is long. Build a Smelter, park it beside that field, and the Gleaners mining there unload into it instead.
+
+### Fleet orders: formations, stances and control groups
+
+When you have ships selected, a fleet bar appears at the bottom of the screen.
+
+| Input | Action |
+| --- | --- |
+| **Formation** buttons, or `T` to cycle | Wall, Sphere, Wedge, Column, Ring, or Loose (no formation) |
+| **Stance** buttons, or `V` to cycle | Aggressive, Defensive or Passive |
+| `Ctrl` + `1`–`9`, or right-click a group chip | Make the selection a control group |
+| `1`–`9`, or click a group chip | Select that group (`Shift` adds it to the selection) |
+| `1`–`9` twice | Select the group and jump the camera to it |
+
+- **Formations:**
+  - The ships form up where they are, with the biggest ship at the centre (Sphere) or the point (Wedge).
+  - When you move the whole group, it flies as one, at the pace of its slowest ship, waiting for stragglers.
+  - The shape turns and climbs with the group, and settles facing the way it went.
+  - While you plot the move, the disc shows where each ship's slot will be at the destination.
+  - Moving only some ships of a group takes them out of it. Loose dissolves the formation.
+- **Advancing in formation** (`Ctrl`+click on the disc): the group stops while its aggressive ships fight what they meet, then carries on in formation.
+- **Stances:**
+  - **Aggressive** ships chase enemies that come close.
+  - **Defensive** ships hold position and fire at whatever comes in range.
+  - **Passive** ships never fire unless you order an attack, and fly away when shot at.
+
+  Warships start Aggressive, Gleaners and the Smelter Passive, and the Forge Defensive.
+- **Control groups** show as numbered chips under the top bar. The number is also drawn on each selected ship's brackets. They are a reliable alternative if your browser keeps `Ctrl` + number for switching tabs.
 
 ### Combat
 
@@ -213,6 +242,13 @@ Runs the headless tests:
   - targeting, leashes, attack orders, Stop and advancing all work;
   - the Forge's point defence fires without the Forge moving;
   - a 40-a-side battle is deterministic and takes about 0.2 ms per tick.
+- **Formations** (`tools/formationtest.js`): checks that:
+  - slots never overlap, in any formation of 2 to 24 ships;
+  - every formation forms up, holds its shape on a 6.5 km curving climb (about 30 units off-slot on average), keeps to the slowest ship's pace, and settles facing the way it went;
+  - groups re-shape when a ship dies, ships leave when ordered off alone, and Loose dissolves the group;
+  - stances work: Passive never fires and flees, Defensive fires without chasing, and Aggressive chases;
+  - an advancing wedge destroys an enemy in its path and re-forms;
+  - two identical runs give the same sync hash.
 - **Balance** (`tools/balancetest.js`): cost-matched battles, each fought twice with the sides swapped. The counter has to win both, keeping at least 25% of its value:
   - Pickets beat Darts;
   - Halberds beat Pickets;
@@ -238,8 +274,8 @@ rules/*.yaml          factions, ships, warships, fauna, weapons, and combat fits
 src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer maths,
                       steering (avoid.js), weapons and projectiles (weapons.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Armament, Attacks, AutoTarget,
-                      Wreck, ProvingGrounds, ...)
-src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove)
+                      Stance, Formations, Wreck, ProvingGrounds, ...)
+src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove, FormationMove)
 src/render/           three.js scene: space backdrop, procedural ships, asteroids and wrecks, combat effects
 src/ui/               orbit camera, movement disc, input, HUD, audio
 tools/                dev server, headless tests, determinism lint

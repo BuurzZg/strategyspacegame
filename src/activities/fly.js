@@ -8,8 +8,8 @@ import { CELL, distSq3 } from '../engine/math.js';
 // or a crowd already holds it) and it stops getting closer, it calls that arrival instead
 // of pushing forever. A ship that is only turning is never shoved, so it isn't cut short.
 export class FlyTo extends Activity {
-  static label = 'Moving';
-  constructor(x, y, z) { super(); this.x = x | 0; this.y = y | 0; this.z = z | 0; this.best = Infinity; this.stuck = 0; }
+  constructor(x, y, z, label = '') { super(); this.x = x | 0; this.y = y | 0; this.z = z | 0; this.best = Infinity; this.stuck = 0; this.text = label; }
+  get label() { return this.text || 'Moving'; }
   tick(self) {
     if (this.canceling) return true;
     const m = self.mobile;

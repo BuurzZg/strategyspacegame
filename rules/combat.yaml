@@ -30,6 +30,8 @@ forge:
 	# the Forge never chases anything: its guns fire from where it is
 	Attacks:
 		Style: turret
+	Stance:
+		Initial: defensive
 	LeavesWreck:
 		Pct: 10
 
@@ -37,11 +39,15 @@ gleaner:
 	Crew:
 		Count: 3
 		Role: miners
+	Stance:
+		Initial: passive
 
 smelter:
 	Crew:
 		Count: 10
 		Role: engineers
+	Stance:
+		Initial: passive
 	LeavesWreck:
 
 dart:

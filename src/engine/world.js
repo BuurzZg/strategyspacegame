@@ -272,6 +272,7 @@ export class World {
     for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }
     h = hashMix(h, this.effects.length);
     for (const e of this.effects) { h = hashMix(h, e.x); h = hashMix(h, e.y); h = hashMix(h, e.z); }
+    if (this.formations) h = this.formations.hash(h, hashMix);
     return h >>> 0;
   }
 }

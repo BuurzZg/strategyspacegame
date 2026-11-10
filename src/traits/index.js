@@ -6,3 +6,4 @@ import './production.js';
 import './economy.js';
 import './combat.js';
 import './sandbox.js';
+import './formation.js';

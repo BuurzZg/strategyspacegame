@@ -24,6 +24,7 @@ export class Actor {
     this.nextToken = 1;
     // fast-path references filled in by traits
     this.health = null; this.mobile = null; this.turret = null; this.attack = null;
+    this.stance = null; this.formation = 0; // formation group id (0: none)
 
     this.traits = [];
     this.traitMap = new Map();

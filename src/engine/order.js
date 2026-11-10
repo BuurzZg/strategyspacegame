@@ -48,14 +48,28 @@ export function resolveOrder(world, player, o) {
   }
   if (!subjects.length) return;
 
-  if (GROUP_MOVES.has(o.n) && target && !target.actor && subjects.length > 1) {
-    // Until formations exist (milestone 5) a group keeps its current shape around the new centre.
+  const F = world.formations;
+  if (o.n === 'SetFormation') { if (F) F.form(player, subjects, String(o.x)); return; }
+  if (GROUP_MOVES.has(o.n) && target && !target.actor) {
     const movers = subjects.filter((a) => a.mobile);
-    const goals = world.groupOffsets(movers, target);
-    movers.forEach((a, i) => dispatch(a, { ...order, target: goals[i] }));
-    for (const a of subjects) if (!a.mobile) dispatch(a, order);
-    return;
+    // a whole formation group moves as one
+    const g = F && F.exactGroup(movers);
+    if (g) {
+      F.move(g, target, o.n === 'AttackMove');
+      for (const a of subjects) if (!a.mobile) dispatch(a, order);
+      return;
+    }
+    // anything else leaves its formation; a loose group keeps its shape around the new centre
+    if (F) F.leave(movers);
+    if (movers.length > 1) {
+      const goals = world.groupOffsets(movers, target);
+      movers.forEach((a, i) => dispatch(a, { ...order, target: goals[i] }));
+      for (const a of subjects) if (!a.mobile) dispatch(a, order);
+      return;
+    }
   }
+  if (F && o.n === 'Stop') { const g = F.exactGroup(subjects.filter((a) => a.mobile)); if (g) F.stop(g); }
+  if (F && (o.n === 'Harvest' || o.n === 'Dock')) F.leave(subjects);
   for (const a of subjects) dispatch(a, order);
 }
 

@@ -3,6 +3,8 @@ import { isqrt, dirVec, cos as COS } from '../engine/math.js';
 import { fireWeapon, muzzleOf } from '../engine/weapons.js';
 import { reach } from '../engine/avoid.js';
 import { Attack, AttackMove } from '../activities/attack.js';
+import { FlyTo } from '../activities/fly.js';
+import { CELL, clamp } from '../engine/math.js';
 
 // ---------------------------------------------------------------- Armament
 // One weapon mount. Forward / Side / Up place the muzzle in the ship's frame; Alternate
@@ -77,7 +79,8 @@ defineTrait('Attacks', class Attacks extends Trait {
     if (!arms.some((a) => a.cooldown === 0)) return;
     const w = this.world;
     const focus = this.focusFrame >= w.frame - 1 && this.canTarget(this.focus) ? this.focus : null;
-    if (--this.scanT <= 0) { this.scanT = 6; this.near = this.info.HoldFire ? [] : this.scan(); }
+    // passive ships only shoot when ordered to (their focus target)
+    if (--this.scanT <= 0) { this.scanT = 6; this.near = this.info.HoldFire || (this.self.stance && this.self.stance.mode === 'passive') ? [] : this.scan(); }
     for (const a of arms) {
       if (a.cooldown > 0) continue;
       if (focus && a.fire(focus)) continue;
@@ -91,6 +94,37 @@ defineTrait('Attacks', class Attacks extends Trait {
   }
 }, { Style: 'standoff', StandoffPct: 70, BreakRange: 700, BreakDistance: 3000, Jink: 0, HoldFire: false });
 
+// ---------------------------------------------------------------- Stance
+// How a ship behaves when enemies are about, unless you give it an order:
+//   aggressive  go after enemies that come close (within a leash), fight back when shot
+//   defensive   hold position: guns fire at whatever comes in range, but it never chases
+//   passive     never fire, and fly away from whoever shoots at it (collectors, scouts)
+// An explicit Attack order is always obeyed.
+export const STANCES = ['aggressive', 'defensive', 'passive'];
+defineTrait('Stance', class Stance extends Trait {
+  created() { this.mode = this.info.Initial; this.self.stance = this; this.fled = -1000; }
+  resolveOrder(o) {
+    if (o.name !== 'SetStance' || !STANCES.includes(o.extra)) return;
+    this.mode = o.extra;
+    // a chase the ship started on its own ends when it is told to hold back
+    const act = this.self.activity;
+    if (this.mode !== 'aggressive' && act instanceof Attack && act.leash) this.self.cancelActivity();
+  }
+  damaged({ attacker }) {
+    const self = this.self, w = this.world;
+    if (this.mode !== 'passive' || !self.mobile || !attacker || attacker.dead || w.frame - this.fled < 75) return;
+    this.fled = w.frame;
+    // run straight away from the attacker, about 2.5 km
+    const dx = self.x - attacker.x, dy = self.y - attacker.y, dz = self.z - attacker.z;
+    const d = Math.max(1, isqrt(dx * dx + dy * dy + dz * dz));
+    const k = 25 * CELL, b = w.bounds;
+    const x = clamp(self.x + Math.trunc((dx * k) / d), b.x0, b.x1), y = clamp(self.y + Math.trunc((dy * k) / d), b.y0, b.y1), z = clamp(self.z + Math.trunc((dz * k) / d), b.z0, b.z1);
+    if (w.formations) w.formations.leave([self]);
+    self.mobile.goal = { x, y, z };
+    self.queueActivity(new FlyTo(x, y, z, 'Fleeing'), false);
+  }
+}, { Initial: 'aggressive' });
+
 // ---------------------------------------------------------------- AutoTarget
 // An idle armed ship goes after enemies that come within ScanRange (and after anyone who
 // shoots it), but gives up a chase that drags it more than Leash from where it started.
@@ -101,13 +135,14 @@ defineTrait('AutoTarget', class AutoTarget extends Trait {
     const self = this.self;
     if (!self.attack || --this.timer > 0) return;
     this.timer = this.info.ScanInterval;
-    if (!self.isIdle) return;
+    if (!self.isIdle || (self.stance && self.stance.mode !== 'aggressive')) return;
     const t = this.acquire(this.info.ScanRange);
     if (t) self.queueActivity(new Attack(t, { leash: this.info.Leash }), false);
   }
   damaged({ attacker }) {
     const self = this.self;
     if (!self.attack || !self.isIdle || !attacker || attacker.dead || !self.attack.canTarget(attacker)) return;
+    if (self.stance && self.stance.mode !== 'aggressive') return; // defensive ships return fire from where they are
     self.queueActivity(new Attack(attacker, { leash: this.info.Leash }), false);
   }
   // The best enemy within range: armed ships before unarmed ones, then the nearest.

@@ -1,6 +1,11 @@
 import { R } from '../render/space.js';
 import { CELL } from '../engine/math.js';
 import { fieldOre } from '../traits/economy.js';
+import { FORMATIONS } from '../traits/formation.js';
+import { STANCES } from '../traits/combat.js';
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const FORMATION_TIPS = { wall: 'A flat sheet facing the way you go', sphere: 'A shell round the biggest ship', wedge: 'An arrowhead, biggest ship at the point', column: 'Single file', ring: 'A flat circle', loose: 'No formation' };
+const STANCE_TIPS = { aggressive: 'Chase and fight enemies that come close', defensive: 'Hold position and return fire', passive: 'Never fire; flee when attacked' };
 
 // HUD: an overlay canvas for in-world marks (selection brackets, box select, move readout)
 // plus DOM panels (resources, selection card, production panel, controls card, toasts).
@@ -41,6 +46,34 @@ export class Hud {
     this.dirty = true;
     this.buildPanel();
     this.groundsPanel();
+    this.fleetPanel();
+  }
+
+  // ---------------------------------------------------------------- fleet bar and control groups
+  fleetPanel() {
+    const mk = (label, tip, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = tip; b.addEventListener('click', () => { fn(); b.blur(); }); return b; };
+    for (const t of [...FORMATIONS, 'loose']) { const b = mk(cap(t), FORMATION_TIPS[t], () => this.input.setFormation(t)); b.dataset.f = t; $('fb-formation').appendChild(b); }
+    for (const s of STANCES) { const b = mk(cap(s), STANCE_TIPS[s], () => this.input.setStance(s)); b.dataset.s = s; $('fb-stance').appendChild(b); }
+    const strip = $('cgroups');
+    strip.addEventListener('click', (e) => { const b = e.target.closest('[data-g]'); if (b) this.input.recallGroup(+b.dataset.g, e.shiftKey); });
+    strip.addEventListener('contextmenu', (e) => { const b = e.target.closest('[data-g]'); if (!b) return; e.preventDefault(); this.input.assignGroup(+b.dataset.g); });
+  }
+  refreshFleet() {
+    const inp = this.input, ships = inp.fleet();
+    const show = ships.length > 0 && !inp.move;
+    $('fleetbar').hidden = !show;
+    if (show) {
+      const f = inp.formationOf(ships), st = inp.stanceOf(inp.own().filter((a) => a.stance));
+      for (const b of $('fb-formation').children) { b.setAttribute('aria-pressed', String(b.dataset.f === f)); b.disabled = ships.length < 2 && b.dataset.f !== 'loose'; }
+      for (const b of $('fb-stance').children) b.setAttribute('aria-pressed', String(b.dataset.s === st));
+    }
+    // control groups strip: one chip per group in use
+    const sig = inp.groups.map((g) => g.filter((id) => { const a = this.world.actorById.get(id); return a && !a.dead; }).length).join(',');
+    if (sig !== this.groupSig) {
+      this.groupSig = sig;
+      const counts = sig.split(',').map(Number);
+      $('cgroups').innerHTML = counts.map((c, i) => (i && c ? `<button type="button" data-g="${i}" title="Group ${i}: click to select (Shift adds, twice to jump to it); right-click to replace it with the selection"><b>${i}</b><span>${c}</span></button>` : '')).join('');
+    }
   }
   resize(w, h, dpr) {
     this.overlay.width = w * dpr; this.overlay.height = h * dpr;
@@ -273,6 +306,7 @@ export class Hud {
     $('move-title').textContent = rallyMode ? 'Rally point' : 'Plot course';
     $('move-hint').classList.toggle('rally', rallyMode);
     if (this.buildOpen) this.refreshBuild();
+    this.refreshFleet();
     if (this.groundsOpen) {
       const hostiles = this.world.actors.filter((a) => a.health && !a.dead && p.isEnemy(a.owner)).length;
       $('pg-count').textContent = hostiles ? `${hostiles} hostile${hostiles > 1 ? 's' : ''} in the area` : 'No hostiles in the area';
@@ -377,6 +411,8 @@ export class Hud {
       if (!v) continue;
       const b = this.drawBrackets(ctx, v, a.asteroid ? ORE_CSS : rd.styleOf(a.owner).css, true);
       if (!b || a.wreck) continue;
+      const gn = inp.isMine(a) ? inp.groupNumberOf(a) : 0;
+      if (gn) { ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.fillStyle = rd.styleOf(a.owner).css; ctx.fillText(String(gn), b.p.x - b.r - 2, b.p.y - b.r - 4); }
       const w = Math.max(18, Math.min(b.r * 1.4, 120));
       const bar = (y, f, color) => { ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = color; ctx.fillRect(b.p.x - w / 2, y, w * f, 2); };
       if (a.asteroid) { bar(b.p.y + b.r + 6, a.asteroid.ore / a.asteroid.maxOre, ORE_CSS); continue; }
@@ -468,7 +504,7 @@ export class Hud {
 
   // Does a screen rectangle overlap a visible HUD panel?
   covered(x, y, w, h) {
-    for (const id of ['help', 'sel', 'move-hint', 'build', 'grounds']) {
+    for (const id of ['help', 'sel', 'move-hint', 'build', 'grounds', 'fleetbar']) {
       const el = $(id);
       if (!el || el.hidden) continue;
       const r = el.getBoundingClientRect();

@@ -50,6 +50,13 @@ export class MoveWidget {
     this.foot = new THREE.Line(new THREE.BufferGeometry().setFromPoints(circlePoints(0.6, 24)), lineMat(PLANE, 0.9));
     this.marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), new THREE.MeshBasicMaterial({ color: HEIGHT, wireframe: true, transparent: true, opacity: 0.95, depthTest: false }));
     for (const o of [this.radius, this.height, this.path, this.stalks, this.ticks, this.foot, this.marker]) { o.renderOrder = 21; o.frustumCulled = false; this.group.add(o); }
+    // formation preview: where each ship's slot will be at the destination
+    const gg = new THREE.BufferGeometry();
+    this.ghostPos = new Float32Array(64 * 3);
+    gg.setAttribute('position', new THREE.BufferAttribute(this.ghostPos, 3).setUsage(THREE.DynamicDrawUsage));
+    this.ghosts = new THREE.Points(gg, new THREE.PointsMaterial({ color: PLANE, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+    this.ghosts.frustumCulled = false; this.ghosts.renderOrder = 22;
+    this.group.add(this.ghosts);
     // everything drawn in the plane colour can be re-tinted (rally placement uses lilac)
     this.planeMats = [];
     this.group.traverse((o) => { if (o.material && o.material.color.getHex() === PLANE) this.planeMats.push(o.material); });
@@ -70,7 +77,11 @@ export class MoveWidget {
 
   // center: selection centre (plane height = center.y); onPlane: cursor point on that plane;
   // dest: final destination (onPlane raised by the height offset); ships: render positions.
-  update(center, onPlane, dest, ships, t) {
+  update(center, onPlane, dest, ships, t, ghosts = []) {
+    const gn = Math.min(64, ghosts.length);
+    for (let i = 0; i < gn; i++) this.ghostPos.set([ghosts[i].x, ghosts[i].y, ghosts[i].z], i * 3);
+    this.ghosts.geometry.setDrawRange(0, gn);
+    this.ghosts.geometry.attributes.position.needsUpdate = true;
     const r = Math.max(0.5, Math.hypot(onPlane.x - center.x, onPlane.z - center.z));
     this.disc.position.copy(center);
     this.disc.scale.setScalar(r);
