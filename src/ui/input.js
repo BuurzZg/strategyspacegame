@@ -9,7 +9,10 @@ import { MoveWidget } from './movewidget.js';
 //   Right-click (space)   open the move disc  M  same            F  focus and follow selection
 //   In move mode: move the mouse over the plane, hold Shift and move up/down for height,
 //   left-click to confirm, right-click or Esc to cancel.
+//   B  production panel     R  place the Forge's rally point (same disc, tinted lilac)
+//   Home  select and focus the Forge
 const DRAG = 5;
+export const RALLY = 0xc9a7ff;
 
 export class Input {
   constructor(canvas, session, hud, audio) {
@@ -76,6 +79,7 @@ export class Input {
     return best;
   }
   isMine(a) { return a.owner === this.viewer; }
+  forge() { return this.world.actors.find((a) => a.owner === this.viewer && !a.dead && a.has('ProductionQueue')) || null; }
   own() { return this.selection.filter((a) => !a.dead && this.isMine(a)); }
 
   setSelection(list, sound = true) {
@@ -91,11 +95,14 @@ export class Input {
   }
 
   // ---------------------------------------------------------- move mode
-  beginMove() {
-    const ships = this.own().filter((a) => a.mobile);
+  // mode 'move': plot a course for the selected ships. mode 'rally': place the Forge's rally point.
+  beginMove(mode = 'move') {
+    const ships = mode === 'rally' ? [this.forge()].filter(Boolean) : this.own().filter((a) => a.mobile);
     if (!ships.length) return;
+    if (this.move) this.cancelMove();
     const center = this.center(ships);
-    this.move = { center, height: 0, anchorY: null, anchorH: 0, onPlane: center.clone(), dest: center.clone() };
+    this.move = { mode, ships, center, height: 0, anchorY: null, anchorH: 0, onPlane: center.clone(), dest: center.clone() };
+    this.widget.setTint(mode === 'rally' ? RALLY : undefined);
     this.widget.show();
     this.updateMove();
     this.hud.modeChanged();
@@ -125,16 +132,31 @@ export class Input {
     m.height = Math.max(b.y0 - m.center.y, Math.min(b.y1 - m.center.y, m.height));
     m.dest.set(m.onPlane.x, m.center.y + m.height, m.onPlane.z);
   }
+  moveShips() { return this.move ? (this.move.mode === 'rally' ? this.move.ships.filter((a) => !a.dead) : this.own().filter((a) => a.mobile)) : []; }
   confirmMove() {
     const m = this.move;
-    const ships = this.own().filter((a) => a.mobile);
+    const ships = this.moveShips();
     if (!m || !ships.length) { this.cancelMove(); return; }
-    this.issue('Move', ships, { x: Math.round(m.dest.x / R), y: Math.round(m.dest.z / R), z: Math.round(m.dest.y / R) });
+    const target = { x: Math.round(m.dest.x / R), y: Math.round(m.dest.z / R), z: Math.round(m.dest.y / R) };
+    if (m.mode === 'rally') {
+      this.issue('SetRallyPoint', ships, target);
+      this.renderer.fx.marker(m.dest.x, m.dest.y, m.dest.z, RALLY);
+      this.audio.play('order');
+      this.cancelMove();
+      return;
+    }
+    this.issue('Move', ships, target);
     this.renderer.fx.marker(m.dest.x, m.dest.y, m.dest.z, 0x5fe3d0);
     this.audio.play('order');
     this.cancelMove();
     if (!this.orbit.follow) this.followSelection();
     this.hud.firstOrder();
+  }
+  selectForge() {
+    const f = this.forge();
+    if (!f) return;
+    this.setSelection([f]);
+    this.focusSelection();
   }
   issue(name, subjects, target, extra) { this.s.om.issue(makeOrder(name, subjects, target, extra)); }
 
@@ -214,8 +236,11 @@ export class Input {
     const k = e.key.toLowerCase();
     if (k === 'shift' && !this.keys.has('shift') && this.move) { this.move.anchorY = null; }
     this.keys.add(k);
-    if (k === 'escape') { if (this.move) this.cancelMove(); else this.setSelection([], false); return; }
+    if (k === 'escape') { if (this.move) this.cancelMove(); else if (this.hud.buildOpen) this.hud.toggleBuild(false); else this.setSelection([], false); return; }
     if (k === 'm') { if (this.move) this.cancelMove(); else this.beginMove(); return; }
+    if (k === 'b') { this.hud.toggleBuild(); return; }
+    if (k === 'r') { if (this.move && this.move.mode === 'rally') this.cancelMove(); else this.beginMove('rally'); return; }
+    if (k === 'home') { e.preventDefault(); this.selectForge(); return; }
     if (k === 'f') { this.focusSelection(); return; }
     if (k === 'h' || k === '?') { this.hud.toggleHelp(); return; }
     if ((e.ctrlKey || e.metaKey) && k === 'a') { e.preventDefault(); this.setSelection(this.world.actors.filter((a) => this.isMine(a) && a.mobile)); return; }
@@ -240,7 +265,7 @@ export class Input {
     if (this.selection.some((a) => a.dead)) this.setSelection(this.selection.filter((a) => !a.dead), false);
     if (this.move) {
       if (dx || dz || rot) this.updateMove();
-      const ships = this.own().filter((a) => a.mobile).map((a) => this.renderer.views.get(a.id)?.pos).filter(Boolean);
+      const ships = this.moveShips().map((a) => this.renderer.views.get(a.id)?.pos).filter(Boolean);
       if (!ships.length) this.cancelMove();
       else this.widget.update(this.move.center, this.move.onPlane, this.move.dest, ships, performance.now() / 1000);
     }

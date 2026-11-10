@@ -186,7 +186,7 @@ export class World {
       const ra = a.health.info.Radius;
       this.unitsInSphere(a.x, a.y, a.z, ra + 4 * CELL, tmp);
       for (const b of tmp) {
-        if (b.id <= a.id || !b.mobile || b.dead) continue;
+        if (b.id <= a.id || !b.mobile || b.dead || a.mobile.launching || b.mobile.launching) continue;
         const rb = b.health.info.Radius;
         const min = ((ra + rb) * 90) / 100;
         const d2 = distSq3(a.x, a.y, a.z, b.x, b.y, b.z);
@@ -199,8 +199,10 @@ export class World {
           const am = a.mobile.moving, bm = b.mobile.moving;
           if (am && !bm) { wa = 15; wb = 85; } else if (bm && !am) { wa = 85; wb = 15; }
         }
-        // Huge ships barely move.
-        if (ra > 4 * rb) { wa = 5; wb = 95; } else if (rb > 4 * ra) { wa = 95; wb = 5; }
+        // A huge hull (the Forge) is never shoved by the small ships around it.
+        if (ra > 4 * rb) { wa = 0; wb = 100; } else if (rb > 4 * ra) { wa = 100; wb = 0; }
+        if (wa) a.mobile.shoved = this.frame;
+        if (wb) b.mobile.shoved = this.frame;
         a.x -= Math.trunc((ux * push * wa) / (d * 50)); a.y -= Math.trunc((uy * push * wa) / (d * 50)); a.z -= Math.trunc((uz * push * wa) / (d * 50));
         b.x += Math.trunc((ux * push * wb) / (d * 50)); b.y += Math.trunc((uy * push * wb) / (d * 50)); b.z += Math.trunc((uz * push * wb) / (d * 50));
         this.clampToBounds(a); this.clampToBounds(b);
@@ -219,6 +221,7 @@ export class World {
       if (a.health) h = hashMix(h, a.health.hp);
     }
     for (const p of this.players) h = hashMix(h, p.resources ? p.resources.cash : 0);
+    for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }
     h = hashMix(h, this.effects.length);
     return h >>> 0;
   }

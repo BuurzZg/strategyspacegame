@@ -5,6 +5,7 @@ import { R } from './space.js';
 import { yawRate } from '../traits/flight.js';
 
 const TAU = Math.PI * 2;
+const RALLY = 0xc9a7ff;
 const toRad = (a) => (a / 1024) * TAU;
 const lerpAngle = (a, b, t) => { let d = (b - a) & 1023; if (d > 512) d -= 1024; return a + d * t; };
 
@@ -31,6 +32,15 @@ export class WorldRenderer {
     this.goalLines = new THREE.LineSegments(this.goalGeo, new THREE.LineBasicMaterial({ color: 0x9ff3e6, transparent: true, opacity: 0.45, depthWrite: false }));
     this.goalLines.frustumCulled = false;
     scene.add(this.goalLines);
+    // the Forge's rally point: a dashed line from the Forge to a spinning beacon
+    this.showRally = false;
+    const rg = new THREE.BufferGeometry();
+    rg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3).setUsage(THREE.DynamicDrawUsage));
+    this.rallyLine = new THREE.Line(rg, new THREE.LineDashedMaterial({ color: RALLY, dashSize: 1.6, gapSize: 1.1, transparent: true, opacity: 0.6, depthWrite: false }));
+    this.rallyLine.frustumCulled = false;
+    this.rallyMark = new THREE.Mesh(new THREE.OctahedronGeometry(1.1, 0), new THREE.MeshBasicMaterial({ color: RALLY, wireframe: true, transparent: true, opacity: 0.9, depthWrite: false }));
+    this.rallyLine.visible = this.rallyMark.visible = false;
+    scene.add(this.rallyLine, this.rallyMark);
   }
 
   styleOf(player) { return this.styles.get(player.faction) || this.styles.values().next().value; }
@@ -69,6 +79,7 @@ export class WorldRenderer {
       const targetRoll = Math.max(-1, Math.min(1, -yawRate(a) / 6)) * (bank / 57.3);
       v.roll += (targetRoll - v.roll) * Math.min(1, dt * 3);
       m.body.rotation.x = v.roll;
+      for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt;
       // engines: flare size follows throttle, trails when moving
       const sp = a.mobile ? a.mobile.pspeed + (a.mobile.speed - a.mobile.pspeed) * alpha : 0;
       const throttle = a.mobile ? Math.min(1, sp / a.mobile.info.MaxSpeed) : 0;
@@ -84,7 +95,21 @@ export class WorldRenderer {
       });
     }
     this.updateGoalLines(alpha);
+    this.updateRally(t, alpha);
     this.fx.update(dt);
+  }
+
+  updateRally(t, alpha) {
+    const forge = this.showRally ? this.world.actors.find((a) => a.owner === this.viewer && !a.dead && a.has('ProductionQueue')) : null;
+    const pt = forge && forge.trait('RallyPoint')?.point;
+    this.rallyLine.visible = this.rallyMark.visible = !!pt;
+    if (!pt) return;
+    const s = this.renderPos(forge, alpha), x = pt.x * R, y = pt.z * R, z = pt.y * R;
+    this.rallyLine.geometry.attributes.position.array.set([s.x, s.y, s.z, x, y, z]);
+    this.rallyLine.geometry.attributes.position.needsUpdate = true;
+    this.rallyLine.computeLineDistances();
+    this.rallyMark.position.set(x, y, z);
+    this.rallyMark.rotation.y = t * 1.4;
   }
 
   updateGoalLines(alpha) {
@@ -104,5 +129,21 @@ export class WorldRenderer {
     this.goalGeo.attributes.position.needsUpdate = true;
   }
 
-  consumeEvents() {}
+  // Render-side reactions to simulation events (world.fxEvents).
+  consumeEvents(events) {
+    const c = new THREE.Color();
+    for (const e of events) {
+      if (e.t === 'ready') {
+        // launch flash at the bay mouth
+        const owner = this.world.players[e.owner];
+        c.setHex(owner ? this.styleOf(owner).glow : 0xffffff);
+        const x = e.x * R, y = e.z * R, z = e.y * R;
+        this.fx.glow.spawn(x, y, z, 0, 0, 0, 0.5, 1.2, 6, c, 0.9);
+        for (let i = 0; i < 10; i++) {
+          const a = Math.random() * TAU, b = (Math.random() - 0.5) * 2;
+          this.fx.glow.spawn(x, y, z, Math.cos(a) * 3, b * 2, Math.sin(a) * 3, 0.5 + Math.random() * 0.4, 0.5, 0.1, c, 0.8);
+        }
+      }
+    }
+  }
 }

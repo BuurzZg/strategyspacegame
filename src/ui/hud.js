@@ -2,12 +2,16 @@ import { R } from '../render/space.js';
 import { CELL } from '../engine/math.js';
 
 // HUD: an overlay canvas for in-world marks (selection brackets, box select, move readout)
-// plus DOM panels (selection card, controls card, hints).
+// plus DOM panels (resources, selection card, production panel, controls card, toasts).
 // Units shown to the player: 1 cell = 100 m, so 10.24 world units = 1 m.
 const $ = (id) => document.getElementById(id);
 const M_PER_UNIT = 100 / CELL;
+const TICKS_PER_S = 25;
 const fmtDist = (units) => { const m = Math.abs(units) * M_PER_UNIT; return m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`; };
 const fmtAlt = (units) => `${units >= 0 ? '+' : '−'}${fmtDist(units)}`;
+const fmtNum = (n) => Math.round(n).toLocaleString('en-US');
+const fmtTime = (ticks) => { const s = Math.ceil(ticks / TICKS_PER_S); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s} s`; };
+const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
 export class Hud {
   constructor() {
@@ -16,8 +20,15 @@ export class Hud {
     this.dirty = true;
     this.refreshT = 0;
     this.helpOpen = true;
+    this.buildOpen = false;
+    this.queueSig = null;
+    this.toasts = [];
   }
-  attach(session, input) { this.s = session; this.input = input; this.world = session.world; this.renderer = session.renderer; this.dirty = true; }
+  attach(session, input) {
+    this.s = session; this.input = input; this.world = session.world; this.renderer = session.renderer; this.audio = input.audio;
+    this.dirty = true;
+    this.buildPanel();
+  }
   resize(w, h, dpr) {
     this.overlay.width = w * dpr; this.overlay.height = h * dpr;
     this.overlay.style.width = `${w}px`; this.overlay.style.height = `${h}px`;
@@ -25,33 +36,188 @@ export class Hud {
   }
   selectionChanged() { this.dirty = true; }
   modeChanged() { this.dirty = true; }
-  toggleHelp(force) { this.helpOpen = force !== undefined ? force : !this.helpOpen; $('help').hidden = !this.helpOpen; }
-  // The controls card tucks itself away after your first move order (H brings it back).
+  // The controls card and the production panel share the right side, so one closes the other.
+  toggleHelp(force) {
+    this.helpOpen = force !== undefined ? force : !this.helpOpen;
+    $('help').hidden = !this.helpOpen;
+    if (this.helpOpen && this.buildOpen) this.toggleBuild(false);
+  }
+  toggleBuild(force) {
+    this.buildOpen = force !== undefined ? force : !this.buildOpen;
+    $('build').hidden = !this.buildOpen;
+    $('btn-build').setAttribute('aria-pressed', String(this.buildOpen));
+    if (this.buildOpen && this.helpOpen) this.toggleHelp(false);
+    this.queueSig = null;
+    this.dirty = true;
+  }
+  // The controls card tucks itself away after your first order (H brings it back).
   firstOrder() { if (!this.ordered) { this.ordered = true; if (this.helpOpen) this.toggleHelp(false); } }
+
+  // ---------------------------------------------------------------- production panel
+  forge() { return this.input.forge(); }
+  queue() { const f = this.forge(); return f ? f.trait('ProductionQueue') : null; }
+
+  // Item buttons are built once; refresh() only updates their state, so a click never lands
+  // on an element that is being replaced.
+  buildPanel() {
+    const rules = this.world.rules, wrap = $('build-items');
+    wrap.innerHTML = '';
+    this.items = new Map();
+    for (const info of rules.buildablesFor('Forge')) {
+      const tt = info.traitInfo('Tooltip'), b = info.traitInfo('Buildable');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bi';
+      btn.dataset.type = info.name;
+      btn.innerHTML = `
+        <span class="bi-name">${esc(tt.Name)}<span class="bi-count"></span></span>
+        <span class="bi-role">${esc(tt.Role)}</span>
+        <span class="bi-stats"><span class="bi-ore" title="Ore">${fmtNum(info.traitInfo('Valued').Cost)}</span><span title="Build time">${fmtTime(b.BuildDuration)}</span><span title="Fleet capacity">cap ${info.traitInfo('ConsumesCapacity')?.Amount || 0}</span></span>
+        <span class="bi-why"></span>`;
+      btn.title = `${tt.Name}: ${tt.Description}`;
+      // blur after a click so Space/Enter can't queue it again by accident
+      btn.addEventListener('click', (e) => { this.queueShip(info.name, e.shiftKey ? 5 : 1); btn.blur(); });
+      btn.addEventListener('contextmenu', (e) => { e.preventDefault(); this.dequeueShip(info.name); });
+      wrap.appendChild(btn);
+      this.items.set(info.name, btn);
+    }
+    $('build-queue').addEventListener('click', (e) => {
+      const el = e.target.closest('[data-i]');
+      const f = this.forge();
+      if (el && f) { this.input.issue('CancelProduction', [f], null, +el.dataset.i); this.audio.play('select'); }
+    });
+    $('build-close').addEventListener('click', () => this.toggleBuild(false));
+    $('btn-rally').addEventListener('click', () => this.input.beginMove('rally'));
+    $('btn-rally-clear').addEventListener('click', () => { const f = this.forge(); if (f) { this.input.issue('ClearRallyPoint', [f]); this.audio.play('select'); } });
+    $('build-forge').addEventListener('click', () => this.input.selectForge());
+  }
+
+  queueShip(type, n) {
+    const f = this.forge(), q = this.queue();
+    if (!f || !q) return;
+    const why = q.canQueue(type);
+    if (why) { this.toast(why, 'bad'); this.audio.play('error'); return; }
+    for (let i = 0; i < n; i++) this.input.issue('StartProduction', [f], null, type);
+    this.audio.play('order');
+    this.firstOrder();
+  }
+  // Right-click a hull: take the last one of that type off the queue (refunded).
+  dequeueShip(type) {
+    const f = this.forge(), q = this.queue();
+    if (!f || !q) return;
+    const i = q.queue.lastIndexOf(type);
+    if (i >= 0) { this.input.issue('CancelProduction', [f], null, i); this.audio.play('select'); }
+  }
+
+  refreshBuild() {
+    const q = this.queue(), f = this.forge();
+    $('build-none').hidden = !!q;
+    $('build-body').hidden = !q;
+    if (!q) return;
+    const counts = {};
+    for (const t of q.queue) counts[t] = (counts[t] || 0) + 1;
+    for (const [type, btn] of this.items) {
+      const why = q.canQueue(type);
+      btn.classList.toggle('blocked', !!why);
+      btn.setAttribute('aria-disabled', String(!!why));
+      btn.querySelector('.bi-why').textContent = why || '';
+      btn.querySelector('.bi-count').textContent = counts[type] ? ` ×${counts[type]}` : '';
+    }
+    // the queue list is rebuilt only when its contents change
+    const sig = q.queue.join(',');
+    if (sig !== this.queueSig) {
+      this.queueSig = sig;
+      $('build-queue').innerHTML = q.queue.map((t, i) => {
+        const name = this.world.rules.actor(t).traitInfo('Tooltip').Name;
+        return `<li><button type="button" class="qi${i === 0 ? ' active' : ''}" data-i="${i}" aria-label="Cancel ${esc(name)} and refund it" title="Cancel and refund">
+          <span class="qi-name">${esc(name)}</span><span class="qi-bar"><i></i></span><span class="qi-x" aria-hidden="true">×</span></button></li>`;
+      }).join('');
+      $('queue-empty').hidden = q.queue.length > 0;
+    }
+    let total = -q.progress;
+    for (const t of q.queue) total += q.duration(t);
+    $('queue-eta').textContent = q.queue.length ? `${q.queue.length} of ${q.info.MaxQueue} · done in ${fmtTime(Math.max(0, total))}` : `0 of ${q.info.MaxQueue}`;
+    const rally = f.trait('RallyPoint')?.point;
+    $('btn-rally-clear').disabled = !rally;
+    $('rally-state').textContent = rally ? `Rally point ${fmtDist(Math.hypot(rally.x - f.x, rally.y - f.y, rally.z - f.z))} from the Forge` : 'No rally point: new ships wait beside their bay';
+  }
+  // Progress bar of the item being built, every frame.
+  drawProgress() {
+    const q = this.queue();
+    const bar = document.querySelector('#build-queue .qi.active .qi-bar i');
+    if (!q || !bar || !q.queue.length) return;
+    bar.style.width = `${Math.min(100, (q.progress / q.duration(q.queue[0])) * 100)}%`;
+  }
+
+  // ---------------------------------------------------------------- toasts
+  toast(text, kind = 'info') {
+    const now = performance.now();
+    const same = this.toasts.find((t) => t.text === text && t.until > now);
+    if (same) { same.count++; same.until = now + 3500; same.el.querySelector('.n').textContent = `×${same.count}`; return; }
+    const el = document.createElement('div');
+    el.className = `toast ${kind}`;
+    el.innerHTML = `<span>${esc(text)}</span><span class="n"></span>`;
+    $('toasts').appendChild(el);
+    this.toasts.push({ text, el, count: 1, until: now + 3500 });
+    while (this.toasts.length > 4) this.toasts.shift().el.remove();
+  }
+  tickToasts() {
+    const now = performance.now();
+    this.toasts = this.toasts.filter((t) => { if (t.until > now) return true; t.el.remove(); return false; });
+  }
+  consumeEvents(events) {
+    const me = this.s.viewer.index;
+    for (const e of events) {
+      if (e.t === 'notify' && e.player === me) { this.toast(e.text, e.kind); if (e.kind === 'bad') this.audio.play('error'); }
+      else if (e.t === 'ready' && e.owner === me) {
+        this.toast(`${this.world.rules.actor(e.type).traitInfo('Tooltip').Name} launched`, 'good');
+        this.audio.play('ready');
+        this.dirty = true;
+      }
+    }
+  }
 
   // ---------------------------------------------------------------- panels
   refresh() {
-    const sel = this.input.selection.filter((a) => !a.dead);
+    const p = this.s.viewer;
+    $('res-ore').textContent = fmtNum(p.resources.cash);
+    const used = p.capacity.used(), cap = p.capacity.cap();
+    $('res-cap').textContent = `${used} / ${cap}`;
+    $('res-cap').classList.toggle('full', used >= cap);
+    const rallyMode = !!this.input.move && this.input.move.mode === 'rally';
     $('move-hint').hidden = !this.input.move;
+    $('move-title').textContent = rallyMode ? 'Rally point' : 'Plot course';
+    $('move-hint').classList.toggle('rally', rallyMode);
+    if (this.buildOpen) this.refreshBuild();
+    this.renderer.showRally = this.buildOpen || rallyMode || this.input.selection.some((a) => a.has('ProductionQueue'));
+
+    const sel = this.input.selection.filter((a) => !a.dead);
     const card = $('sel');
     if (!sel.length) { card.hidden = true; return; }
     card.hidden = false;
     if (sel.length === 1) {
-      const a = sel[0], tt = a.info.traitInfo('Tooltip'), f = a.mobile;
-      const speed = f ? Math.round(f.speed * 25 * M_PER_UNIT) : 0;
+      const a = sel[0], tt = a.info.traitInfo('Tooltip'), f = a.mobile, q = a.trait('ProductionQueue');
+      const speed = f ? Math.round(f.speed * TICKS_PER_S * M_PER_UNIT) : 0;
       const heading = Math.round((a.yaw / 1024) * 360);
-      const status = f && (a.activity || f.speed > 0) ? (a.activity ? 'Under way' : 'Coasting') : 'Holding';
+      let status = 'Holding';
+      if (a.activity) status = a.activity.label === 'Launching' ? 'Launching' : 'Under way';
+      else if (f && f.speed > 0) status = 'Coasting';
       $('sel-name').textContent = tt.Name;
       $('sel-class').textContent = `${tt.Class} · ${tt.Role}`;
       $('sel-desc').textContent = tt.Description;
-      $('sel-status').textContent = status;
-      $('sel-stats').innerHTML = [
+      const stats = [
         ['Speed', `${speed} m/s`],
         ['Altitude', fmtAlt(a.z)],
         ['Heading', `${String(heading).padStart(3, '0')}°`],
-        ['Pitch', `${Math.round((a.pitch / 1024) * 360)}°`],
         ['Hull', `${Math.ceil((a.health.hp / a.health.maxHp) * 100)}%`],
-      ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+      ];
+      if (q) {
+        const cur = q.queue[0];
+        if (cur && status === 'Holding') status = 'Building';
+        stats.push(['Building', cur ? `${this.world.rules.actor(cur).traitInfo('Tooltip').Name} ${Math.floor((q.progress / q.duration(cur)) * 100)}%` : 'Idle']);
+      } else stats.splice(3, 0, ['Pitch', `${Math.round((a.pitch / 1024) * 360)}°`]);
+      $('sel-status').textContent = status;
+      $('sel-stats').innerHTML = stats.map(([k, v]) => `<div${k === 'Building' ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     } else {
       const counts = {};
       for (const a of sel) { const n = a.info.traitInfo('Tooltip').Name; counts[n] = (counts[n] || 0) + 1; }
@@ -70,7 +236,7 @@ export class Hud {
     const p = inp.project(v.pos);
     if (p.z > 1) return null;
     const r = Math.max(9, inp.screenRadius(v.pos, v.radius) * 1.15);
-    const l = Math.max(4, r * 0.38);
+    const l = Math.max(4, Math.min(r * 0.38, 26));
     ctx.strokeStyle = color; ctx.lineWidth = strong ? 1.6 : 1;
     ctx.beginPath();
     for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
@@ -90,7 +256,7 @@ export class Hud {
       if (!v) continue;
       const b = this.drawBrackets(ctx, v, rd.styleOf(a.owner).css, true);
       if (!b) continue;
-      const f = a.health.hp / a.health.maxHp, w = Math.max(18, b.r * 1.4);
+      const f = a.health.hp / a.health.maxHp, w = Math.max(18, Math.min(b.r * 1.4, 120));
       ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, b.p.y + b.r + 5, w + 2, 4);
       ctx.fillStyle = f > 0.6 ? '#7cf2a8' : f > 0.3 ? '#ffb547' : '#ff5a64'; ctx.fillRect(b.p.x - w / 2, b.p.y + b.r + 6, w * f, 2);
     }
@@ -113,7 +279,7 @@ export class Hud {
       const alt = m.dest.y / R;
       const d = inp.project(m.dest);
       if (d.z < 1) {
-        const lines = [`${fmtDist(dist)}`, `alt ${fmtAlt(alt)}${Math.abs(m.height) > 0.01 ? `  (${fmtAlt(m.height / R)})` : ''}`];
+        const lines = [`${m.mode === 'rally' ? 'rally  ' : ''}${fmtDist(dist)}`, `alt ${fmtAlt(alt)}${Math.abs(m.height) > 0.01 ? `  (${fmtAlt(m.height / R)})` : ''}`];
         ctx.font = '500 12px "IBM Plex Mono", monospace';
         const w = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 14;
         // place the readout beside the marker, flipping sides to stay clear of panels and edges
@@ -122,7 +288,7 @@ export class Hud {
         if (blocked(x)) x = d.x - 14 - w;
         if (x < 8 || this.covered(x, y, w, 38)) { x = Math.max(8, Math.min(innerWidth - w - 8, d.x - w / 2)); y = d.y + 18; }
         ctx.fillStyle = 'rgba(5,6,11,0.8)'; ctx.fillRect(x, y, w, 38);
-        ctx.fillStyle = '#5fe3d0'; ctx.fillText(lines[0], x + 7, y + 15);
+        ctx.fillStyle = m.mode === 'rally' ? '#c9a7ff' : '#5fe3d0'; ctx.fillText(lines[0], x + 7, y + 15);
         ctx.fillStyle = '#ffb547'; ctx.fillText(lines[1], x + 7, y + 31);
       }
     }
@@ -130,7 +296,7 @@ export class Hud {
 
   // Does a screen rectangle overlap a visible HUD panel?
   covered(x, y, w, h) {
-    for (const id of ['help', 'sel', 'move-hint']) {
+    for (const id of ['help', 'sel', 'move-hint', 'build']) {
       const el = $(id);
       if (!el || el.hidden) continue;
       const r = el.getBoundingClientRect();
@@ -142,6 +308,8 @@ export class Hud {
   update(dt) {
     this.refreshT -= dt;
     if (this.dirty || this.refreshT <= 0) { this.refresh(); this.refreshT = 0.15; this.dirty = false; }
+    if (this.buildOpen) this.drawProgress();
+    this.tickToasts();
     this.draw();
   }
 }

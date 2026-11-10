@@ -50,7 +50,11 @@ export class MoveWidget {
     this.foot = new THREE.Line(new THREE.BufferGeometry().setFromPoints(circlePoints(0.6, 24)), lineMat(PLANE, 0.9));
     this.marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), new THREE.MeshBasicMaterial({ color: HEIGHT, wireframe: true, transparent: true, opacity: 0.95, depthTest: false }));
     for (const o of [this.radius, this.height, this.path, this.stalks, this.ticks, this.foot, this.marker]) { o.renderOrder = 21; o.frustumCulled = false; this.group.add(o); }
+    // everything drawn in the plane colour can be re-tinted (rally placement uses lilac)
+    this.planeMats = [];
+    this.group.traverse((o) => { if (o.material && o.material.color.getHex() === PLANE) this.planeMats.push(o.material); });
   }
+  setTint(color = PLANE) { for (const m of this.planeMats) m.color.setHex(color); }
 
   show() { this.group.visible = true; }
   hide() { this.group.visible = false; }

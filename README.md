@@ -5,8 +5,10 @@ Two rival Forge fleets, the **Meridian Hollow** and the **Cinder Pact**, mine an
 
 See [PLAN.md](PLAN.md) for the full design, the ship roster and the milestone plan.
 
-**Status: Milestone 1, flight trials.** You get a camera, the movement disc with its height line, and ships that fly in full 3D.
-Production, mining, combat and the AI come in later milestones.
+**Status: Milestone 2, the Forge and production.** You command your Forge, the kilometre-long mothership, and build a fleet from it.
+New ships launch from bays on its flanks and fly to your rally point. Mining, combat and the AI come in later milestones.
+
+There is no mining yet, so you start with 2,500 ore and spend it down. Milestone 3 adds the Gleaners that bring more in.
 
 ## Running the game
 
@@ -25,7 +27,7 @@ Opening `index.html` straight from disk (`file://`) does not work, because brows
 
 | Option | Effect |
 | --- | --- |
-| `?fleet=test` or `#fleet` | Adds four Darts and a second Halberd, so you can try group moves and box selection |
+| `?fleet=test` or `#fleet` | Adds four Darts and a second Halberd at the start, so you can try group moves and box selection |
 | `?faction=cinder` | Flies the Cinder Pact colours instead of the Meridian Hollow |
 | `?seed=123` | Changes the seed for the backdrop and the asteroid layout |
 
@@ -56,8 +58,9 @@ After you give a move order, the camera follows the selected ships. Panning brea
 | Left-drag | Box select |
 | Double-click | Select a ship and focus on it |
 | `Ctrl` + `A` | Select all your ships |
-| `Esc` | Clear the selection |
+| `Esc` | Cancel the disc, then close the production panel, then clear the selection |
 | `Backspace` / `Delete` | All stop |
+| `Home` | Select the Forge and focus on it |
 
 ### Plotting a move: the movement disc
 
@@ -70,6 +73,25 @@ A readout beside the marker shows the distance and the target altitude. One grid
 
 Groups keep their spacing when they move. Proper formations arrive in Milestone 5.
 
+### Production
+
+The Forge builds one ship at a time from its queue. You pay for a ship when you queue it, and get the full cost back if you cancel it.
+
+| Input | Action |
+| --- | --- |
+| `B` or the **Build** button | Open or close the production panel |
+| Click a hull | Queue one |
+| `Shift` + click a hull | Queue five |
+| Right-click a hull | Take the last one of that type off the queue (refunded) |
+| Click a ship in the queue | Cancel it (refunded) |
+| `R` or **Set rally point** | Place the rally point with the movement disc (lilac this time): mouse for position, `Shift` for height, left-click to set |
+| **Clear** | Remove the rally point |
+
+- **Launching:** a finished ship appears in a bay on the Forge's flank and flies clear of the hull before it takes orders. The bays alternate port and starboard.
+- **Rally point:** new ships fly to it and spread into a grid around it. With no rally point they wait beside the bay they left. The lilac beacon and its dashed line show while the Forge is selected or the panel is open.
+- **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
+- **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
+
 ### Other
 
 | Key | Action |
@@ -78,10 +100,15 @@ Groups keep their spacing when they move. Proper formations arrive in Milestone 
 
 ## The ships in this build
 
-| Ship | Class | Handling |
-| --- | --- | --- |
-| Halberd | Frigate | Heavy. Turns in place before it accelerates, and needs a long distance to stop |
-| Dart | Fighter | Fast and nimble. It never fully stops while cruising, so it banks through its turns |
+| Ship | Class | Ore | Build time | Capacity | Handling |
+| --- | --- | --- | --- | --- | --- |
+| Forge | Mothership | — | — | provides 30 | Immense and slow. Turns in place; about 24 m/s flat out |
+| Halberd | Assault frigate | 450 | 30 s | 6 | Heavy. Turns in place before it accelerates, and needs a long distance to stop |
+| Picket | Flak corvette | 140 | 15 s | 3 | Steady mid-weight gunboat |
+| Talon | Bomber | 90 | 12 s | 2 | Quick, but heavier in the turn than a Dart |
+| Dart | Interceptor | 60 | 8 s | 1 | Fast and nimble. It never fully stops while cruising, so it banks through its turns |
+
+You start with the Forge, a Halberd and two Darts (8 of 30 capacity). Weapons arrive in Milestone 4.
 
 ## Development
 
@@ -89,7 +116,16 @@ Groups keep their spacing when they move. Proper formations arrive in Milestone 
 npm test
 ```
 
-Runs the headless flight trials. Both hulls fly to points ahead, behind, straight up, straight down, on a diagonal and a short hop away, and the trials check arrival, accuracy and time. They also check that two identical runs give the same sync hash, and that a group move works.
+Runs the headless tests:
+
+- **Flight trials** (`tools/flighttest.js`): every hull, Forge included, flies to points ahead, behind, straight up, straight down, on a diagonal and a short hop away. The trials check arrival, accuracy and time, plus a determinism check and a group move.
+- **Production** (`tools/productiontest.js`): checks that:
+  - ships launch exactly on their build time, from the right bay, even while the Forge turns;
+  - ships clear the hull, then reach their muster slot or the rally point;
+  - fleet capacity, ore and the queue limit refuse what they should;
+  - cancelling refunds in full, and a destroyed Forge refunds its queue;
+  - the Forge is never shoved by its own ships;
+  - two identical runs give the same sync hash.
 
 ```bash
 npm run check
@@ -104,8 +140,8 @@ index.html            page, styles and HUD markup
 lib/                  three.js (vendored, r160)
 rules/*.yaml          factions, ship stats and handling
 src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer math
-src/traits/           gameplay traits (Flight, Health, Tooltip, ...)
-src/activities/       per-actor tasks (FlyTo, ...)
+src/traits/           gameplay traits (Flight, ProductionQueue, LaunchBay, FleetCapacity, ...)
+src/activities/       per-actor tasks (FlyTo, Launch, ...)
 src/render/           three.js scene: space backdrop, procedural ships, effects
 src/ui/               orbit camera, movement disc, input, HUD, audio
 tools/                dev server, headless tests, determinism lint

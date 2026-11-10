@@ -9,8 +9,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <!--DF:STYLE-->
 <style>
-/* Layout: full-bleed 3D view; a thin status strip on top, a selection card bottom-left,
-   a controls card on the right, and in-world marks drawn on an overlay canvas. */
+/* Layout: full-bleed 3D view; a thin status strip on top with ore and fleet capacity,
+   a selection card bottom-left, the production panel or the controls card on the right,
+   toasts under the strip, and in-world marks drawn on an overlay canvas. */
 :root {
   --ink: #05060b;
   --panel: rgba(9, 12, 20, 0.84);
@@ -21,6 +22,8 @@
   --muted: #7f8ea3;
   --accent: #5fe3d0;   /* Meridian Hollow teal */
   --height: #ffb547;   /* altitude and height cues */
+  --rally: #c9a7ff;    /* the Forge's rally point */
+  --ore: #d9a577;      /* ore costs and income */
   --good: #7cf2a8;
   --bad: #ff5a64;
   --f-display: "Oxanium", "Eurostile", "Segoe UI", sans-serif;
@@ -46,8 +49,15 @@ kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; bor
 .brand { font: 700 17px var(--f-display); letter-spacing: 0.34em; color: var(--text); }
 .brand b { color: var(--accent); font-weight: 700; }
 .tag { font: 500 11px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; }
-#btn-help { margin-left: auto; pointer-events: auto; background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
-#btn-help:hover { border-color: var(--accent); }
+#res { display: flex; gap: 18px; margin-left: 6px; }
+.res-item { display: flex; align-items: baseline; gap: 7px; }
+.res-k { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.res-item b { font: 500 15px var(--f-mono); font-variant-numeric: tabular-nums; }
+#res-ore { color: var(--ore); }
+#res-cap.full { color: var(--height); }
+.top-btns { margin-left: auto; display: flex; gap: 8px; }
+.top-btns button { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
+.top-btns button:hover, #btn-build[aria-pressed="true"] { border-color: var(--accent); }
 
 #sel {
   position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -61,6 +71,7 @@ kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; bor
 #sel-desc:empty { display: none; }
 #sel-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px 14px; margin: 10px 0 0; }
 #sel-stats div { display: flex; flex-direction: column; }
+#sel-stats .wide { grid-column: 1 / -1; }
 dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums; }
 
@@ -74,6 +85,58 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 #help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; align-items: baseline; }
 #help dd { font: 13px var(--f-body); color: var(--text); }
 #help dt { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text); }
+#build {
+  position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 60px; width: min(380px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 12px 14px 14px; max-height: calc(100% - 90px); overflow-y: auto;
+}
+#build > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; padding-right: 26px; }
+#build h2 { margin: 0; font: 600 14px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; }
+#build h3 { margin: 0; font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+#build-forge { margin-left: auto; background: none; border: 0; padding: 0; font: 500 11px var(--f-mono); color: var(--muted); text-decoration: underline dotted; text-underline-offset: 3px; }
+#build-forge:hover { color: var(--text); }
+#build-close { position: absolute; top: 8px; right: 8px; background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; padding: 4px 8px; }
+#build-none { margin: 0; color: var(--muted); font-size: 13px; }
+.build-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.bi { display: grid; align-content: start; gap: 2px; text-align: left; background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; min-width: 0; }
+.bi:hover { border-color: var(--accent); background: #101827; }
+.bi.blocked { opacity: 0.55; }
+.bi.blocked:hover { border-color: var(--bad); }
+.bi-name { font: 600 14px var(--f-display); letter-spacing: 0.05em; }
+.bi-count { color: var(--accent); font: 500 12px var(--f-mono); }
+.bi-role { font-size: 12px; color: var(--muted); }
+.bi-stats { display: flex; flex-wrap: wrap; gap: 4px 10px; font: 12px var(--f-mono); font-variant-numeric: tabular-nums; margin-top: 3px; }
+.bi-ore { color: var(--ore); }
+.bi-ore::before { content: "◆ "; font-size: 9px; vertical-align: 1px; }
+.bi-why { font-size: 11px; color: var(--bad); }
+.bi-why:empty { display: none; }
+.queue-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 14px 0 6px; }
+#queue-eta { font: 11px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+#build-queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.qi { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 96px auto; gap: 10px; align-items: center; background: transparent; border: 1px solid var(--line-soft); padding: 5px 8px; border-radius: 3px; text-align: left; font-size: 13px; }
+.qi:hover { border-color: var(--bad); }
+.qi:hover .qi-x { color: var(--bad); }
+.qi-bar { height: 3px; background: var(--line); position: relative; overflow: hidden; }
+.qi-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent); }
+.qi:not(.active) { color: var(--muted); }
+.qi:not(.active) .qi-bar { visibility: hidden; }
+.qi-x { color: var(--muted); font-size: 15px; line-height: 1; }
+#queue-empty { margin: 0; color: var(--muted); font-size: 12px; }
+.rally-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.rally-row button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 5px 10px; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+#btn-rally { border-color: color-mix(in srgb, var(--rally) 45%, var(--line)); }
+#btn-rally:hover { border-color: var(--rally); }
+.rally-row button:disabled { opacity: 0.45; cursor: default; }
+#rally-state { flex-basis: 100%; margin: 0; font-size: 12px; color: var(--muted); }
+
+#toasts { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+.toast { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--muted); padding: 6px 12px; font-size: 13px; display: flex; gap: 8px; }
+.toast.good { border-left-color: var(--good); }
+.toast.bad { border-left-color: var(--bad); }
+.toast .n { color: var(--muted); font-family: var(--f-mono); font-size: 12px; }
+#move-title { font: 600 11px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); align-self: center; }
+#move-hint.rally #move-title { color: var(--rally); }
+.r { color: var(--rally); }
+
 /* Info panels never block the view: clicks pass through to the battlefield. */
 #sel, #help, #move-hint { pointer-events: none; }
 #help-close { pointer-events: auto; }
@@ -81,17 +144,20 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 .h { color: var(--height); }
 .a { color: var(--accent); }
 
+/* centred in the space to the right of the selection card */
 #move-hint {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px; max-width: calc(100vw - 32px);
+  position: absolute; left: 424px; right: max(16px, env(safe-area-inset-right, 0px)); margin-inline: auto; width: fit-content; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px;
 }
 #move-hint span { display: flex; gap: 6px; align-items: center; color: var(--muted); }
 #boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
 
 @media (max-width: 760px) {
-  #help { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 45vh; }
+  #help, #build { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 50vh; }
+  #res { gap: 10px; }
+  .brand { letter-spacing: 0.2em; }
   .tag { display: none; }
-  #move-hint { bottom: auto; top: 54px; }
+  #move-hint { bottom: auto; top: 54px; left: 16px; right: 16px; }
 }
 </style>
 <!--DF:STYLE-END-->
@@ -104,8 +170,15 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 
   <header id="top">
     <div class="brand">DRIFT<b>FORGE</b></div>
-    <span class="tag">Milestone 1 · flight trials</span>
-    <button id="btn-help" type="button">Controls <kbd>H</kbd></button>
+    <span class="tag">Milestone 2 · forge and production</span>
+    <div id="res" aria-label="Resources">
+      <div class="res-item" title="Ore in the bank"><span class="res-k">Ore</span><b id="res-ore">0</b></div>
+      <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
+    </div>
+    <div class="top-btns">
+      <button id="btn-build" type="button" aria-pressed="false">Build <kbd>B</kbd></button>
+      <button id="btn-help" type="button">Controls <kbd>H</kbd></button>
+    </div>
   </header>
 
   <section id="sel" hidden aria-label="Selected ships">
@@ -115,10 +188,29 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
     <dl id="sel-stats"></dl>
   </section>
 
+  <section id="build" hidden aria-label="Forge production">
+    <button id="build-close" type="button" aria-label="Close production">×</button>
+    <header><h2>Forge production</h2><button id="build-forge" type="button">Show Forge <kbd>Home</kbd></button></header>
+    <p id="build-none" hidden>Your Forge is gone. Nothing can be built.</p>
+    <div id="build-body">
+      <div id="build-items" class="build-items"></div>
+      <div class="queue-head"><h3>Queue</h3><span id="queue-eta"></span></div>
+      <ol id="build-queue"></ol>
+      <p id="queue-empty">Click a hull to build it. <kbd>Shift</kbd>-click queues five; right-click removes one.</p>
+      <div class="rally-row">
+        <button id="btn-rally" type="button">Set rally point <kbd>R</kbd></button>
+        <button id="btn-rally-clear" type="button">Clear</button>
+        <p id="rally-state"></p>
+      </div>
+    </div>
+  </section>
+
+  <div id="toasts" aria-live="polite"></div>
+
   <aside id="help" aria-label="Controls">
     <button id="help-close" type="button" aria-label="Close controls">×</button>
-    <h2>Flight trials</h2>
-    <p>Your Halberd frigate is selected. Right-click empty space to plot a course, hold <kbd>Shift</kbd> to set the height, then left-click to go.</p>
+    <h2>Your Forge</h2>
+    <p>The Forge is your mothership, and it builds your fleet. Press <kbd>B</kbd> to open production and pick a hull. New ships launch from the bays on its flanks.</p>
     <h3>Camera</h3>
     <dl>
       <dt><kbd>Right-drag</kbd></dt><dd>Rotate around the focus</dd>
@@ -135,6 +227,15 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Double-click</kbd></dt><dd>Select and focus</dd>
       <dt><kbd>Ctrl A</kbd></dt><dd>Select all ships</dd>
       <dt><kbd>Backspace</kbd></dt><dd>All stop</dd>
+      <dt><kbd>Home</kbd></dt><dd>Select and focus the Forge</dd>
+    </dl>
+    <h3>Production</h3>
+    <dl>
+      <dt><kbd>B</kbd></dt><dd>Open or close the production panel</dd>
+      <dt><kbd>Click</kbd> a hull</dt><dd>Queue one (<kbd>Shift</kbd> queues five)</dd>
+      <dt><kbd>Right-click</kbd> a hull</dt><dd>Remove one from the queue</dd>
+      <dt><kbd>Click</kbd> in the queue</dt><dd>Cancel that ship, full refund</dd>
+      <dt><kbd>R</kbd></dt><dd>Place the <span class="r">rally point</span> with the disc</dd>
     </dl>
     <h3>Plotting a move</h3>
     <dl>
@@ -147,6 +248,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
   </aside>
 
   <div id="move-hint" hidden>
+    <b id="move-title">Plot course</b>
     <span><kbd>Mouse</kbd> place on the plane</span>
     <span><kbd>Shift</kbd> height</span>
     <span><kbd>Left-click</kbd> engage</span>

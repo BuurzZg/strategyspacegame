@@ -16,9 +16,11 @@ defineTrait('Flight', class Flight extends Trait {
     this.self.mobile = this;
     this.speed = 0; this.pspeed = 0;
     this.moving = false;
+    this.launching = false; // set by the Launch activity while clearing a bay
+    this.shoved = -1;       // last frame crowding pushed this ship
     this.goal = null; // last commanded destination, for UI
   }
-  savePrev() { this.pspeed = this.speed; this.moving = false; }
+  savePrev() { this.pspeed = this.speed; this.moving = false; this.launching = false; }
 
   // Advance one tick toward (tx, ty, tz). Returns true when the ship has arrived and stopped.
   flyToward(tx, ty, tz) {

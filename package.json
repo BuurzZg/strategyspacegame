@@ -6,7 +6,7 @@
   "description": "Real-time 3D space strategy in the browser, built on three.js with a deterministic engine",
   "scripts": {
     "start": "node tools/serve.js",
-    "test": "node tools/flighttest.js",
+    "test": "node tools/flighttest.js && node tools/productiontest.js",
     "check": "node tools/check-determinism.js"
   }
 }

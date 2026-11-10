@@ -1,40 +1,66 @@
-halberd:
+# Ships. Costs are ore; BuildDuration is in ticks (25 per second).
+# Fleet capacity: the Forge provides 30. Fighters use 1-2, corvettes 3, frigates 6.
+
+# ------------------------------------------------------------------ mothership
+forge:
 	Inherits: ^Ship
 	Tooltip:
-		Name: Halberd
-		Class: Frigate
-		Role: Assault frigate
-		Description: A long, armoured frigate built around twin pulse batteries. Slow to turn, hard to stop.
-	Valued:
-		Cost: 450
+		Name: Forge
+		Class: Mothership
+		Role: Foundry-city
+		Description: A kilometre of furnaces, hangars and crew decks. It builds your fleet. If it falls, so do your people.
 	Health:
-		HP: 120000
-		Radius: 820
+		HP: 2400000
+		Radius: 5400
 	Armor:
-		Type: heavy
+		Type: capital
 	Selectable:
-		Radius: 1000
+		Radius: 5600
+		Priority: 20
 	Flight:
-		MaxSpeed: 45
+		MaxSpeed: 10
 		Acceleration: 1
-		Deceleration: 2
-		TurnSpeed: 4
-		PitchSpeed: 3
+		Deceleration: 1
+		TurnSpeed: 1
+		PitchSpeed: 1
+		MaxPitch: 256
 		TurnInPlace: true
-		Slip: 120
-		Bank: 18
+		Slip: 240
+		ArriveRadius: 160
+		Bank: 3
 	WithModel:
-		Model: halberd
+		Model: forge
+	ProductionQueue:
+		Type: Forge
+		MaxQueue: 10
+	LaunchBay:
+		Forward: 512
+		Side: 1400
+		Up: -100
+		ExitYaw: 220
+		LaunchSpeed: 16
+		Clearance: 768
+	RallyPoint:
+	ProvidesCapacity:
+		Amount: 30
+	ProvidesPrerequisite:
 
+# ------------------------------------------------------------------ fighters
 dart:
 	Inherits: ^Ship
 	Tooltip:
 		Name: Dart
 		Class: Fighter
 		Role: Interceptor
-		Description: A needle of an interceptor with two autocannons and more engine than hull.
+		Description: A needle of an interceptor with two autocannons and more engine than hull. Hunts bombers.
 	Valued:
 		Cost: 60
+	Buildable:
+		Queue: Forge
+		BuildDuration: 200
+		BuildPaletteOrder: 10
+	ConsumesCapacity:
+		Amount: 1
 	Health:
 		HP: 6000
 		Radius: 260
@@ -53,3 +79,107 @@ dart:
 		Bank: 60
 	WithModel:
 		Model: dart
+
+talon:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Talon
+		Class: Fighter
+		Role: Bomber
+		Description: A delta-winged bomber carrying plasma charges under its belly. Cracks frigates and capital hulls.
+	Valued:
+		Cost: 90
+	Buildable:
+		Queue: Forge
+		BuildDuration: 300
+		BuildPaletteOrder: 20
+	ConsumesCapacity:
+		Amount: 2
+	Health:
+		HP: 8000
+		Radius: 300
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 460
+	Flight:
+		MaxSpeed: 110
+		Acceleration: 4
+		Deceleration: 5
+		TurnSpeed: 10
+		PitchSpeed: 9
+		MinSpeed: 45
+		Slip: 80
+		Bank: 50
+	WithModel:
+		Model: talon
+
+# ------------------------------------------------------------------ corvettes
+picket:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Picket
+		Class: Corvette
+		Role: Flak corvette
+		Description: A squat gunboat with a twin flak turret that fills the sky around it. Fighters avoid it.
+	Valued:
+		Cost: 140
+	Buildable:
+		Queue: Forge
+		BuildDuration: 375
+		BuildPaletteOrder: 30
+	ConsumesCapacity:
+		Amount: 3
+	Health:
+		HP: 24000
+		Radius: 420
+	Armor:
+		Type: medium
+	Selectable:
+		Radius: 620
+	Flight:
+		MaxSpeed: 80
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 8
+		PitchSpeed: 7
+		MinSpeed: 20
+		Slip: 120
+		Bank: 35
+	WithModel:
+		Model: picket
+
+# ------------------------------------------------------------------ frigates
+halberd:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Halberd
+		Class: Frigate
+		Role: Assault frigate
+		Description: A long, armoured frigate built around twin pulse batteries. Slow to turn, hard to stop.
+	Valued:
+		Cost: 450
+	Buildable:
+		Queue: Forge
+		BuildDuration: 750
+		BuildPaletteOrder: 40
+	ConsumesCapacity:
+		Amount: 6
+	Health:
+		HP: 120000
+		Radius: 820
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 1000
+	Flight:
+		MaxSpeed: 45
+		Acceleration: 1
+		Deceleration: 2
+		TurnSpeed: 4
+		PitchSpeed: 3
+		TurnInPlace: true
+		Slip: 120
+		Bank: 18
+	WithModel:
+		Model: halberd

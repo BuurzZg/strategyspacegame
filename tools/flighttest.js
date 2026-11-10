@@ -1,5 +1,5 @@
 // Flight-model checks, no browser needed:  npm test
-// Every ship type must reach awkward 3D targets exactly, stop, and do it deterministically.
+// Every hull must reach awkward 3D targets exactly, stop, and do it deterministically.
 import { makeWorld } from './headless.js';
 import { makeOrder } from '../src/engine/order.js';
 import { CELL, dist3 } from '../src/engine/math.js';
@@ -21,16 +21,16 @@ const CASES = [
 
 async function fly(type, [dx, dy, dz]) {
   const w = await makeWorld({ players: [player] });
-  w.actors.forEach((a) => w.removeActor(a));
+  w.actors.slice().forEach((a) => w.removeActor(a));
   const ship = w.createActor(type, w.players[0], { x: 96 * CELL, y: 96 * CELL, z: 0, yaw: 0 });
   const t = { x: ship.x + dx * CELL, y: ship.y + dy * CELL, z: ship.z + dz * CELL };
   w.resolveOrder(makeOrder('Move', [ship], t), w.players[0]);
   let f = 0, maxSpeed = 0;
-  for (; f < 25 * 240 && (ship.activity || ship.mobile.speed > 0); f++) { w.tick(); maxSpeed = Math.max(maxSpeed, ship.mobile.speed); }
+  for (; f < 25 * 600 && (ship.activity || ship.mobile.speed > 0); f++) { w.tick(); maxSpeed = Math.max(maxSpeed, ship.mobile.speed); }
   return { ship, t, f, maxSpeed, miss: dist3(ship.x, ship.y, ship.z, t.x, t.y, t.z), hash: w.syncHash() };
 }
 
-for (const type of ['halberd', 'dart']) {
+for (const type of ['forge', 'halberd', 'picket', 'talon', 'dart']) {
   for (const c of CASES) {
     const r = await fly(type, c);
     const secs = (r.f / 25).toFixed(1);
@@ -44,8 +44,9 @@ check(a.hash === b.hash && a.f === b.f, `deterministic (hash ${a.hash.toString(1
 
 // Group move keeps the group's shape (roughly) and everyone arrives.
 {
-  const w = await makeWorld({ players: [player], extraShips: ['dart', 'dart', 'dart', 'dart'] });
-  const ships = w.actors.slice();
+  const w = await makeWorld({ players: [player] });
+  w.actors.slice().forEach((a) => w.removeActor(a));
+  const ships = ['halberd', 'dart', 'dart', 'dart', 'dart'].map((type, i) => w.createActor(type, w.players[0], { x: 96 * CELL, y: (90 + i * 3) * CELL, z: 0, yaw: 0 }));
   const t = { x: 140 * CELL, y: 70 * CELL, z: 12 * CELL };
   w.resolveOrder(makeOrder('Move', ships, t), w.players[0]);
   let f = 0;

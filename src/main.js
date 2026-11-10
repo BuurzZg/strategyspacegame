@@ -38,13 +38,14 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-function startFlightTrials(rules) {
+// Milestone 2 sandbox: your Forge and escorts in an empty stretch of the Drift.
+function startSkirmish(rules) {
   const seed = parseInt(params.get('seed'), 10) || 7;
   const test = params.get('fleet') === 'test' || location.hash === '#fleet'; // the hash form works where query strings can't
   const settings = {
-    seed, latency: 1, mode: 'trials',
+    seed, latency: 1, mode: 'skirmish',
     space: { w: 192, d: 192, h: 64 },
-    spawns: [[96, 96, 0]],
+    spawns: [[70, 96, 0]],
     players: [{ name: 'You', faction: params.get('faction') === 'cinder' ? 'cinder' : 'meridian', client: 0 }],
     extraShips: test ? ['dart', 'dart', 'halberd', 'dart', 'dart'] : [],
   };
@@ -61,14 +62,14 @@ function startFlightTrials(rules) {
   input = new Input(canvas, session, hud, audio);
   hud.attach(session, input);
   rd.syncViews();
-  // start on the first ship, selected, seen from behind and above
-  const ship = world.actors.find((a) => a.owner === viewer);
+  // start on the Forge, selected, seen from behind and above its port quarter
+  const ship = input.forge() || world.actors.find((a) => a.owner === viewer);
   if (ship) {
     input.setSelection([ship], false);
     const v = rd.views.get(ship.id);
     rd.renderPos(ship, 1, v.pos);
     orbit.focus.copy(v.pos); orbit.focusT.copy(v.pos);
-    orbit.yaw = orbit.yawT = Math.PI + 0.55; orbit.pitch = orbit.pitchT = 0.32; orbit.dist = orbit.distT = 34;
+    orbit.yaw = orbit.yawT = Math.PI - 0.75; orbit.pitch = orbit.pitchT = 0.36; orbit.dist = orbit.distT = 95;
     input.followSelection(); // the camera rides with the selection until you pan away
   }
   resize();
@@ -89,6 +90,9 @@ function pump() {
     acc -= TICK_MS; n++;
   }
   if (n >= 25) acc = Math.min(acc, TICK_MS);
+  // events wait for the next frame; a hidden tab (no frames) must not pile them up forever
+  const ev = session.world.fxEvents;
+  if (ev.length > 4000) ev.splice(0, ev.length - 2000);
 }
 setInterval(pump, 10);
 
@@ -100,7 +104,10 @@ function frame(now) {
   if (!session) return;
   pump();
   const alpha = session.om.stalled ? 1 : Math.min(1, acc / TICK_MS);
-  session.world.fxEvents.length = 0;
+  const events = session.world.fxEvents;
+  session.renderer.consumeEvents(events);
+  hud.consumeEvents(events);
+  events.length = 0;
   input.update(dt);
   session.orbit.update(dt);
   space.update(camera, renderer.getPixelRatio());
@@ -115,7 +122,7 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 (async () => {
   try {
     const rules = await loadRules(async (f) => { const r = await fetch(f); if (!r.ok) throw new Error(`Could not load ${f} (${r.status})`); return r.text(); });
-    startFlightTrials(rules);
+    startSkirmish(rules);
     requestAnimationFrame(frame);
   } catch (e) {
     console.error(e);
