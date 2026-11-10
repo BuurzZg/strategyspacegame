@@ -139,7 +139,7 @@ export class World {
   // Closest point to (x, y, z) on an actor's hull axis. Most hulls are spheres, so that is
   // their centre; a capsule hull (Health.HalfLength) has a line along its nose.
   hullAxisPoint(t, x, y, z) {
-    const hl = t.health ? t.health.info.HalfLength : 0;
+    const hl = t.health ? t.health.info.HalfLength : t.body ? t.body.halfLength | 0 : 0;
     if (!hl) return [t.x, t.y, t.z];
     const f = dirVec(t.yaw, t.pitch);
     const s = clamp(Math.trunc(((x - t.x) * f[0] + (y - t.y) * f[1] + (z - t.z) * f[2]) / 1024), -hl, hl);
@@ -233,16 +233,18 @@ export class World {
     for (const t of this.solids()) {
       const s = t.self;
       if (s.dead) continue;
-      const r = t.radius();
-      this.unitsInSphere(s.x, s.y, s.z, r + this.maxHalfLength + 4 * CELL, tmp);
+      const r = t.radius(), sh = t.halfLength | 0;
+      this.unitsInSphere(s.x, s.y, s.z, r + sh + this.maxHalfLength + 4 * CELL, tmp);
       for (const b of tmp) {
         if (b.dead || b.mobile.ghost) continue;
         const rb = b.health.info.Radius, hb = b.health.info.HalfLength;
-        const [bx, by, bz] = hb ? this.hullAxisPoint(b, s.x, s.y, s.z) : [b.x, b.y, b.z];
+        // a long wreck is a capsule too: closest point on its axis, then on the ship's
+        const [sx, sy, sz] = sh ? this.hullAxisPoint(s, b.x, b.y, b.z) : [s.x, s.y, s.z];
+        const [bx, by, bz] = hb ? this.hullAxisPoint(b, sx, sy, sz) : [b.x, b.y, b.z];
         const min = r + Math.trunc((rb * 80) / 100);
-        const d2 = distSq3(s.x, s.y, s.z, bx, by, bz);
+        const d2 = distSq3(sx, sy, sz, bx, by, bz);
         if (d2 >= min * min) continue;
-        let ux = bx - s.x, uy = by - s.y, uz = bz - s.z, d = isqrt(d2);
+        let ux = bx - sx, uy = by - sy, uz = bz - sz, d = isqrt(d2);
         if (d === 0) { ux = 0; uy = 0; uz = 1; d = 1; }
         const push = min - (d2 === 0 ? 0 : d);
         b.x += Math.trunc((ux * push) / d); b.y += Math.trunc((uy * push) / d); b.z += Math.trunc((uz * push) / d);

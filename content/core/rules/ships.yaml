@@ -46,6 +46,10 @@ forge:
 	ProvidesCapacity:
 		Amount: 30
 	ProvidesPrerequisite:
+	# carries the fleet between places; spools the Skein Drive to leave (60 s)
+	Hangar:
+	Skein:
+		SpoolTime: 1500
 	# Gleaners unload into the furnace maw on top of the prow, three at a time.
 	OreDropoff:
 		Slots: 3

@@ -17,7 +17,9 @@ function rng(seed) {
 export const STAR_DIR = new THREE.Vector3(-0.62, 0.32, -0.71).normalize();
 
 export class SpaceScene {
-  constructor(scene, bounds, seed = 7) {
+  // sky: an optional hex tint for the nebula backdrop (each kind of place has its own)
+  constructor(scene, bounds, seed = 7, sky = '') {
+    this.sky = sky;
     this.scene = scene;
     this.group = new THREE.Group();
     scene.add(this.group);
@@ -34,10 +36,10 @@ export class SpaceScene {
   makeSky() {
     const mat = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { starDir: { value: STAR_DIR } },
+      uniforms: { starDir: { value: STAR_DIR }, tint: { value: skyTint(this.sky) } },
       vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `
-        varying vec3 vDir; uniform vec3 starDir;
+        varying vec3 vDir; uniform vec3 starDir; uniform vec3 tint;
         float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
         float noise(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
           return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
@@ -52,7 +54,7 @@ export class SpaceScene {
           float n2 = fbm(d * 5.1 + vec3(-2.0, 4.0, 0.3));
           float cloud = smoothstep(0.42, 0.85, n1) * (0.35 + band);
           float wisp = smoothstep(0.55, 0.9, n2) * band;
-          vec3 violet = vec3(0.20, 0.07, 0.30), teal = vec3(0.03, 0.20, 0.22), ember = vec3(0.45, 0.13, 0.05);
+          vec3 violet = tint, teal = vec3(0.03, 0.20, 0.22), ember = vec3(0.45, 0.13, 0.05);
           float toStar = max(dot(d, starDir), 0.0);
           vec3 col = base + violet * cloud * 0.9 + teal * wisp * 0.7 + ember * pow(toStar, 6.0) * (0.35 + cloud);
           col += vec3(1.0, 0.55, 0.25) * pow(toStar, 90.0) * 0.6;          // halo around Orrin
@@ -162,6 +164,13 @@ export class SpaceScene {
     this.sky.position.copy(camera.position);
     this.starMat.uniforms.pr.value = pixelRatio;
   }
+}
+
+// The backdrop's main gas colour: the default violet, or a place's own tint, kept dark.
+function skyTint(hex) {
+  if (!hex) return new THREE.Vector3(0.20, 0.07, 0.30);
+  const c = new THREE.Color(parseInt(hex, 16));
+  return new THREE.Vector3(c.r * 0.38, c.g * 0.38, c.b * 0.38);
 }
 
 export function radialTexture(stops, size = 128) {

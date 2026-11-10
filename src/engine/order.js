@@ -1,3 +1,5 @@
+import { DockHangar } from '../activities/hangar.js';
+
 // Orders are the only way input changes the simulation. The UI (or a bot) builds an Order,
 // the OrderManager schedules it for a future frame on every client, and on that frame each
 // client resolves it identically.
@@ -70,6 +72,19 @@ export function resolveOrder(world, player, o) {
   }
   if (F && o.n === 'Stop') { const g = F.exactGroup(subjects.filter((a) => a.mobile)); if (g) F.stop(g); }
   if (F && (o.n === 'Harvest' || o.n === 'Dock')) F.leave(subjects);
+  if (o.n === 'Recall') {
+    // the ships come home and go aboard the Forge's hangar
+    const forge = world.actors.find((a) => a.owner === player && !a.dead && a.has('Hangar'));
+    if (!forge) return;
+    const ships = subjects.filter((a) => a.mobile && a !== forge);
+    if (F) F.leave(ships);
+    for (const a of ships) {
+      if (a.collector) a.collector.auto = false;
+      a.mobile.goal = null;
+      a.queueActivity(new DockHangar(forge.id), false);
+    }
+    return;
+  }
   for (const a of subjects) dispatch(a, order);
 }
 

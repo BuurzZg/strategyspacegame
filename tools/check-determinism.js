@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SIM_DIRS = ['src/engine', 'src/traits', 'src/activities'];
+const SIM_DIRS = ['src/engine', 'src/traits', 'src/activities', 'src/galaxy'];
 const ALLOW = new Set();
 const FORBIDDEN = [
   [/Math\.random\s*\(/, 'Math.random (use world.rng)'],

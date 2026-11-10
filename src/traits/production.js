@@ -103,23 +103,31 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
 
   // Build complete: the ship appears in a bay mouth, flies clear, then heads for the
   // rally point (or a muster slot beside the bay). Bays alternate port and starboard.
-  launch(type) {
+  // `from`: a hangar entry ({ hp, cargo, kind }) when an existing ship launches, not a new build.
+  launch(type, from = null) {
     const self = this.self, w = this.world;
     const bay = self.trait('LaunchBay');
     const n = this.launches++;
     const side = n % 2 ? -1 : 1;
     const pose = bay ? bay.pose(side) : { x: self.x, y: self.y, z: self.z, yaw: self.yaw };
     const unit = w.createActor(type, self.owner, pose);
-    w.fx({ t: 'ready', actor: unit.id, type, owner: self.owner.index, x: pose.x, y: pose.y, z: pose.z });
-    w.emit('produced', unit, self);
-    if (!unit.mobile) return;
+    if (from) {
+      if (unit.health && from.hp) unit.health.hp = Math.max(1, Math.min(unit.health.maxHp, from.hp));
+      if (unit.collector && from.cargo) { unit.collector.cargo = from.cargo; unit.collector.kind = from.kind; }
+      w.fx({ t: 'ready', actor: unit.id, type, owner: self.owner.index, x: pose.x, y: pose.y, z: pose.z, hangar: true });
+    } else {
+      w.fx({ t: 'ready', actor: unit.id, type, owner: self.owner.index, x: pose.x, y: pose.y, z: pose.z });
+      w.emit('produced', unit, self);
+    }
+    if (!unit.mobile) return unit;
     unit.mobile.speed = Math.min(unit.mobile.info.MaxSpeed, bay ? bay.info.LaunchSpeed : 0);
     unit.mobile.ghost = true; // no crowding on the spawn tick either
     unit.queueActivity(new Launch(self.id, bay ? bay.info.Clearance : CELL));
-    if (unit.collector) return; // it starts mining as soon as it is clear
+    if (unit.collector) return unit; // it starts mining as soon as it is clear
     const dest = this.destination(n, side);
     unit.mobile.goal = dest;
     unit.queueActivity(new FlyTo(dest.x, dest.y, dest.z));
+    return unit;
   }
 
   // Slot n around the rally point, or beside the bay on `side` when there is none.

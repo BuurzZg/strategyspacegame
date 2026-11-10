@@ -5,7 +5,17 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 5, formations and stances, in the Proving Grounds.** The game opens in the Proving Grounds, a testing sandbox. You get the Forge, its escorts, Gleaners mining four asteroid fields, and a panel to call in enemies.
+**Status: Milestone 6, places built from data.** The game opens on a start screen. Pick a place to take the Forge to:
+
+- **Scrap Shoal:** ore rocks, dead ships, and sometimes something living in the wrecks;
+- **Ore Reef:** rich ore among crystal arches and spires;
+- **Ice Tail:** the debris trail of a broken comet, the best place for water;
+- **Lantern Mist:** a Glim nebula with fuel and spore drifts, and things that hunt in the haze;
+- **Wreck:** one giant derelict and the debris of whatever killed it.
+
+Every place is generated from a template and a seed, so the same seed always gives the same map. The fleet launches from the Forge's hangar when it arrives. Gather what you can, then recall your ships and spool the Skein Drive to leave. A report shows what the visit gained and cost, and the run carries on to the next place with the stores and ships you left with.
+
+The **Proving Grounds** sandbox is still on the start screen, with a panel to call in enemies.
 
 Warships fight with:
 - autocannons and plasma charges (fighters);
@@ -17,7 +27,9 @@ Each counters something and is countered by something else. Bigger ships leave w
 
 Fleets fly in formation, follow a stance, and can be saved as control groups.
 
-The galaxy map and the survival voyage come in later milestones.
+Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
+
+The galaxy map, and the survival needs (water, air, food, fuel), come in Milestone 7.
 
 ## Running the game
 
@@ -36,11 +48,13 @@ Opening `index.html` straight from disk (`file://`) does not work, because brows
 
 | Option | Effect |
 | --- | --- |
-| `?fleet=test` or `#fleet` | Adds four Darts and a second Halberd at the start, so you can try group moves and box selection |
-| `?faction=cinder` | Flies the Cinder Pact colours instead of the Meridian Hollow |
-| `?seed=123` | Changes the seed for the backdrop and the asteroid layout |
+| `?poi=OreReef&seed=12` or `#OreReef` | Skips the start screen and goes straight to a place (`ScrapShoal`, `OreReef`, `IceTail`, `LanternMist`, `Wreck`), with an optional seed |
+| `?grounds` or `#grounds` | Skips the start screen and opens the Proving Grounds |
+| `?fleet=test` or `#fleet` | The Proving Grounds, with four Darts and a second Halberd added at the start, so you can try group moves and box selection |
+| `?faction=cinder` | In the Proving Grounds, flies the Cinder Pact colours instead of the Meridian Hollow |
+| `?seed=123` | Changes the seed for the backdrop and the layout |
 
-For example, <http://localhost:8080/?fleet=test>.
+For example, <http://localhost:8080/?poi=Wreck&seed=3>. The hash forms (`#Wreck`) work where query strings can't, such as on the published play link.
 
 ## Controls
 
@@ -104,9 +118,36 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
 - **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
 
-### Mining
+### Places and leaving them
 
-You start with 1,500 ore and two Gleaners. Both start mining as soon as the game begins.
+- **Arriving:** the Forge stitches in near one edge of the map. Its ships launch from the bays one by one, keeping the hull damage and cargo they had when they came aboard.
+- **The top bar** shows the place's name and your five stores.
+- **Hovering or selecting** a rock, cloud or wreck shows what it holds. Field labels show how much is left in each field.
+- **Hostiles:** some places have Ashen Gaunt raiders or a Gnasher pack. Some lurk and pounce on whatever comes close. Others hunt: after a while they come for the Forge, and a warning shows under the top bar.
+
+The **Skein Drive** panel, bottom right, is how you leave:
+
+| Button | Action |
+| --- | --- |
+| **Recall all** | Every ship flies home to the nearer bay and goes aboard. Collectors unload their holds into the stores as they come in. |
+| **Launch all** | Everything aboard launches again |
+| **Spool the Skein** | One minute to spool, then the Forge stitches away. Ships still outside are left behind and lost. Press it again to cancel. |
+
+The panel counts the ships aboard and outside, and warns while ships are still outside during a spool. You can always leave; later, some enemies will be able to interrupt the spool-up.
+
+**The report** lists each store as you arrived, what was gathered, what was spent, and what you leave with. It also lists the ships aboard, built here, destroyed and left behind, and the Forge's hull. **Choose the next place** takes you back to the start screen, which now shows the run's stores and fleet. **Start a new run** resets them.
+
+### Gathering
+
+You start with 1,500 ore, two Gleaners, a Shearer and a Skimmer. Collectors start work as soon as they launch.
+
+| Collector | Gathers | From | Hold |
+| --- | --- | --- | --- |
+| Gleaner | ore, ice | rocks | 100 |
+| Shearer | salvage | wrecks, including the giant hulk at a Wreck | 80 |
+| Skimmer | Glim, spores | clouds: it flies into them and fills up | 120 |
+
+A collector carries one kind at a time. Clouds shrink as they are skimmed and disperse when empty; wrecks break apart.
 
 - **Gleaners work on their own.** A new Gleaner launches and starts mining straight away. It picks a good rock nearby (close, rich, and not already taken by another Gleaner), mines until its 100-ore hold is full, and unloads at the nearest Forge or Smelter. Then it heads back out.
 - **Docking:** the Forge takes three Gleaners at a time on its furnace maw, at the top of the prow. A Smelter takes two, one on each flank. If every slot is busy, a Gleaner waits above the dock.
@@ -114,12 +155,12 @@ You start with 1,500 ore and two Gleaners. Both start mining as soon as the game
 - **Fields** are labelled with their name and the ore left. Rocks shrink as they are mined and break apart when empty.
 - **Gleaners you move stop mining.** Send them back to work with a right-click on a rock.
 
-| Input (with Gleaners selected) | Action |
+| Input (with collectors selected) | Action |
 | --- | --- |
-| Right-click a rock | Mine that rock |
-| Right-click the Forge or a Smelter | Come back and unload now, then carry on mining |
+| Right-click a rock, wreck or cloud | The collectors that can work it go there. The label reads Mine, Cut or Skim. |
+| Right-click the Forge or a Smelter | Come back and unload now, then carry on |
 
-One Gleaner on the nearest field brings in about 180 ore a minute. The far field, Ostrel Deep, is the richest, but the round trip from the Forge is long. Build a Smelter, park it beside that field, and the Gleaners mining there unload into it instead.
+One Gleaner on a near field brings in about 180 ore a minute. Far fields are slow to work from the Forge: build a Smelter, park it beside the field, and the collectors working there unload into it instead.
 
 ### Fleet orders: formations, stances and control groups
 
@@ -161,11 +202,11 @@ When you have ships selected, a fleet bar appears at the bottom of the screen.
 - **Fighters** (Darts, Talons) make attack runs: in fast, weaving, break away, come round. **Bigger ships** hold off at a comfortable range and keep their guns on target.
 - **The Forge** never chases anything. Its four point-defence turrets shoot at whatever comes close.
 - **Hovering** an enemy shows its faction and hull in red. With warships selected, the label reads "Attack".
-- **When ships die:** losses show as a message under the top bar. Fighters break up; anything bigger leaves a charred, drifting **wreck** with salvage in it. Salvage can be collected from Milestone 6.
+- **When ships die:** losses show as a message under the top bar. Fighters break up; anything bigger leaves a charred, drifting **wreck** with salvage in it, for Shearers to cut.
 
 ### The Proving Grounds
 
-Press `G`, or the **Proving Grounds** button, to open the sandbox panel.
+Choose **Proving Grounds** on the start screen: the Forge, its escorts and two Gleaners beside four asteroid fields. Press `G`, or the **Proving Grounds** button, to open the sandbox panel.
 
 - **Ashen Gaunt:** Darts, Talons, Pickets, Halberds, Spindles, a Sabre, or a mixed raiding party. They appear about 3 km beyond where the camera is looking and advance on your Forge.
 - **Drift fauna:** a pack of eight Gnashers, monsters that hunt in packs and bite.
@@ -183,7 +224,9 @@ Press `G`, or the **Proving Grounds** button, to open the sandbox panel.
 | Ship | Class | Ore | Build | Capacity | Crew | Weapons | Strong against | Weak against |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Forge | Mothership | — | — | provides 30 | — | 4 point-defence turrets | fighters that come close | — |
-| Gleaner | Ore collector | 100 | 12 s | 1 | 3 miners | — | — | everything |
+| Gleaner | Ore and ice collector | 100 | 12 s | 1 | 3 miners | — | — | everything |
+| Shearer | Salvage cutter | 120 | 13 s | 1 | 3 miners | — | — | everything |
+| Skimmer | Gas collector | 110 | 12 s | 1 | 3 miners | — | — | everything |
 | Smelter | Mobile refinery | 600 | 40 s | 4 | 10 engineers | — | — | everything |
 | Dart | Interceptor | 60 | 8 s | 1 | 2 pilots | Autocannons (fixed, forward) | Talons, Gnashers | flak |
 | Talon | Bomber | 90 | 12 s | 2 | 3 pilots | Plasma charges (fixed, forward) | frigates, capitals | Darts, flak |
@@ -194,12 +237,12 @@ Press `G`, or the **Proving Grounds** button, to open the sandbox panel.
 
 Monsters: the **Gnasher**, a pack hunter about the size of a fighter. It bites.
 
-You start with the Forge, a Halberd, two Darts and two Gleaners (10 of 30 capacity). Everything can be built from the start for now; blueprints arrive in Milestone 11.
+On the voyage you start with the Forge, a Halberd, two Darts, two Gleaners, a Shearer and a Skimmer (12 of 30 capacity). Everything can be built from the start for now; blueprints arrive in Milestone 11.
 
 How it works:
 - **Armour and damage.** Ships have one of four armour classes: light, medium, heavy and capital. Each weapon does more or less damage to each class.
 - **Aim.** Shots fly where the target is going to be, and can miss a ship that turns away. Heavy batteries only partly lead their target, so they struggle against weaving fighters.
-- **Where the numbers live.** Every number is in `rules/weapons.yaml` and `rules/combat.yaml`.
+- **Where the numbers live.** Every number is in `content/core/rules/weapons.yaml` and `content/core/rules/combat.yaml`.
 
 ## Development
 
@@ -249,6 +292,17 @@ Runs the headless tests:
   - stances work: Passive never fires and flees, Defensive fires without chasing, and Aggressive chases;
   - an advancing wedge destroys an enemy in its path and re-forms;
   - two identical runs give the same sync hash.
+- **Places** (`tools/poitest.js`): checks that:
+  - every template gives exactly the same map for the same seed, a different map for a different seed, and no field on top of the Forge's arrival point;
+  - every place type builds what its layout promised, and the fleet launches from the hangar;
+  - every resource kind can be gathered;
+  - Recall brings every ship aboard, keeping hull damage, and collectors unload as they come in;
+  - the Skein spools for a full minute, then the Forge leaves; ships outside are left behind;
+  - the report accounts for every unit of every store (end = start + every change, kind by kind) and lists what was built;
+  - the next place starts with exactly the fleet that was aboard and the stores that were left;
+  - hunting packs wait out their delay, then come for the Forge;
+  - a Dart crosses the giant hulk without touching it;
+  - two identical visits give the same sync hash.
 - **Balance** (`tools/balancetest.js`): cost-matched battles, each fought twice with the sides swapped. The counter has to win both, keeping at least 25% of its value:
   - Pickets beat Darts;
   - Halberds beat Pickets;
@@ -263,20 +317,40 @@ Runs the headless tests:
 npm run check
 ```
 
-Lints the simulation folders (`src/engine`, `src/traits`, `src/activities`) for anything that would break determinism, such as `Math.random`, `Math.sin` or `Date`.
+Lints the simulation folders (`src/engine`, `src/traits`, `src/activities`, `src/galaxy`) for anything that would break determinism, such as `Math.random`, `Math.sin` or `Date`. `npm test` runs it first.
+
+### Content packs
+
+Everything the game is made of lives in **content packs**, so new content (and later DLC) can be added without touching the code. The core pack is `content/core/`:
+
+```
+content/core/pack.yaml          the manifest: which files hold rules, weapons, resources and place types
+content/core/rules/*.yaml       factions, ships, warships, fauna, deposits, combat fits
+content/core/rules/weapons.yaml weapons
+content/core/resources.yaml     the five resources: name, description, colour, order
+content/core/poi-types.yaml     place templates: size, sky, rock fields, wrecks, the hulk, clouds,
+                                crystal formations, nebulae, encounters and names (the format is
+                                documented at the top of the file)
+```
+
+Packs listed after the core pack are merged on top of it, so a pack can add a place type or change one value of an existing ship. When the game loads, every reference is checked: a place that asks for an unknown resource or ship, or a collector that gathers an unknown resource, stops it with a message naming the file.
 
 ### Project layout
 
 ```
 index.html            page, styles and HUD markup
 lib/                  three.js (vendored, r160)
-rules/*.yaml          factions, ships, warships, fauna, weapons, and combat fits layered onto the hulls
+content/core/          the core content pack (see above)
 src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer maths,
-                      steering (avoid.js), weapons and projectiles (weapons.js)
-src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Armament, Attacks, AutoTarget,
-                      Stance, Formations, Wreck, ProvingGrounds, ...)
-src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove, FormationMove)
-src/render/           three.js scene: space backdrop, procedural ships, asteroids and wrecks, combat effects
+                      steering (avoid.js), weapons and projectiles (weapons.js), content packs
+                      (content.js), the place generator (poi.js)
+src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
+                      Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein, ...)
+src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
+                      FormationMove, DockHangar)
+src/galaxy/           the run: stores, fleet and visits carried from place to place (run.js)
+src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
+                      wrecks, combat effects
 src/ui/               orbit camera, movement disc, input, HUD, audio
 tools/                dev server, headless tests, determinism lint
 ```

@@ -160,6 +160,41 @@ export function buildShip(type, style) {
       out.length = 3.4;
       break;
     }
+    case 'shearer': {
+      // salvage tug: a squat cab and engine block, a long jointed cutting arm under the nose
+      part(box(1.5, 0.8, 1.1), M.hull, -0.4, 0.1, 0, body);
+      part(box(0.7, 0.5, 0.8), M.hull, 0.6, 0.15, 0, body);
+      part(box(0.35, 0.22, 0.6), M.light, 0.85, 0.32, 0, body);
+      part(box(1.3, 0.16, 0.16), M.trim, 1.0, -0.35, 0, body, 0, 0, -0.18);
+      part(box(0.9, 0.12, 0.12), M.trim, 1.95, -0.62, 0, body, 0, 0, 0.3);
+      part(cone(0.12, 0.35, 6), M.light, 2.48, -0.5, 0, body, 0, 0, -Math.PI / 2);
+      for (const z of [-1, 1]) {
+        part(box(1.2, 0.3, 0.25), M.dark, -0.4, -0.35, z * 0.5, body);
+        part(cyl(0.18, 0.22, 0.45, 6), M.dark, -1.3, 0.05, z * 0.35, body, 0, 0, Math.PI / 2);
+        out.engines.push({ pos: new THREE.Vector3(-1.58, 0.05, z * 0.35), size: 0.5 });
+      }
+      out.nose = new THREE.Vector3(2.65, -0.5, 0);
+      out.gauge = part(box(1.0, 0.06, 0.45), M.furnace, -0.4, 0.53, 0, body);
+      out.length = 4;
+      break;
+    }
+    case 'skimmer': {
+      // gas collector: a wide intake ring at the nose, a tube body, a bladder down each flank
+      part(torus(0.55, 0.1, 18), M.trim, 1.15, 0, 0, body, 0, Math.PI / 2, 0);
+      part(cyl(0.5, 0.3, 0.8, 10), M.dark, 0.75, 0, 0, body, 0, 0, Math.PI / 2);
+      part(cyl(0.32, 0.32, 1.8, 8), M.hull, -0.3, 0, 0, body, 0, 0, Math.PI / 2);
+      part(box(0.45, 0.2, 0.4), M.light, 0.1, 0.36, 0, body);
+      for (const z of [-1, 1]) {
+        const bl = part(G('sk-bladder', () => new THREE.IcosahedronGeometry(0.5, 1)), M.hull, -0.4, -0.05, z * 0.62, body);
+        bl.scale.set(1.6, 0.6, 0.6);
+        part(cyl(0.15, 0.19, 0.4, 6), M.dark, -1.3, 0, z * 0.3, body, 0, 0, Math.PI / 2);
+        out.engines.push({ pos: new THREE.Vector3(-1.56, 0, z * 0.3), size: 0.5 });
+      }
+      out.nose = new THREE.Vector3(1.2, 0, 0);
+      out.gauge = part(box(1.2, 0.06, 0.3), M.furnace, -0.3, 0.34, 0, body);
+      out.length = 3.4;
+      break;
+    }
     case 'smelter': {
       // mobile refinery: a broad barge, an intake ring at the bow, a glowing crucible on top,
       // dock clamps reaching out from both flanks

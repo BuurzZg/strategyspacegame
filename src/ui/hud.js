@@ -4,6 +4,11 @@ import { fieldOre } from '../traits/economy.js';
 import { FORMATIONS } from '../traits/formation.js';
 import { STANCES } from '../traits/combat.js';
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+const hex = (c) => `#${c}`;
+// What a deposit is called, and what gathering it is called.
+const DEPOSIT_NAMES = { ore: 'Ore rock', ice: 'Ice rock', glim: 'Glim cloud', spores: 'Spore drift', salvage: 'Wreck' };
+const VERBS = { ore: 'Mine', ice: 'Mine', salvage: 'Cut', glim: 'Skim', spores: 'Skim' };
+export { VERBS };
 const FORMATION_TIPS = { wall: 'A flat sheet facing the way you go', sphere: 'A shell round the biggest ship', wedge: 'An arrowhead, biggest ship at the point', column: 'Single file', ring: 'A flat circle', loose: 'No formation' };
 const STANCE_TIPS = { aggressive: 'Chase and fight enemies that come close', defensive: 'Hold position and return fire', passive: 'Never fire; flee when attacked' };
 
@@ -44,9 +49,128 @@ export class Hud {
   attach(session, input) {
     this.s = session; this.input = input; this.world = session.world; this.renderer = session.renderer; this.audio = input.audio;
     this.dirty = true;
-    this.buildPanel();
-    this.groundsPanel();
-    this.fleetPanel();
+    this.deposits = []; this.groupSig = null; this.queueSig = null;
+    for (const t of this.toasts) t.el.remove();
+    this.toasts = [];
+    if (!this.panelsBuilt) { this.panelsBuilt = true; this.buildPanel(); this.groundsPanel(); this.fleetPanel(); this.resourceBar(); this.skeinPanel(); }
+    // per map: the sandbox panel only in the Proving Grounds, the Skein panel only on the voyage
+    $('btn-grounds').hidden = !this.world.settings.sandbox;
+    if (!this.world.settings.sandbox && this.groundsOpen) this.toggleGrounds(false);
+    const voyage = this.world.settings.mode === 'poi';
+    $('skein').hidden = !voyage;
+    document.body.classList.toggle('voyage', voyage);
+    $('help-intro').innerHTML = voyage
+      ? 'Gather what the Forge needs, build what you must, and leave before the place turns on you. <b>Recall</b> your ships and <b>spool the Skein</b> (bottom right) to go on to the next place.'
+      : 'Your Forge, its escorts and two Gleaners, in a quiet corner of the Drift. Press <kbd>G</kbd> to call in Ashen Gaunt raiders or a Gnasher pack and test your fleet against them. Press <kbd>B</kbd> to build warships.';
+    $('report').hidden = true;
+    const poi = this.world.settings.poi;
+    $('place').textContent = poi ? poi.name : 'Proving Grounds';
+    if (poi) this.toast(`Arrived: ${poi.name}`, 'info');
+  }
+
+  // ---------------------------------------------------------------- resources
+  resourceBar() {
+    const res = this.world.rules.content.resources;
+    $('res-stores').innerHTML = Object.values(res).map((r) => `<div class="res-item" title="${esc(r.Name)}: ${esc(r.Description || '')}"><span class="res-k" style="color:${hex(r.Color)}">${esc(r.Name)}</span><b id="res-${r.id}" style="color:${hex(r.Color)}">0</b>${r.id === 'ore' ? '<span id="res-rate"></span>' : ''}</div>`).join('');
+  }
+
+  // ---------------------------------------------------------------- leaving: the Skein Drive
+  skeinPanel() {
+    $('btn-recall').addEventListener('click', () => {
+      const ships = this.input.world.actors.filter((a) => a.owner === this.s.viewer && a.mobile && !a.dead && !a.has('Hangar'));
+      if (ships.length) { this.input.issue('Recall', ships); this.audio.play('order'); this.toast(`Recalling ${ships.length} ship${ships.length > 1 ? 's' : ''}`, 'info'); }
+    });
+    $('btn-launch').addEventListener('click', () => { const f = this.forge(); if (f) { this.input.issue('LaunchAll', [f]); this.audio.play('order'); } });
+    $('btn-spool').addEventListener('click', () => {
+      const f = this.forge();
+      if (!f) return;
+      if (f.skein.spooling) this.input.issue('CancelSpool', [f]);
+      else { this.input.issue('SpoolSkein', [f]); this.audio.play('alert'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); }
+    });
+  }
+  refreshSkein() {
+    if ($('skein').hidden) return;
+    const f = this.forge(), w = this.world;
+    if (!f || !f.skein) return;
+    const out = w.actors.filter((a) => a.owner === this.s.viewer && a.mobile && !a.dead && a !== f).length;
+    const aboard = f.trait('Hangar').aboard.length;
+    const sk = f.skein, spooling = sk.spooling;
+    const left = spooling ? Math.ceil((sk.info.SpoolTime - sk.spool) / TICKS_PER_S) : 0;
+    $('skein-state').textContent = w.departed ? 'Gone' : spooling ? `Spooling · ${left} s` : 'Ready';
+    $('skein-bar').style.width = `${spooling ? (sk.spool / sk.info.SpoolTime) * 100 : 0}%`;
+    $('skein-fleet').textContent = `${aboard} aboard · ${out} outside${spooling && out ? ' (they will be left behind)' : ''}`;
+    $('skein-fleet').classList.toggle('warn', spooling && out > 0);
+    $('btn-spool').textContent = spooling ? 'Cancel spool' : 'Spool the Skein';
+    $('btn-launch').disabled = !aboard || spooling;
+    $('btn-recall').disabled = !out;
+  }
+
+  // ---------------------------------------------------------------- the report
+  showReport(r, onContinue) {
+    const res = this.world.rules.content.resources;
+    const name = (t) => this.world.rules.actors.get(t)?.traitInfo('Tooltip')?.Name || t;
+    const list = (m) => Object.entries(m).map(([t, n]) => `${n} × ${name(t)}`).join(', ') || 'none';
+    const rows = Object.entries(r.stores).map(([k, s]) => {
+      const ch = s.changes, gathered = ch.gathered || 0, spent = -(ch.spent || 0) - (ch.refunded || 0);
+      return `<tr><th scope="row" style="color:${hex(res[k].Color)}">${esc(res[k].Name)}</th><td>${fmtNum(s.start)}</td><td class="g">${gathered ? `+${fmtNum(gathered)}` : '—'}</td><td>${spent ? `−${fmtNum(spent)}` : '—'}</td><td><b>${fmtNum(s.end)}</b></td></tr>`;
+    }).join('');
+    const aboard = r.ships.aboard.reduce((m, e) => { m[e.type] = (m[e.type] || 0) + 1; return m; }, {});
+    const lost = Object.values(r.ships.destroyed).reduce((a, b) => a + b, 0), behind = Object.values(r.ships.leftBehind).reduce((a, b) => a + b, 0);
+    $('report-title').textContent = `Leaving ${r.place ? r.place.name : 'this place'}`;
+    $('report-sub').textContent = `${Math.floor(r.seconds / 60)} min ${r.seconds % 60} s here. ${lost + behind ? `${lost + behind} ship${lost + behind > 1 ? 's' : ''} did not come home.` : 'Everyone came home.'}`;
+    $('report-stores').innerHTML = `<thead><tr><th></th><th>Arrived with</th><th>Gathered</th><th>Spent</th><th>Leaving with</th></tr></thead><tbody>${rows}</tbody>`;
+    $('report-ships').innerHTML = [
+      ['Aboard', list(aboard)],
+      ['Built here', list(r.ships.built)],
+      ['Destroyed', list(r.ships.destroyed)],
+      ['Left behind', list(r.ships.leftBehind)],
+      ['In the holds', Object.entries(r.ships.aboard.reduce((m, e) => { if (e.cargo) m[e.kind] = (m[e.kind] || 0) + e.cargo; return m; }, {})).map(([k, n]) => `${fmtNum(n)} ${res[k] ? res[k].Name.toLowerCase() : k}`).join(', ') || 'empty'],
+      ['Forge hull', r.forge ? `${Math.ceil((r.forge.hp / r.forge.maxHp) * 100)}%` : '—'],
+    ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('');
+    $('report').hidden = false;
+    $('report-next').onclick = () => { $('report').hidden = true; onContinue(); };
+    $('report-next').focus();
+  }
+
+  // ---------------------------------------------------------------- the start screen
+  showLauncher(open, opts) {
+    $('launcher').hidden = !open;
+    document.body.classList.toggle('at-launcher', open);
+    if (!open) return;
+    const { rules, run, onVisit, onGrounds, onNewRun } = opts;
+    const res = rules.content.resources, types = rules.content.poiTypes;
+    $('launch-seed').value = '';
+    $('launch-head').textContent = run ? `Visit ${run.visits + 1}: where next?` : 'Where do you take the Forge first?';
+    $('launch-intro').textContent = run
+      ? 'The Skein is quiet for now. Pick the next place to stitch to.'
+      : 'The Skein Drive tore loose mid-jump and threw the Forge into the Wrack. It can still make short stitches. Choose a place to start gathering what you need.';
+    $('launch-run').hidden = !run;
+    if (run) {
+      const fleet = run.fleet.reduce((m, e) => { m[e.type] = (m[e.type] || 0) + 1; return m; }, {});
+      $('launch-run').innerHTML = `<div class="lr-stores">${Object.values(res).map((r) => `<span><i style="background:${hex(r.Color)}"></i>${esc(r.Name)} <b>${fmtNum(run.stores[r.id] || 0)}</b></span>`).join('')}</div>
+        <div class="lr-fleet">Aboard: ${Object.entries(fleet).map(([t, n]) => `${n} × ${esc(rules.actor(t).traitInfo('Tooltip').Name)}`).join(', ') || 'no ships'} · Forge hull ${Math.ceil((run.forge.hp / rules.actor('forge').traitInfo('Health').HP) * 100)}%</div>`;
+    }
+    // what each kind of place has to offer
+    const offers = (t) => {
+      const kinds = new Set();
+      for (const n of t.nodes) {
+        const [k] = n.key.split('@');
+        const kind = n.nodes.find((c) => c.key === 'Kind')?.value;
+        if ((k === 'Deposit' || k === 'Clouds') && kind) kinds.add(kind);
+        if (k === 'Wrecks' || k === 'Hulk') kinds.add('salvage');
+      }
+      return [...kinds].map((k) => `<span class="chip" style="color:${hex(res[k].Color)};border-color:${hex(res[k].Color)}55">${esc(res[k].Name)}</span>`).join('');
+    };
+    $('launch-places').innerHTML = Object.values(types).map((t) => `<button type="button" class="place" data-t="${esc(t.id)}"><b>${esc(t.Name)}</b><span>${esc(t.Description)}</span><span class="chips">${offers(t)}</span></button>`).join('');
+    $('launch-places').onclick = (e) => {
+      const b = e.target.closest('[data-t]');
+      if (!b) return;
+      const s = $('launch-seed').value.trim();
+      onVisit(b.dataset.t, s ? parseInt(s, 10) || 0 : undefined);
+    };
+    $('launch-grounds').onclick = onGrounds;
+    $('launch-new').hidden = !run;
+    $('launch-new').onclick = onNewRun;
   }
 
   // ---------------------------------------------------------------- fleet bar and control groups
@@ -110,8 +234,6 @@ export class Hud {
   // Hostiles appear about 3 km beyond the point the camera is looking at (seen from the
   // Forge) and advance on the Forge. Your own test ships appear ahead of the Forge.
   groundsPanel() {
-    $('btn-grounds').hidden = !this.world.settings.sandbox;
-    if (!this.world.settings.sandbox) return;
     const button = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', () => { fn(); b.blur(); }); return b; };
     for (const [label, faction, types] of HOSTILE_WAVES) $(faction === 'fauna' ? 'pg-fauna' : 'pg-gaunt').appendChild(button(label, () => this.spawnHostile(faction, types)));
     for (const [label, types] of OWN_WAVES) $('pg-mine').appendChild(button(label, () => this.spawnOwn(types)));
@@ -261,8 +383,8 @@ export class Hud {
     for (const e of events) {
       if (e.t === 'notify' && e.player === me) { this.toast(e.text, e.kind); if (e.kind === 'bad') this.audio.play('error'); }
       else if (e.t === 'deposit' && e.owner === me) {
-        this.deposits.push([e.frame, e.amount]);
-        const el = $('res-ore');
+        if (!e.kind || e.kind === 'ore') this.deposits.push([e.frame, e.amount]);
+        const el = $(`res-${e.kind || 'ore'}`) || $('res-ore');
         el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
         this.audio.play('deposit');
         this.dirty = true;
@@ -272,6 +394,8 @@ export class Hud {
         this.dirty = true;
       } else if (e.t === 'fire' && e.report) this.audio.play(e.report, this.near(e) * 0.8);
       else if (e.t === 'impact' && e.missile) this.audio.play('boom', this.near(e) * 0.6);
+      else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
+      else if (e.t === 'aboard' && e.owner === me) this.dirty = true;
       else if (e.t === 'killed') {
         const big = (e.radius || 0) > 600;
         this.audio.play(big ? 'boom-big' : 'boom', Math.max(this.near(e), e.owner === me ? 0.5 : 0));
@@ -292,7 +416,8 @@ export class Hud {
   // ---------------------------------------------------------------- panels
   refresh() {
     const p = this.s.viewer;
-    $('res-ore').textContent = fmtNum(p.resources.cash);
+    for (const k in p.resources.amounts) { const el = $(`res-${k}`); if (el) el.textContent = fmtNum(p.resources.amounts[k]); }
+    this.refreshSkein();
     // ore delivered over the last minute of game time
     const since = this.world.frame - 60 * TICKS_PER_S;
     while (this.deposits.length && this.deposits[0][0] < since) this.deposits.shift();
@@ -317,24 +442,31 @@ export class Hud {
     const card = $('sel');
     if (!sel.length) { card.hidden = true; return; }
     card.hidden = false;
-    if (sel.length === 1 && sel[0].asteroid) {
-      const t = sel[0].asteroid, field = this.world.fields[t.field];
-      $('sel-name').textContent = 'Asteroid';
-      $('sel-class').textContent = field ? `Ore body · ${field.name}` : 'Ore body';
-      $('sel-desc').textContent = this.input.own().some((s) => s.collector) ? 'Right-click it with Gleaners selected to mine it.' : 'Select Gleaners, then right-click it to mine it.';
+    if (sel.length === 1 && (sel[0].asteroid || sel[0].cloud)) {
+      const t = sel[0].deposit, field = sel[0].asteroid ? this.world.fields[t.field] : null, rn = this.world.rules.content.resources[t.kind];
+      const who = { ore: 'Gleaners', ice: 'Gleaners', glim: 'Skimmers', spores: 'Skimmers' }[t.kind];
+      $('sel-name').textContent = DEPOSIT_NAMES[t.kind] || 'Deposit';
+      $('sel-class').textContent = field ? `${rn.Name} · ${field.name}` : rn.Name;
+      $('sel-desc').textContent = `${rn.Description} ${who}: select them, then right-click this to ${(VERBS[t.kind] || 'gather').toLowerCase()} it.`;
       $('sel-status').textContent = '';
       $('sel-stats').innerHTML = [
-        ['Ore', `${fmtNum(t.ore)} / ${fmtNum(t.maxOre)}`],
+        [rn.Name, `${fmtNum(t.amount)} / ${fmtNum(t.maxAmount)}`],
         ['Size', `${fmtNum(t.radius() * 2 * M_PER_UNIT)} m`],
-        ...(field ? [['Field ore', fmtNum(fieldOre(field))]] : []),
+        ...(field ? [['In the field', fmtNum(fieldOre(field))]] : []),
       ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+      return;
+    }
+    if (sel.length === 1 && sel[0].rock) {
+      $('sel-name').textContent = 'Crystal formation'; $('sel-class').textContent = 'Fused crystal · Obstacle';
+      $('sel-desc').textContent = sel[0].info.traitInfo('Tooltip').Description; $('sel-status').textContent = '';
+      $('sel-stats').innerHTML = `<div><dt>Size</dt><dd>${fmtNum(sel[0].rock.radius() * 2 * M_PER_UNIT)} m</dd></div>`;
       return;
     }
     if (sel.length === 1 && sel[0].wreck) {
       const k = sel[0].wreck, of = this.world.rules.actors.get(k.of)?.traitInfo('Tooltip')?.Name || 'ship';
-      $('sel-name').textContent = 'Wreck';
+      $('sel-name').textContent = k.self.init.name ? `Wreck of the ${k.self.init.name}` : 'Wreck';
       $('sel-class').textContent = `Derelict · was a ${of}`;
-      $('sel-desc').textContent = 'Dead and drifting. Salvage crews will be able to cut it apart (Milestone 6).';
+      $('sel-desc').textContent = 'Dead and drifting. Shearers can cut salvage out of it: select them, then right-click the wreck.';
       $('sel-status').textContent = '';
       $('sel-stats').innerHTML = [['Salvage', fmtNum(k.salvage)], ['Size', `${fmtNum(k.radius() * 2 * M_PER_UNIT)} m`]]
         .map(([k2, v]) => `<div><dt>${k2}</dt><dd>${v}</dd></div>`).join('');
@@ -358,8 +490,9 @@ export class Hud {
       ];
       if (a.collector) {
         const c = a.collector;
-        if (!a.activity && !c.auto) status = 'Holding (right-click a rock to mine)';
-        stats.push(['Hold', `${c.cargo} / ${c.info.Capacity} ore`]);
+        if (!a.activity && !c.auto) status = `Holding (right-click a ${c.kinds.includes('salvage') ? 'wreck' : c.kinds.includes('glim') ? 'cloud' : 'rock'} to work it)`;
+        const kn = this.world.rules.content.resources[c.kind || c.kinds[0]];
+        stats.push(['Hold', `${c.cargo} / ${c.info.Capacity} ${c.cargo || c.kinds.length === 1 ? kn.Name.toLowerCase() : c.kinds.map((k) => this.world.rules.content.resources[k].Name.toLowerCase()).join(' or ')}`]);
       }
       const crew = a.info.traitInfo('Crew');
       if (crew && crew.Count) stats.push(['Crew', `${crew.Count} ${crew.Count === 1 ? crew.Role.replace(/s$/, '') : crew.Role}`]);
@@ -381,7 +514,7 @@ export class Hud {
       $('sel-status').textContent = sel.some((a) => a.activity) ? 'Under way' : 'Holding';
       const z = sel.reduce((s, a) => s + a.z, 0) / sel.length;
       const cargo = sel.filter((a) => a.collector).reduce((s, a) => s + a.collector.cargo, 0);
-      $('sel-stats').innerHTML = `<div><dt>Mean altitude</dt><dd>${fmtAlt(z)}</dd></div>` + (sel.some((a) => a.collector) ? `<div><dt>Ore aboard</dt><dd>${fmtNum(cargo)}</dd></div>` : '');
+      $('sel-stats').innerHTML = `<div><dt>Mean altitude</dt><dd>${fmtAlt(z)}</dd></div>` + (sel.some((a) => a.collector) ? `<div><dt>In the holds</dt><dd>${fmtNum(cargo)}</dd></div>` : '');
     }
   }
 
@@ -409,13 +542,13 @@ export class Hud {
     for (const a of inp.selection) {
       const v = rd.views.get(a.id);
       if (!v) continue;
-      const b = this.drawBrackets(ctx, v, a.asteroid ? ORE_CSS : rd.styleOf(a.owner).css, true);
-      if (!b || a.wreck) continue;
+      const b = this.drawBrackets(ctx, v, a.deposit && !a.wreck ? ORE_CSS : rd.styleOf(a.owner).css, true);
+      if (!b || a.wreck || a.rock) continue;
       const gn = inp.isMine(a) ? inp.groupNumberOf(a) : 0;
       if (gn) { ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.fillStyle = rd.styleOf(a.owner).css; ctx.fillText(String(gn), b.p.x - b.r - 2, b.p.y - b.r - 4); }
       const w = Math.max(18, Math.min(b.r * 1.4, 120));
       const bar = (y, f, color) => { ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = color; ctx.fillRect(b.p.x - w / 2, y, w * f, 2); };
-      if (a.asteroid) { bar(b.p.y + b.r + 6, a.asteroid.ore / a.asteroid.maxOre, ORE_CSS); continue; }
+      if (a.deposit) { bar(b.p.y + b.r + 6, a.deposit.amount / a.deposit.maxAmount, ORE_CSS); continue; }
       const f = a.health.hp / a.health.maxHp;
       bar(b.p.y + b.r + 6, f, f > 0.6 ? '#7cf2a8' : f > 0.3 ? '#ffb547' : '#ff5a64');
       if (a.collector && a.collector.cargo > 0) bar(b.p.y + b.r + 10, a.collector.cargo / a.collector.info.Capacity, ORE_CSS);
@@ -436,8 +569,10 @@ export class Hud {
             ctx.fillStyle = HOSTILE_CSS; ctx.fillRect(b.p.x - w2 / 2, b.p.y + b.r + 6, w2 * f, 2);
           }
           const tname = hv.info.traitInfo('Tooltip').Name;
-          const name = hv.asteroid ? `Asteroid · ${fmtNum(hv.asteroid.ore)} ore`
-            : hv.wreck ? `Wreck of a ${this.world.rules.actors.get(hv.wreck.of)?.traitInfo('Tooltip')?.Name || 'ship'} · ${fmtNum(hv.wreck.salvage)} salvage`
+          const rn = hv.deposit ? this.world.rules.content.resources[hv.deposit.kind] : null;
+          const name = hv.wreck ? `${hv.init.name ? `Wreck of the ${hv.init.name}` : `Wreck of a ${this.world.rules.actors.get(hv.wreck.of)?.traitInfo('Tooltip')?.Name || 'ship'}`} · ${fmtNum(hv.wreck.salvage)} salvage`
+            : hv.deposit ? `${DEPOSIT_NAMES[hv.deposit.kind]} · ${fmtNum(hv.deposit.amount)} ${rn.Name.toLowerCase()}`
+              : hv.rock ? 'Crystal formation'
               : hostile ? `${tname} · ${this.world.factions.get(hv.owner.faction)?.Name || hv.owner.name}` : tname;
           const text = action ? `${action}: ${name}` : name;
           ctx.font = '500 11px "IBM Plex Mono", monospace';
@@ -497,14 +632,14 @@ export class Hud {
       ctx.fillStyle = `rgba(217,165,119,${alpha})`;
       ctx.fillText(f.name.toUpperCase(), p.x, p.y);
       ctx.fillStyle = `rgba(223,232,242,${alpha * 0.8})`;
-      ctx.fillText(ore ? `${fmtNum(ore)} ore` : 'mined out', p.x, p.y + 14);
+      ctx.fillText(ore ? `${fmtNum(ore)} ${(this.world.rules.content.resources[f.kind || 'ore']?.Name || 'ore').toLowerCase()}` : 'mined out', p.x, p.y + 14);
     }
     ctx.textAlign = 'start';
   }
 
   // Does a screen rectangle overlap a visible HUD panel?
   covered(x, y, w, h) {
-    for (const id of ['help', 'sel', 'move-hint', 'build', 'grounds', 'fleetbar']) {
+    for (const id of ['help', 'sel', 'move-hint', 'build', 'grounds', 'fleetbar', 'skein']) {
       const el = $(id);
       if (!el || el.hidden) continue;
       const r = el.getBoundingClientRect();

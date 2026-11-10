@@ -2,6 +2,8 @@ import * as THREE from '../../lib/three.module.js';
 import { buildShip, buildWreck } from './ships.js';
 import { CombatFx } from './combatfx.js';
 import { buildAsteroid } from './asteroids.js';
+import { buildCloud, buildSpire, buildNebula, CLOUD_COLORS } from './deposits.js';
+import { radialTexture } from './space.js';
 import { Effects } from './effects.js';
 import { R } from './space.js';
 import { yawRate } from '../traits/flight.js';
@@ -32,6 +34,12 @@ export class WorldRenderer {
     this.hover = null;
     this.fx = new Effects(scene);
     this.combat = new CombatFx(scene, this.fx, world);
+    // nebulae: huge faint light, placed once
+    (world.nebulae || []).forEach((n, i) => {
+      const g = buildNebula(world.settings.seed + i * 977, n.color, n.radius * R);
+      g.position.set(n.at[0] * R, n.at[2] * R, n.at[1] * R);
+      scene.add(g);
+    });
     this.tmp = new THREE.Vector3();
     // destination lines for selected ships
     this.goalGeo = new THREE.BufferGeometry();
@@ -57,16 +65,17 @@ export class WorldRenderer {
     const wm = a.info.traitInfo('WithModel');
     if (!wm || !wm.Model) return null;
     const style = this.styleOf(a.owner);
-    const model = wm.Model === 'asteroid' ? buildAsteroid(a.id) : a.wreck ? buildWreck(a.wreck.model, a.id, style) : buildShip(wm.Model, style);
+    const model = a.asteroid ? buildAsteroid(a.id, a.asteroid.kind) : a.cloud ? buildCloud(a.id, a.cloud.kind) : a.rock ? buildSpire(a.id)
+      : a.wreck ? buildWreck(a.wreck.model, a.id, style) : buildShip(wm.Model, style);
     model.root.rotation.order = 'YZX';
     this.scene.add(model.root);
-    const radius = a.asteroid ? a.asteroid.radius() * R : a.wreck ? a.wreck.radius() * R : (a.info.traitInfo('Selectable')?.Radius || 800) * R;
+    const radius = a.body ? (a.body.radius() + (a.body.halfLength | 0)) * R : (a.info.traitInfo('Selectable')?.Radius || 800) * R;
     return { actor: a, model, style, roll: 0, radius, pos: new THREE.Vector3() };
   }
 
   syncViews() {
     for (const a of this.world.actors) if (!this.views.has(a.id) && !a.dead) { const v = this.makeView(a); if (v) this.views.set(a.id, v); }
-    for (const [id, v] of this.views) if (v.actor.disposed || v.actor.dead) { this.scene.remove(v.model.root); if (v.beam) this.scene.remove(v.beam); this.views.delete(id); this.selected.delete(v.actor); }
+    for (const [id, v] of this.views) if (v.actor.disposed || v.actor.dead) { this.scene.remove(v.model.root); if (v.beam) this.scene.remove(v.beam); if (v.spoolGlow) this.scene.remove(v.spoolGlow); this.views.delete(id); this.selected.delete(v.actor); }
   }
 
   // Interpolated render-space position of an actor (alpha in [0,1] between ticks).
@@ -87,11 +96,15 @@ export class WorldRenderer {
       const bank = a.mobile ? a.mobile.info.Bank : 0;
       const targetRoll = Math.max(-1, Math.min(1, -yawRate(a) / 6)) * (bank / 57.3);
       v.roll += (targetRoll - v.roll) * Math.min(1, dt * 3);
-      for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt;
-      if (a.asteroid) {
-        // rocks shrink as they are mined; the crystals keep glowing until the last of the ore
-        v.radius = a.asteroid.radius() * R;
+      // the Skein spooling: the foundry ring races and light gathers into the hull
+      const spool = a.skein && a.skein.spooling ? a.skein.spool / a.skein.info.SpoolTime : 0;
+      for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt * (1 + spool * 14);
+      if (a.skein) this.spoolFx(a, v, spool, dt);
+      if (a.asteroid || a.cloud || a.rock) {
+        // rocks shrink as they are mined, clouds thin as they are skimmed
+        v.radius = a.body.radius() * R;
         m.root.scale.setScalar(v.radius);
+        if (a.cloud) m.body.children.forEach((s, i) => { s.material.rotation = t * 0.05 * ((i % 3) - 1); });
         continue;
       }
       if (a.wreck) {
@@ -133,11 +146,42 @@ export class WorldRenderer {
     this.fx.update(dt);
   }
 
+  spoolFx(a, v, spool, dt) {
+    if (!spool) { if (v.spoolGlow) v.spoolGlow.visible = false; return; }
+    if (!v.spoolGlow) {
+      v.spoolGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTexture([[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(255,255,255,0.4)'], [1, 'rgba(255,255,255,0)']]), color: v.style.glow, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      this.scene.add(v.spoolGlow);
+    }
+    v.spoolGlow.visible = true;
+    v.spoolGlow.position.copy(v.pos);
+    v.spoolGlow.scale.setScalar(4 + spool * 40 + Math.sin(performance.now() / 90) * spool * 3);
+    v.spoolGlow.material.opacity = 0.25 + spool * 0.6;
+    // threads of light drawn in from all around
+    const c = new THREE.Color(v.style.glow);
+    for (let i = 0; i < Math.ceil(spool * 6); i++) {
+      if (Math.random() > dt * 30) continue;
+      const d = new THREE.Vector3(Math.random() - 0.5, (Math.random() - 0.5) * 0.6, Math.random() - 0.5).normalize().multiplyScalar(30 + Math.random() * 30);
+      this.fx.glow.spawn(v.pos.x + d.x, v.pos.y + d.y, v.pos.z + d.z, -d.x / 0.8, -d.y / 0.8, -d.z / 0.8, 0.8, 0.6, 0.2, c, 0.9);
+    }
+  }
+
   // Mining beam from a collector's scoop to the rock; ore stream while it unloads into a dock.
   collectorFx(a, v) {
     const c = a.collector, frame = this.world.frame, col = new THREE.Color(ORE);
-    const tv = c.miningFrame >= frame - 2 ? this.views.get(c.target) : null;
+    let tv = c.miningFrame >= frame - 2 ? this.views.get(c.target) : null;
+    if (tv && tv.actor.cloud) {
+      // skimming: gas streams into the intake, no beam
+      const nose = v.model.body.localToWorld((v.model.nose || new THREE.Vector3(1, 0, 0)).clone());
+      col.setHex(CLOUD_COLORS[tv.actor.cloud.kind] || 0xffffff);
+      if (Math.random() < 0.7) {
+        const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(2 + Math.random() * 2);
+        this.fx.glow.spawn(nose.x + d.x, nose.y + d.y, nose.z + d.z, -d.x / 0.35, -d.y / 0.35, -d.z / 0.35, 0.35, 0.5, 0.15, col, 0.8);
+      }
+      tv = null;
+    }
     if (v.beam) v.beam.visible = !!tv;
+    const beamColor = tv && tv.actor.wreck ? 0xcfe8ff : tv && tv.actor.asteroid && tv.actor.asteroid.kind === 'ice' ? 0xbfeaff : ORE;
+    if (tv) col.setHex(beamColor);
     if (tv) {
       const nose = v.model.body.localToWorld((v.model.nose || new THREE.Vector3(1, 0, 0)).clone());
       // the beam ends where it meets the rock's actual surface
@@ -147,7 +191,7 @@ export class WorldRenderer {
       const hit = tv.model.rockMesh && beamRay.intersectObject(tv.model.rockMesh, false)[0];
       const surf = hit ? hit.point : nose.clone().sub(tv.pos).setLength(tv.radius * 0.9).add(tv.pos);
       if (!v.beam) {
-        v.beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: ORE, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+        v.beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ color: beamColor, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
         v.beam.renderOrder = 6;
         this.scene.add(v.beam);
       }
@@ -156,6 +200,8 @@ export class WorldRenderer {
       v.beam.quaternion.setFromUnitVectors(beamUp, d.clone().normalize());
       v.beam.scale.set(w, d.length(), w);
       v.beam.material.opacity = 0.55 + Math.random() * 0.35;
+      v.beam.material.color.setHex(beamColor);
+      if (tv.actor.wreck && Math.random() < 0.5) this.combat.sparks(surf.x, surf.y, surf.z, 0xcfe8ff, 2, 4, 0.2);
       if (Math.random() < 0.5) this.fx.glow.spawn(surf.x, surf.y, surf.z, 0, 0, 0, 0.15, 0.9, 0.3, col, 0.8);
       if (Math.random() < 0.35) {
         const d = nose.clone().sub(surf);
@@ -205,7 +251,18 @@ export class WorldRenderer {
     this.combat.consume(events, this.views);
     const c = new THREE.Color();
     for (const e of events) {
-      if (e.t === 'deposit') {
+      if (e.t === 'dispersed') {
+        c.setHex(CLOUD_COLORS[e.kind] || 0xffffff);
+        this.combat.puff(e.x * R, e.z * R, e.y * R, 8, e.radius * R * 0.4, CLOUD_COLORS[e.kind] || 0xffffff, 0.25);
+      } else if (e.t === 'aboard') {
+        this.combat.flash(e.x * R, e.z * R, e.y * R, 1.5, 0xd8f7ff, 0.2);
+      } else if (e.t === 'departed') {
+        // the Forge stitches away: a white flash, a ring, and it is gone
+        const x = e.x * R, y = e.z * R, z = e.y * R;
+        this.combat.flash(x, y, z, 120, 0xffffff, 0.6);
+        this.fx.ring(x, y - 0.2, z, 80, 0xd8f7ff, 1.2);
+        for (const v of this.views.values()) if (v.actor.skein && v.actor.owner.index === e.owner) { v.model.root.visible = false; if (v.spoolGlow) v.spoolGlow.visible = false; }
+      } else if (e.t === 'deposit') {
         // a flash of molten ore as the hold empties
         c.setHex(0xffa860);
         this.fx.glow.spawn(e.x * R, e.z * R - 0.3, e.y * R, 0, 0, 0, 0.45, 0.8, 3.5, c, 0.9);

@@ -4,6 +4,7 @@ import { R } from '../render/space.js';
 import { MoveWidget } from './movewidget.js';
 import { FORMATIONS, slotTemplate } from '../traits/formation.js';
 import { STANCES } from '../traits/combat.js';
+import { VERBS } from './hud.js';
 import { sin as SIN, cos as COS, angleOf } from '../engine/math.js';
 
 // Mouse and keyboard → selection, camera and Orders.
@@ -183,7 +184,7 @@ export class Input {
   hoverAction(a) {
     if (!a) return null;
     const collectors = this.own().some((s) => s.collector);
-    if (collectors && a.asteroid) return 'Mine';
+    if (a.deposit && this.own().some((s) => s.collector && s.collector.canWork(a))) return VERBS[a.deposit.kind] || 'Gather';
     if (collectors && this.isMine(a) && a.has('OreDropoff') && !this.selection.includes(a)) return 'Unload here';
     if (a.health && this.isEnemy(a) && this.armed().length) return 'Attack';
     return null;
@@ -289,7 +290,8 @@ export class Input {
       const hit = this.pick(e.clientX, e.clientY);
       const collectors = this.own().filter((a) => a.collector);
       // collectors selected: right-click a rock to mine it, or the Forge / a Smelter to unload now
-      if (hit && collectors.length && hit.asteroid) { this.orderCollectors('Harvest', collectors, hit); return; }
+      const workers = hit && hit.deposit ? collectors.filter((c) => c.collector.canWork(hit)) : [];
+      if (workers.length) { this.orderCollectors('Harvest', workers, hit); return; }
       if (hit && collectors.length && this.isMine(hit) && hit.has('OreDropoff') && !collectors.includes(hit)) { this.orderCollectors('Dock', collectors, hit); return; }
       // armed ships selected: right-click an enemy to attack it
       const armed = this.armed();

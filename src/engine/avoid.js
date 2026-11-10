@@ -49,7 +49,12 @@ export function obstaclesFor(w, self, ignore = 0) {
   const out = [];
   for (const t of w.solids()) {
     const a = t.self;
-    if (!a.dead) out.push({ id: a.id, q0: [a.x, a.y, a.z], q1: [a.x, a.y, a.z], r: t.radius() });
+    if (a.dead) continue;
+    const hl = t.halfLength | 0;
+    if (!hl) { out.push({ id: a.id, q0: [a.x, a.y, a.z], q1: [a.x, a.y, a.z], r: t.radius() }); continue; }
+    const f = dirVec(a.yaw, a.pitch);
+    const ox = Math.trunc((f[0] * hl) / 1024), oy = Math.trunc((f[1] * hl) / 1024), oz = Math.trunc((f[2] * hl) / 1024);
+    out.push({ id: a.id, q0: [a.x - ox, a.y - oy, a.z - oz], q1: [a.x + ox, a.y + oy, a.z + oz], r: t.radius() });
   }
   const rs = reach(self);
   for (const a of w.actors) {

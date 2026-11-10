@@ -170,7 +170,7 @@ defineTrait('LeavesWreck', class extends Trait {
     const init = {
       x: self.x, y: self.y, z: self.z, yaw: self.yaw, pitch: self.pitch,
       model: self.info.traitInfo('WithModel')?.Model || self.type, of: self.type,
-      radius: h.Radius + Math.trunc(h.HalfLength / 2), salvage: Math.trunc((cost * this.info.Pct) / 100) + this.info.Bonus,
+      radius: h.Radius, halfLength: h.HalfLength, salvage: Math.trunc((cost * this.info.Pct) / 100) + this.info.Bonus,
       vx: (self.x - self.px) * 4, vy: (self.y - self.py) * 4, vz: (self.z - self.pz) * 4,
     };
     w.addFrameEndTask((ww) => ww.createActor('wreck', ww.neutral, init));
@@ -184,6 +184,7 @@ defineTrait('Wreck', class Wreck extends Trait {
     const i = this.self.init;
     this.self.wreck = this; this.self.deposit = this; this.self.body = this;
     this.size = i.radius || this.info.Radius;
+    this.halfLength = i.halfLength | 0; // long hulls stay capsules when they die
     this.salvage = i.salvage ?? this.info.Salvage;
     this.maxAmount = Math.max(1, this.salvage);
     this.kind = 'salvage'; this.field = -1;

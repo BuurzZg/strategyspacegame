@@ -89,7 +89,8 @@ export class Actor {
     for (const t of this.tickers) if (t.enabled) t.tick();
     if (this.dead) return;
     if (this.activity) {
-      if (this.activity.run(this)) this.activity = this.activity.next;
+      // (an activity may end the actor's whole activity chain while it runs)
+      if (this.activity.run(this)) this.activity = this.activity ? this.activity.next : null;
     } else for (const t of this.idlers) if (t.enabled) t.idle();
   }
 

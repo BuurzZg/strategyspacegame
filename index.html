@@ -54,11 +54,13 @@ kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; bor
 .res-item { display: flex; align-items: baseline; gap: 7px; }
 .res-k { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .res-item b { font: 500 15px var(--f-mono); font-variant-numeric: tabular-nums; }
-#res-ore { color: var(--ore); display: inline-block; }
-#res-ore.bump { animation: bump 0.6s ease-out; }
-@keyframes bump { 0% { transform: translateY(-2px); color: #ffe0b8; text-shadow: 0 0 10px rgba(255, 176, 112, 0.8); } 100% { transform: none; } }
-@media (prefers-reduced-motion: reduce) { #res-ore.bump { animation: none; } }
-#res-rate { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 7ch; }
+#res-stores { display: contents; }
+#res-stores b { display: inline-block; }
+#res-stores b.bump { animation: bump 0.6s ease-out; }
+@keyframes bump { 0% { transform: translateY(-2px); color: #fff3e0; text-shadow: 0 0 10px rgba(255, 220, 170, 0.8); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { #res-stores b.bump { animation: none; } }
+#res-rate { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+#res-rate:empty { display: none; }
 #res-cap.full { color: var(--height); }
 .top-btns { margin-left: auto; display: flex; gap: 8px; }
 .top-btns button { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
@@ -192,10 +194,68 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
   background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px;
 }
 #move-hint span { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+/* leaving: the Skein Drive panel, bottom right on the voyage */
+#skein {
+  position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 264px;
+  background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--rally); padding: 10px 12px 12px;
+}
+#skein header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+#skein h2 { margin: 0; font: 600 13px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; }
+#skein-state { font: 500 11px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--rally); font-variant-numeric: tabular-nums; }
+.skein-track { height: 4px; background: #121a28; margin: 8px 0 6px; overflow: hidden; }
+#skein-bar { height: 100%; width: 0; background: linear-gradient(90deg, #8e6bd8, #e8dcff); }
+#skein-fleet { margin: 0 0 8px; font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+#skein-fleet.warn { color: var(--height); }
+.skein-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.skein-btns button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 5px 8px; font-size: 12px; }
+.skein-btns button:hover:not(:disabled) { border-color: var(--rally); }
+.skein-btns button:disabled { opacity: 0.4; cursor: default; }
+#btn-spool { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--rally) 50%, var(--line)); color: #e8dcff; font-weight: 600; }
+body.voyage #fleetbar, body.voyage #move-hint { right: 296px; }
+body.voyage #build, body.voyage #help { max-height: calc(100% - 290px); }
+
+/* the start screen and the report: modal, over a dimmed sky */
+.modal { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; background: radial-gradient(ellipse at center, rgba(5, 6, 11, 0.45), rgba(5, 6, 11, 0.86)); }
+.modal-card { width: min(860px, 100%); background: var(--panel); border: 1px solid var(--line); padding: 20px 22px 22px; }
+.modal h1 { margin: 0; font: 700 26px var(--f-display); letter-spacing: 0.3em; }
+.modal h1 b { color: var(--accent); }
+.modal h2 { margin: 14px 0 4px; font: 600 16px var(--f-display); letter-spacing: 0.1em; }
+.modal p { margin: 0 0 12px; color: var(--muted); max-width: 70ch; }
+.places { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin: 12px 0; }
+.place { display: grid; align-content: start; gap: 4px; text-align: left; background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; }
+.place:hover, .place:focus-visible { border-color: var(--accent); background: #101827; }
+.place b { font: 600 15px var(--f-display); letter-spacing: 0.05em; }
+.place > span { font-size: 12.5px; color: var(--muted); }
+.place .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip { font: 500 10px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid; border-radius: 2px; padding: 1px 5px; }
+.launch-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-top: 6px; }
+.launch-row label { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.launch-row input { width: 9ch; font: 13px var(--f-mono); background: #0d131e; color: var(--text); border: 1px solid var(--line); padding: 4px 6px; border-radius: 3px; }
+.launch-row button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 6px 12px; }
+.launch-row button:hover { border-color: var(--accent); }
+#launch-run { border: 1px solid var(--line-soft); padding: 8px 10px; margin: 8px 0 0; font-size: 13px; }
+.lr-stores { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 13px var(--f-mono); }
+.lr-stores i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; vertical-align: 1px; }
+.lr-fleet { color: var(--muted); margin-top: 4px; }
+#report .modal-card { width: min(640px, 100%); border-top: 3px solid var(--rally); }
+#report table { width: 100%; border-collapse: collapse; font: 13px var(--f-mono); font-variant-numeric: tabular-nums; margin: 4px 0 14px; }
+#report th, #report td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line-soft); }
+#report thead th { font: 600 10px var(--f-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+#report tbody th { text-align: left; font: 600 13px var(--f-body); }
+#report td.g { color: var(--good); }
+#report-ships { display: grid; gap: 6px; margin: 0 0 16px; }
+#report-ships div { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
+#report-ships dd { font: 13px var(--f-body); }
+#report-next { background: color-mix(in srgb, var(--accent) 14%, #0d131e); border: 1px solid var(--accent); border-radius: 3px; padding: 8px 16px; font-weight: 600; }
+body.at-launcher #top, body.at-launcher #cgroups, body.at-launcher #toasts, body.at-launcher #sel, body.at-launcher #skein, body.at-launcher #build, body.at-launcher #grounds { display: none; }
+.modal:not([hidden]) ~ #help, .modal:not([hidden]) ~ #fleetbar, .modal:not([hidden]) ~ #cgroups, .modal:not([hidden]) ~ #move-hint { display: none; }
+
 #boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
 
 @media (max-width: 760px) {
   #help, #build, #grounds { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 50vh; }
+  #skein { width: auto; left: 16px; right: 16px; bottom: auto; top: 128px; }
+  body.voyage #fleetbar, body.voyage #move-hint { right: 16px; }
   #res { gap: 10px; }
   .brand { letter-spacing: 0.2em; }
   .tag { display: none; }
@@ -213,9 +273,9 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 
   <header id="top">
     <div class="brand">DRIFT<b>FORGE</b></div>
-    <span class="tag">Milestone 5 · formations · Proving Grounds</span>
+    <span class="tag" id="place" title="Milestone 6 · places from data"></span>
     <div id="res" aria-label="Resources">
-      <div class="res-item" title="Ore in the bank, and how much your Gleaners delivered in the last minute"><span class="res-k">Ore</span><b id="res-ore">0</b><span id="res-rate"></span></div>
+      <div id="res-stores"></div>
       <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
     </div>
     <div class="top-btns">
@@ -266,12 +326,48 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
     <p id="pg-count"></p>
   </section>
 
+  <section id="skein" hidden aria-label="Leaving: the Skein Drive">
+    <header><h2>Skein Drive</h2><span id="skein-state">Ready</span></header>
+    <div class="skein-track"><div id="skein-bar"></div></div>
+    <p id="skein-fleet"></p>
+    <div class="skein-btns">
+      <button id="btn-recall" type="button" title="Every ship flies home and goes aboard the Forge">Recall all</button>
+      <button id="btn-launch" type="button" title="Launch everything aboard again">Launch all</button>
+      <button id="btn-spool" type="button" title="One minute to spool, then the Forge stitches away. Ships outside are left behind.">Spool the Skein</button>
+    </div>
+  </section>
+
   <div id="toasts" aria-live="polite"></div>
+
+  <div id="launcher" class="modal" hidden>
+    <div class="modal-card">
+      <h1>DRIFT<b>FORGE</b></h1>
+      <h2 id="launch-head"></h2>
+      <p id="launch-intro"></p>
+      <div id="launch-run" hidden></div>
+      <div id="launch-places" class="places"></div>
+      <div class="launch-row">
+        <label>Seed <input id="launch-seed" type="text" inputmode="numeric" placeholder="random" aria-label="Seed for the place (blank for random)"></label>
+        <button id="launch-grounds" type="button">Proving Grounds (sandbox)</button>
+        <button id="launch-new" type="button" hidden>Start a new run</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="report" class="modal" hidden role="dialog" aria-labelledby="report-title">
+    <div class="modal-card">
+      <h2 id="report-title"></h2>
+      <p id="report-sub"></p>
+      <table id="report-stores"></table>
+      <dl id="report-ships"></dl>
+      <button id="report-next" type="button">Choose the next place</button>
+    </div>
+  </div>
 
   <aside id="help" aria-label="Controls">
     <button id="help-close" type="button" aria-label="Close controls">×</button>
-    <h2>Proving Grounds</h2>
-    <p>Your Forge, its escorts and two Gleaners, in a quiet corner of the Drift. Press <kbd>G</kbd> to call in Ashen Gaunt raiders or a Gnasher pack and test your fleet against them. Press <kbd>B</kbd> to build warships.</p>
+    <h2>Controls</h2>
+    <p id="help-intro"></p>
     <h3>Camera</h3>
     <dl>
       <dt><kbd>Right-drag</kbd></dt><dd>Rotate around the focus</dd>
@@ -298,12 +394,21 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Click</kbd> in the queue</dt><dd>Cancel that ship, full refund</dd>
       <dt><kbd>R</kbd></dt><dd>Place the <span class="r">rally point</span> with the disc</dd>
     </dl>
-    <h3>Mining</h3>
+    <h3>Gathering</h3>
     <dl>
-      <dt>Gleaners</dt><dd>Mine on their own; unload at the nearest Forge or Smelter</dd>
-      <dt><kbd>Right-click</kbd> a rock</dt><dd>Gleaners mine that rock</dd>
-      <dt><kbd>Right-click</kbd> the Forge</dt><dd>Gleaners unload now</dd>
+      <dt>Gleaners</dt><dd>Mine ore and ice from rocks</dd>
+      <dt>Shearers</dt><dd>Cut salvage out of wrecks</dd>
+      <dt>Skimmers</dt><dd>Skim glim and spores from clouds</dd>
+      <dt>On their own</dt><dd>Idle collectors find work; they unload at the nearest Forge or Smelter</dd>
+      <dt><kbd>Right-click</kbd> a deposit</dt><dd>Collectors that can work it go there</dd>
+      <dt><kbd>Right-click</kbd> the Forge</dt><dd>Collectors unload now</dd>
       <dt>Smelter</dt><dd>Mobile refinery: park it by a far field</dd>
+    </dl>
+    <h3>Leaving a place</h3>
+    <dl>
+      <dt>Recall all</dt><dd>Every ship flies home and goes aboard, hull and cargo kept</dd>
+      <dt>Spool the Skein</dt><dd>One minute, then the Forge leaves. Ships still outside are lost</dd>
+      <dt>The report</dt><dd>What you gathered, spent and lost; then choose the next place</dd>
     </dl>
     <h3>Fleet orders</h3>
     <dl>
