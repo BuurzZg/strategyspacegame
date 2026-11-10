@@ -7,6 +7,9 @@ defineTrait('Valued', class extends Trait {}, { Cost: 0 });
 defineTrait('Armor', class extends Trait {}, { Type: 'light' });
 defineTrait('Selectable', class extends Trait {}, { Radius: 1024, Priority: 10 });
 defineTrait('WithModel', class extends Trait {}, { Model: '', Scale: 100 });
+// How many people fly this ship, and in what role (pilots, engineers, miners, hands).
+// Shown for now; the voyage (Milestone 7) draws them from the Forge's crew.
+defineTrait('Crew', class extends Trait {}, { Count: 0, Role: 'hands' });
 
 // World traits
 defineTrait('Faction', class extends Trait {}, { InternalName: '', Name: '', Color: 'ffffff', Glow: 'ffffff', Dark: '000000', Description: '' });
@@ -57,7 +60,8 @@ defineTrait('StartingFleet', class extends Trait {
       const cx = Math.trunc((b.x0 + b.x1) / 2), cy = Math.trunc((b.y0 + b.y1) / 2);
       const x0 = sx * CELL, y0 = sy * CELL, z0 = sz * CELL;
       const yaw = x0 === cx && y0 === cy ? 0 : angleOf(cx - x0, cy - y0);
-      const ships = [...(w.settings.startingShips || this.info.Ships), ...(p.index === 0 ? extra : [])];
+      // a player slot can bring its own ships (an empty list for hostiles that arrive later)
+      const ships = [...(p.slot.ships || w.settings.startingShips || this.info.Ships), ...(p.index === 0 ? extra : [])];
       if (!ships.length) continue;
       const flagship = w.createActor(ships[0], p, { x: x0, y: y0, z: z0, yaw });
       // escorts line up ahead of a big flagship (clear of its whole hull), or beside a small one

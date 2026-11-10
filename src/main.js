@@ -34,11 +34,13 @@ function resize() {
     const scale = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
     session.renderer.fx.glow.points.material.uniforms.scale.value = scale;
     session.renderer.fx.smoke.points.material.uniforms.scale.value = scale;
+    session.renderer.combat.setScale(scale);
   }
 }
 window.addEventListener('resize', resize);
 
-// Milestone 3 sandbox: your Forge, escorts and Gleaners beside four asteroid fields.
+// The Proving Grounds: your Forge, escorts and Gleaners beside four asteroid fields, with
+// hostiles on call from the sandbox panel (G).
 function startSkirmish(rules) {
   const seed = parseInt(params.get('seed'), 10) || 7;
   const test = params.get('fleet') === 'test' || location.hash === '#fleet'; // the hash form works where query strings can't
@@ -53,7 +55,13 @@ function startSkirmish(rules) {
       { name: 'Halvard Reach', at: [118, 118, 8], count: 11, spread: 7, ore: [800, 1700] },
       { name: 'Ostrel Deep', at: [158, 44, -8], count: 13, spread: 8, ore: [1400, 2400] },
     ],
-    players: [{ name: 'You', faction: params.get('faction') === 'cinder' ? 'cinder' : 'meridian', client: 0 }],
+    // the Proving Grounds: you, plus two hostile sides that arrive when you call them in
+    sandbox: true,
+    players: [
+      { name: 'You', faction: params.get('faction') === 'cinder' ? 'cinder' : 'meridian', client: 0 },
+      { name: 'Ashen Gaunt', faction: 'gaunt', team: 1, ships: [] },
+      { name: 'Drift fauna', faction: 'fauna', team: 2, ships: [] },
+    ],
     extraShips: test ? ['dart', 'dart', 'halberd', 'dart', 'dart'] : [],
   };
   const world = new World(rules, settings);
@@ -124,6 +132,8 @@ function frame(now) {
 }
 
 $('btn-help').addEventListener('click', () => hud.toggleHelp());
+$('btn-grounds').addEventListener('click', () => hud.toggleGrounds());
+$('btn-build').addEventListener('click', () => hud.toggleBuild());
 $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 
 (async () => {

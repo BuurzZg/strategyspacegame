@@ -2,7 +2,7 @@ import { parseYaml, mergeFiles, resolveInheritance } from './miniyaml.js';
 import { TraitRegistry, ProjectileRegistry, WarheadRegistry, compileCondition } from './traits.js';
 import { parseWDist } from './math.js';
 
-export const RULE_FILES = ['rules/world.yaml', 'rules/player.yaml', 'rules/defaults.yaml', 'rules/ships.yaml'];
+export const RULE_FILES = ['rules/world.yaml', 'rules/player.yaml', 'rules/defaults.yaml', 'rules/ships.yaml', 'rules/warships.yaml', 'rules/fauna.yaml', 'rules/combat.yaml'];
 export const WEAPON_FILES = ['rules/weapons.yaml'];
 
 // Parse a field value according to the type of its default.
@@ -58,7 +58,7 @@ export class ActorInfo {
 export class WeaponInfo {
   constructor(name, nodes) {
     this.name = name;
-    this.ReloadDelay = 25; this.Range = 4096; this.MinRange = 0; this.Report = ''; this.Burst = 1;
+    this.ReloadDelay = 25; this.Range = 4096; this.MinRange = 0; this.Report = ''; this.Burst = 1; this.BurstDelay = 3;
     this.projectile = null; this.warheads = [];
     for (const n of nodes) {
       const [key] = n.key.split('@');

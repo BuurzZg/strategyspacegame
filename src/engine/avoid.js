@@ -43,17 +43,17 @@ const gap = (c) => { const x = c.px - c.qx, y = c.py - c.qy, z = c.pz - c.qz; re
 // A ship's reach from its centre: its radius, plus half its length if it is a long hull.
 export function reach(a) { return a.health ? a.health.info.Radius + a.health.info.HalfLength : 0; }
 
-// What `self` should steer around: every asteroid, and every hull at least 2.5 times its size.
+// What `self` should steer around: every asteroid and wreck, and every hull at least 2.5 times its size.
 // Ghosts (launching, docking) are left out: they are inside another hull on purpose.
-export function obstaclesFor(w, self) {
+export function obstaclesFor(w, self, ignore = 0) {
   const out = [];
-  for (const t of w.traitsOfType('Asteroid')) {
+  for (const t of w.solids()) {
     const a = t.self;
     if (!a.dead) out.push({ id: a.id, q0: [a.x, a.y, a.z], q1: [a.x, a.y, a.z], r: t.radius() });
   }
   const rs = reach(self);
   for (const a of w.actors) {
-    if (a === self || !a.mobile || a.dead || a.mobile.ghost || !a.health || 2 * reach(a) < 5 * rs) continue;
+    if (a === self || a.id === ignore || !a.mobile || a.dead || a.mobile.ghost || !a.health || 2 * reach(a) < 5 * rs) continue;
     const h = a.health.info;
     if (!h.HalfLength) { out.push({ id: a.id, q0: [a.x, a.y, a.z], q1: [a.x, a.y, a.z], r: h.Radius }); continue; }
     const f = dirVec(a.yaw, a.pitch), hl = h.HalfLength;
@@ -67,10 +67,11 @@ export function obstaclesFor(w, self) {
 // clear, otherwise a detour point. `margin` is extra room beyond touching (faster ships,
 // which turn wider, want more).
 //
+// `ignore` is a hull not to steer round: the ship being attacked (a strafing run has to pass it).
 // An obstacle only counts when the line comes closer to it than both its ends do: a ship
 // leaving a rock it was mining, or flying to a point beside a rock, isn't sent round it.
-export function planRoute(w, self, tx, ty, tz, margin) {
-  const obs = obstaclesFor(w, self);
+export function planRoute(w, self, tx, ty, tz, margin, ignore = 0) {
+  const obs = obstaclesFor(w, self, ignore);
   if (!obs.length) return [tx, ty, tz];
   const rs = reach(self);
   const P = [self.x, self.y, self.z];

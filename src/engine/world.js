@@ -145,10 +145,11 @@ export class World {
     const s = clamp(Math.trunc(((x - t.x) * f[0] + (y - t.y) * f[1] + (z - t.z) * f[2]) / 1024), -hl, hl);
     return [t.x + Math.trunc((f[0] * s) / 1024), t.y + Math.trunc((f[1] * s) / 1024), t.z + Math.trunc((f[2] * s) / 1024)];
   }
-  // Distance from a point to the surface of an actor's hull or asteroid (0 inside it).
+  // Distance from a point to the surface of an actor's hull, asteroid or wreck (0 inside it).
   edgeDistPoint(x, y, z, t) {
     const [cx, cy, cz] = this.hullAxisPoint(t, x, y, z);
-    const d = isqrt(distSq3(x, y, z, cx, cy, cz)) - (t.health ? t.health.info.Radius : t.asteroid ? t.asteroid.radius() : 0);
+    const r = t.health ? t.health.info.Radius : t.asteroid ? t.asteroid.radius() : t.wreck ? t.wreck.radius() : 0;
+    const d = isqrt(distSq3(x, y, z, cx, cy, cz)) - r;
     return d < 0 ? 0 : d;
   }
   edgeDist(a, t) { return this.edgeDistPoint(a.x, a.y, a.z, t); }
@@ -228,8 +229,8 @@ export class World {
         this.clampToBounds(a); this.clampToBounds(b);
       }
     }
-    // Asteroids are solid: ships that drift into one are pushed back out to its surface.
-    for (const t of this.traitsOfType('Asteroid')) {
+    // Asteroids and wrecks are solid: ships that drift into one are pushed back out to its surface.
+    for (const t of this.solids()) {
       const s = t.self;
       if (s.dead) continue;
       const r = t.radius();
@@ -252,6 +253,9 @@ export class World {
     }
   }
 
+  // Solid bodies that ships steer round and are pushed off: asteroids and wrecks.
+  solids() { return [...this.traitsOfType('Asteroid'), ...this.traitsOfType('Wreck')]; }
+
   // Hash of the simulation state; compared between clients (and save/load) to detect divergence.
   syncHash() {
     let h = hashMix(2166136261, this.frame);
@@ -267,6 +271,7 @@ export class World {
     for (const p of this.players) h = hashMix(h, p.resources ? p.resources.cash : 0);
     for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }
     h = hashMix(h, this.effects.length);
+    for (const e of this.effects) { h = hashMix(h, e.x); h = hashMix(h, e.y); h = hashMix(h, e.z); }
     return h >>> 0;
   }
 }

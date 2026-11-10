@@ -4,3 +4,5 @@ import './player.js';
 import './flight.js';
 import './production.js';
 import './economy.js';
+import './combat.js';
+import './sandbox.js';

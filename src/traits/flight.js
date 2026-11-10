@@ -25,21 +25,24 @@ defineTrait('Flight', class Flight extends Trait {
     this.scraped = -1;      // last frame it was pushed off a rock or a much bigger hull (should be rare)
     this.goal = null; // last commanded destination, for UI
     this.route = null; // cached steering plan: { tx, ty, tz, x, y, z, frame, direct }
+    this.engaging = 0; // id of the ship being attacked this tick: not steered round (set by Attack)
   }
-  savePrev() { this.pspeed = this.speed; this.moving = false; this.ghost = false; }
+  savePrev() { this.pspeed = this.speed; this.moving = false; this.ghost = false; this.engaging = 0; }
 
   // Where to steer this tick on the way to (tx, ty, tz): the target, or a detour point round
-  // whatever is in the way. Re-planned every 8 ticks, and on reaching a detour point.
+  // whatever is in the way. Re-planned every 8 ticks, on reaching a detour point, or when the
+  // target has moved more than about 50 m (attack runs chase a moving point).
   aimFor(tx, ty, tz) {
     const p = this.route, w = this.world, self = this.self;
-    if (p && p.tx === tx && p.ty === ty && p.tz === tz && w.frame - p.frame < 8) {
-      if (p.direct) return p;
+    if (p && Math.abs(p.tx - tx) + Math.abs(p.ty - ty) + Math.abs(p.tz - tz) < 512 && w.frame - p.frame < 8) {
+      if (p.direct) return [tx, ty, tz];
       const near = 3 * this.speed + 4 * this.info.ArriveRadius;
-      if (distSq3(self.x, self.y, self.z, p.x, p.y, p.z) > near * near) return p;
+      if (distSq3(self.x, self.y, self.z, p.x, p.y, p.z) > near * near) return [p.x, p.y, p.z];
     }
-    const [x, y, z] = planRoute(w, self, tx, ty, tz, 200 + 3 * this.info.MaxSpeed);
-    this.route = { tx, ty, tz, x, y, z, frame: w.frame, direct: x === tx && y === ty && z === tz };
-    return this.route;
+    const [x, y, z] = planRoute(w, self, tx, ty, tz, 200 + 3 * this.info.MaxSpeed, this.engaging);
+    const direct = x === tx && y === ty && z === tz;
+    this.route = { tx, ty, tz, x, y, z, frame: w.frame, direct };
+    return [x, y, z];
   }
 
   // Advance one tick toward (tx, ty, tz). Returns true when the ship has arrived and stopped.
@@ -55,7 +58,7 @@ defineTrait('Flight', class Flight extends Trait {
     }
     // steer for the target, or for a detour point while the way is blocked
     const aim = this.aimFor(tx, ty, tz);
-    let dx = aim.x - self.x, dy = aim.y - self.y, dz = aim.z - self.z;
+    let dx = aim[0] - self.x, dy = aim[1] - self.y, dz = aim[2] - self.z;
     let h2 = dx * dx + dy * dy, sd = isqrt(h2 + dz * dz);
     if (sd === 0) { dx = ex; dy = ey; dz = ez; h2 = dx * dx + dy * dy; sd = d; }
     // turn toward it

@@ -185,6 +185,66 @@ export function buildShip(type, style) {
       out.length = 13;
       break;
     }
+    case 'spindle': {
+      // lance frigate: a thin spine wrapped round one long lance, capacitor rings along it
+      part(cyl(0.18, 0.18, 4.4, 8), M.dark, 1.7, 0, 0, body, 0, 0, Math.PI / 2);
+      part(cyl(0.32, 0.16, 0.45, 8), M.light, 4.0, 0, 0, body, 0, 0, -Math.PI / 2);
+      for (const x of [0.9, 1.8, 2.7]) part(torus(0.45, 0.09, 16), M.trim, x, 0, 0, body, 0, Math.PI / 2, 0);
+      part(box(3.4, 0.6, 0.75), M.hull, -0.6, 0, 0, body);
+      part(box(2.2, 0.25, 1.1), M.dark, -0.9, -0.38, 0, body);
+      part(box(0.7, 0.36, 0.45), M.hull, -1.4, 0.46, 0, body);
+      part(box(0.42, 0.1, 0.47), M.light, -1.2, 0.6, 0, body);
+      for (const z of [-1, 1]) part(wedge(1.7, 1.0, 0.2, 0.08), M.trim, -1.0, 0, z * 0.6, body);
+      part(cyl(0.34, 0.42, 0.9, 8), M.hull, -2.6, 0, 0, body, 0, 0, Math.PI / 2);
+      part(cyl(0.28, 0.28, 0.06, 8), M.engine, -3.07, 0, 0, body, 0, 0, Math.PI / 2);
+      out.engines.push({ pos: new THREE.Vector3(-3.15, 0, 0), size: 1.0 });
+      out.length = 7.2;
+      break;
+    }
+    case 'sabre': {
+      // destroyer: a long armoured hull, torpedo spine on top, pulse batteries on the flanks
+      part(box(10, 1.6, 2.6), M.hull, 0, 0, 0, body);
+      part(wedge(3.5, 2.6, 0.6, 1.4), M.hull, 6.7, -0.05, 0, body);
+      part(box(7, 0.6, 1.2), M.dark, -0.5, -1.05, 0, body);
+      part(box(6, 0.6, 1.0), M.dark, 0.6, 1.1, 0, body);
+      for (let i = 0; i < 4; i++) part(cyl(0.16, 0.16, 0.12, 8), M.light, -1.4 + i * 1.3, 1.46, 0, body);
+      part(box(1.6, 1.2, 1.2), M.hull, -2.6, 1.4, 0, body);
+      part(box(1.62, 0.16, 1.22), M.light, -2.4, 1.75, 0, body);
+      for (const z of [-1, 1]) {
+        part(box(2.2, 0.5, 0.5), M.dark, 3.4, 0.2, z * 1.5, body);
+        part(cyl(0.07, 0.07, 1.2, 6), M.dark, 4.9, 0.2, z * 1.5, body, 0, 0, Math.PI / 2);
+        part(box(9, 0.12, 0.05), M.trim, -0.3, 0.35, z * 1.32, body);
+        part(box(4, 0.08, 0.05), M.light, 0.5, -0.4, z * 1.32, body);
+      }
+      for (const [y, z] of [[0, 0], [0.1, 0.95], [0.1, -0.95]]) {
+        part(cyl(0.55, 0.7, 1.2, 10), M.hull, -5.6, y, z, body, 0, 0, Math.PI / 2);
+        part(cyl(0.46, 0.46, 0.06, 10), M.engine, -6.22, y, z, body, 0, 0, Math.PI / 2);
+        out.engines.push({ pos: new THREE.Vector3(-6.3, y, z), size: 1.5 });
+      }
+      out.length = 14;
+      break;
+    }
+    case 'gnasher': {
+      // a monster: ribbed, eyeless, all jaw; it glows where its nerves run
+      if (!M.skin) {
+        M.skin = new THREE.MeshStandardMaterial({ color: 0x3a2c46, roughness: 0.75, metalness: 0.1, flatShading: true });
+        M.nerve = new THREE.MeshStandardMaterial({ color: style.glow, emissive: style.color, emissiveIntensity: 1.6, flatShading: true });
+      }
+      const skin = M.skin, glowM = M.nerve;
+      const hump = part(G('gn-body', () => new THREE.IcosahedronGeometry(0.6, 1)), skin, 0, 0, 0, body);
+      hump.scale.set(2.0, 0.75, 0.85);
+      for (const sy of [-1, 1]) part(wedge(1.2, 0.9, 0.25, 0.14), skin, 1.45, sy * 0.16, 0, body, 0, 0, sy * 0.28);
+      for (let i = 0; i < 4; i++) {
+        const rib = part(torus(0.5, 0.05, 10), glowM, 0.6 - i * 0.42, 0.05, 0, body, 0, Math.PI / 2, 0);
+        rib.scale.set(1, 0.95 - i * 0.12, 1.1 - i * 0.12);
+      }
+      part(cone(0.32, 1.5, 6), skin, -1.7, 0, 0, body, 0, 0, Math.PI / 2);
+      for (const z of [-1, 1]) part(wedge(0.9, 0.7, 0.05, 0.05), skin, -1.4, 0, z * 0.32, body, 0, z * 0.5, 0);
+      out.engines.push({ pos: new THREE.Vector3(-2.3, 0, 0), size: 0.55 });
+      out.nose = new THREE.Vector3(2.0, 0, 0);
+      out.length = 4.2;
+      break;
+    }
     case 'talon': {
       // bomber: blunt fuselage over a delta wing, plasma charge pod slung underneath
       part(box(2.2, 0.42, 0.62), M.hull, 0, 0, 0, body);
@@ -250,5 +310,33 @@ export function buildShip(type, style) {
     body.add(s);
     return s;
   });
+  return out;
+}
+
+// A wreck: the dead ship's model, charred, with pieces missing (chosen from the actor id, so
+// it always looks the same). Embers are drawn by the renderer at `embers` points.
+const charMat = new THREE.MeshStandardMaterial({ color: 0x24222a, roughness: 0.95, metalness: 0.2, flatShading: true });
+const scorchMat = new THREE.MeshStandardMaterial({ color: 0x3a2a24, roughness: 0.9, metalness: 0.1, flatShading: true });
+const emberMat = new THREE.MeshStandardMaterial({ color: 0x8a3a1a, emissive: 0xff5a1a, emissiveIntensity: 1.1, flatShading: true });
+export function buildWreck(model, seed, style) {
+  const out = buildShip(model, style);
+  let s = (seed * 2654435761) >>> 0 || 1;
+  const rand = () => { s = (Math.imul(s ^ (s >>> 15), 2246822519) + 0x9e3779b9) >>> 0; return s / 4294967296; };
+  const meshes = [];
+  out.body.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  out.embers = [];
+  for (const m of meshes) {
+    const r = rand();
+    if (r < 0.22 && meshes.length > 4) { m.parent.remove(m); continue; }
+    // only small parts smoulder; big plates are scorched or charred
+    if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+    const small = m.geometry.boundingSphere.radius * Math.max(m.scale.x, m.scale.y, m.scale.z) < 0.5;
+    m.material = small && r < 0.4 ? emberMat : r < 0.6 ? scorchMat : charMat;
+    if (r < 0.4) out.embers.push(m.position.clone());
+  }
+  for (const f of out.flares) f.parent.remove(f);
+  out.flares = []; out.engines = []; out.spin = [];
+  out.body.rotation.set((rand() - 0.5) * 0.6, 0, (rand() - 0.5) * 0.8);
+  out.tumble = new THREE.Vector3((rand() - 0.5) * 0.06, (rand() - 0.5) * 0.04, (rand() - 0.5) * 0.06);
   return out;
 }

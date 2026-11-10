@@ -1,0 +1,118 @@
+# Weapon fits, crew and wrecks, merged onto the hull definitions in ships.yaml and
+# warships.yaml (the same layering content packs will use to change ships).
+#
+# Armament: Forward / Side (port +) / Up place the muzzle; Arc is the half-angle it can fire
+# into (512 = a turret that covers everything; fighters' fixed guns must point at the target).
+# Attacks: Style strafe (attack runs), standoff (hold at StandoffPct of weapon range) or
+# turret (never manoeuvres to fight; the guns fire from where the ship is).
+
+forge:
+	Armament@pd1:
+		Weapon: PointDefence
+		Forward: 4200
+		Side: 900
+		Up: 300
+	Armament@pd2:
+		Weapon: PointDefence
+		Forward: 4200
+		Side: -900
+		Up: 300
+	Armament@pd3:
+		Weapon: PointDefence
+		Forward: -3800
+		Side: 1200
+		Up: 200
+	Armament@pd4:
+		Weapon: PointDefence
+		Forward: -3800
+		Side: -1200
+		Up: 200
+	# the Forge never chases anything: its guns fire from where it is
+	Attacks:
+		Style: turret
+	LeavesWreck:
+		Pct: 10
+
+gleaner:
+	Crew:
+		Count: 3
+		Role: miners
+
+smelter:
+	Crew:
+		Count: 10
+		Role: engineers
+	LeavesWreck:
+
+dart:
+	Crew:
+		Count: 2
+		Role: pilots
+	Armament:
+		Weapon: Autocannon
+		Forward: 500
+		Side: 120
+		Arc: 36
+		Alternate: true
+	Attacks:
+		Style: strafe
+		BreakRange: 600
+		BreakDistance: 3200
+		Jink: 600
+	AutoTarget:
+
+talon:
+	Crew:
+		Count: 3
+		Role: pilots
+	Armament:
+		Weapon: PlasmaCharge
+		Forward: 400
+		Up: -120
+		Arc: 70
+	Attacks:
+		Style: strafe
+		BreakRange: 500
+		BreakDistance: 3000
+		Jink: 450
+	AutoTarget:
+
+picket:
+	Crew:
+		Count: 6
+		Role: hands
+	Armament:
+		Weapon: FlakBurst
+		Forward: 150
+		Up: 260
+	Attacks:
+		StandoffPct: 65
+	AutoTarget:
+	LeavesWreck:
+
+halberd:
+	Crew:
+		Count: 14
+		Role: hands
+	Armament@port:
+		Weapon: PulseBattery
+		Forward: 500
+		Side: 190
+	Armament@starboard:
+		Weapon: PulseBattery
+		Forward: 500
+		Side: -190
+	Attacks:
+	AutoTarget:
+	LeavesWreck:
+
+# What is left when a bigger hull dies. Placed by LeavesWreck, which sets its size and salvage.
+wreck:
+	Tooltip:
+		Name: Wreck
+		Class: Derelict
+		Role: Salvage
+		Description: What is left of a ship. It will be worth cutting apart once you have a Shearer.
+	Wreck:
+	WithModel:
+		Model: wreck

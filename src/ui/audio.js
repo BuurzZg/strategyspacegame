@@ -42,7 +42,8 @@ export class Audio {
   play(name, vol = 1) {
     if (!this.ctx || !this.enabled || vol < 0.03) return;
     const now = performance.now();
-    const gap = { shard: 60, beam: 70, blast: 120, impact: 90, explode: 80, collapse: 300, deposit: 250, alert: 4000, storm: 1500, comm: 300 }[name] || 40;
+    const gap = { shard: 60, beam: 70, blast: 120, impact: 90, explode: 80, collapse: 300, deposit: 250, alert: 4000, storm: 1500, comm: 300,
+      cannon: 45, pulse: 60, flak: 70, plasma: 110, lance: 180, torpedo: 150, bite: 90, boom: 70, 'boom-big': 220, hit: 50 }[name] || 40;
     if (now - (this.last.get(name) || 0) < gap) return;
     this.last.set(name, now);
     const v = vol;
@@ -64,6 +65,17 @@ export class Audio {
       case 'comm': this.tone('sine', 1320, 1320, 0.05, 0.06 * v); this.tone('sine', 1760, 1760, 0.05, 0.05 * v, 0.07); break;
       case 'objective': [659, 880].forEach((f, i) => this.tone('triangle', f, f, 0.16, 0.1 * v, i * 0.1)); break;
       case 'collapse': this.burst(1.2, 0.5 * v, 1200); this.tone('sine', 70, 30, 1.0, 0.35 * v); break;
+      // weapons and destruction
+      case 'cannon': this.burst(0.05, 0.1 * v, 3200, 2, 'bandpass'); break;
+      case 'pulse': this.tone('square', 520, 180, 0.09, 0.05 * v); this.burst(0.07, 0.06 * v, 1800); break;
+      case 'flak': this.burst(0.12, 0.14 * v, 900); break;
+      case 'plasma': this.tone('sine', 260, 90, 0.3, 0.12 * v); this.tone('triangle', 900, 300, 0.2, 0.05 * v); break;
+      case 'lance': this.tone('sawtooth', 2200, 400, 0.45, 0.08 * v); this.tone('sine', 140, 60, 0.5, 0.12 * v); break;
+      case 'torpedo': this.burst(0.5, 0.08 * v, 700, 0.8); this.tone('sine', 180, 320, 0.4, 0.05 * v); break;
+      case 'bite': this.burst(0.08, 0.12 * v, 500, 3, 'bandpass'); this.tone('square', 90, 60, 0.08, 0.06 * v); break;
+      case 'hit': this.burst(0.06, 0.07 * v, 2400, 1.5, 'bandpass'); break;
+      case 'boom': this.burst(0.6, 0.3 * v, 1500); this.tone('sine', 110, 40, 0.5, 0.22 * v); break;
+      case 'boom-big': this.burst(1.6, 0.45 * v, 900, 0.7); this.tone('sine', 70, 25, 1.4, 0.35 * v); this.burst(0.8, 0.2 * v, 3000, 1, 'bandpass'); break;
     }
   }
 }

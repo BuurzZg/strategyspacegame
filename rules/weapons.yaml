@@ -1,1 +1,162 @@
-# Weapons arrive in milestone 4 (combat).
+# Weapons. Ranges, HitRadius and Spread are world units (1024 per cell, about 100 m);
+# Speed is per tick (25 ticks a second); ReloadDelay in ticks. Tracking: how much of a moving
+# target's motion the gunner leads, in % (heavy batteries can't follow a jinking fighter).
+# Versus: % damage by armour type: light (fighters, Gleaners), medium (corvettes),
+# heavy (frigates, Smelter), capital (destroyers, the Forge).
+#
+# The counters: flak shreds fighters; pulse batteries tear up corvettes; plasma charges
+# and torpedoes crack frigates and capitals; autocannons hunt bombers; lances kill capitals.
+
+Autocannon:
+	ReloadDelay: 3
+	Range: 2600
+	Report: cannon
+	Projectile: Bolt
+		Speed: 700
+		HitRadius: 140
+		Inaccuracy: 40
+		Color: ffe6a8
+		Size: 60
+	Warhead@hit: SpreadDamage
+		Damage: 160
+		Versus:
+			light: 100
+			medium: 45
+			heavy: 40
+			capital: 20
+
+PlasmaCharge:
+	ReloadDelay: 50
+	Burst: 2
+	BurstDelay: 6
+	Range: 1800
+	Report: plasma
+	Projectile: Bolt
+		Speed: 220
+		HitRadius: 260
+		Color: b8f0ff
+		Size: 220
+	Warhead@hit: SpreadDamage
+		Damage: 4200
+		Versus:
+			light: 15
+			medium: 60
+			heavy: 150
+			capital: 150
+	Warhead@fx: CreateEffect
+		Explosion: plasma
+		Size: 140
+
+FlakBurst:
+	ReloadDelay: 10
+	Range: 3000
+	Report: flak
+	Projectile: Bolt
+		Speed: 450
+		Detonate: true
+		HitRadius: 200
+		Inaccuracy: 120
+		Tracking: 80
+		Color: ffd38a
+		Size: 80
+	Warhead@burst: SpreadDamage
+		Damage: 900
+		Spread: 600
+		Falloff: 50
+		Versus:
+			light: 120
+			medium: 25
+			heavy: 10
+			capital: 8
+
+PulseBattery:
+	ReloadDelay: 15
+	Range: 3600
+	Report: pulse
+	Projectile: Bolt
+		Speed: 380
+		HitRadius: 160
+		Inaccuracy: 60
+		Tracking: 50
+		Color: 9ff3ff
+		Size: 110
+	Warhead@hit: SpreadDamage
+		Damage: 1600
+		Versus:
+			light: 45
+			medium: 130
+			heavy: 70
+			capital: 50
+
+Lance:
+	ReloadDelay: 100
+	Range: 5600
+	Report: lance
+	Projectile: InstantHit
+		Color: d8f7ff
+		Size: 160
+	Warhead@hit: SpreadDamage
+		Damage: 22000
+		Versus:
+			light: 2
+			medium: 50
+			heavy: 110
+			capital: 170
+
+Torpedo:
+	ReloadDelay: 90
+	Range: 6000
+	Report: torpedo
+	Projectile: Missile
+		Speed: 50
+		MaxSpeed: 170
+		Accel: 5
+		TurnRate: 140
+		Lifetime: 170
+		HitRadius: 240
+		Color: ffb36b
+		Size: 120
+	Warhead@hit: SpreadDamage
+		Damage: 11000
+		Spread: 300
+		Versus:
+			light: 10
+			medium: 70
+			heavy: 140
+			capital: 110
+	Warhead@fx: CreateEffect
+		Explosion: torpedo
+		Size: 180
+
+PointDefence:
+	ReloadDelay: 4
+	Range: 2800
+	Report: cannon
+	Projectile: Bolt
+		Speed: 800
+		HitRadius: 140
+		Inaccuracy: 60
+		Color: ffe6a8
+		Size: 50
+	Warhead@hit: SpreadDamage
+		Damage: 200
+		Versus:
+			light: 120
+			medium: 40
+			heavy: 10
+			capital: 5
+
+GnasherBite:
+	ReloadDelay: 10
+	Range: 450
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: e9b8ff
+	Warhead@hit: SpreadDamage
+		Damage: 600
+		Versus:
+			light: 100
+			medium: 90
+			heavy: 70
+			capital: 60

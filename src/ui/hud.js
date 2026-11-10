@@ -12,7 +12,16 @@ const fmtDist = (units) => { const m = Math.abs(units) * M_PER_UNIT; return m >=
 const fmtAlt = (units) => `${units >= 0 ? '+' : '−'}${fmtDist(units)}`;
 const fmtNum = (n) => Math.round(n).toLocaleString('en-US');
 const fmtTime = (ticks) => { const s = Math.ceil(ticks / TICKS_PER_S); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s} s`; };
-const ORE_CSS = '#ffb070';
+const ORE_CSS = '#ffb070', HOSTILE_CSS = '#ff5a64';
+const n = (type, k) => Array(k).fill(type);
+// Proving Grounds spawn buttons: [label, faction of the spawning player, ships]
+const HOSTILE_WAVES = [
+  ['6 Darts', 'gaunt', n('dart', 6)], ['6 Talons', 'gaunt', n('talon', 6)], ['4 Pickets', 'gaunt', n('picket', 4)],
+  ['2 Halberds', 'gaunt', n('halberd', 2)], ['2 Spindles', 'gaunt', n('spindle', 2)], ['Sabre', 'gaunt', ['sabre']],
+  ['Raiding party', 'gaunt', [...n('dart', 4), ...n('talon', 2), ...n('picket', 2), 'halberd']],
+  ['Gnasher pack', 'fauna', n('gnasher', 8)],
+];
+const OWN_WAVES = [['6 Darts', n('dart', 6)], ['4 Talons', n('talon', 4)], ['3 Pickets', n('picket', 3)], ['Halberd', ['halberd']], ['Spindle', ['spindle']], ['Sabre', ['sabre']]];
 const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
 export class Hud {
@@ -31,6 +40,7 @@ export class Hud {
     this.s = session; this.input = input; this.world = session.world; this.renderer = session.renderer; this.audio = input.audio;
     this.dirty = true;
     this.buildPanel();
+    this.groundsPanel();
   }
   resize(w, h, dpr) {
     this.overlay.width = w * dpr; this.overlay.height = h * dpr;
@@ -40,18 +50,63 @@ export class Hud {
   selectionChanged() { this.dirty = true; }
   modeChanged() { this.dirty = true; }
   // The controls card and the production panel share the right side, so one closes the other.
+  // (and the Proving Grounds panel too)
   toggleHelp(force) {
     this.helpOpen = force !== undefined ? force : !this.helpOpen;
     $('help').hidden = !this.helpOpen;
-    if (this.helpOpen && this.buildOpen) this.toggleBuild(false);
+    if (this.helpOpen) { if (this.buildOpen) this.toggleBuild(false); if (this.groundsOpen) this.toggleGrounds(false); }
   }
   toggleBuild(force) {
     this.buildOpen = force !== undefined ? force : !this.buildOpen;
     $('build').hidden = !this.buildOpen;
     $('btn-build').setAttribute('aria-pressed', String(this.buildOpen));
-    if (this.buildOpen && this.helpOpen) this.toggleHelp(false);
+    if (this.buildOpen) { if (this.helpOpen) this.toggleHelp(false); if (this.groundsOpen) this.toggleGrounds(false); }
     this.queueSig = null;
     this.dirty = true;
+  }
+  toggleGrounds(force) {
+    if (!this.world.settings.sandbox) return;
+    this.groundsOpen = force !== undefined ? force : !this.groundsOpen;
+    $('grounds').hidden = !this.groundsOpen;
+    $('btn-grounds').setAttribute('aria-pressed', String(this.groundsOpen));
+    if (this.groundsOpen) { if (this.helpOpen) this.toggleHelp(false); if (this.buildOpen) this.toggleBuild(false); }
+    this.dirty = true;
+  }
+
+  // ---------------------------------------------------------------- Proving Grounds
+  // Hostiles appear about 3 km beyond the point the camera is looking at (seen from the
+  // Forge) and advance on the Forge. Your own test ships appear ahead of the Forge.
+  groundsPanel() {
+    $('btn-grounds').hidden = !this.world.settings.sandbox;
+    if (!this.world.settings.sandbox) return;
+    const button = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', () => { fn(); b.blur(); }); return b; };
+    for (const [label, faction, types] of HOSTILE_WAVES) $(faction === 'fauna' ? 'pg-fauna' : 'pg-gaunt').appendChild(button(label, () => this.spawnHostile(faction, types)));
+    for (const [label, types] of OWN_WAVES) $('pg-mine').appendChild(button(label, () => this.spawnOwn(types)));
+    $('pg-ore').addEventListener('click', () => { this.input.issueWorld('SandboxOre', { player: this.s.viewer.index, amount: 2000 }); this.audio.play('deposit'); });
+    $('pg-clear').addEventListener('click', () => { for (const p of this.world.players) if (p !== this.s.viewer) this.input.issueWorld('SandboxClear', { player: p.index }); this.audio.play('select'); });
+    $('grounds-close').addEventListener('click', () => this.toggleGrounds(false));
+  }
+  spawnHostile(faction, types) {
+    const p = this.world.players.find((x) => x.faction === faction), forge = this.forge();
+    if (!p || !forge) return;
+    const f = this.s.orbit.focusT;
+    let dx = f.x / R - forge.x, dy = f.z / R - forge.y;
+    let d = Math.hypot(dx, dy);
+    if (d < 4 * CELL) { const yaw = this.s.orbit.yaw; dx = -Math.cos(yaw); dy = -Math.sin(yaw); d = 1; }
+    const out = Math.max(d, 8 * CELL) + 30 * CELL, b = this.world.bounds;
+    const at = [Math.round(forge.x + (dx / d) * out), Math.round(forge.y + (dy / d) * out), Math.round(f.y / R)]
+      .map((v, i) => Math.max([b.x0, b.y0, b.z0][i] + 2 * CELL, Math.min([b.x1, b.y1, b.z1][i] - 2 * CELL, v)));
+    this.input.issueWorld('SandboxSpawn', { player: p.index, types, at, attack: [forge.x, forge.y, forge.z] });
+    this.toast(`${types.length} hostile${types.length > 1 ? 's' : ''} inbound`, 'bad');
+    this.audio.play('alert');
+  }
+  spawnOwn(types) {
+    const forge = this.forge();
+    if (!forge) return;
+    const ahead = forge.health.info.Radius + forge.health.info.HalfLength + 5 * CELL;
+    const c = Math.cos((forge.yaw / 1024) * Math.PI * 2), s = Math.sin((forge.yaw / 1024) * Math.PI * 2);
+    this.input.issueWorld('SandboxSpawn', { player: this.s.viewer.index, types, at: [Math.round(forge.x + c * ahead), Math.round(forge.y + s * ahead), forge.z] });
+    this.audio.play('ready');
   }
   // The controls card tucks itself away after your first order (H brings it back).
   firstOrder() { if (!this.ordered) { this.ordered = true; if (this.helpOpen) this.toggleHelp(false); } }
@@ -182,8 +237,23 @@ export class Hud {
         this.toast(`${this.world.rules.actor(e.type).traitInfo('Tooltip').Name} launched`, 'good');
         this.audio.play('ready');
         this.dirty = true;
+      } else if (e.t === 'fire' && e.report) this.audio.play(e.report, this.near(e) * 0.8);
+      else if (e.t === 'impact' && e.missile) this.audio.play('boom', this.near(e) * 0.6);
+      else if (e.t === 'killed') {
+        const big = (e.radius || 0) > 600;
+        this.audio.play(big ? 'boom-big' : 'boom', Math.max(this.near(e), e.owner === me ? 0.5 : 0));
+        if (e.owner === me && e.type !== 'wreck') {
+          this.toast(`${this.world.rules.actor(e.type).traitInfo('Tooltip').Name} lost`, 'bad');
+          this.dirty = true;
+        }
       }
     }
+  }
+  // How loud a sound at an event's position is: 1 close to the camera, fading to 0 far away.
+  near(e) {
+    const c = this.s.camera.position;
+    const d = Math.hypot(e.x * R - c.x, e.z * R - c.y, e.y * R - c.z);
+    return Math.max(0, Math.min(1, 1.25 - d / 260));
   }
 
   // ---------------------------------------------------------------- panels
@@ -203,6 +273,10 @@ export class Hud {
     $('move-title').textContent = rallyMode ? 'Rally point' : 'Plot course';
     $('move-hint').classList.toggle('rally', rallyMode);
     if (this.buildOpen) this.refreshBuild();
+    if (this.groundsOpen) {
+      const hostiles = this.world.actors.filter((a) => a.health && !a.dead && p.isEnemy(a.owner)).length;
+      $('pg-count').textContent = hostiles ? `${hostiles} hostile${hostiles > 1 ? 's' : ''} in the area` : 'No hostiles in the area';
+    }
     this.renderer.showRally = this.buildOpen || rallyMode || this.input.selection.some((a) => a.has('ProductionQueue'));
 
     const sel = this.input.selection.filter((a) => !a.dead);
@@ -222,6 +296,16 @@ export class Hud {
       ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
       return;
     }
+    if (sel.length === 1 && sel[0].wreck) {
+      const k = sel[0].wreck, of = this.world.rules.actors.get(k.of)?.traitInfo('Tooltip')?.Name || 'ship';
+      $('sel-name').textContent = 'Wreck';
+      $('sel-class').textContent = `Derelict · was a ${of}`;
+      $('sel-desc').textContent = 'Dead and drifting. Salvage crews will be able to cut it apart (Milestone 6).';
+      $('sel-status').textContent = '';
+      $('sel-stats').innerHTML = [['Salvage', fmtNum(k.salvage)], ['Size', `${fmtNum(k.radius() * 2 * M_PER_UNIT)} m`]]
+        .map(([k2, v]) => `<div><dt>${k2}</dt><dd>${v}</dd></div>`).join('');
+      return;
+    }
     if (sel.length === 1) {
       const a = sel[0], tt = a.info.traitInfo('Tooltip'), f = a.mobile, q = a.trait('ProductionQueue');
       const speed = f ? Math.round(f.speed * TICKS_PER_S * M_PER_UNIT) : 0;
@@ -230,7 +314,7 @@ export class Hud {
       if (a.activity) status = a.activity.label === 'Moving' ? 'Under way' : a.activity.label;
       else if (f && f.speed > 0) status = 'Coasting';
       $('sel-name').textContent = tt.Name;
-      $('sel-class').textContent = `${tt.Class} · ${tt.Role}`;
+      $('sel-class').textContent = a.owner === p ? `${tt.Class} · ${tt.Role}` : `${this.world.factions.get(a.owner.faction)?.Name || a.owner.name} · ${tt.Role}`;
       $('sel-desc').textContent = tt.Description;
       const stats = [
         ['Speed', `${speed} m/s`],
@@ -243,6 +327,8 @@ export class Hud {
         if (!a.activity && !c.auto) status = 'Holding (right-click a rock to mine)';
         stats.push(['Hold', `${c.cargo} / ${c.info.Capacity} ore`]);
       }
+      const crew = a.info.traitInfo('Crew');
+      if (crew && crew.Count) stats.push(['Crew', `${crew.Count} ${crew.Count === 1 ? crew.Role.replace(/s$/, '') : crew.Role}`]);
       const dropoff = a.trait('OreDropoff');
       if (dropoff) stats.push(['Docked', `${dropoff.slots.filter(Boolean).length} of ${dropoff.slots.length}`]);
       if (q) {
@@ -290,7 +376,7 @@ export class Hud {
       const v = rd.views.get(a.id);
       if (!v) continue;
       const b = this.drawBrackets(ctx, v, a.asteroid ? ORE_CSS : rd.styleOf(a.owner).css, true);
-      if (!b) continue;
+      if (!b || a.wreck) continue;
       const w = Math.max(18, Math.min(b.r * 1.4, 120));
       const bar = (y, f, color) => { ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = color; ctx.fillRect(b.p.x - w / 2, y, w * f, 2); };
       if (a.asteroid) { bar(b.p.y + b.r + 6, a.asteroid.ore / a.asteroid.maxOre, ORE_CSS); continue; }
@@ -304,14 +390,24 @@ export class Hud {
       const v = rd.views.get(hv.id);
       const action = inp.hoverAction(hv);
       if (v) {
-        const b = this.drawBrackets(ctx, v, action ? ORE_CSS : 'rgba(223,232,242,0.6)', !!action);
+        const hostile = action === 'Attack' || (hv.health && this.s.viewer.isEnemy(hv.owner));
+        const col = action === 'Attack' || (!action && hostile) ? HOSTILE_CSS : action ? ORE_CSS : 'rgba(223,232,242,0.6)';
+        const b = this.drawBrackets(ctx, v, col, !!action);
         if (b) {
-          const name = hv.asteroid ? `Asteroid · ${fmtNum(hv.asteroid.ore)} ore` : hv.info.traitInfo('Tooltip').Name;
+          if (hv.health && hostile) {
+            const f = hv.health.hp / hv.health.maxHp, w2 = Math.max(18, Math.min(b.r * 1.4, 120));
+            ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w2 / 2 - 1, b.p.y + b.r + 5, w2 + 2, 4);
+            ctx.fillStyle = HOSTILE_CSS; ctx.fillRect(b.p.x - w2 / 2, b.p.y + b.r + 6, w2 * f, 2);
+          }
+          const tname = hv.info.traitInfo('Tooltip').Name;
+          const name = hv.asteroid ? `Asteroid · ${fmtNum(hv.asteroid.ore)} ore`
+            : hv.wreck ? `Wreck of a ${this.world.rules.actors.get(hv.wreck.of)?.traitInfo('Tooltip')?.Name || 'ship'} · ${fmtNum(hv.wreck.salvage)} salvage`
+              : hostile ? `${tname} · ${this.world.factions.get(hv.owner.faction)?.Name || hv.owner.name}` : tname;
           const text = action ? `${action}: ${name}` : name;
           ctx.font = '500 11px "IBM Plex Mono", monospace';
           const tw = ctx.measureText(text).width, tx = b.p.x + b.r + 6, ty = b.p.y - b.r + 10;
           ctx.fillStyle = 'rgba(5,6,11,0.72)'; ctx.fillRect(tx - 4, ty - 11, tw + 8, 15);
-          ctx.fillStyle = action ? ORE_CSS : 'rgba(223,232,242,0.9)';
+          ctx.fillStyle = action === 'Attack' || hostile ? HOSTILE_CSS : action ? ORE_CSS : 'rgba(223,232,242,0.9)';
           ctx.fillText(text, tx, ty);
         }
       }
@@ -372,7 +468,7 @@ export class Hud {
 
   // Does a screen rectangle overlap a visible HUD panel?
   covered(x, y, w, h) {
-    for (const id of ['help', 'sel', 'move-hint', 'build']) {
+    for (const id of ['help', 'sel', 'move-hint', 'build', 'grounds']) {
       const el = $(id);
       if (!el || el.hidden) continue;
       const r = el.getBoundingClientRect();

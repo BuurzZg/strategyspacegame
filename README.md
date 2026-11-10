@@ -1,13 +1,21 @@
 # Driftforge
 
-A real-time 3D space strategy game for the browser, built on three.js with a deterministic, lockstep-ready simulation.
-Two rival Forge fleets, the **Meridian Hollow** and the **Cinder Pact**, mine and fight inside the Drift, the debris ring around the star Orrin.
+A space survival game for the browser, built on three.js with a deterministic, lockstep-ready simulation.
+You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow, stranded in the Wrack, a galaxy of scrap. Its Skein Drive is broken. Cross the galaxy, keep your people alive, and find the parts to mend it.
 
-See [PLAN.md](PLAN.md) for the full design, the ship roster and the milestone plan.
+See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 3, collectors and mining.** You command your Forge, the kilometre-long mothership, beside four asteroid fields.
-Gleaners mine the rocks and unload into the Forge's furnace, and that ore pays for the fleet you build. A Smelter, a mobile refinery, shortens the trip to distant fields.
-Combat, formations and the AI come in later milestones.
+**Status: Milestone 4, combat, in the Proving Grounds.** The game opens in the Proving Grounds, a testing sandbox. You get the Forge, its escorts, Gleaners mining four asteroid fields, and a panel to call in enemies.
+
+Warships fight with:
+- autocannons and plasma charges (fighters);
+- flak (corvettes);
+- pulse batteries and lances (frigates);
+- torpedoes (destroyers).
+
+Each counters something and is countered by something else. Bigger ships leave wrecks behind.
+
+The galaxy map and the survival voyage come in later milestones.
 
 ## Running the game
 
@@ -111,6 +119,30 @@ You start with 1,500 ore and two Gleaners. Both start mining as soon as the game
 
 One Gleaner on the nearest field brings in about 180 ore a minute. The far field, Ostrel Deep, is the richest, but the round trip from the Forge is long. Build a Smelter, park it beside that field, and the Gleaners mining there unload into it instead.
 
+### Combat
+
+| Input | Action |
+| --- | --- |
+| Right-click an enemy (with warships selected) | Attack it |
+| `Ctrl` + left-click on the movement disc | Advance: fly there, fighting anything met on the way |
+| `Backspace` | All stop (also ends an attack) |
+| Left-click an enemy or a wreck | Inspect it |
+
+- **On their own:** idle warships engage enemies that come within about 600 m, and fight back when shot. They give up a chase that drags them more than 1.2 km from where they started.
+- **Fighters** (Darts, Talons) make attack runs: in fast, weaving, break away, come round. **Bigger ships** hold off at a comfortable range and keep their guns on target.
+- **The Forge** never chases anything. Its four point-defence turrets shoot at whatever comes close.
+- **Hovering** an enemy shows its faction and hull in red. With warships selected, the label reads "Attack".
+- **When ships die:** losses show as a message under the top bar. Fighters break up; anything bigger leaves a charred, drifting **wreck** with salvage in it. Salvage can be collected from Milestone 6.
+
+### The Proving Grounds
+
+Press `G`, or the **Proving Grounds** button, to open the sandbox panel.
+
+- **Ashen Gaunt:** Darts, Talons, Pickets, Halberds, Spindles, a Sabre, or a mixed raiding party. They appear about 3 km beyond where the camera is looking and advance on your Forge.
+- **Drift fauna:** a pack of eight Gnashers, monsters that hunt in packs and bite.
+- **Your ships:** test ships appear ahead of the Forge.
+- **+2,000 ore** and **Remove hostiles**.
+
 ### Other
 
 | Key | Action |
@@ -119,18 +151,26 @@ One Gleaner on the nearest field brings in about 180 ore a minute. The far field
 
 ## The ships in this build
 
-| Ship | Class | Ore | Build time | Capacity | Handling |
-| --- | --- | --- | --- | --- | --- |
-| Forge | Mothership | — | — | provides 30 | Immense and slow. Turns in place; about 24 m/s flat out |
-| Gleaner | Ore collector | 100 | 12 s | 1 | Mines and hauls on its own |
-| Smelter | Mobile refinery | 600 | 40 s | 4 | Slow barge; Gleaners unload into it |
-| Halberd | Assault frigate | 450 | 30 s | 6 | Heavy. Turns in place before it accelerates, and needs a long distance to stop |
-| Picket | Flak corvette | 140 | 15 s | 3 | Steady mid-weight gunboat |
-| Talon | Bomber | 90 | 12 s | 2 | Quick, but heavier in the turn than a Dart |
-| Dart | Interceptor | 60 | 8 s | 1 | Fast and nimble. It never fully stops while cruising, so it banks through its turns |
+| Ship | Class | Ore | Build | Capacity | Crew | Weapons | Strong against | Weak against |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Forge | Mothership | — | — | provides 30 | — | 4 point-defence turrets | fighters that come close | — |
+| Gleaner | Ore collector | 100 | 12 s | 1 | 3 miners | — | — | everything |
+| Smelter | Mobile refinery | 600 | 40 s | 4 | 10 engineers | — | — | everything |
+| Dart | Interceptor | 60 | 8 s | 1 | 2 pilots | Autocannons (fixed, forward) | Talons, Gnashers | flak |
+| Talon | Bomber | 90 | 12 s | 2 | 3 pilots | Plasma charges (fixed, forward) | frigates, capitals | Darts, flak |
+| Picket | Flak corvette | 140 | 15 s | 3 | 6 hands | Flak turret | fighters, Gnashers | frigates |
+| Halberd | Assault frigate | 450 | 30 s | 6 | 14 hands | Two pulse batteries | corvettes | bombers, destroyers |
+| Spindle | Lance frigate | 380 | 28 s | 5 | 12 hands | One long lance (fixed, forward) | capitals | fighters |
+| Sabre | Destroyer | 900 | 50 s | 10 | 30 hands | Torpedoes, two pulse batteries | frigates | bombers, Spindles |
 
-You start with the Forge, a Halberd, two Darts and two Gleaners (10 of 30 capacity). Weapons arrive in Milestone 4.
-The Smelter can be built from the start for now; from Milestone 7 it will need research first.
+Monsters: the **Gnasher**, a pack hunter about the size of a fighter. It bites.
+
+You start with the Forge, a Halberd, two Darts and two Gleaners (10 of 30 capacity). Everything can be built from the start for now; blueprints arrive in Milestone 11.
+
+How it works:
+- **Armour and damage.** Ships have one of four armour classes: light, medium, heavy and capital. Each weapon does more or less damage to each class.
+- **Aim.** Shots fly where the target is going to be, and can miss a ship that turns away. Heavy batteries only partly lead their target, so they struggle against weaving fighters.
+- **Where the numbers live.** Every number is in `rules/weapons.yaml` and `rules/combat.yaml`.
 
 ## Development
 
@@ -164,6 +204,24 @@ Runs the headless tests:
   - a Gleaner coming home from behind the Forge flies round it to the furnace maw;
   - four Gleaners mining for four minutes scrape a rock or a hull in under 1% of their moving ticks (the result is 0);
   - two identical runs give the same sync hash.
+- **Combat** (`tools/combattest.js`): checks that:
+  - damage follows the armour table exactly;
+  - shots hit a target holding still and mostly miss a fighter crossing at full speed;
+  - flak hits several fighters at once, and torpedoes chase a moving frigate;
+  - fixed guns only fire forward, while turrets fire all round;
+  - kills remove the ship and big hulls leave a solid wreck worth 40% of their cost;
+  - targeting, leashes, attack orders, Stop and advancing all work;
+  - the Forge's point defence fires without the Forge moving;
+  - a 40-a-side battle is deterministic and takes about 0.2 ms per tick.
+- **Balance** (`tools/balancetest.js`): cost-matched battles, each fought twice with the sides swapped. The counter has to win both, keeping at least 25% of its value:
+  - Pickets beat Darts;
+  - Halberds beat Pickets;
+  - Talons beat Halberds;
+  - Darts beat Talons;
+  - a Sabre beats Halberds;
+  - Spindles beat a Sabre;
+  - Darts beat Spindles;
+  - Pickets beat a Gnasher pack.
 
 ```bash
 npm run check
@@ -176,11 +234,13 @@ Lints the simulation folders (`src/engine`, `src/traits`, `src/activities`) for 
 ```
 index.html            page, styles and HUD markup
 lib/                  three.js (vendored, r160)
-rules/*.yaml          factions, ship stats and handling
-src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer math
-src/traits/           gameplay traits (Flight, ProductionQueue, Collector, OreDropoff, Asteroid, ...)
-src/activities/       per-actor tasks (FlyTo, Launch, Harvest, MineAsteroid, DeliverOre)
-src/render/           three.js scene: space backdrop, procedural ships and asteroids, effects
+rules/*.yaml          factions, ships, warships, fauna, weapons, and combat fits layered onto the hulls
+src/engine/           deterministic core: world, actors, traits, orders, lockstep, integer maths,
+                      steering (avoid.js), weapons and projectiles (weapons.js)
+src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Armament, Attacks, AutoTarget,
+                      Wreck, ProvingGrounds, ...)
+src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove)
+src/render/           three.js scene: space backdrop, procedural ships, asteroids and wrecks, combat effects
 src/ui/               orbit camera, movement disc, input, HUD, audio
 tools/                dev server, headless tests, determinism lint
 ```

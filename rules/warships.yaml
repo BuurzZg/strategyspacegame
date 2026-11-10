@@ -1,0 +1,102 @@
+# Heavier warships. Both can be built from the start for now; from Milestone 11 they need
+# blueprints.
+
+spindle:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Spindle
+		Class: Frigate
+		Role: Lance frigate
+		Description: A thin frigate wrapped around one long lance. It cracks capital hulls from far off, and cannot hit a fighter to save its life.
+	Valued:
+		Cost: 380
+	Buildable:
+		Queue: Forge
+		BuildDuration: 700
+		BuildPaletteOrder: 50
+	ConsumesCapacity:
+		Amount: 5
+	Health:
+		HP: 80000
+		Radius: 720
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 950
+	Flight:
+		MaxSpeed: 42
+		Acceleration: 1
+		Deceleration: 2
+		TurnSpeed: 4
+		PitchSpeed: 3
+		TurnInPlace: true
+		Slip: 120
+		Bank: 15
+	WithModel:
+		Model: spindle
+	Crew:
+		Count: 12
+		Role: hands
+	Armament:
+		Weapon: Lance
+		Forward: 1100
+		Arc: 24
+	Attacks:
+		StandoffPct: 85
+	AutoTarget:
+	LeavesWreck:
+
+sabre:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Sabre
+		Class: Destroyer
+		Role: Destroyer
+		Description: A heavy hull with torpedo racks along its spine and pulse batteries on both flanks. It hunts frigates.
+	Valued:
+		Cost: 900
+	Buildable:
+		Queue: Forge
+		BuildDuration: 1250
+		BuildPaletteOrder: 60
+	ConsumesCapacity:
+		Amount: 10
+	Health:
+		HP: 300000
+		Radius: 900
+		HalfLength: 900
+	Armor:
+		Type: capital
+	Selectable:
+		Radius: 2000
+	Flight:
+		MaxSpeed: 32
+		Acceleration: 1
+		Deceleration: 1
+		TurnSpeed: 3
+		PitchSpeed: 2
+		TurnInPlace: true
+		Slip: 140
+		ArriveRadius: 100
+		Bank: 8
+	WithModel:
+		Model: sabre
+	Crew:
+		Count: 30
+		Role: hands
+	Armament@torpedoes:
+		Weapon: Torpedo
+		Forward: 300
+		Up: 450
+	Armament@port:
+		Weapon: PulseBattery
+		Forward: 900
+		Side: 600
+	Armament@starboard:
+		Weapon: PulseBattery
+		Forward: 900
+		Side: -600
+	Attacks:
+		StandoffPct: 65
+	AutoTarget:
+	LeavesWreck:

@@ -1,5 +1,6 @@
 import * as THREE from '../../lib/three.module.js';
-import { buildShip } from './ships.js';
+import { buildShip, buildWreck } from './ships.js';
+import { CombatFx } from './combatfx.js';
 import { buildAsteroid } from './asteroids.js';
 import { Effects } from './effects.js';
 import { R } from './space.js';
@@ -30,6 +31,7 @@ export class WorldRenderer {
     this.selected = new Set();
     this.hover = null;
     this.fx = new Effects(scene);
+    this.combat = new CombatFx(scene, this.fx, world);
     this.tmp = new THREE.Vector3();
     // destination lines for selected ships
     this.goalGeo = new THREE.BufferGeometry();
@@ -55,10 +57,10 @@ export class WorldRenderer {
     const wm = a.info.traitInfo('WithModel');
     if (!wm || !wm.Model) return null;
     const style = this.styleOf(a.owner);
-    const model = wm.Model === 'asteroid' ? buildAsteroid(a.id) : buildShip(wm.Model, style);
+    const model = wm.Model === 'asteroid' ? buildAsteroid(a.id) : a.wreck ? buildWreck(a.wreck.model, a.id, style) : buildShip(wm.Model, style);
     model.root.rotation.order = 'YZX';
     this.scene.add(model.root);
-    const radius = a.asteroid ? a.asteroid.radius() * R : (a.info.traitInfo('Selectable')?.Radius || 800) * R;
+    const radius = a.asteroid ? a.asteroid.radius() * R : a.wreck ? a.wreck.radius() * R : (a.info.traitInfo('Selectable')?.Radius || 800) * R;
     return { actor: a, model, style, roll: 0, radius, pos: new THREE.Vector3() };
   }
 
@@ -92,8 +94,24 @@ export class WorldRenderer {
         m.root.scale.setScalar(v.radius);
         continue;
       }
+      if (a.wreck) {
+        // tumble slowly; embers flicker where the hull still burns
+        m.body.rotation.x += m.tumble.x * dt; m.body.rotation.y += m.tumble.y * dt; m.body.rotation.z += m.tumble.z * dt;
+        if (m.embers.length && Math.random() < dt * 3) {
+          const p = m.body.localToWorld(m.embers[Math.floor(Math.random() * m.embers.length)].clone());
+          glowColor.setHex(0xff7a2a);
+          this.fx.glow.spawn(p.x, p.y, p.z, 0, 0.3, 0, 0.8, 0.5, 0.05, glowColor, 0.8);
+        }
+        continue;
+      }
       m.body.rotation.x = v.roll;
       if (m.gauge) m.gauge.scale.x = Math.max(0.02, a.collector.cargo / a.collector.info.Capacity);
+      // a badly damaged hull trails smoke and the odd spark
+      if (a.health && a.health.hp * 2 < a.health.maxHp && Math.random() < dt * (a.health.hp * 4 < a.health.maxHp ? 6 : 2.5)) {
+        const r = v.radius * 0.4;
+        this.combat.puff(v.pos.x + (Math.random() - 0.5) * r, v.pos.y + (Math.random() - 0.5) * r, v.pos.z + (Math.random() - 0.5) * r, 1, Math.max(0.4, r * 0.5), 0x2c2a30, 0.5);
+        if (Math.random() < 0.4) this.combat.sparks(v.pos.x, v.pos.y, v.pos.z, 0xffb070, 3, 3, 0.2);
+      }
       if (a.collector) this.collectorFx(a, v);
       // engines: flare size follows throttle, trails when moving
       const sp = a.mobile ? a.mobile.pspeed + (a.mobile.speed - a.mobile.pspeed) * alpha : 0;
@@ -111,6 +129,7 @@ export class WorldRenderer {
     }
     this.updateGoalLines(alpha);
     this.updateRally(t, alpha);
+    this.combat.update(dt, alpha);
     this.fx.update(dt);
   }
 
@@ -183,6 +202,7 @@ export class WorldRenderer {
 
   // Render-side reactions to simulation events (world.fxEvents).
   consumeEvents(events) {
+    this.combat.consume(events, this.views);
     const c = new THREE.Color();
     for (const e of events) {
       if (e.t === 'deposit') {

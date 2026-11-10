@@ -24,6 +24,7 @@
   --height: #ffb547;   /* altitude and height cues */
   --rally: #c9a7ff;    /* the Forge's rally point */
   --ore: #d9a577;      /* ore costs and income */
+  --hostile: #ff5a64;  /* enemies, attack orders */
   --good: #7cf2a8;
   --bad: #ff5a64;
   --f-display: "Oxanium", "Eurostile", "Segoe UI", sans-serif;
@@ -132,6 +133,24 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 .rally-row button:disabled { opacity: 0.45; cursor: default; }
 #rally-state { flex-basis: 100%; margin: 0; font-size: 12px; color: var(--muted); }
 
+#grounds {
+  position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 60px; width: min(380px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--hostile); padding: 12px 14px 14px; max-height: calc(100% - 90px); overflow-y: auto;
+}
+#grounds h2 { margin: 0; font: 600 14px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; }
+#grounds h3 { margin: 12px 0 6px; font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--hostile); }
+#grounds h3:nth-of-type(3) { color: var(--accent); }
+.pg-sub { text-transform: none; letter-spacing: 0; color: var(--muted); font-weight: 400; margin-left: 6px; }
+.pg-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+#grounds-close { position: absolute; top: 8px; right: 8px; background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; padding: 4px 8px; }
+.pg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pg-grid button, .pg-row button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; font-size: 12px; text-align: left; }
+#pg-gaunt button:hover, #pg-fauna button:hover { border-color: var(--hostile); }
+#pg-mine button:hover, .pg-row button:hover { border-color: var(--accent); }
+.pg-row { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+#pg-count { margin: 8px 0 0; font: 12px var(--f-mono); color: var(--muted); }
+#btn-grounds[aria-pressed="true"] { border-color: var(--hostile); }
+
 #toasts { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
 .toast { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--muted); padding: 6px 12px; font-size: 13px; display: flex; gap: 8px; }
 .toast.good { border-left-color: var(--good); }
@@ -140,6 +159,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 #move-title { font: 600 11px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); align-self: center; }
 #move-hint.rally #move-title { color: var(--rally); }
 .r { color: var(--rally); }
+.x { color: var(--hostile); }
 
 /* Info panels never block the view: clicks pass through to the battlefield. */
 #sel, #help, #move-hint { pointer-events: none; }
@@ -157,7 +177,7 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 #boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
 
 @media (max-width: 760px) {
-  #help, #build { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 50vh; }
+  #help, #build, #grounds { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 50vh; }
   #res { gap: 10px; }
   .brand { letter-spacing: 0.2em; }
   .tag { display: none; }
@@ -174,12 +194,13 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
 
   <header id="top">
     <div class="brand">DRIFT<b>FORGE</b></div>
-    <span class="tag">Milestone 3 · collectors and mining</span>
+    <span class="tag">Milestone 4 · combat · Proving Grounds</span>
     <div id="res" aria-label="Resources">
       <div class="res-item" title="Ore in the bank, and how much your Gleaners delivered in the last minute"><span class="res-k">Ore</span><b id="res-ore">0</b><span id="res-rate"></span></div>
       <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
     </div>
     <div class="top-btns">
+      <button id="btn-grounds" type="button" aria-pressed="false" hidden>Proving Grounds <kbd>G</kbd></button>
       <button id="btn-build" type="button" aria-pressed="false">Build <kbd>B</kbd></button>
       <button id="btn-help" type="button">Controls <kbd>H</kbd></button>
     </div>
@@ -209,12 +230,29 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
     </div>
   </section>
 
+  <section id="grounds" hidden aria-label="Proving Grounds">
+    <button id="grounds-close" type="button" aria-label="Close the Proving Grounds panel">×</button>
+    <header><h2>Proving Grounds</h2></header>
+    <p class="pg-note">A sandbox for testing fights. Hostiles appear about 3 km beyond where you are looking and advance on your Forge.</p>
+    <h3>Ashen Gaunt</h3>
+    <div id="pg-gaunt" class="pg-grid"></div>
+    <h3>Drift fauna</h3>
+    <div id="pg-fauna" class="pg-grid"></div>
+    <h3>Your ships <span class="pg-sub">appear ahead of the Forge</span></h3>
+    <div id="pg-mine" class="pg-grid"></div>
+    <div class="pg-row">
+      <button id="pg-ore" type="button">+2,000 ore</button>
+      <button id="pg-clear" type="button">Remove hostiles</button>
+    </div>
+    <p id="pg-count"></p>
+  </section>
+
   <div id="toasts" aria-live="polite"></div>
 
   <aside id="help" aria-label="Controls">
     <button id="help-close" type="button" aria-label="Close controls">×</button>
-    <h2>Your Forge</h2>
-    <p>The Forge is your mothership, and it builds your fleet from ore. Your two Gleaners are already mining the nearest field. Press <kbd>B</kbd> to build more Gleaners, or warships.</p>
+    <h2>Proving Grounds</h2>
+    <p>Your Forge, its escorts and two Gleaners, in a quiet corner of the Drift. Press <kbd>G</kbd> to call in Ashen Gaunt raiders or a Gnasher pack and test your fleet against them. Press <kbd>B</kbd> to build warships.</p>
     <h3>Camera</h3>
     <dl>
       <dt><kbd>Right-drag</kbd></dt><dd>Rotate around the focus</dd>
@@ -247,6 +285,13 @@ dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums
       <dt><kbd>Right-click</kbd> a rock</dt><dd>Gleaners mine that rock</dd>
       <dt><kbd>Right-click</kbd> the Forge</dt><dd>Gleaners unload now</dd>
       <dt>Smelter</dt><dd>Mobile refinery: park it by a far field</dd>
+    </dl>
+    <h3>Combat</h3>
+    <dl>
+      <dt><kbd>Right-click</kbd> an enemy</dt><dd>Selected warships <span class="x">attack</span> it</dd>
+      <dt><kbd>Ctrl</kbd> + <kbd>Left-click</kbd></dt><dd>On the disc: advance, fighting anything on the way</dd>
+      <dt>On their own</dt><dd>Idle warships engage enemies that come close</dd>
+      <dt><kbd>G</kbd></dt><dd>Proving Grounds: spawn enemies to test against</dd>
     </dl>
     <h3>Plotting a move</h3>
     <dl>

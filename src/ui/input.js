@@ -1,5 +1,5 @@
 import * as THREE from '../../lib/three.module.js';
-import { makeOrder } from '../engine/order.js';
+import { makeOrder, makeWorldOrder } from '../engine/order.js';
 import { R } from '../render/space.js';
 import { MoveWidget } from './movewidget.js';
 
@@ -10,7 +10,8 @@ import { MoveWidget } from './movewidget.js';
 //   In move mode: move the mouse over the plane, hold Shift and move up/down for height,
 //   left-click to confirm, right-click or Esc to cancel.
 //   B  production panel     R  place the Forge's rally point (same disc, tinted lilac)
-//   Home  select and focus the Forge
+//   Home  select and focus the Forge     G  Proving Grounds panel (sandbox)
+//   Right-click an enemy  attack it      Ctrl + left-click on the disc  advance, fighting on the way
 const DRAG = 5;
 export const RALLY = 0xc9a7ff;
 
@@ -81,6 +82,9 @@ export class Input {
     return best;
   }
   isMine(a) { return a.owner === this.viewer; }
+  isEnemy(a) { return this.viewer.isEnemy(a.owner); }
+  // ships that manoeuvre to fight (the Forge's turrets fire on their own and it never chases)
+  armed() { return this.own().filter((a) => a.attack && a.mobile && a.attack.info.Style !== 'turret'); }
   forge() { return this.world.actors.find((a) => a.owner === this.viewer && !a.dead && a.has('ProductionQueue')) || null; }
   own() { return this.selection.filter((a) => !a.dead && this.isMine(a)); }
 
@@ -147,8 +151,15 @@ export class Input {
       this.cancelMove();
       return;
     }
-    this.issue('Move', ships, target);
-    this.renderer.fx.marker(m.dest.x, m.dest.y, m.dest.z, 0x5fe3d0);
+    // Ctrl: advance and fight anything met on the way (ships without guns just move)
+    const fights = (a) => a.attack && a.attack.info.Style !== 'turret';
+    const advance = this.keys.has('control') && ships.some(fights);
+    if (advance) {
+      const armed = ships.filter(fights), rest = ships.filter((a) => !fights(a));
+      this.issue('AttackMove', armed, target);
+      if (rest.length) this.issue('Move', rest, target);
+    } else this.issue('Move', ships, target);
+    this.renderer.fx.marker(m.dest.x, m.dest.y, m.dest.z, advance ? 0xff5a64 : 0x5fe3d0);
     this.audio.play('order');
     this.cancelMove();
     if (!this.orbit.follow) this.followSelection();
@@ -167,6 +178,7 @@ export class Input {
     const collectors = this.own().some((s) => s.collector);
     if (collectors && a.asteroid) return 'Mine';
     if (collectors && this.isMine(a) && a.has('OreDropoff') && !this.selection.includes(a)) return 'Unload here';
+    if (a.health && this.isEnemy(a) && this.armed().length) return 'Attack';
     return null;
   }
   selectForge() {
@@ -176,6 +188,7 @@ export class Input {
     this.focusSelection();
   }
   issue(name, subjects, target, extra) { this.s.om.issue(makeOrder(name, subjects, target, extra)); }
+  issueWorld(name, extra) { this.s.om.issue(makeWorldOrder(name, extra)); }
 
   // ---------------------------------------------------------- pointer
   down(e) {
@@ -214,6 +227,16 @@ export class Input {
       // collectors selected: right-click a rock to mine it, or the Forge / a Smelter to unload now
       if (hit && collectors.length && hit.asteroid) { this.orderCollectors('Harvest', collectors, hit); return; }
       if (hit && collectors.length && this.isMine(hit) && hit.has('OreDropoff') && !collectors.includes(hit)) { this.orderCollectors('Dock', collectors, hit); return; }
+      // armed ships selected: right-click an enemy to attack it
+      const armed = this.armed();
+      if (hit && armed.length && hit.health && this.isEnemy(hit)) {
+        this.issue('Attack', armed, { actor: hit });
+        const v = this.renderer.views.get(hit.id);
+        if (v) this.renderer.fx.marker(v.pos.x, v.pos.y, v.pos.z, 0xff5a64);
+        this.audio.play('order');
+        this.hud.firstOrder();
+        return;
+      }
       if (hit && this.isMine(hit)) { if (!this.selection.includes(hit)) this.setSelection([hit]); return; }
       if (this.own().some((a) => a.mobile)) { this.beginMove(); this.updateMove(); }
     }
@@ -262,6 +285,7 @@ export class Input {
     if (k === 'b') { this.hud.toggleBuild(); return; }
     if (k === 'r') { if (this.move && this.move.mode === 'rally') this.cancelMove(); else this.beginMove('rally'); return; }
     if (k === 'home') { e.preventDefault(); this.selectForge(); return; }
+    if (k === 'g') { this.hud.toggleGrounds(); return; }
     if (k === 'f') { this.focusSelection(); return; }
     if (k === 'h' || k === '?') { this.hud.toggleHelp(); return; }
     if ((e.ctrlKey || e.metaKey) && k === 'a') { e.preventDefault(); this.setSelection(this.world.actors.filter((a) => this.isMine(a) && a.mobile)); return; }

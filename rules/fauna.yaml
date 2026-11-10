@@ -1,0 +1,39 @@
+# Space monsters: not a faction, no reputation, always hostile.
+
+gnasher:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Gnasher
+		Class: Monster
+		Role: Pack hunter
+		Description: A ribbed, eyeless hunter about the size of a fighter. They hunt in packs and bite through hull plating.
+	Health:
+		HP: 9000
+		Radius: 320
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 480
+	Flight:
+		MaxSpeed: 125
+		Acceleration: 6
+		Deceleration: 6
+		TurnSpeed: 13
+		PitchSpeed: 12
+		MinSpeed: 40
+		Slip: 140
+		Bank: 45
+	WithModel:
+		Model: gnasher
+	Armament:
+		Weapon: GnasherBite
+		Forward: 300
+		Arc: 90
+	Attacks:
+		Style: strafe
+		BreakRange: 250
+		BreakDistance: 2000
+		Jink: 500
+	AutoTarget:
+		ScanRange: 9000
+		Leash: 30000

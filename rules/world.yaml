@@ -15,6 +15,20 @@ World:
 		Glow: ffc08a
 		Dark: 4a160c
 		Description: Smelter clans bound by debt and fire. They breed hulls fast and spend them faster.
+	Faction@gaunt:
+		InternalName: gaunt
+		Name: Ashen Gaunt
+		Color: c8323c
+		Glow: ffe2c4
+		Dark: 3a0d12
+		Description: Tall, many-jointed scavengers sealed in rust-red suits. They strip what they find, and they count debts.
+	Faction@fauna:
+		InternalName: fauna
+		Name: Drift fauna
+		Color: b05cff
+		Glow: f0c8ff
+		Dark: 2a0e40
+		Description: Things that live in the scrap. Not a people. Just hungry.
 	Faction@neutral:
 		InternalName: neutral
 		Name: Derelict
@@ -25,3 +39,4 @@ World:
 	StartingFleet:
 		Ships: forge, halberd, dart, dart, gleaner, gleaner
 	AsteroidFields:
+	ProvingGrounds:
