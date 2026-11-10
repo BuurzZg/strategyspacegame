@@ -8,6 +8,10 @@
 #   Patrol      the ships they keep at places they claim (more in dangerous regions)
 #   Enemies     factions they fight on sight
 #   Leave       from this tier on, you may mine and salvage in their territory
+#   Sells       goods they trade away, with how much a station holds; Wants: goods they pay well for
+#   Hires       crew for hire at their stations, by role; Ships: hulls they will sell, crewed
+#   Info        what they know and will sell: survey (every place within two stitches), chart (a region)
+#   Dialog      their comms tree (dialogs/<name>.yaml)
 
 Reputation:
 	# the lowest standing of each tier
@@ -27,6 +31,8 @@ Reputation:
 	CloseRange: 9
 	# seconds you may linger inside CloseRange of a wary faction after its warning
 	WarnTime: 20
+	# trading: per deal
+	Trade: 1
 
 rivet:
 	Name: Rivet Moot
@@ -40,6 +46,13 @@ rivet:
 	Patrol: dart, dart, picket, halberd
 	Enemies: gaunt
 	Leave: Friendly
+	# trade: what they sell (and how much they have), what they want, crew and ships for hire, information
+	Sells: food 600, ice 800, salvage 400
+	Wants: ore, glim
+	Hires: hands 12, miners 6, engineers 4
+	Ships: dart, picket, gleaner, shearer
+	Info: survey
+	Dialog: rivet
 
 synod:
 	Name: Lantern Synod
@@ -53,6 +66,11 @@ synod:
 	Patrol: picket, halberd, halberd, spindle
 	Enemies: gaunt
 	Leave: Friendly
+	Sells: glim 1500, food 900, spores 400
+	Wants: salvage, ice
+	Hires: engineers 3
+	Info: chart
+	Dialog: synod
 
 gaunt:
 	Name: Ashen Gaunt
@@ -66,6 +84,10 @@ gaunt:
 	Patrol: dart, dart, talon, talon, picket, halberd, sabre
 	Enemies: rivet, synod, cinder
 	Leave: Allied
+	Sells: salvage 1200, ore 800
+	Wants: glim, food
+	Ships: dart, talon
+	Dialog: gaunt
 
 cinder:
 	Name: Cinder Pact
@@ -79,6 +101,12 @@ cinder:
 	Patrol: dart, talon, halberd, spindle, sabre
 	Enemies: gaunt
 	Leave: Friendly
+	Sells: ore 1200, ice 600
+	Wants: salvage, spores
+	Hires: pilots 6, hands 8
+	Ships: talon, halberd, spindle
+	Info: chart
+	Dialog: cinder
 
 choir:
 	Name: The Choir
@@ -91,3 +119,7 @@ choir:
 	Station: ChoirBloom
 	Patrol: moth, moth, moth, moth, moth, moth
 	Leave: Neutral
+	Sells: glim 800, spores 800
+	Wants: ice
+	Info: survey, chart
+	Dialog: choir

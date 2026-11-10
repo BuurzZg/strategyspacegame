@@ -12,6 +12,7 @@ import { Audio } from './ui/audio.js';
 import { newRun, visitSettings, applyReport } from './galaxy/run.js';
 import * as V from './galaxy/voyage.js';
 import { ChartScreen } from './ui/chart.js';
+import { CommsPanel } from './ui/comms.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -148,7 +149,7 @@ function startChart() {
   closeChart();
   hud.showLauncher(false);
   chart = new ChartScreen({
-    canvas, camera, rules, voyage, audio, hud,
+    canvas, camera, rules, voyage, audio, hud, comms: hud.comms,
     onGoIn: () => goIn(),
     onChange: () => (voyage.over ? deleteSave() : writeSave()),
     onQuit: () => { writeSave(); showLauncher(); },
@@ -240,6 +241,7 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 (async () => {
   try {
     rules = await loadRules(async (f) => { const r = await fetch(f); if (!r.ok) throw new Error(`Could not load ${f} (${r.status})`); return r.text(); });
+    hud.comms = new CommsPanel(rules, audio);
     resize();
     // straight into a map from the address: ?grounds, ?poi=OreReef&seed=12, or #grounds, #fleet,
     // #OreReef (the hash forms work where query strings can't)

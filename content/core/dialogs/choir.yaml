@@ -1,0 +1,56 @@
+choir:
+	Start: hello
+	Node@hello:
+		Say: [The swarm brightens in a slow ripple of gold. The translator renders it:] WE SEE THE THREAD THAT TORE. YOU ARE FAR FROM ITS END.
+		Say@Wary: [A cold flicker, blue on blue:] YOU BURNED SOME OF US. SPEAK.
+		Say@Hostile: [The swarm goes dark.]
+		Choice@trade:
+			Text: We would trade for Glim.
+			If: station, tier >= Neutral, where chart
+			Do: trade
+		Choice@skein:
+			Text: What do you know of the Skein?
+			If: tier >= Neutral, not flag choir-skein
+			Goto: skein
+		Choice@chart:
+			Text: Show us where the places are.
+			If: tier >= Neutral
+			Goto: chart
+		Choice@peace:
+			Text: We did not mean to harm you.
+			If: tier <= Wary, no treaty Peace
+			Goto: peace
+		Choice@ceasefire:
+			Text: Please. Stop.
+			If: where map, at war
+			Goto: ceasefire
+		Choice@bye:
+			Text: Thank you.
+			Do: close
+	Node@skein:
+		Say: THE LENS THAT IS NOT GLASS LIES WHERE THE HEAPS ARE DEEPEST. THE VEIL OPENS TO THOSE WHO SEE THROUGH IT. WE WILL BE ON THE OTHER SIDE.
+		Choice@thanks:
+			Text: Thank you.
+			Do: flag choir-skein, standing 2
+			Goto: hello
+	Node@chart:
+		Say: [Light pours over the comms screen and becomes a map.] WATER FOR THE SHOWING. THREE HUNDRED.
+		Choice@buy:
+			Text: Three hundred ice.
+			Do: pay ice 300, reveal chart, close
+		Choice@back:
+			Text: Not now.
+			Goto: hello
+	Node@peace:
+		Say: GLIM IS OUR BLOOD. GIVE BACK WHAT YOU SPILLED. THREE HUNDRED.
+		Choice@pay:
+			Text: Three hundred Glim.
+			Do: pay glim 300, treaty Peace, standing 15, close
+		Choice@back:
+			Text: Not now.
+			Goto: hello
+	Node@ceasefire:
+		Say: [The light softens.] ENOUGH.
+		Choice@agree:
+			Text: Enough.
+			Do: ceasefire, standing -5, close

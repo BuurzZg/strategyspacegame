@@ -1,5 +1,6 @@
 import { parseYaml, mergeFiles } from './miniyaml.js';
 import { Rules } from './rules.js';
+import { lintDialog } from '../galaxy/comms.js';
 
 // Content packs. Each pack is a folder under content/ with a pack.yaml manifest that lists
 // its rule, weapon and data files. Packs load in order; files from later packs merge into
@@ -20,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -46,6 +47,10 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   const factions = [...mergeFiles(data.Factions)];
   rules.content.reputation = nodesToObject(factions.find(([k]) => k === 'Reputation')?.[1].nodes || []);
   rules.content.factions = Object.fromEntries(factions.filter(([k]) => k !== 'Reputation').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
+  const trade = new Map(mergeFiles(data.Trade));
+  rules.content.trade = trade.has('Trade') ? nodesToObject(trade.get('Trade').nodes) : {};
+  rules.content.treaties = trade.has('Treaties') ? nodesToObject(trade.get('Treaties').nodes) : {};
+  rules.content.dialogs = Object.fromEntries([...mergeFiles(data.Dialogs)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
@@ -76,7 +81,9 @@ export function lintContent(rules) {
     for (const [t] of weights(r.Types)) if (!poiTypes[t]) errs.push(`regions: ${id}.Types: unknown point-of-interest type "${t}"`);
   }
   const { races = {}, factions = {}, regions = {} } = rules.content;
+  for (const d of Object.values(rules.content.dialogs || {})) errs.push(...lintDialog(rules, d));
   for (const [id, f] of Object.entries(factions)) {
+    if (f.Dialog && !(rules.content.dialogs || {})[f.Dialog]) errs.push(`factions: ${id}.Dialog: no dialog "${f.Dialog}"`);
     if (!races[f.Race]) errs.push(`factions: ${id}.Race: unknown race "${f.Race}"`);
     if (f.Station && !poiTypes[f.Station]) errs.push(`factions: ${id}.Station: unknown place type "${f.Station}"`);
     for (const s of list(f.Patrol)) if (!rules.actors.has(s)) errs.push(`factions: ${id}.Patrol: unknown ship "${s}"`);

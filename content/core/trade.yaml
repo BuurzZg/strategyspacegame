@@ -1,0 +1,24 @@
+# Trade is barter: there is no money in the Wrack. Every good has a value; a deal is fair when
+# what you give is worth at least what you take, at the faction's prices.
+#   Value       what one unit is worth (resources, crew by role, information)
+#   Standing    price change by tier, percent: you pay more when they dislike you, and get less
+#   Stock       how scarce stock raises their price: at zero stock, +Scarce percent
+#   Wants       what they pay for goods they want, and for goods they do not, as percent of Value
+
+Trade:
+	Value: ore 1, ice 1, salvage 2, glim 3, spores 2, food 2, hands 40, miners 50, pilots 60, engineers 80, chart 400, survey 250
+	Standing: Hostile 30, Wary 30, Neutral 10, Friendly 0, Allied -30
+	Scarce: 50
+	Wants: 70
+	Unwanted: 30
+	# ships for hire cost their ore cost times this percent (in value), and come with their crew
+	ShipPct: 140
+
+# Treaties: what each costs and how long it lasts. Breaking one (firing on them while it holds)
+# costs Break standing and ends it.
+Treaties:
+	Ceasefire: 10
+	Peace: 30
+	Leave: 20
+	Tribute: 15
+	Break: -40

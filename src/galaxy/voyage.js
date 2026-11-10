@@ -3,6 +3,7 @@ import { hashMix } from '../engine/math.js';
 import { mapKinds, weights } from '../engine/content.js';
 import { CELL } from '../engine/math.js';
 import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
+import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces } from './comms.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
 import { ROLES, makeRoster, count, free, freeAll, loseAny, lose, assignFleet } from './crew.js';
@@ -44,7 +45,7 @@ export function newVoyage(rules, { seed = 1 } = {}) {
     forge: { hp: rules.actor('forge').traitInfo('Health').HP },
     fleet: START_FLEET.map((type) => ({ type, hp: rules.actor(type).traitInfo('Health').HP })),
     items: {}, airless: 0, dry: false, over: null, visits: 0,
-    standing: {}, met: {},
+    standing: {}, met: {}, treaties: [], flags: [], stock: {},
     log: [],
   };
   assignFleet(s.crew, rules, s.fleet);
@@ -359,8 +360,10 @@ export function visitSettings(rules, s) {
     for (let k = 0; k < Math.trunc((base.length * (2 + (+R.Danger || 1))) / 3); k++) ships.push(base[k % base.length]);
     if (ships.length) L.encounters.push({ side: fid, ships, at, behaviour, delay });
   };
+  // a ceasefire, peace or tribute treaty keeps a hostile faction's guns cold
+  const truce = (fid) => activeTreaties(s, fid).some((k) => k !== 'Leave');
   const tierOf = (fid) => tierIndex(rules, standingOf(rules, s, fid));
-  const mood = (fid) => (tierOf(fid) === 0 ? 'hunt' : tierOf(fid) === 4 ? 'escort' : 'lurk');
+  const mood = (fid) => (tierOf(fid) === 0 && !truce(fid) ? 'hunt' : tierOf(fid) === 4 ? 'escort' : 'lurk');
   if (p.owner && F[p.owner]) {
     present.add(p.owner);
     if (L.station) L.station.owner = p.owner;
@@ -380,8 +383,10 @@ export function visitSettings(rules, s) {
   const factions = [...present].sort();
   settings.poi.owner = p.owner || '';
   settings.poi.ownerName = p.owner && F[p.owner] ? F[p.owner].Name : '';
-  settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) : true;
-  settings.voyage = { day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
+  settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) || activeTreaties(s, p.owner).includes('Leave') : true;
+  settings.poi.treaties = Object.fromEntries(factions.map((fid) => [fid, activeTreaties(s, fid)]));
+  settings.poi.danger = +R.Danger || 1;
+  settings.voyage = { flags: [...(s.flags || [])], day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
   return {
     ...settings,
     latency: 1,
@@ -394,7 +399,7 @@ export function visitSettings(rules, s) {
       ...factions.map((fid, i) => ({ name: F[fid].Name, faction: fid, team: i + 1, ships: [], tier: tierOf(fid), standing: standingOf(rules, s, fid) })),
       { name: 'Drift fauna', faction: 'fauna', team: factions.length + 1, ships: [] },
     ],
-    relations: relationsFor(rules, factions, tierOf),
+    relations: relationsFor(rules, factions, (fid) => (truce(fid) && tierOf(fid) === 0 ? 1 : tierOf(fid))),
   };
 }
 
@@ -442,6 +447,12 @@ export function returnFromMap(rules, s, report) {
     note(s, `${F[fid].Name}: ${c.delta > 0 ? '+' : ''}${c.delta} standing (${Object.entries(c.reasons).map(([why, n]) => `${why} ${n > 0 ? '+' : ''}${n}`).join(', ')}).`, c.delta < 0 ? 'bad' : 'good');
     if (t) note(s, `The ${F[fid].Name} are now ${t.to} toward the Forge.`, 'story');
   }
+  // treaties made over comms on the map, and treaties broken there
+  for (const fid of st.broken || []) { const d = breakTreaties(rules, s, fid); if (d) { change(rules, s, fid, d); note(s, `You broke your treaty with the ${F[fid].Name} (${d}).`, 'bad'); } }
+  for (const t of st.treaties || []) if (F[t.faction]) { const d = addTreaty(rules, s, t.faction, t.kind); note(s, `${t.kind} with the ${F[t.faction].Name} for ${d} days.`, 'good'); }
+  for (const [k, n] of Object.entries(st.paid || {})) s.stores[k] = Math.max(0, (s.stores[k] | 0) - n);
+  for (const f of st.flags || []) s.flags = [...new Set([...(s.flags || []), f])];
+  for (const what of st.reveals || []) note(s, revealPlaces(rules, s, galaxyOf(rules, s), what), 'info');
   // what was found
   for (const id of report.found || []) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); }
   // morale: losses hurt, a win helps
@@ -468,6 +479,7 @@ export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
   if (s && s.kind === 'voyage' && s.version === 2) { s.standing = {}; s.met = {}; s.version = 3; } // from Milestone 7
+  if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; } // from Milestone 8
   if (!s || s.kind !== 'voyage' || s.version !== SAVE_VERSION) throw new Error('That save is from another version of Driftforge.');
   galaxyOf(rules, s);
   return s;

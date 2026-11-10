@@ -346,7 +346,9 @@ export class Input {
   // ---------------------------------------------------------- keys
   keyDown(e) {
     if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (this.hud.comms && this.hud.comms.isOpen) { if (this.hud.comms.key(e.key)) e.preventDefault(); return; }
     const k = e.key.toLowerCase();
+    if (k === 'c' && !e.ctrlKey && !e.metaKey) { this.hud.hail(); return; }
     if (k === 'shift' && !this.keys.has('shift') && this.move) { this.move.anchorY = null; }
     this.keys.add(k);
     if (k === 'escape') { if (this.move) this.cancelMove(); else if (this.hud.buildOpen) this.hud.toggleBuild(false); else this.setSelection([], false); return; }

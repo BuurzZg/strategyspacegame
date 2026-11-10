@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 8, factions and reputation.** Five factions claim parts of the Wrack, with stations at their seats: the Rivet Moot's hull-towns, the Lantern Synod's refineries, the Ashen Gaunt's dens, the Cinder Pact's holds and the Choir's blooms. How they treat you on a map depends on your standing with them, and what you do there changes it. See [Factions and standing](#factions-and-standing).
+**Status: Milestone 9, diplomacy and trade.** Hail a faction where it holds the Forge's place, or hail one of its ships or stations on a map: talk, trade, hire crew and ships, buy charts, pay tribute, and make or break treaties. See [Comms and trade](#comms-and-trade).
+
+**Milestone 8, factions and reputation:** Five factions claim parts of the Wrack, with stations at their seats: the Rivet Moot's hull-towns, the Lantern Synod's refineries, the Ashen Gaunt's dens, the Cinder Pact's holds and the Choir's blooms. How they treat you on a map depends on your standing with them, and what you do there changes it. See [Factions and standing](#factions-and-standing).
 
 **Milestone 7, the voyage:** Start a **new voyage** from the title screen. Each one is a new seeded galaxy of about 300 places in four regions, ringed round the dead star Orrin:
 
@@ -32,7 +34,7 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-Diplomacy and trade with the factions come in Milestone 9.
+Events, monsters and the story come in Milestone 10.
 
 ## Running the game
 
@@ -200,6 +202,29 @@ The engineers have a fix on one part at a time: the gold ring. Go in and cut int
 - **Declaring war:** `Ctrl` + right-click a ship you are not at war with to attack it.
 - **Races:** a faction you have not met starts where you stand with its race: the average of that race's factions you have met.
 - **Monsters** (Gnashers) have no standing and fight everyone.
+
+### Comms and trade
+
+- **Hailing:** on the star chart, at a place a faction holds, **Hail** (or `C`) on the place card. On a map, select one of their ships or their station and press **Hail** (or `C`); the map waits while you talk.
+- **The comms panel** shows what they say and your choices (number keys pick them). What you can say depends on your standing, whether this is their station, whether you are at war on the map, and the treaties you have. Choices you cannot pay for are shown, with what you are short of.
+- **Trade** (at their station, Neutral or better) is barter: there is no money in the Wrack. Every good has a value. Pick what you take and what you give; the deal is fair when what you give is worth at least what they ask.
+  - Prices follow your standing: 30% dearer when they are Hostile or Wary, 10% when Neutral, at value when Friendly, 30% cheaper when Allied. What they pay you moves the other way.
+  - Prices rise as their stock runs down (up to +50% at zero), and stock comes back a little each day.
+  - They pay 70% of value for goods they want, 30% for the rest.
+  - Every deal raises your standing by 1.
+- **Hiring** (at their station): crew by role, and crewed hulls (Rivet Moot: Darts, Pickets, Gleaners, Shearers; Cinder Pact: Talons, Halberds, Spindles; Ashen Gaunt: Darts and Talons, if you are Friendly). A hull needs room in the hangar.
+- **Information:** a survey (every place within two stitches) or a chart (the whole region).
+- **Treaties:**
+
+| Treaty | Lasts | What it does |
+| --- | --- | --- |
+| Tribute | 15 days | Paid to the Ashen Gaunt: they hold their fire |
+| Ceasefire | 10 days | Mid-fight on a map: they stand down now |
+| Peace | 30 days | Amends with a faction that is Wary or Hostile: no fighting |
+| Leave | 20 days | You may mine and salvage their claims without it costing standing |
+
+  Firing on a faction while a treaty holds breaks it: −40 standing, and war for the rest of the visit.
+- **Threats:** if your armed ships frighten them, they hand over goods (−10 standing); if not, it costs you (−15), and on a map they open fire.
 
 ### Places and leaving them
 
@@ -394,6 +419,14 @@ Runs the headless tests:
   - firing, kills and helping change standing by the listed amounts;
   - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
   - a visit with factions is deterministic.
+- **Comms** (`tools/commstest.js`): checks that:
+  - every dialog validates, and every node and every one of the 66 choices can be reached in some situation;
+  - conditions gate choices, and choices you cannot pay for are refused;
+  - prices follow standing (±30%), scarcity (+50% at zero stock) and wants exactly;
+  - deals: unfair ones are refused, goods change hands, stock runs down and comes back, trading warms them;
+  - hiring crew, and a hull that comes with its crew; no hull without room in the hangar;
+  - treaties: tribute keeps the Gaunt's guns cold at their own den, firing breaks it (−40), Leave gives leave, treaties run out;
+  - a ceasefire over comms mid-fight on a map; threats with and without a fleet; surveys and charts.
 - **Places** (`tools/poitest.js`): checks that:
   - every template gives exactly the same map for the same seed, a different map for a different seed, and no field on top of the Forge's arrival point;
   - every place type builds what its layout promised, and the fleet launches from the hangar;
@@ -443,6 +476,9 @@ content/core/races.yaml         races, and where their factions start
 content/core/factions.yaml      factions: seats, territory, patrols, enemies, leave; and every
                                 reputation number (tiers, penalties, ranges)
 content/core/rules/stations.yaml  faction stations and Choirmoth swarms
+content/core/trade.yaml         values, price rules and treaty lengths
+content/core/dialogs/*.yaml     comms trees, one per faction (the format is documented at the top
+                                of rivet.yaml)
 content/example-pack/           an example add-on: a second Hullborn faction, in YAML only
 ```
 
@@ -464,10 +500,12 @@ src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attac
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
                       travel and saves (voyage.js), the crew (crew.js), standing (standing.js),
+                      comms, dialogs, trade and treaties (comms.js),
                       practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
                       wrecks, combat effects, the star chart (galaxy.js)
-src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), audio
+src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), the
+                      comms and trade panel (comms.js), audio
 tools/                dev server, headless tests, determinism lint
 ```
 

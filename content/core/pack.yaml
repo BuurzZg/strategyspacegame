@@ -12,6 +12,8 @@
 #   Names       name generators
 #   Races       races, and where their factions start
 #   Factions    factions, their territory and fleets, and the reputation numbers
+#   Trade       values, prices and treaties
+#   Dialogs     comms trees, one per faction
 
 Pack:
 	Id: core
@@ -27,3 +29,5 @@ Pack:
 	Names: names.yaml
 	Races: races.yaml
 	Factions: factions.yaml
+	Trade: trade.yaml
+	Dialogs: dialogs/rivet.yaml, dialogs/synod.yaml, dialogs/gaunt.yaml, dialogs/cinder.yaml, dialogs/choir.yaml

@@ -3,6 +3,7 @@ import { OrbitCamera } from './camera.js';
 import { SpaceScene } from '../render/space.js';
 import { StarChart, chartPos, TYPE_COLORS, factionColor } from '../render/galaxy.js';
 import { standingOf, tierName, hasLeave, raceStanding, TIERS } from '../galaxy/standing.js';
+import * as CM from '../galaxy/comms.js';
 import * as V from '../galaxy/voyage.js';
 import { laneOpen } from '../galaxy/galaxy.js';
 import { ROLES, count, free } from '../galaxy/crew.js';
@@ -20,8 +21,8 @@ const DRAG = 5;
 const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores']];
 
 export class ChartScreen {
-  constructor({ canvas, camera, rules, voyage, audio, hud, onGoIn, onQuit, onChange, onEnd }) {
-    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, onGoIn, onQuit, onChange, onEnd });
+  constructor({ canvas, camera, rules, voyage, audio, hud, comms, onGoIn, onQuit, onChange, onEnd }) {
+    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, onGoIn, onQuit, onChange, onEnd });
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
     const B = 140 / (1 / 256);
@@ -85,7 +86,9 @@ export class ChartScreen {
     this.on(window, 'keydown', (e) => {
       if (e.target.closest && e.target.closest('input, textarea')) return;
       if (!$('chart-end').hidden) return;
+      if (this.comms && this.comms.isOpen) { if (this.comms.key(e.key)) e.preventDefault(); return; }
       const k = e.key.toLowerCase();
+      if (k === 'c' && this.g.points[this.s.at].owner) { this.hail(this.g.points[this.s.at].owner); return; }
       this.keys.add(k);
       if (k === 'f' || e.key === 'Home') { this.select(this.s.at); this.orbit.focusOn(chartPos(this.g.points[this.s.at])); }
       else if (e.key === 'Escape') this.select(this.s.at);
@@ -140,6 +143,19 @@ export class ChartScreen {
     else if (a === 'rest') this.act(V.rest);
     else if (a === 'home') this.act(V.jumpHome);
     else if (a === 'go') this.onGoIn();
+    else if (a === 'hail') this.hail(this.g.points[this.s.at].owner);
+  }
+  // Talk to the faction that holds the Forge's place: their dialog, trade and hiring.
+  hail(fid) {
+    if (!this.comms || !fid || this.s.over) return;
+    const s = this.s, g = this.g, rules = this.rules;
+    this.comms.open({
+      fid,
+      context: () => CM.chartContext(rules, s, g, fid),
+      apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
+      trade: { s, pointId: s.at, onDeal: () => { this.onChange(s); this.refresh(); } },
+      onClose: () => this.refresh(),
+    });
   }
   panelClick(e) {
     const b = e.target.closest('button[data-act]');
@@ -187,6 +203,7 @@ export class ChartScreen {
     let why = '';
     if (here) {
       btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
+      if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, false, p.seat ? 'Talk, trade and hire at their station' : 'Talk to them']);
       btns.push(['rest', p.type === 'StillWater' ? 'Rest a day (still water: twice the rest)' : 'Rest a day', false, 'Morale rises; the crew still eat, drink and breathe']);
       const home = V.canJumpHome(this.rules, s);
       if (V.drive(this.rules, s).finalJump) { btns.push(['home', 'Make the final jump', !home.ok, home.why || 'Home']); if (!home.ok) why = home.why; }

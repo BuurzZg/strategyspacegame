@@ -1,0 +1,66 @@
+cinder:
+	Start: hello
+	Node@hello:
+		Say: Meridian. We wondered when you'd turn up. Our Forge didn't make it home either, you know.
+		Say@Friendly: Meridian! Pull up a chair, so to speak. What do you need?
+		Say@Allied: Meridian! Pull up a chair, so to speak. What do you need?
+		Say@Hostile: Meridian. We have nothing to say to you that a torpedo can't.
+		Choice@trade:
+			Text: Let's trade.
+			If: station, tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: We need pilots. And hulls.
+			If: station, tier >= Neutral, where chart
+			Do: hire
+		Choice@chart:
+			Text: You've been out here longer. Sell us your charts.
+			If: tier >= Wary
+			Goto: chart
+		Choice@leave:
+			Text: Can we work your fields?
+			If: tier >= Neutral, tier <= Neutral, no treaty Leave
+			Goto: leave
+		Choice@peace:
+			Text: We're the same people, more or less. Let's not fight.
+			If: tier <= Wary, no treaty Peace
+			Goto: peace
+		Choice@ceasefire:
+			Text: Stop shooting!
+			If: where map, at war
+			Goto: ceasefire
+		Choice@threaten:
+			Text: Stay out of our way.
+			Do: threaten, close
+		Choice@bye:
+			Text: Another time.
+			Do: close
+	Node@chart:
+		Say: Charts of {region}, drawn by people who died drawing them. Two hundred and fifty salvage.
+		Choice@buy:
+			Text: Two hundred and fifty salvage.
+			Do: pay salvage 250, reveal chart, close
+		Choice@back:
+			Text: Too much.
+			Goto: hello
+	Node@leave:
+		Say: Three hundred ore and our claims are yours to work, for a while.
+		Choice@pay:
+			Text: Three hundred ore.
+			Do: pay ore 300, treaty Leave, close
+		Choice@back:
+			Text: No.
+			Goto: hello
+	Node@peace:
+		Say: The same people. Hm. Four hundred ore says we are.
+		Choice@pay:
+			Text: Four hundred ore.
+			Do: pay ore 400, treaty Peace, standing 12, close
+		Choice@back:
+			Text: Then we're not.
+			Goto: hello
+	Node@ceasefire:
+		Say: Fine. We stop. You owe us for the ammunition.
+		Choice@agree:
+			Text: Agreed.
+			Do: ceasefire, standing -5, close

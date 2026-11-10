@@ -1,0 +1,48 @@
+gaunt:
+	Start: hello
+	Node@hello:
+		Say: Forge. You float like something worth stripping.
+		Say@Neutral: Forge. Still in one piece. Good. Talk.
+		Say@Friendly: Forge! Our debt-friend. Talk.
+		Say@Allied: Forge! Our debt-friend. Talk.
+		Choice@tribute:
+			Text: What would it take for the Gaunt to leave us be?
+			If: no treaty Tribute
+			Goto: tribute
+		Choice@trade:
+			Text: We'll trade, if you will.
+			If: station, tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: We'd buy a hull or two.
+			If: station, tier >= Friendly, where chart
+			Do: hire
+		Choice@threaten:
+			Text: Leave now, or we make wrecks of you.
+			Do: threaten, close
+		Choice@ceasefire:
+			Text: Enough. Name your price to stop.
+			If: where map, at war, tier >= Wary
+			Goto: ceasefire
+		Choice@bye:
+			Text: We're leaving.
+			Do: close
+	Node@tribute:
+		Say: Glim. Four hundred. Or food: six hundred. Then we look the other way. For a while.
+		Choice@glim:
+			Text: Four hundred Glim.
+			Do: pay glim 400, treaty Tribute, standing 10, close
+		Choice@food:
+			Text: Six hundred food.
+			Do: pay food 600, treaty Tribute, standing 10, close
+		Choice@back:
+			Text: No.
+			Goto: hello
+	Node@ceasefire:
+		Say: Pay first. Two hundred and fifty salvage. Then we stop.
+		Choice@pay:
+			Text: Two hundred and fifty salvage.
+			Do: pay salvage 250, ceasefire, close
+		Choice@back:
+			Text: Never mind.
+			Goto: hello

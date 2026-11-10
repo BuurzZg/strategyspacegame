@@ -249,7 +249,7 @@ body.voyage #build, body.voyage #help { max-height: calc(100% - 290px); }
 #report-ships dd { font: 13px var(--f-body); }
 #report-next { background: color-mix(in srgb, var(--accent) 14%, #0d131e); border: 1px solid var(--accent); border-radius: 3px; padding: 8px 16px; font-weight: 600; }
 body.at-launcher #top, body.at-launcher #cgroups, body.at-launcher #toasts, body.at-launcher #sel, body.at-launcher #skein, body.at-launcher #build, body.at-launcher #grounds { display: none; }
-.modal:not([hidden]) ~ #help, .modal:not([hidden]) ~ #fleetbar, .modal:not([hidden]) ~ #cgroups, .modal:not([hidden]) ~ #move-hint { display: none; }
+#comms:not([hidden]) ~ #help, .modal:not([hidden]) ~ #help, .modal:not([hidden]) ~ #fleetbar, .modal:not([hidden]) ~ #cgroups, .modal:not([hidden]) ~ #move-hint { display: none; }
 
 /* the title */
 .title-intro { font-size: 15px; color: var(--text) !important; }
@@ -345,6 +345,34 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
   #chart-help { right: 16px; }
 }
 
+/* comms and trade */
+#comms .modal-card { width: min(720px, 100%); border-top: 3px solid var(--accent); position: relative; }
+.comms-head { display: flex; align-items: baseline; gap: 12px; }
+.comms-head h2 { margin: 0 !important; }
+#comms-tier { font: 600 11px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+#comms-close { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 20px; }
+#comms-say { font-size: 15px; color: var(--text) !important; margin: 12px 0 14px; line-height: 1.55; }
+#comms-choices { display: grid; gap: 6px; }
+#comms-choices button { text-align: left; background: #0d131e; border: 1px solid var(--line); border-radius: 3px; padding: 8px 12px; display: flex; gap: 10px; align-items: baseline; }
+#comms-choices button:hover:not(:disabled) { border-color: var(--accent); }
+#comms-choices button:disabled { opacity: 0.55; cursor: default; }
+#comms-choices .why, #trade-balance p { color: var(--height); font-size: 12px; margin: 0; }
+#comms-notes { list-style: none; margin: 12px 0 0; padding: 0; font-size: 12.5px; color: var(--good); display: grid; gap: 3px; }
+#comms-notes:empty { display: none; }
+#trade h3, #trade-body h3 { margin: 10px 0 6px; font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+#trade-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+#trade-body table { width: 100%; border-collapse: collapse; font: 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+#trade-body th, #trade-body td { padding: 3px 4px; border-bottom: 1px solid var(--line-soft); text-align: right; }
+#trade-body thead th { font: 600 10px var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+#trade-body tbody th { text-align: left; font: 13px var(--f-body); }
+#trade-body .sub { color: var(--muted); font-size: 11px; }
+#trade-body .q { white-space: nowrap; }
+#trade-body .q button { background: #0d131e; border: 1px solid var(--line); border-radius: 3px; width: 22px; padding: 0; }
+#trade-body .q b { display: inline-block; min-width: 4ch; text-align: center; }
+#trade-balance { margin: 12px 0 8px; font-size: 13px; }
+#trade-balance .bar { margin-top: 6px; }
+@media (max-width: 760px) { #trade-body { grid-template-columns: 1fr; } }
+
 #boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
 
 @media (max-width: 760px) {
@@ -374,6 +402,7 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
       <div class="res-item" title="Fleet capacity used / available (queued ships count)"><span class="res-k">Fleet</span><b id="res-cap">0 / 0</b></div>
     </div>
     <div class="top-btns">
+      <button id="btn-hail" type="button" hidden>Hail <kbd>C</kbd></button>
       <button id="btn-grounds" type="button" aria-pressed="false" hidden>Proving Grounds <kbd>G</kbd></button>
       <button id="btn-build" type="button" aria-pressed="false">Build <kbd>B</kbd></button>
       <button id="btn-help" type="button">Controls <kbd>H</kbd></button>
@@ -504,6 +533,23 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
         <dl id="ce-stats"></dl>
         <div class="launch-row"><button id="ce-new" type="button" class="primary">New voyage</button><button id="ce-title-btn" type="button">Title</button></div>
       </div>
+    </div>
+  </div>
+
+  <div id="comms" class="modal" hidden role="dialog" aria-labelledby="comms-who">
+    <div class="modal-card">
+      <header class="comms-head"><h2 id="comms-who"></h2><span id="comms-tier"></span><button id="comms-close" type="button" aria-label="Close comms">×</button></header>
+      <div id="comms-dialog">
+        <p id="comms-say"></p>
+        <div id="comms-choices"></div>
+      </div>
+      <div id="trade" hidden>
+        <h3 id="trade-title"></h3>
+        <div id="trade-body"></div>
+        <div id="trade-balance"></div>
+        <div class="launch-row"><button id="trade-deal" type="button" class="primary">Make the deal</button><button id="trade-back" type="button">Back to talking</button></div>
+      </div>
+      <ul id="comms-notes"></ul>
     </div>
   </div>
 

@@ -78,6 +78,7 @@ export class Hud {
 
   // ---------------------------------------------------------------- leaving: the Skein Drive
   skeinPanel() {
+    $('btn-hail').addEventListener('click', () => this.hail());
     $('btn-recall').addEventListener('click', () => {
       const ships = this.input.world.actors.filter((a) => a.owner === this.s.viewer && a.mobile && !a.dead && !a.has('Hangar'));
       if (ships.length) { this.input.issue('Recall', ships); this.audio.play('order'); this.toast(`Recalling ${ships.length} ship${ships.length > 1 ? 's' : ''}`, 'info'); }
@@ -121,6 +122,29 @@ export class Hud {
     $('btn-spool').textContent = spooling ? 'Cancel spool' : 'Spool the Skein';
     $('btn-launch').disabled = !aboard || spooling;
     $('btn-recall').disabled = !out;
+  }
+
+  // ---------------------------------------------------------------- comms on a map
+  // The faction ship or station selected (or hovered) that can be hailed, if any.
+  hailTarget() {
+    const sel = this.input.selection, w = this.world;
+    const a = sel.length === 1 ? sel[0] : this.input.hover;
+    if (!a || a.dead || !a.owner.slot || a.owner.slot.tier === undefined || !w.diplomacy) return null;
+    return a;
+  }
+  hail() {
+    const a = this.hailTarget();
+    if (!a || !this.comms) return;
+    const w = this.world, me = this.s.viewer, p = a.owner, fid = p.faction, v = w.settings.voyage || {}, rules = w.rules;
+    this.savedSpeed = this.s.speed || 1;
+    this.s.speed = 0; // the map waits while you talk
+    this.comms.open({
+      fid,
+      context: () => ({ rules, fid, factionName: p.name, tier: p.slot.tier, station: !!a.station, where: 'map', atWar: me.isEnemy(p), treaties: w.diplomacy.treatiesWith(fid), flags: new Set(v.flags || []), stores: { ...(v.stores || {}), ...me.resources.amounts }, place: w.settings.poi ? w.settings.poi.name : '', region: v.region || '' }),
+      apply: (effects) => { this.input.issueWorld('Comms', { faction: fid, effects }); return { close: effects.some((e) => e.op === 'close'), notes: [] }; },
+      trade: null,
+      onClose: () => { this.s.speed = this.savedSpeed; },
+    });
   }
 
   // ---------------------------------------------------------------- the report
@@ -447,6 +471,9 @@ export class Hud {
     const p = this.s.viewer;
     for (const k in p.resources.amounts) { const el = $(`res-${k}`); if (el) el.textContent = fmtNum(p.resources.amounts[k]); }
     this.refreshDay();
+    const ht = this.hailTarget();
+    $('btn-hail').hidden = !ht;
+    if (ht) $('btn-hail').firstChild.textContent = `Hail ${ht.owner.name} `;
     this.refreshSkein();
     // ore delivered over the last minute of game time
     const since = this.world.frame - 60 * TICKS_PER_S;

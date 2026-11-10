@@ -1,0 +1,82 @@
+# Comms trees. A dialog is a set of nodes; each says something (Say, or Say@<Tier> when your
+# standing is in that tier) and offers choices. A choice shows when all its If conditions hold:
+#   station | not station          the hail is with their station (or a place they hold)
+#   tier >= X | tier <= X          your standing with them (Hostile, Wary, Neutral, Friendly, Allied)
+#   where chart | where map        hailed from the star chart, or from a map
+#   at war | not at war            on a map: fighting each other right now
+#   treaty X | no treaty X         a treaty (Ceasefire, Peace, Leave, Tribute) holds, or not
+#   has <store> <n>                you have that much aboard
+#   flag <name> | not flag <name>  something that happened before
+# and does its Do effects in order, then goes to its Goto node (or closes):
+#   trade | hire                   open the trade screen, or the hiring screen
+#   pay <store> <n>                hand it over (the choice needs you to have it)
+#   standing <n>                   change your standing with them
+#   treaty <kind>                  a treaty for the days in trade.yaml
+#   ceasefire                      on a map: they stop fighting now (and a Ceasefire treaty)
+#   threaten                       they yield goods if your fleet frightens them; if not, it costs you
+#   reveal survey | reveal chart   what they know: places within two stitches, or the whole region
+#   flag <name> | close
+# Text may use {place}, {region} and {faction}.
+
+rivet:
+	Start: hello
+	Node@hello:
+		Say: Forge! Rivet Moot, {place}. Mind the scaffolds, and the cousins. What do you need?
+		Say@Wary: You've a nerve, hailing us. Keep your guns cold and say your piece.
+		Say@Hostile: Turn round, Forge. The Moot has nothing for you but rivets, and we fire those.
+		Choice@trade:
+			Text: Show us what you're selling.
+			If: station, tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: We need hands. And maybe a hull or two.
+			If: station, tier >= Neutral, where chart
+			Do: hire
+		Choice@info:
+			Text: What's out there that we should know about?
+			If: tier >= Neutral
+			Goto: info
+		Choice@leave:
+			Text: Would the Moot let our Gleaners work its fields?
+			If: tier >= Neutral, tier <= Neutral, no treaty Leave
+			Goto: leave
+		Choice@peace:
+			Text: We want no quarrel with the Moot.
+			If: tier <= Wary, no treaty Peace
+			Goto: peace
+		Choice@ceasefire:
+			Text: Hold your fire! We'll talk.
+			If: where map, at war
+			Goto: ceasefire
+		Choice@bye:
+			Text: Safe stitching.
+			Do: close
+	Node@info:
+		Say: Our scouts keep a survey of everything within two stitches of here. Hundred and twenty salvage, and it's yours.
+		Choice@buy:
+			Text: Deal.
+			Do: pay salvage 120, reveal survey, close
+		Choice@back:
+			Text: Not today.
+			Goto: hello
+	Node@leave:
+		Say: A season's leave to work our claims: two hundred and fifty ore. That's a cousin's price.
+		Choice@pay:
+			Text: Done. Two hundred and fifty ore.
+			Do: pay ore 250, treaty Leave, standing 2, close
+		Choice@back:
+			Text: Too dear.
+			Goto: hello
+	Node@peace:
+		Say: Words are cheap, Forge. Plating isn't. Three hundred salvage and we'll call it square, for a while.
+		Choice@pay:
+			Text: Three hundred salvage. Square.
+			Do: pay salvage 300, treaty Peace, standing 15, close
+		Choice@back:
+			Text: We'll think about it.
+			Goto: hello
+	Node@ceasefire:
+		Say: ...Fine. You stand down, we stand down. Cross us again and we won't answer the hail.
+		Choice@agree:
+			Text: Agreed. Standing down.
+			Do: ceasefire, standing -5, close

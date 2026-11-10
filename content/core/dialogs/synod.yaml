@@ -1,0 +1,62 @@
+synod:
+	Start: hello
+	Node@hello:
+		Say: The Lantern Synod hears you, Forge. Speak plainly. There is no violence near the refinery.
+		Say@Wary: The Synod remembers you, Forge. Speak, and be brief.
+		Say@Hostile: The Synod does not speak with those who burn its lanterns.
+		Choice@trade:
+			Text: We need Glim. And food, if you have it.
+			If: station, tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: Would any of your renderers sign on? Our engines need tending.
+			If: station, tier >= Friendly, where chart
+			Do: hire
+		Choice@chart:
+			Text: The Synod keeps charts, they say.
+			If: tier >= Neutral
+			Goto: chart
+		Choice@leave:
+			Text: May our Skimmers work your clouds?
+			If: tier >= Neutral, tier <= Neutral, no treaty Leave
+			Goto: leave
+		Choice@peace:
+			Text: We would make amends.
+			If: tier <= Wary, no treaty Peace
+			Goto: peace
+		Choice@ceasefire:
+			Text: Stop. We ask for mercy.
+			If: where map, at war
+			Goto: ceasefire
+		Choice@bye:
+			Text: We'll leave you to your lanterns.
+			Do: close
+	Node@chart:
+		Say: The Synod charts {region}, every place and every lane. Two hundred salvage. The price is the price.
+		Choice@buy:
+			Text: Two hundred salvage.
+			Do: pay salvage 200, reveal chart, close
+		Choice@back:
+			Text: Another time.
+			Goto: hello
+	Node@leave:
+		Say: The clouds are the Synod's. For two hundred Glim, the Synod will not count what you take, for a time.
+		Choice@pay:
+			Text: Two hundred Glim.
+			Do: pay glim 200, treaty Leave, close
+		Choice@back:
+			Text: No.
+			Goto: hello
+	Node@peace:
+		Say: Amends are made in water. Six hundred ice, and the Synod will set down its grievance.
+		Choice@pay:
+			Text: Six hundred ice.
+			Do: pay ice 600, treaty Peace, standing 15, close
+		Choice@back:
+			Text: We cannot spare it.
+			Goto: hello
+	Node@ceasefire:
+		Say: The code allows mercy. Once.
+		Choice@agree:
+			Text: Thank you.
+			Do: ceasefire, standing -5, close
