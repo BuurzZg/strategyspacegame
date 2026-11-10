@@ -1,0 +1,93 @@
+import { defineTrait, Trait } from '../engine/traits.js';
+import { angleOf, angleDiff, turnToward, approach, pitchOf, dirVec, isqrt, clamp } from '../engine/math.js';
+import { FlyTo } from '../activities/fly.js';
+
+// 3D flight. Ships fly along their nose: they turn (yaw and pitch at limited rates),
+// accelerate toward a cruise speed and brake so they stop on the target.
+//
+//   MaxSpeed, Acceleration, Deceleration   world units per tick (per tick^2)
+//   TurnSpeed, PitchSpeed                  angle units per tick (1024 = full turn)
+//   MaxPitch                               steepest climb/dive (256 = vertical)
+//   TurnInPlace                            big hulls slow right down to turn; small craft keep MinSpeed% forward
+//   Slip                                   share of thrust (of 1024) aimed straight at the target, so a ship
+//                                          always converges even when the target is nearly vertical
+defineTrait('Flight', class Flight extends Trait {
+  created() {
+    this.self.mobile = this;
+    this.speed = 0; this.pspeed = 0;
+    this.moving = false;
+    this.goal = null; // last commanded destination, for UI
+  }
+  savePrev() { this.pspeed = this.speed; this.moving = false; }
+
+  // Advance one tick toward (tx, ty, tz). Returns true when the ship has arrived and stopped.
+  flyToward(tx, ty, tz) {
+    const self = this.self, info = this.info, w = this.world;
+    const dx = tx - self.x, dy = ty - self.y, dz = tz - self.z;
+    const h2 = dx * dx + dy * dy, d = isqrt(h2 + dz * dz);
+    if (d <= Math.max(info.ArriveRadius, this.speed)) {
+      self.x = tx; self.y = ty; self.z = tz;
+      this.speed = 0;
+      this.moving = true;
+      return true;
+    }
+    // turn toward the target
+    const h = isqrt(h2);
+    const wantYaw = angleOf(dx, dy);
+    const wantPitch = clamp(pitchOf(h, dz), -info.MaxPitch, info.MaxPitch);
+    if (h > info.ArriveRadius) self.yaw = turnToward(self.yaw, wantYaw, info.TurnSpeed);
+    self.pitch = approach(self.pitch, wantPitch, info.PitchSpeed);
+
+    // how well the nose points at the target (1024 = dead ahead)
+    const f = dirVec(self.yaw, self.pitch);
+    const align = Math.trunc((f[0] * dx + f[1] * dy + f[2] * dz) / d);
+    // speed: cruise, brake for arrival, slow down to turn. Small craft keep MinSpeed% while
+    // cruising (they swing round in wide turns) but may slow right down to arrive.
+    const brake = isqrt(2 * info.Deceleration * d);
+    let want = Math.min(info.MaxSpeed, brake);
+    const minPct = info.TurnInPlace || brake < info.MaxSpeed ? 8 : info.MinSpeed;
+    const alignPct = align <= 0 ? minPct : Math.max(minPct, Math.trunc((align * align * 100) / (1024 * 1024)));
+    want = Math.max(4, Math.trunc((want * alignPct) / 100));
+    this.speed = this.speed < want ? Math.min(want, this.speed + info.Acceleration) : Math.max(want, this.speed - info.Deceleration);
+
+    // move: mostly along the nose, partly straight at the target; on final approach the
+    // manoeuvring thrusters take over and the ship glides straight onto the point
+    const s = d < 4 * info.ArriveRadius + 3 * this.speed ? 1024 : info.Slip;
+    const vx = f[0] * (1024 - s) + Math.trunc((dx * 1024) / d) * s;
+    const vy = f[1] * (1024 - s) + Math.trunc((dy * 1024) / d) * s;
+    const vz = f[2] * (1024 - s) + Math.trunc((dz * 1024) / d) * s;
+    self.x += Math.trunc((vx * this.speed) / 1048576);
+    self.y += Math.trunc((vy * this.speed) / 1048576);
+    self.z += Math.trunc((vz * this.speed) / 1048576);
+    w.clampToBounds(self);
+    this.moving = true;
+    return false;
+  }
+
+  // No orders: coast to a stop along the nose and level out slowly.
+  idle() {
+    const self = this.self, info = this.info;
+    if (this.speed > 0) {
+      this.speed = Math.max(0, this.speed - info.Deceleration);
+      const f = dirVec(self.yaw, self.pitch);
+      self.x += Math.trunc((f[0] * this.speed) / 1024);
+      self.y += Math.trunc((f[1] * this.speed) / 1024);
+      self.z += Math.trunc((f[2] * this.speed) / 1024);
+      this.world.clampToBounds(self);
+      this.moving = this.speed > 0;
+    }
+    if (self.pitch !== 0) self.pitch = approach(self.pitch, 0, info.PitchSpeed >> 1);
+  }
+
+  orderFor(target) { return target.actor ? null : { order: 'Move', priority: 1 }; }
+  resolveOrder(o) {
+    const self = this.self;
+    if ((o.name === 'Move' || (o.name === 'AttackMove' && !self.attack)) && o.target) {
+      this.goal = { x: o.target.x, y: o.target.y, z: o.target.z };
+      self.queueActivity(new FlyTo(o.target.x, o.target.y, o.target.z), o.queued);
+    } else if (o.name === 'Stop') { self.cancelActivity(); this.goal = null; }
+  }
+}, { MaxSpeed: 60, Acceleration: 2, Deceleration: 3, TurnSpeed: 6, PitchSpeed: 5, MaxPitch: 230, TurnInPlace: false, MinSpeed: 35, Slip: 160, ArriveRadius: 48, Bank: 30 });
+
+// Used by the renderer only: yaw change per tick, to bank into turns.
+export function yawRate(a) { return angleDiff(a.pyaw, a.yaw); }

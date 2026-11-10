@@ -1,0 +1,26 @@
+# World actor: traits that exist once per match.
+
+World:
+	Faction@meridian:
+		InternalName: meridian
+		Name: Meridian Hollow
+		Color: 5fe3d0
+		Glow: b8fff5
+		Dark: 103a3a
+		Description: A foundry-city of glass-lit decks. Precise, patient, and running out of time.
+	Faction@cinder:
+		InternalName: cinder
+		Name: Cinder Pact
+		Color: ff6a3d
+		Glow: ffc08a
+		Dark: 4a160c
+		Description: Smelter clans bound by debt and fire. They breed hulls fast and spend them faster.
+	Faction@neutral:
+		InternalName: neutral
+		Name: Derelict
+		Color: 8f97a8
+		Glow: d8dde8
+		Dark: 2a2e38
+		Description: Abandoned hulks drifting in the ring.
+	StartingFleet:
+		Ships: halberd

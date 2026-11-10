@@ -1,0 +1,55 @@
+halberd:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Halberd
+		Class: Frigate
+		Role: Assault frigate
+		Description: A long, armoured frigate built around twin pulse batteries. Slow to turn, hard to stop.
+	Valued:
+		Cost: 450
+	Health:
+		HP: 120000
+		Radius: 820
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 1000
+	Flight:
+		MaxSpeed: 45
+		Acceleration: 1
+		Deceleration: 2
+		TurnSpeed: 4
+		PitchSpeed: 3
+		TurnInPlace: true
+		Slip: 120
+		Bank: 18
+	WithModel:
+		Model: halberd
+
+dart:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Dart
+		Class: Fighter
+		Role: Interceptor
+		Description: A needle of an interceptor with two autocannons and more engine than hull.
+	Valued:
+		Cost: 60
+	Health:
+		HP: 6000
+		Radius: 260
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 420
+	Flight:
+		MaxSpeed: 140
+		Acceleration: 6
+		Deceleration: 6
+		TurnSpeed: 14
+		PitchSpeed: 12
+		MinSpeed: 45
+		Slip: 80
+		Bank: 60
+	WithModel:
+		Model: dart

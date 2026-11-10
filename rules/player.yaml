@@ -1,0 +1,5 @@
+# Player actor: one per player.
+
+Player:
+	PlayerResources:
+		Cash: 1000

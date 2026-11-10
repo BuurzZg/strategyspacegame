@@ -1,0 +1,249 @@
+import * as THREE from '../../lib/three.module.js';
+import { makeOrder } from '../engine/order.js';
+import { R } from '../render/space.js';
+import { MoveWidget } from './movewidget.js';
+
+// Mouse and keyboard → selection, camera and Orders.
+//   Left click / drag     select / box select (Shift adds)     Double-click  select + focus
+//   Right-drag            rotate camera       Scroll  zoom      Middle-drag  pan
+//   Right-click (space)   open the move disc  M  same            F  focus and follow selection
+//   In move mode: move the mouse over the plane, hold Shift and move up/down for height,
+//   left-click to confirm, right-click or Esc to cancel.
+const DRAG = 5;
+
+export class Input {
+  constructor(canvas, session, hud, audio) {
+    this.canvas = canvas;
+    this.s = session;
+    this.world = session.world;
+    this.viewer = session.viewer;
+    this.renderer = session.renderer;
+    this.orbit = session.orbit;
+    this.cam = session.camera;
+    this.hud = hud;
+    this.audio = audio;
+    this.selection = [];
+    this.mx = 0; this.my = 0;
+    this.buttons = new Map(); // button -> { x, y, moved }
+    this.box = null;
+    this.keys = new Set();
+    this.hover = null;
+    this.lastClick = { t: 0, id: 0 };
+    this.ray = new THREE.Raycaster();
+    this.widget = new MoveWidget(session.scene);
+    this.move = null; // { center, height, anchorY, anchorH, onPlane, dest }
+    this.listeners = [];
+    this.bind();
+  }
+
+  on(t, ev, fn, o) { t.addEventListener(ev, fn, o); this.listeners.push([t, ev, fn, o]); }
+  dispose() { for (const [t, e, f, o] of this.listeners) t.removeEventListener(e, f, o); }
+
+  bind() {
+    const c = this.canvas;
+    this.on(c, 'contextmenu', (e) => e.preventDefault());
+    this.on(c, 'pointerdown', (e) => this.down(e));
+    this.on(window, 'pointermove', (e) => this.moveEv(e));
+    this.on(window, 'pointerup', (e) => this.up(e));
+    this.on(c, 'wheel', (e) => { e.preventDefault(); this.orbit.zoom(e.deltaY); }, { passive: false });
+    this.on(c, 'dblclick', (e) => e.preventDefault());
+    this.on(window, 'keydown', (e) => this.keyDown(e));
+    this.on(window, 'keyup', (e) => this.keyUp(e));
+    this.on(window, 'blur', () => { this.keys.clear(); this.buttons.clear(); });
+  }
+
+  // ---------------------------------------------------------- picking
+  ndc(x, y) { const r = this.canvas.getBoundingClientRect(); return new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, -((y - r.top) / r.height) * 2 + 1); }
+  project(v) {
+    const p = v.clone().project(this.cam), r = this.canvas.getBoundingClientRect();
+    return { x: r.left + ((p.x + 1) / 2) * r.width, y: r.top + ((1 - p.y) / 2) * r.height, z: p.z };
+  }
+  // On-screen radius (px) of a sphere of radius r (render units) at v.
+  screenRadius(v, r) {
+    const d = this.cam.position.distanceTo(v);
+    return (r / Math.max(0.01, d)) * (this.canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(this.cam.fov / 2))));
+  }
+  pick(x, y) {
+    let best = null, bs = Infinity;
+    for (const v of this.renderer.views.values()) {
+      if (v.actor.dead) continue;
+      const p = this.project(v.pos);
+      if (p.z > 1 || p.z < -1) continue;
+      const rpx = Math.max(10, this.screenRadius(v.pos, v.radius));
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < rpx && d - rpx < bs) { bs = d - rpx; best = v.actor; }
+    }
+    return best;
+  }
+  isMine(a) { return a.owner === this.viewer; }
+  own() { return this.selection.filter((a) => !a.dead && this.isMine(a)); }
+
+  setSelection(list, sound = true) {
+    this.selection = list.filter((a) => !a.dead);
+    this.renderer.selected = new Set(this.selection);
+    if (sound && list.length) this.audio.play('select');
+    this.hud.selectionChanged();
+  }
+  center(list) {
+    const c = new THREE.Vector3();
+    for (const a of list) c.add(this.renderer.views.get(a.id)?.pos || c);
+    return c.multiplyScalar(1 / Math.max(1, list.length));
+  }
+
+  // ---------------------------------------------------------- move mode
+  beginMove() {
+    const ships = this.own().filter((a) => a.mobile);
+    if (!ships.length) return;
+    const center = this.center(ships);
+    this.move = { center, height: 0, anchorY: null, anchorH: 0, onPlane: center.clone(), dest: center.clone() };
+    this.widget.show();
+    this.updateMove();
+    this.hud.modeChanged();
+  }
+  cancelMove() { this.move = null; this.widget.hide(); this.hud.modeChanged(); }
+  updateMove() {
+    const m = this.move;
+    if (!m) return;
+    const b = this.s.renderBounds;
+    if (this.keys.has('shift')) {
+      // height: vertical mouse motion, scaled to the distance of the destination from the camera
+      if (m.anchorY === null) { m.anchorY = this.my; m.anchorH = m.height; }
+      const perPx = (2 * Math.tan(THREE.MathUtils.degToRad(this.cam.fov / 2)) * this.cam.position.distanceTo(m.onPlane)) / this.canvas.clientHeight;
+      m.height = m.anchorH + (m.anchorY - this.my) * perPx;
+    } else {
+      m.anchorY = null;
+      this.ray.setFromCamera(this.ndc(this.mx, this.my), this.cam);
+      const o = this.ray.ray.origin, d = this.ray.ray.direction;
+      if (Math.abs(d.y) > 1e-4) {
+        const t = (m.center.y - o.y) / d.y;
+        if (t > 0) m.onPlane.set(o.x + d.x * t, m.center.y, o.z + d.z * t);
+        else m.onPlane.copy(m.center); // looking away from the plane
+      }
+      m.onPlane.x = Math.max(b.x0, Math.min(b.x1, m.onPlane.x));
+      m.onPlane.z = Math.max(b.z0, Math.min(b.z1, m.onPlane.z));
+    }
+    m.height = Math.max(b.y0 - m.center.y, Math.min(b.y1 - m.center.y, m.height));
+    m.dest.set(m.onPlane.x, m.center.y + m.height, m.onPlane.z);
+  }
+  confirmMove() {
+    const m = this.move;
+    const ships = this.own().filter((a) => a.mobile);
+    if (!m || !ships.length) { this.cancelMove(); return; }
+    this.issue('Move', ships, { x: Math.round(m.dest.x / R), y: Math.round(m.dest.z / R), z: Math.round(m.dest.y / R) });
+    this.renderer.fx.marker(m.dest.x, m.dest.y, m.dest.z, 0x5fe3d0);
+    this.audio.play('order');
+    this.cancelMove();
+    if (!this.orbit.follow) this.followSelection();
+    this.hud.firstOrder();
+  }
+  issue(name, subjects, target, extra) { this.s.om.issue(makeOrder(name, subjects, target, extra)); }
+
+  // ---------------------------------------------------------- pointer
+  down(e) {
+    this.mx = e.clientX; this.my = e.clientY;
+    this.audio.init();
+    this.buttons.set(e.button, { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false });
+    if (e.button === 0 && !this.move) this.box = { x: e.clientX, y: e.clientY, shift: e.shiftKey, active: false };
+    this.canvas.setPointerCapture?.(e.pointerId);
+  }
+  moveEv(e) {
+    const dx = e.clientX - this.mx, dy = e.clientY - this.my;
+    this.mx = e.clientX; this.my = e.clientY;
+    for (const [btn, st] of this.buttons) {
+      if (!st.moved && Math.hypot(e.clientX - st.x, e.clientY - st.y) > DRAG) st.moved = true;
+      if (!st.moved) continue;
+      if (btn === 2) this.orbit.rotate(dx, dy);
+      else if (btn === 1) this.orbit.pan(dx, dy);
+    }
+    if (this.box && this.buttons.get(0)?.moved) this.box.active = true;
+    if (this.move && !this.buttons.get(2)?.moved) this.updateMove();
+  }
+  up(e) {
+    const st = this.buttons.get(e.button);
+    this.buttons.delete(e.button);
+    if (!st) return;
+    if (e.button === 0) {
+      const box = this.box;
+      this.box = null;
+      if (this.move) { if (!st.moved) this.confirmMove(); return; }
+      if (box && box.active) { this.boxSelect(box, e.clientX, e.clientY); return; }
+      this.clickSelect(e.clientX, e.clientY, e.shiftKey);
+    } else if (e.button === 2 && !st.moved) {
+      if (this.move) { this.cancelMove(); return; }
+      const hit = this.pick(e.clientX, e.clientY);
+      if (hit && this.isMine(hit)) { if (!this.selection.includes(hit)) this.setSelection([hit]); return; }
+      if (this.own().some((a) => a.mobile)) { this.beginMove(); this.updateMove(); }
+    }
+  }
+  clickSelect(x, y, additive) {
+    const a = this.pick(x, y);
+    const now = performance.now();
+    if (a && this.lastClick.id === a.id && now - this.lastClick.t < 350) { this.focusSelection(); this.lastClick = { t: 0, id: 0 }; return; }
+    this.lastClick = { t: now, id: a ? a.id : 0 };
+    if (!a) { if (!additive) this.setSelection([]); return; }
+    if (additive) this.setSelection(this.selection.includes(a) ? this.selection.filter((s) => s !== a) : [...this.selection, a]);
+    else this.setSelection([a]);
+  }
+  boxSelect(b, x, y) {
+    const lx = Math.min(b.x, x), hx = Math.max(b.x, x), ly = Math.min(b.y, y), hy = Math.max(b.y, y);
+    const hits = [];
+    for (const v of this.renderer.views.values()) {
+      if (v.actor.dead || !this.isMine(v.actor)) continue;
+      const p = this.project(v.pos);
+      if (p.z < 1 && p.x >= lx && p.x <= hx && p.y >= ly && p.y <= hy) hits.push(v.actor);
+    }
+    this.setSelection(b.shift ? [...new Set([...this.own(), ...hits])] : hits);
+  }
+  followSelection() {
+    const list = this.selection.filter((a) => !a.dead);
+    if (!list.length) return false;
+    this.orbit.focusOn(this.center(list), () => { const l = this.selection.filter((a) => !a.dead); return l.length ? this.center(l) : null; });
+    return true;
+  }
+  focusSelection() {
+    const list = this.selection.filter((a) => !a.dead);
+    if (!this.followSelection()) return;
+    const maxR = Math.max(...list.map((a) => this.renderer.views.get(a.id)?.radius || 2));
+    const spread = Math.max(...list.map((a) => this.renderer.views.get(a.id)?.pos.distanceTo(this.center(list)) || 0));
+    this.orbit.distT = Math.max(this.orbit.minDist, Math.min(400, (maxR * 6 + spread * 2.2)));
+  }
+
+  // ---------------------------------------------------------- keys
+  keyDown(e) {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'shift' && !this.keys.has('shift') && this.move) { this.move.anchorY = null; }
+    this.keys.add(k);
+    if (k === 'escape') { if (this.move) this.cancelMove(); else this.setSelection([], false); return; }
+    if (k === 'm') { if (this.move) this.cancelMove(); else this.beginMove(); return; }
+    if (k === 'f') { this.focusSelection(); return; }
+    if (k === 'h' || k === '?') { this.hud.toggleHelp(); return; }
+    if ((e.ctrlKey || e.metaKey) && k === 'a') { e.preventDefault(); this.setSelection(this.world.actors.filter((a) => this.isMine(a) && a.mobile)); return; }
+    if (k === 'backspace' || k === 'delete') { const u = this.own().filter((a) => a.mobile); if (u.length) this.issue('Stop', u); }
+  }
+  keyUp(e) {
+    const k = e.key.toLowerCase();
+    this.keys.delete(k);
+    if (k === 'shift' && this.move) { this.move.anchorY = null; this.updateMove(); }
+  }
+
+  update(dt) {
+    let dx = 0, dz = 0, rot = 0;
+    if (this.keys.has('a') || this.keys.has('arrowleft')) dx -= 1;
+    if (this.keys.has('d') || this.keys.has('arrowright')) dx += 1;
+    if (this.keys.has('w') || this.keys.has('arrowup')) dz += 1;
+    if (this.keys.has('s') || this.keys.has('arrowdown')) dz -= 1;
+    if (this.keys.has('q')) rot -= 1;
+    if (this.keys.has('e')) rot += 1;
+    if (dx || dz) this.orbit.panPlane(dx * dt * 60, dz * dt * 60);
+    if (rot) this.orbit.rotate(rot * dt * 260, 0);
+    if (this.selection.some((a) => a.dead)) this.setSelection(this.selection.filter((a) => !a.dead), false);
+    if (this.move) {
+      if (dx || dz || rot) this.updateMove();
+      const ships = this.own().filter((a) => a.mobile).map((a) => this.renderer.views.get(a.id)?.pos).filter(Boolean);
+      if (!ships.length) this.cancelMove();
+      else this.widget.update(this.move.center, this.move.onPlane, this.move.dest, ships, performance.now() / 1000);
+    }
+    this.hover = this.box && this.box.active ? null : this.pick(this.mx, this.my);
+  }
+}

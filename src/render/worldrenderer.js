@@ -1,0 +1,108 @@
+import * as THREE from '../../lib/three.module.js';
+import { buildShip } from './ships.js';
+import { Effects } from './effects.js';
+import { R } from './space.js';
+import { yawRate } from '../traits/flight.js';
+
+const TAU = Math.PI * 2;
+const toRad = (a) => (a / 1024) * TAU;
+const lerpAngle = (a, b, t) => { let d = (b - a) & 1023; if (d > 512) d -= 1024; return a + d * t; };
+
+export function factionStyle(info) {
+  return { id: info.InternalName, name: info.Name, color: parseInt(info.Color, 16), glow: parseInt(info.Glow, 16), dark: parseInt(info.Dark, 16), css: `#${info.Color}` };
+}
+
+// Reads the simulation and draws it. Never writes to it.
+export class WorldRenderer {
+  constructor(scene, world, viewer) {
+    this.scene = scene;
+    this.world = world;
+    this.viewer = viewer;
+    this.styles = new Map([...world.factions].map(([k, v]) => [k, factionStyle(v)]));
+    this.views = new Map();
+    this.selected = new Set();
+    this.hover = null;
+    this.fx = new Effects(scene);
+    this.tmp = new THREE.Vector3();
+    // destination lines for selected ships
+    this.goalGeo = new THREE.BufferGeometry();
+    this.goalPos = new Float32Array(6 * 128);
+    this.goalGeo.setAttribute('position', new THREE.BufferAttribute(this.goalPos, 3).setUsage(THREE.DynamicDrawUsage));
+    this.goalLines = new THREE.LineSegments(this.goalGeo, new THREE.LineBasicMaterial({ color: 0x9ff3e6, transparent: true, opacity: 0.45, depthWrite: false }));
+    this.goalLines.frustumCulled = false;
+    scene.add(this.goalLines);
+  }
+
+  styleOf(player) { return this.styles.get(player.faction) || this.styles.values().next().value; }
+
+  makeView(a) {
+    const wm = a.info.traitInfo('WithModel');
+    if (!wm || !wm.Model) return null;
+    const style = this.styleOf(a.owner);
+    const model = buildShip(wm.Model, style);
+    model.root.rotation.order = 'YZX';
+    this.scene.add(model.root);
+    return { actor: a, model, style, roll: 0, radius: (a.info.traitInfo('Selectable')?.Radius || 800) * R, pos: new THREE.Vector3() };
+  }
+
+  syncViews() {
+    for (const a of this.world.actors) if (!this.views.has(a.id) && !a.dead) { const v = this.makeView(a); if (v) this.views.set(a.id, v); }
+    for (const [id, v] of this.views) if (v.actor.disposed || v.actor.dead) { this.scene.remove(v.model.root); this.views.delete(id); this.selected.delete(v.actor); }
+  }
+
+  // Interpolated render-space position of an actor (alpha in [0,1] between ticks).
+  renderPos(a, alpha, out = this.tmp) {
+    return out.set((a.px + (a.x - a.px) * alpha) * R, (a.pz + (a.z - a.pz) * alpha) * R, (a.py + (a.y - a.py) * alpha) * R);
+  }
+
+  update(t, dt, alpha) {
+    this.syncViews();
+    const glowColor = new THREE.Color();
+    for (const v of this.views.values()) {
+      const a = v.actor, m = v.model;
+      this.renderPos(a, alpha, v.pos);
+      m.root.position.copy(v.pos);
+      const yaw = lerpAngle(a.pyaw, a.yaw, alpha), pitch = a.ppitch + (a.pitch - a.ppitch) * alpha;
+      m.root.rotation.set(0, -toRad(yaw), toRad(pitch));
+      // bank into turns (visual only)
+      const bank = a.mobile ? a.mobile.info.Bank : 0;
+      const targetRoll = Math.max(-1, Math.min(1, -yawRate(a) / 6)) * (bank / 57.3);
+      v.roll += (targetRoll - v.roll) * Math.min(1, dt * 3);
+      m.body.rotation.x = v.roll;
+      // engines: flare size follows throttle, trails when moving
+      const sp = a.mobile ? a.mobile.pspeed + (a.mobile.speed - a.mobile.pspeed) * alpha : 0;
+      const throttle = a.mobile ? Math.min(1, sp / a.mobile.info.MaxSpeed) : 0;
+      m.engines.forEach((e, i) => {
+        const fl = m.flares[i];
+        fl.scale.setScalar(e.size * (0.6 + throttle * 1.6 + Math.sin(t * 40 + i) * 0.05));
+        fl.material.opacity = 0.35 + throttle * 0.65;
+        if (throttle > 0.05) {
+          const p = fl.getWorldPosition(this.tmp);
+          glowColor.setHex(v.style.glow);
+          this.fx.glow.spawn(p.x, p.y, p.z, 0, 0, 0, 0.45 + throttle * 0.9, e.size * 0.9 * throttle + 0.15, 0.05, glowColor, 0.55 * throttle);
+        }
+      });
+    }
+    this.updateGoalLines(alpha);
+    this.fx.update(dt);
+  }
+
+  updateGoalLines(alpha) {
+    let n = 0;
+    const p = this.goalPos;
+    for (const a of this.selected) {
+      if (a.dead || !a.mobile || !a.mobile.goal || n >= 126) continue;
+      const g = a.mobile.goal;
+      const s = this.renderPos(a, alpha);
+      p.set([s.x, s.y, s.z, g.x * R, g.z * R, g.y * R], n * 6); n++;
+      // small cross at the destination
+      const x = g.x * R, y = g.z * R, z = g.y * R, c = 0.8;
+      p.set([x - c, y, z, x + c, y, z], n * 6); n++;
+      p.set([x, y, z - c, x, y, z + c], n * 6); n++;
+    }
+    this.goalGeo.setDrawRange(0, n * 2);
+    this.goalGeo.attributes.position.needsUpdate = true;
+  }
+
+  consumeEvents() {}
+}

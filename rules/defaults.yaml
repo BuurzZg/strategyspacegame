@@ -1,0 +1,11 @@
+# Abstract bases. Distances are world units (1024 per cell; 1 cell is about 100 m in the UI).
+# Speeds are world units per tick (25 ticks per second). Angles: 1024 per full turn.
+
+^Ship:
+	Tooltip:
+	Valued:
+	Health:
+	Armor:
+	Selectable:
+	Flight:
+	WithModel:

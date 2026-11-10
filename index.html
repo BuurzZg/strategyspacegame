@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Driftforge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!--DF:STYLE-->
+<style>
+/* Layout: full-bleed 3D view; a thin status strip on top, a selection card bottom-left,
+   a controls card on the right, and in-world marks drawn on an overlay canvas. */
+:root {
+  --ink: #05060b;
+  --panel: rgba(9, 12, 20, 0.84);
+  --panel-solid: #0b0f19;
+  --line: #1d2738;
+  --line-soft: #141c29;
+  --text: #dfe8f2;
+  --muted: #7f8ea3;
+  --accent: #5fe3d0;   /* Meridian Hollow teal */
+  --height: #ffb547;   /* altitude and height cues */
+  --good: #7cf2a8;
+  --bad: #ff5a64;
+  --f-display: "Oxanium", "Eurostile", "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; margin: 0; }
+body { background: var(--ink); color: var(--text); font: 14px/1.45 var(--f-body); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
+#app { position: fixed; inset: 0; }
+#view, #overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#overlay { pointer-events: none; }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+kbd { font: 500 11px var(--f-mono); color: var(--text); background: #121a28; border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+
+#top {
+  position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 18px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(to bottom, rgba(5, 6, 11, 0.9), rgba(5, 6, 11, 0)); pointer-events: none;
+}
+.brand { font: 700 17px var(--f-display); letter-spacing: 0.34em; color: var(--text); }
+.brand b { color: var(--accent); font-weight: 700; }
+.tag { font: 500 11px var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; }
+#btn-help { margin-left: auto; pointer-events: auto; background: var(--panel); border: 1px solid var(--line); padding: 6px 12px; border-radius: 3px; display: flex; gap: 8px; align-items: center; }
+#btn-help:hover { border-color: var(--accent); }
+
+#sel {
+  position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: min(360px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 12px 14px;
+}
+#sel header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+#sel-name { margin: 0; font: 700 18px var(--f-display); letter-spacing: 0.06em; }
+#sel-status { font: 500 11px var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+#sel-class { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+#sel-desc { margin: 8px 0 0; color: var(--text); font-size: 13px; max-width: 46ch; }
+#sel-desc:empty { display: none; }
+#sel-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px 14px; margin: 10px 0 0; }
+#sel-stats div { display: flex; flex-direction: column; }
+dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+dd { margin: 0; font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+
+#help {
+  position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 60px; width: min(330px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--line); padding: 14px 16px; max-height: calc(100% - 90px); overflow-y: auto;
+}
+#help h2 { margin: 0 0 4px; font: 600 14px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; }
+#help p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+#help h3 { margin: 12px 0 6px; font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+#help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; align-items: baseline; }
+#help dd { font: 13px var(--f-body); color: var(--text); }
+#help dt { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text); }
+/* Info panels never block the view: clicks pass through to the battlefield. */
+#sel, #help, #move-hint { pointer-events: none; }
+#help-close { pointer-events: auto; }
+#help-close { position: absolute; top: 8px; right: 8px; background: none; border: 0; color: var(--muted); font-size: 18px; line-height: 1; padding: 4px 8px; }
+.h { color: var(--height); }
+.a { color: var(--accent); }
+
+#move-hint {
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  background: var(--panel); border: 1px solid var(--line); padding: 8px 14px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font-size: 13px; max-width: calc(100vw - 32px);
+}
+#move-hint span { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+#boot-error { position: absolute; left: 50%; top: 40%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--bad); color: var(--bad); padding: 14px 18px; max-width: 80vw; }
+
+@media (max-width: 760px) {
+  #help { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-height: 45vh; }
+  .tag { display: none; }
+  #move-hint { bottom: auto; top: 54px; }
+}
+</style>
+<!--DF:STYLE-END-->
+</head>
+<body>
+<!--DF:BODY-->
+<div id="app">
+  <canvas id="view"></canvas>
+  <canvas id="overlay"></canvas>
+
+  <header id="top">
+    <div class="brand">DRIFT<b>FORGE</b></div>
+    <span class="tag">Milestone 1 · flight trials</span>
+    <button id="btn-help" type="button">Controls <kbd>H</kbd></button>
+  </header>
+
+  <section id="sel" hidden aria-label="Selected ships">
+    <header><h2 id="sel-name"></h2><span id="sel-status"></span></header>
+    <p id="sel-class"></p>
+    <p id="sel-desc"></p>
+    <dl id="sel-stats"></dl>
+  </section>
+
+  <aside id="help" aria-label="Controls">
+    <button id="help-close" type="button" aria-label="Close controls">×</button>
+    <h2>Flight trials</h2>
+    <p>Your Halberd frigate is selected. Right-click empty space to plot a course, hold <kbd>Shift</kbd> to set the height, then left-click to go.</p>
+    <h3>Camera</h3>
+    <dl>
+      <dt><kbd>Right-drag</kbd></dt><dd>Rotate around the focus</dd>
+      <dt><kbd>Scroll</kbd></dt><dd>Zoom, close-up to tactical</dd>
+      <dt><kbd>Middle-drag</kbd></dt><dd>Pan</dd>
+      <dt><kbd>W A S D</kbd></dt><dd>Pan across the plane</dd>
+      <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>Rotate left / right</dd>
+      <dt><kbd>F</kbd></dt><dd>Focus and follow the selection</dd>
+    </dl>
+    <h3>Ships</h3>
+    <dl>
+      <dt><kbd>Click</kbd></dt><dd>Select a ship (<kbd>Shift</kbd> adds)</dd>
+      <dt><kbd>Drag</kbd></dt><dd>Box-select</dd>
+      <dt><kbd>Double-click</kbd></dt><dd>Select and focus</dd>
+      <dt><kbd>Ctrl A</kbd></dt><dd>Select all ships</dd>
+      <dt><kbd>Backspace</kbd></dt><dd>All stop</dd>
+    </dl>
+    <h3>Plotting a move</h3>
+    <dl>
+      <dt><kbd>Right-click</kbd> or <kbd>M</kbd></dt><dd>Open the <span class="a">movement disc</span> at the fleet's height</dd>
+      <dt><kbd>Mouse</kbd></dt><dd>Place the point on the disc</dd>
+      <dt><kbd>Shift</kbd> + <kbd>Mouse</kbd></dt><dd>Raise or lower it along the <span class="h">height line</span></dd>
+      <dt><kbd>Left-click</kbd></dt><dd>Engage</dd>
+      <dt><kbd>Right-click</kbd> <kbd>Esc</kbd></dt><dd>Cancel</dd>
+    </dl>
+  </aside>
+
+  <div id="move-hint" hidden>
+    <span><kbd>Mouse</kbd> place on the plane</span>
+    <span><kbd>Shift</kbd> height</span>
+    <span><kbd>Left-click</kbd> engage</span>
+    <span><kbd>Right-click</kbd> cancel</span>
+  </div>
+  <p id="boot-error" hidden role="alert"></p>
+</div>
+<script type="module" src="src/main.js"></script>
+<!--DF:BODY-END-->
+</body>
+</html>
