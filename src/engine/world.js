@@ -221,6 +221,8 @@ export class World {
         if (sa > 4 * sb) { wa = 0; wb = 100; } else if (sb > 4 * sa) { wa = 100; wb = 0; }
         if (wa) a.mobile.shoved = this.frame;
         if (wb) b.mobile.shoved = this.frame;
+        if (wa === 100) a.mobile.scraped = this.frame;
+        if (wb === 100) b.mobile.scraped = this.frame;
         a.x -= Math.trunc((ux * push * wa) / (d * 50)); a.y -= Math.trunc((uy * push * wa) / (d * 50)); a.z -= Math.trunc((uz * push * wa) / (d * 50));
         b.x += Math.trunc((ux * push * wb) / (d * 50)); b.y += Math.trunc((uy * push * wb) / (d * 50)); b.z += Math.trunc((uz * push * wb) / (d * 50));
         this.clampToBounds(a); this.clampToBounds(b);
@@ -244,6 +246,7 @@ export class World {
         const push = min - (d2 === 0 ? 0 : d);
         b.x += Math.trunc((ux * push) / d); b.y += Math.trunc((uy * push) / d); b.z += Math.trunc((uz * push) / d);
         b.mobile.shoved = this.frame;
+        b.mobile.scraped = this.frame;
         this.clampToBounds(b);
       }
     }

@@ -73,6 +73,8 @@ A readout beside the marker shows the distance and the target altitude. One grid
 
 Groups keep their spacing when they move. Proper formations arrive in Milestone 5.
 
+Ships steer round asteroids and round hulls much bigger than their own, such as the Forge and the Smelter, instead of flying through them. Each ship plans a detour past the first thing in its way and re-checks the route every third of a second.
+
 ### Production
 
 The Forge builds one ship at a time from its queue. You pay for a ship when you queue it, and get the full cost back if you cancel it.
@@ -155,6 +157,12 @@ Runs the headless tests:
   - a Smelter parked by a far field takes the deliveries, and a docked Gleaner rides along when the Forge moves;
   - move, mine and unload-now orders work, and a new Gleaner starts mining by itself;
   - the Forge's hull is a long capsule, and rocks are solid;
+  - two identical runs give the same sync hash.
+- **Avoidance** (`tools/avoidtest.js`): checks that:
+  - every hull steers round a big rock dead ahead, and the smaller hulls thread a dense field without touching a rock;
+  - ships fly across, along and diagonally over the Forge without scraping its hull;
+  - a Gleaner coming home from behind the Forge flies round it to the furnace maw;
+  - four Gleaners mining for four minutes scrape a rock or a hull in under 1% of their moving ticks (the result is 0);
   - two identical runs give the same sync hash.
 
 ```bash
