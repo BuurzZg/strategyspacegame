@@ -18,7 +18,7 @@ defineTrait('ProvingGrounds', class extends Trait {
     const p = w.players[x.player | 0];
     if (!p) return;
     if (o.name === 'SandboxSpawn') this.spawn(p, x);
-    else if (o.name === 'SandboxOre') p.resources.give(clamp(x.amount | 0, 0, 1000000));
+    else if (o.name === 'SandboxOre') p.resources.give(clamp(x.amount | 0, 0, 1000000), 'gift');
     else if (o.name === 'SandboxClear') for (const a of w.actors.slice()) if (a.owner === p && a.health && !a.dead) w.removeActor(a);
   }
   spawn(p, x) {

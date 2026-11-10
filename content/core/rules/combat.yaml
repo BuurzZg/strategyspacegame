@@ -42,6 +42,20 @@ gleaner:
 	Stance:
 		Initial: passive
 
+shearer:
+	Crew:
+		Count: 3
+		Role: miners
+	Stance:
+		Initial: passive
+
+skimmer:
+	Crew:
+		Count: 3
+		Role: miners
+	Stance:
+		Initial: passive
+
 smelter:
 	Crew:
 		Count: 10

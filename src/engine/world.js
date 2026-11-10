@@ -148,7 +148,7 @@ export class World {
   // Distance from a point to the surface of an actor's hull, asteroid or wreck (0 inside it).
   edgeDistPoint(x, y, z, t) {
     const [cx, cy, cz] = this.hullAxisPoint(t, x, y, z);
-    const r = t.health ? t.health.info.Radius : t.asteroid ? t.asteroid.radius() : t.wreck ? t.wreck.radius() : 0;
+    const r = t.health ? t.health.info.Radius : t.body ? t.body.radius() : 0;
     const d = isqrt(distSq3(x, y, z, cx, cy, cz)) - r;
     return d < 0 ? 0 : d;
   }
@@ -253,8 +253,8 @@ export class World {
     }
   }
 
-  // Solid bodies that ships steer round and are pushed off: asteroids and wrecks.
-  solids() { return [...this.traitsOfType('Asteroid'), ...this.traitsOfType('Wreck')]; }
+  // Solid bodies that ships steer round and are pushed off: asteroids, wrecks and rock formations.
+  solids() { return [...this.traitsOfType('Asteroid'), ...this.traitsOfType('Wreck'), ...this.traitsOfType('Rock')]; }
 
   // Hash of the simulation state; compared between clients (and save/load) to detect divergence.
   syncHash() {
@@ -265,10 +265,11 @@ export class World {
       h = hashMix(h, a.yaw); h = hashMix(h, a.pitch);
       if (a.mobile) h = hashMix(h, a.mobile.speed);
       if (a.health) h = hashMix(h, a.health.hp);
-      if (a.asteroid) h = hashMix(h, a.asteroid.ore);
+      if (a.deposit) h = hashMix(h, a.deposit.amount);
       if (a.collector) h = hashMix(h, a.collector.cargo);
     }
-    for (const p of this.players) h = hashMix(h, p.resources ? p.resources.cash : 0);
+    const kinds = Object.keys(this.rules.content?.resources || { ore: 1 }); // fixed content order
+    for (const p of this.players) if (p.resources) for (const k of kinds) h = hashMix(h, p.resources.amounts[k] | 0);
     for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }
     h = hashMix(h, this.effects.length);
     for (const e of this.effects) { h = hashMix(h, e.x); h = hashMix(h, e.y); h = hashMix(h, e.z); }

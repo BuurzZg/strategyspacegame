@@ -13,13 +13,13 @@ export class Harvest extends Activity {
     if (c.cargo >= c.info.Capacity) { this.queueChild(new DeliverOre(0)); return false; }
     let ast = this.prefer ? w.actorById.get(this.prefer) : null;
     this.prefer = 0;
-    if (!ast || ast.dead || !ast.asteroid) ast = c.findAsteroid();
+    if (!c.canWork(ast) || (c.cargo > 0 && ast.deposit.kind !== c.kind)) ast = c.findAsteroid();
     if (!ast) {
       if (c.cargo > 0) { this.queueChild(new DeliverOre(0)); return false; }
       return true;
     }
     c.target = ast.id;
-    c.lastField = ast.asteroid.field;
+    c.lastField = ast.deposit.field ?? -1;
     this.queueChild(new MineAsteroid(ast.id));
     return false;
   }
@@ -36,7 +36,8 @@ export class MineAsteroid extends Activity {
     if (this.canceling) return true;
     const w = self.world, c = self.collector, m = self.mobile;
     const ast = w.actorById.get(this.id);
-    if (!ast || ast.dead || c.cargo >= c.info.Capacity) return true;
+    if (!ast || ast.dead || !ast.deposit || c.cargo >= c.info.Capacity) return true;
+    if (c.cargo > 0 && ast.deposit.kind !== c.kind) return true; // one kind per load
     const range = c.info.MineRange;
     const edge = w.edgeDist(self, ast);
     if (!this.mining && edge > range + 150) {
@@ -55,7 +56,8 @@ export class MineAsteroid extends Activity {
     c.miningFrame = w.frame;
     if (++this.t >= c.info.MineInterval) {
       this.t = 0;
-      c.cargo += ast.asteroid.take(Math.min(c.info.MineAmount, c.info.Capacity - c.cargo));
+      c.kind = ast.deposit.kind;
+      c.cargo += ast.deposit.take(Math.min(c.info.MineAmount, c.info.Capacity - c.cargo));
     }
     return c.cargo >= c.info.Capacity || ast.dead;
   }
@@ -116,10 +118,10 @@ export class DeliverOre extends Activity {
       self.x = p.x; self.y = p.y; self.z = p.z; self.yaw = dock.yaw; self.pitch = dock.pitch; m.speed = 0;
       const n = Math.min(c.cargo, c.info.UnloadAmount);
       c.cargo -= n; this.delivered += n;
-      self.owner.resources.give(n);
+      self.owner.resources.giveKind(c.kind, n, 'gathered');
       c.unloadFrame = w.frame;
       if (c.cargo <= 0) {
-        w.fx({ t: 'deposit', actor: self.id, dock: dock.id, owner: self.owner.index, amount: this.delivered, x: self.x, y: self.y, z: self.z });
+        w.fx({ t: 'deposit', actor: self.id, dock: dock.id, owner: self.owner.index, amount: this.delivered, kind: c.kind, x: self.x, y: self.y, z: self.z });
         this.phase = 'out';
       }
       return false;

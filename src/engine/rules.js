@@ -2,8 +2,6 @@ import { parseYaml, mergeFiles, resolveInheritance } from './miniyaml.js';
 import { TraitRegistry, ProjectileRegistry, WarheadRegistry, compileCondition } from './traits.js';
 import { parseWDist } from './math.js';
 
-export const RULE_FILES = ['rules/world.yaml', 'rules/player.yaml', 'rules/defaults.yaml', 'rules/ships.yaml', 'rules/warships.yaml', 'rules/fauna.yaml', 'rules/combat.yaml'];
-export const WEAPON_FILES = ['rules/weapons.yaml'];
 
 // Parse a field value according to the type of its default.
 function parseField(def, node, where) {
@@ -112,12 +110,8 @@ export class Rules {
   }
 }
 
-// Load rule texts with any reader (fetch in the browser, fs in Node).
-export async function loadRuleTexts(readText) {
-  const read = async (files) => Promise.all(files.map(async (f) => [f, await readText(f)]));
-  return { rules: await read(RULE_FILES), weapons: await read(WEAPON_FILES) };
-}
-export async function loadRules(readText, extraNodes = []) {
-  const t = await loadRuleTexts(readText);
-  return new Rules(t.rules, t.weapons, extraNodes);
+// Load the rules (and the rest of the content) with any reader: fetch in the browser, fs in Node.
+export async function loadRules(readText, packs) {
+  const { loadContent } = await import('./content.js');
+  return loadContent(readText, packs);
 }

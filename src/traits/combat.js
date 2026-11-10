@@ -178,17 +178,33 @@ defineTrait('LeavesWreck', class extends Trait {
 }, { Pct: 40, Bonus: 0 });
 
 // A wreck drifts on with the momentum the ship died with (in 1/4 units per tick), slowing
-// to a stop, and is solid: ships steer round it. Salvage is cut from it in Milestone 6.
+// to a stop, and is solid: ships steer round it. Shearers cut salvage from it.
 defineTrait('Wreck', class Wreck extends Trait {
   created() {
     const i = this.self.init;
-    this.self.wreck = this;
+    this.self.wreck = this; this.self.deposit = this; this.self.body = this;
     this.size = i.radius || this.info.Radius;
     this.salvage = i.salvage ?? this.info.Salvage;
+    this.maxAmount = Math.max(1, this.salvage);
+    this.kind = 'salvage'; this.field = -1;
     this.model = i.model || ''; this.of = i.of || '';
     this.vx = i.vx | 0; this.vy = i.vy | 0; this.vz = i.vz | 0;
   }
   radius() { return this.size; }
+  get amount() { return this.salvage; }
+  get solid() { return true; }
+  // Shearers cut salvage from it; when the last is taken the hulk breaks apart.
+  take(n) {
+    const t = Math.min(n, this.salvage);
+    this.salvage -= t;
+    if (this.salvage <= 0 && !this.self.dead) {
+      const self = this.self, w = this.world;
+      self.dead = true;
+      w.fx({ t: 'depleted', actor: self.id, x: self.x, y: self.y, z: self.z, radius: this.size, wreck: true });
+      w.addFrameEndTask((ww) => ww.removeActor(self));
+    }
+    return t;
+  }
   tick() {
     if (!this.vx && !this.vy && !this.vz) return;
     const s = this.self;

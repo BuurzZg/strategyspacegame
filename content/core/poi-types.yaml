@@ -1,0 +1,176 @@
+# Point-of-interest templates. Each visit builds a map from one of these, with the seed of
+# that place, so the same place always comes out the same.
+#
+# Ranges are "min-max" (whole numbers); a single number means exactly that.
+#   Size                    the map in cells (1 cell is about 100 m): width, depth, height
+#   Sky                     backdrop tint (hex)
+#   Deposit@name            asteroid fields: Kind (ore, ice), Fields, Rocks per field, Spread
+#                           (cells), Amount per rock, Shape (ball, or tail: strung out in a line)
+#   Wrecks                  derelicts: Count, Of (hulls they were), Salvage each, Clusters
+#   Hulk                    one giant derelict: Of, Salvage, Size (radius in world units)
+#   Clouds@name             gas: Kind (glim, spores), Count, Size (radius, world units), Amount
+#   Formation@name          crystal rock: Shape (arch, ring, spire), Count, Size (cells)
+#   Nebula                  coloured gas, for looks (and sensors, later): Count, Size (cells), Color
+#   Encounter@name          hostiles: Side (gaunt, fauna), Ships, Count (groups), Chance (%),
+#                           Behaviour (lurk: wait and pounce on what comes close; hunt: come for
+#                           the Forge after Delay seconds), Delay
+#   Names                   for named places (a Hulk's ship): picked from this list
+
+ScrapShoal:
+	Name: Scrap Shoal
+	Description: A dense drift of debris: ore rocks and dead ships, and sometimes something living in the wrecks.
+	Size: 176, 176, 56
+	Sky: 7a4a8a
+	Deposit@ore:
+		Kind: ore
+		Fields: 2-3
+		Rocks: 6-10
+		Spread: 5-7
+		Amount: 500-1200
+	Deposit@ice:
+		Kind: ice
+		Fields: 0-1
+		Rocks: 4-6
+		Spread: 4-5
+		Amount: 300-700
+	Wrecks:
+		Count: 8-12
+		Of: halberd, picket, spindle, gleaner, smelter, sabre
+		Salvage: 120-450
+		Clusters: 2-3
+	Clouds@glim:
+		Kind: glim
+		Count: 0-1
+		Size: 2400-3200
+		Amount: 250-500
+	Nebula:
+		Count: 1-2
+		Size: 30-50
+		Color: 6a3a8a
+	Encounter@mites:
+		Side: fauna
+		Ships: gnasher, gnasher, gnasher, gnasher
+		Count: 1
+		Chance: 50
+		Behaviour: lurk
+
+OreReef:
+	Name: Ore Reef
+	Description: Rich ore among crystal arches and spires. Quiet, and very beautiful.
+	Size: 176, 176, 64
+	Sky: 3a5a8a
+	Deposit@ore:
+		Kind: ore
+		Fields: 3-4
+		Rocks: 8-12
+		Spread: 5-8
+		Amount: 900-2000
+	Formation@arch:
+		Shape: arch
+		Count: 1-2
+		Size: 8-12
+	Formation@ring:
+		Shape: ring
+		Count: 0-1
+		Size: 9-13
+	Formation@spire:
+		Shape: spire
+		Count: 1-2
+		Size: 6-9
+	Nebula:
+		Count: 1
+		Size: 40-60
+		Color: 2a5a7a
+
+IceTail:
+	Name: Ice Tail
+	Description: The long debris trail of a broken comet. The best place in the Drift for water.
+	Size: 192, 160, 48
+	Sky: 4a6a8a
+	Deposit@ice:
+		Kind: ice
+		Fields: 3-4
+		Rocks: 8-11
+		Spread: 4-6
+		Amount: 600-1400
+		Shape: tail
+	Deposit@ore:
+		Kind: ore
+		Fields: 1
+		Rocks: 5-7
+		Spread: 4-5
+		Amount: 400-800
+	Clouds@glim:
+		Kind: glim
+		Count: 1
+		Size: 2400-3000
+		Amount: 300-500
+	Nebula:
+		Count: 1
+		Size: 30-40
+		Color: 5a8aaa
+
+LanternMist:
+	Name: Lantern Mist
+	Description: A Glim nebula. Fuel and spore drifts, poor sight lines, and things that hunt in the haze.
+	Size: 176, 176, 64
+	Sky: 8a6a3a
+	Clouds@glim:
+		Kind: glim
+		Count: 4-6
+		Size: 2800-4000
+		Amount: 500-1100
+	Clouds@spores:
+		Kind: spores
+		Count: 3-5
+		Size: 2400-3400
+		Amount: 400-900
+	Deposit@ore:
+		Kind: ore
+		Fields: 1
+		Rocks: 5-7
+		Spread: 4-5
+		Amount: 400-800
+	Nebula:
+		Count: 3-4
+		Size: 40-70
+		Color: 9a7a3a
+	Encounter@pack:
+		Side: fauna
+		Ships: gnasher, gnasher, gnasher, gnasher, gnasher, gnasher
+		Count: 1
+		Chance: 80
+		Behaviour: hunt
+		Delay: 90-150
+
+Wreck:
+	Name: Wreck
+	Description: One giant derelict, and the debris of whatever killed it. Rich salvage, and someone may have got here first.
+	Size: 160, 160, 56
+	Sky: 6a3a3a
+	Hulk:
+		Of: forge
+		Salvage: 2400-3600
+		Size: 2600
+	Wrecks:
+		Count: 6-9
+		Of: halberd, picket, sabre, spindle
+		Salvage: 150-400
+		Clusters: 1-2
+	Deposit@ore:
+		Kind: ore
+		Fields: 1-2
+		Rocks: 5-8
+		Spread: 4-6
+		Amount: 400-900
+	Nebula:
+		Count: 1
+		Size: 30-40
+		Color: 7a3a3a
+	Encounter@scavengers:
+		Side: gaunt
+		Ships: dart, dart, dart, picket, halberd
+		Count: 1
+		Chance: 70
+		Behaviour: lurk
+	Names: Patient Hour, Ninth Lantern, Ashgrove, Quiet Tithe, Long Answer, Salt Meridian, Glass Orchard, Ember Psalm

@@ -1,0 +1,30 @@
+# Resources. The first five are gathered on point-of-interest maps; on the galaxy map (from
+# Milestone 7) ice melts into water, spores feed the hydroponics, and Glim fuels the Skein.
+#   Color: how it is drawn in the HUD and on the map
+#   Gathered by: which collectors pick it up (for the docs and the HUD)
+
+ore:
+	Name: Ore
+	Color: d9a577
+	Description: Metal from asteroids. Builds ships and patches hulls.
+	Order: 1
+ice:
+	Name: Ice
+	Color: a8e4ff
+	Description: Frozen water from comet shards and pale rocks. It melts into water for the crew.
+	Order: 2
+salvage:
+	Name: Salvage
+	Color: c9b8a6
+	Description: Plating, wiring and machinery cut from wrecks. Repairs systems and buys goodwill.
+	Order: 3
+glim:
+	Name: Glim
+	Color: fff0b0
+	Description: A pale, luminous condensate skimmed from nebulae. The Skein Drive burns it.
+	Order: 4
+spores:
+	Name: Spores
+	Color: 9be8a0
+	Description: Drifting biomass. The Forge's hydroponics grow it into food.
+	Order: 5

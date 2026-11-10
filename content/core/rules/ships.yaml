@@ -91,11 +91,94 @@ gleaner:
 		Model: gleaner
 	# 100 ore per trip: 2 ore every 5 ticks is 10 s of mining; unloading takes under a second.
 	Collector:
+		Kinds: ore, ice
 		Capacity: 100
 		MineAmount: 2
 		MineInterval: 5
 		MineRange: 600
 		UnloadAmount: 5
+
+shearer:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Shearer
+		Class: Utility
+		Role: Salvage cutter
+		Description: A tug with a cutting arm. It slices plating and machinery out of wrecks and brings it home.
+	Valued:
+		Cost: 120
+	Buildable:
+		Queue: Forge
+		BuildDuration: 325
+		BuildPaletteOrder: 3
+	ConsumesCapacity:
+		Amount: 1
+	Health:
+		HP: 18000
+		Radius: 320
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 500
+	Flight:
+		MaxSpeed: 64
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 8
+		PitchSpeed: 7
+		MinSpeed: 20
+		Slip: 160
+		Bank: 22
+	WithModel:
+		Model: shearer
+	Collector:
+		Kinds: salvage
+		Capacity: 80
+		MineAmount: 2
+		MineInterval: 6
+		MineRange: 500
+		UnloadAmount: 4
+
+skimmer:
+	Inherits: ^Ship
+	Tooltip:
+		Name: Skimmer
+		Class: Utility
+		Role: Gas collector
+		Description: A ram-scoop with bladders down both flanks. It flies into Glim and spore clouds and fills up.
+	Valued:
+		Cost: 110
+	Buildable:
+		Queue: Forge
+		BuildDuration: 300
+		BuildPaletteOrder: 4
+	ConsumesCapacity:
+		Amount: 1
+	Health:
+		HP: 14000
+		Radius: 300
+	Armor:
+		Type: light
+	Selectable:
+		Radius: 480
+	Flight:
+		MaxSpeed: 76
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 9
+		PitchSpeed: 8
+		MinSpeed: 20
+		Slip: 160
+		Bank: 28
+	WithModel:
+		Model: skimmer
+	Collector:
+		Kinds: glim, spores
+		Capacity: 120
+		MineAmount: 3
+		MineInterval: 5
+		MineRange: 0
+		UnloadAmount: 6
 
 smelter:
 	Inherits: ^Ship

@@ -76,19 +76,19 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
       const type = String(o.extra);
       const err = this.canQueue(type);
       if (err) { this.world.notify(p, err, 'bad'); return; }
-      p.resources.take(this.rules.actor(type).traitInfo('Valued').Cost);
+      p.resources.take(this.rules.actor(type).traitInfo('Valued').Cost, 'spent');
       this.queue.push(type);
     } else if (o.name === 'CancelProduction') {
       const i = o.extra | 0;
       if (i < 0 || i >= this.queue.length) return;
       const type = this.queue.splice(i, 1)[0];
-      p.resources.give(this.rules.actor(type).traitInfo('Valued').Cost);
+      p.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
       if (i === 0) this.progress = 0;
     }
   }
 
   killed() {
-    for (const type of this.queue) this.self.owner.resources.give(this.rules.actor(type).traitInfo('Valued').Cost);
+    for (const type of this.queue) this.self.owner.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
     this.queue.length = 0;
     this.progress = 0;
   }

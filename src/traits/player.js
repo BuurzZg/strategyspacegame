@@ -3,15 +3,29 @@ import { defineTrait, Trait } from '../engine/traits.js';
 // Traits on each player's Player actor. They register themselves on the Player as
 // fast references (player.resources, player.capacity, player.tech).
 
-// Ore in the bank. A lobby slot may override the starting amount.
+// The player's stores: one amount per resource kind in the content (ore, ice, salvage, Glim,
+// spores). Ore is the building currency, so `cash`, take() and give() work on ore. A slot
+// may set the starting ore (`cash`) or every store (`stores`). Every change is tallied by
+// reason (gathered, spent, refunded, gift...) so a visit's report can account for it all.
 defineTrait('PlayerResources', class extends Trait {
   created() {
-    const slot = this.self.owner.slot;
-    this.cash = slot && slot.cash !== undefined ? slot.cash : this.info.Cash;
+    const slot = this.self.owner.slot || {};
+    const kinds = Object.keys(this.world.rules.content?.resources || { ore: 1 });
+    this.amounts = Object.fromEntries(kinds.map((k) => [k, 0]));
+    this.amounts.ore = slot.cash !== undefined ? slot.cash : this.info.Cash;
+    if (slot.stores) for (const k of kinds) if (slot.stores[k] !== undefined) this.amounts[k] = slot.stores[k] | 0;
+    this.start = { ...this.amounts };
+    this.tally = {}; // reason -> kind -> amount
     this.self.owner.resources = this;
   }
-  take(n) { if (this.cash < n) return false; this.cash -= n; return true; }
-  give(n) { this.cash += n; }
+  get cash() { return this.amounts.ore; }
+  set cash(v) { this.amounts.ore = v; }
+  amount(k) { return this.amounts[k] || 0; }
+  note(reason, k, n) { const t = (this.tally[reason] ||= {}); t[k] = (t[k] || 0) + n; }
+  take(n, reason = 'spent') { return this.takeKind('ore', n, reason); }
+  give(n, reason = 'refunded') { this.giveKind('ore', n, reason); }
+  takeKind(k, n, reason = 'spent') { if ((this.amounts[k] || 0) < n) return false; this.amounts[k] -= n; this.note(reason, k, -n); return true; }
+  giveKind(k, n, reason = 'gift') { if (!(k in this.amounts)) return; this.amounts[k] += n; this.note(reason, k, n); }
 }, { Cash: 1000 });
 
 // Fleet capacity: ships consume it (ConsumesCapacity), the Forge provides it (ProvidesCapacity).

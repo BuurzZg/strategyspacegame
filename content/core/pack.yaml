@@ -1,0 +1,17 @@
+# The base game, as a content pack. An add-on is another folder like this one; packs load
+# in order and later ones extend or override earlier ones (MiniYAML merging: same keys
+# merge, -Key removes).
+#
+#   Rules       actor definitions (ships, fauna, world, player)
+#   Weapons     weapon definitions
+#   Resources   stores and map resources
+#   PoiTypes    point-of-interest templates
+
+Pack:
+	Id: core
+	Name: Driftforge
+	Version: 1
+	Rules: rules/world.yaml, rules/player.yaml, rules/defaults.yaml, rules/ships.yaml, rules/warships.yaml, rules/fauna.yaml, rules/combat.yaml, rules/deposits.yaml
+	Weapons: rules/weapons.yaml
+	Resources: resources.yaml
+	PoiTypes: poi-types.yaml

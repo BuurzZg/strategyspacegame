@@ -1,0 +1,22 @@
+# Things in space that aren't ships: gas clouds you can skim, and the inert crystal rock of
+# strange formations. (Ore and ice rocks are `asteroid` in ships.yaml; wrecks are in combat.yaml.)
+
+cloud:
+	Tooltip:
+		Name: Cloud
+		Class: Gas
+		Role: Skimmable
+		Description: A drifting ball of gas. Skimmers fly into it and scoop it up.
+	Cloud:
+	WithModel:
+		Model: cloud
+
+spire:
+	Tooltip:
+		Name: Formation
+		Class: Rock
+		Role: Obstacle
+		Description: Fused crystal, grown into shapes nobody made. Solid; nothing to mine.
+	Rock:
+	WithModel:
+		Model: spire
