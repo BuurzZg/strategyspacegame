@@ -1,0 +1,91 @@
+# The voyage: the numbers behind the galaxy map. Every one of them can be changed by a pack.
+#
+# Stores the crew lives on: ice (melted into water), food and air. Needs are per 10 crew per
+# day. A day passes for each day of travel or work on the galaxy map, and every DayTicks of
+# play on a map (6000 ticks = 4 minutes).
+
+Voyage:
+	DayTicks: 6000
+	# what a new voyage starts with
+	Crew: engineers 30, pilots 24, miners 30, hands 66
+	Stores: ore 1500, ice 2400, salvage 150, glim 700, spores 120, food 1600, air 900
+	Morale: 70
+	# per 10 crew per day
+	Need:
+		Water: 6
+		Food: 8
+		Air: 10
+	# life support makes air from water; the tank holds this much
+	AirTank: 1000
+	AirPerDay: 170
+	WaterPerAir: 25
+	# hydroponics grows food from water, and much faster with spores
+	FoodPerDay: 100
+	WaterPerFood: 30
+	SporeFood: 70
+	SporesPerDay: 20
+	# percent: a store is "low" under this many days of need
+	LowDays: 3
+	# people lost each day, in percent of the crew (at least one): no food, no air
+	StarvePct: 2
+	SuffocatePct: 8
+	# the run ends after this many days without air
+	AirlessDays: 3
+	# the Skein Drive: base stitch in spans; Glim per 10 spans; days per stitch = 1 + length / DaySpan
+	BaseRange: 100
+	GlimPer10: 6
+	DaySpan: 90
+	# drifting without Glim, at sub-light: days per 10 spans
+	DriftDaysPer10: 1
+	# the reactor's daily draw of Glim
+	ReactorGlim: 3
+	# sensors: how far the chart reveals what a place is (spans, at full condition)
+	SensorRange: 170
+	# repairs, per day of work: points of condition per engineer (in tenths), and cost per point
+	RepairPer10Engineers: 5
+	RepairOre: 6
+	RepairSalvage: 4
+	# hull repairs: percent of the hull per day per 10 engineers, and cost per percent
+	HullPer10Engineers: 2
+	HullOre: 30
+	HullSalvage: 12
+	# morale: drifts toward a target each day (up to Rise, down to Fall)
+	MoraleTarget: 70
+	MoraleRise: 3
+	MoraleFall: 6
+	MoraleLow: 10
+	MoraleOut: 25
+	MoraleRest: 10
+	MoraleLoss: 2
+	MoraleWin: 4
+	# below Slow, work is slower (percent); below Desert, people leave (percent a day)
+	MoraleSlow: 30
+	SlowPct: 75
+	MoraleDesert: 15
+	DesertPct: 2
+	# Forge systems: hull damage on a map wears systems down (points per percent of hull lost)
+	SystemWear: 2
+	# a place yields less each time it is visited again (percent per visit; never below Floor)
+	RevisitPct: 35
+	RevisitFloor: 30
+
+# The Forge's systems, in the order the Forge screen lists them.
+Systems:
+	drive:
+		Name: Skein Drive
+		Description: Stitches. Damaged, it reaches less far and spools slower; at zero it cannot stitch at all.
+	reactor:
+		Name: Reactor
+		Description: Powers everything. Damaged, every other system works slower.
+	life:
+		Name: Life support
+		Description: Makes air from water.
+	hydro:
+		Name: Hydroponics
+		Description: Grows food from water and spores.
+	foundry:
+		Name: Foundry
+		Description: Builds ships. Damaged, building is slower; at zero it stops.
+	sensors:
+		Name: Sensors
+		Description: How far the chart can see what a place is.

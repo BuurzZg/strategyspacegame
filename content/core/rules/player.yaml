@@ -6,3 +6,4 @@ Player:
 	FleetCapacity:
 		Max: 200
 	TechTree:
+	CrewRoster:

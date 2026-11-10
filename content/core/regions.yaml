@@ -1,0 +1,62 @@
+# Regions of the Wrack, from the Drift outward to the Shore. The galaxy generator rings them
+# round the dead star Orrin, inner to outer, in the order they are listed here.
+#
+# Distances are in spans. The Skein Drive's base stitch is 100 spans; each region sits
+# beyond the reach of the drive as it was before the component that opens it.
+#   Ring        inner and outer radius
+#   Points      how many places
+#   Spacing     the least distance between two places
+#   Danger      1 to 4: how many hostiles, and how big, on its maps
+#   Veil        a nebula wall at these radii on the way in: no stitch crosses it without
+#               the Stillwater Lens
+#   Edge        places at least this far out stand on the Shore's edge: the final jump
+#               goes from there
+#   Types       point-of-interest types, with weights
+#   Color       on the star chart
+#   Names       first words of place names (the second word comes from the place type)
+
+Drift:
+	Name: The Drift
+	Description: The debris ring round the dead star Orrin. Home, as much as anywhere is now.
+	Ring: 40, 320
+	Points: 60
+	Spacing: 44
+	Danger: 1
+	Color: 5fe3d0
+	Types: OreReef 3, ScrapShoal 3, IceTail 3, LanternMist 3, Wreck 1, StillWater 2
+	Names: Tessel, Marrow, Halvard, Ostrel, Vane, Oxbow, Pellucid, Thimble, Saltglass, Orrin's, Kettle, Wicker, Hobb, Lamplight, Tarry, Greyling, Mallow, Cinder, Fallow, Quill
+
+Middens:
+	Name: The Middens
+	Description: Banks of the old dead, swept into heaps by tides nobody remembers. Busy, for the Wrack.
+	Ring: 432, 655
+	Points: 86
+	Spacing: 50
+	Danger: 2
+	Color: d9a577
+	Types: ScrapShoal 4, OreReef 2, IceTail 2, LanternMist 2, Wreck 3, StillWater 1
+	Names: Rivet, Gutter, Bramble, Tinker, Sallow, Drum, Knuckle, Pewter, Grist, Mortar, Cobble, Bracken, Tallow, Shingle, Hasp, Ferrule, Spall, Clinker, Dross, Mudlark, Pike, Rook
+
+Hush:
+	Name: The Hush
+	Description: Behind the Veil, where the nebulae swallow radio and the stars look further away than they are.
+	Ring: 740, 915
+	Veil: 662, 732
+	Points: 90
+	Spacing: 54
+	Danger: 3
+	Color: c9a7ff
+	Types: LanternMist 4, IceTail 2, OreReef 2, ScrapShoal 2, Wreck 2, StillWater 2
+	Names: Lull, Vesper, Murmur, Candle, Hollow, Pale, Sable, Linnet, Wren, Moth, Ember, Gloam, Hearth, Sorrow, Lantern, Velvet, Dusk, Ashen, Whisper, Still, Nocturne, Faint
+
+Shore:
+	Name: The Shore
+	Description: The Wrack's outer edge, where the scrap thins out and the dark beyond begins. Nothing out here is friendly.
+	Ring: 1075, 1240
+	Edge: 1185
+	Points: 84
+	Spacing: 64
+	Danger: 4
+	Color: ff9a6a
+	Types: Wreck 3, ScrapShoal 2, IceTail 2, LanternMist 2, OreReef 1, StillWater 1
+	Names: Last, Farthing, Breaker, Tidewrack, Strand, Undertow, Brine, Gull, Jetsam, Flotsam, Spindrift, Lowwater, Farewell, Harbour, Cairn, Beacon, Outer, Margin, Sounding, Wake

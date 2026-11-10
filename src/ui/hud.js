@@ -71,7 +71,7 @@ export class Hud {
   // ---------------------------------------------------------------- resources
   resourceBar() {
     const res = this.world.rules.content.resources;
-    $('res-stores').innerHTML = Object.values(res).map((r) => `<div class="res-item" title="${esc(r.Name)}: ${esc(r.Description || '')}"><span class="res-k" style="color:${hex(r.Color)}">${esc(r.Name)}</span><b id="res-${r.id}" style="color:${hex(r.Color)}">0</b>${r.id === 'ore' ? '<span id="res-rate"></span>' : ''}</div>`).join('');
+    $('res-stores').innerHTML = Object.values(res).filter((r) => !r.Galaxy).map((r) => `<div class="res-item" title="${esc(r.Name)}: ${esc(r.Description || '')}"><span class="res-k" style="color:${hex(r.Color)}">${esc(r.Name)}</span><b id="res-${r.id}" style="color:${hex(r.Color)}">0</b>${r.id === 'ore' ? '<span id="res-rate"></span>' : ''}</div>`).join('');
   }
 
   // ---------------------------------------------------------------- leaving: the Skein Drive
@@ -95,9 +95,9 @@ export class Hud {
     const out = w.actors.filter((a) => a.owner === this.s.viewer && a.mobile && !a.dead && a !== f).length;
     const aboard = f.trait('Hangar').aboard.length;
     const sk = f.skein, spooling = sk.spooling;
-    const left = spooling ? Math.ceil((sk.info.SpoolTime - sk.spool) / TICKS_PER_S) : 0;
+    const left = spooling ? Math.ceil((sk.time - sk.spool) / TICKS_PER_S) : 0;
     $('skein-state').textContent = w.departed ? 'Gone' : spooling ? `Spooling · ${left} s` : 'Ready';
-    $('skein-bar').style.width = `${spooling ? (sk.spool / sk.info.SpoolTime) * 100 : 0}%`;
+    $('skein-bar').style.width = `${spooling ? (sk.spool / sk.time) * 100 : 0}%`;
     $('skein-fleet').textContent = `${aboard} aboard · ${out} outside${spooling && out ? ' (they will be left behind)' : ''}`;
     $('skein-fleet').classList.toggle('warn', spooling && out > 0);
     $('btn-spool').textContent = spooling ? 'Cancel spool' : 'Spool the Skein';

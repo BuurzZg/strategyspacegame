@@ -6,6 +6,10 @@
 #   Weapons     weapon definitions
 #   Resources   stores and map resources
 #   PoiTypes    point-of-interest templates
+#   Regions     the galaxy's regions, inner to outer
+#   Items       drive components (later: relics, blueprints)
+#   Voyage      the numbers behind the galaxy map, and the Forge's systems
+#   Names       name generators
 
 Pack:
 	Id: core
@@ -15,3 +19,7 @@ Pack:
 	Weapons: rules/weapons.yaml
 	Resources: resources.yaml
 	PoiTypes: poi-types.yaml
+	Regions: regions.yaml
+	Items: items.yaml
+	Voyage: voyage.yaml
+	Names: names.yaml

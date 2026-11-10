@@ -97,7 +97,7 @@ export class WorldRenderer {
       const targetRoll = Math.max(-1, Math.min(1, -yawRate(a) / 6)) * (bank / 57.3);
       v.roll += (targetRoll - v.roll) * Math.min(1, dt * 3);
       // the Skein spooling: the foundry ring races and light gathers into the hull
-      const spool = a.skein && a.skein.spooling ? a.skein.spool / a.skein.info.SpoolTime : 0;
+      const spool = a.skein && a.skein.spooling ? a.skein.spool / a.skein.time : 0;
       for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt * (1 + spool * 14);
       if (a.skein) this.spoolFx(a, v, spool, dt);
       if (a.asteroid || a.cloud || a.rock) {

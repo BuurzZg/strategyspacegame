@@ -50,7 +50,13 @@ defineTrait('RallyPoint', class extends Trait {
 // Orders (subject: the ship with the queue):
 //   StartProduction  extra: actor type      CancelProduction  extra: index in the queue
 defineTrait('ProductionQueue', class ProductionQueue extends Trait {
-  created() { this.queue = []; this.progress = 0; this.launches = 0; }
+  created() {
+    this.queue = []; this.progress = 0; this.launches = 0;
+    // the foundry's condition on the voyage: percent of normal speed (0: nothing is built)
+    const slot = this.self.owner.slot || {};
+    this.speed = slot.buildSpeed ?? 100; this.acc = 0;
+  }
+  crewOf(type) { const c = this.rules.actor(type).traitInfo('Crew'); return c && c.Count ? c : null; }
   get rules() { return this.world.rules; }
   buildables() { return this.rules.buildablesFor(this.info.Type); }
   duration(type) { return this.rules.actor(type).traitInfo('Buildable').BuildDuration; }
@@ -67,6 +73,9 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     const need = info.traitInfo('ConsumesCapacity')?.Amount || 0;
     if (p.capacity && p.capacity.used() + need > p.capacity.cap()) return 'Fleet capacity reached';
     if (p.resources.cash < info.traitInfo('Valued').Cost) return 'Not enough ore';
+    const crew = this.crewOf(type);
+    if (crew && p.crew && !p.crew.has(crew.Role, crew.Count)) return `Not enough ${crew.Role}: it needs ${crew.Count}`;
+    if (this.speed <= 0) return 'The foundry is wrecked';
     return null;
   }
 
@@ -77,24 +86,36 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
       const err = this.canQueue(type);
       if (err) { this.world.notify(p, err, 'bad'); return; }
       p.resources.take(this.rules.actor(type).traitInfo('Valued').Cost, 'spent');
+      const crew = this.crewOf(type);
+      if (crew && p.crew) p.crew.take(crew.Role, crew.Count);
       this.queue.push(type);
     } else if (o.name === 'CancelProduction') {
       const i = o.extra | 0;
       if (i < 0 || i >= this.queue.length) return;
       const type = this.queue.splice(i, 1)[0];
-      p.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
+      this.refund(type);
       if (i === 0) this.progress = 0;
     }
   }
 
-  killed() {
-    for (const type of this.queue) this.self.owner.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
+  refund(type) {
+    const p = this.self.owner, crew = this.crewOf(type);
+    p.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
+    if (crew && p.crew) p.crew.give(crew.Role, crew.Count);
+  }
+  // everything still queued is cancelled (the Forge is destroyed, or leaves)
+  refundAll() {
+    for (const type of this.queue) this.refund(type);
     this.queue.length = 0;
     this.progress = 0;
   }
+  killed() { this.refundAll(); }
 
   tick() {
     if (!this.queue.length) return;
+    this.acc += this.speed;
+    if (this.acc < 100) return;
+    this.acc -= 100;
     if (++this.progress < this.duration(this.queue[0])) return;
     const type = this.queue.shift();
     this.progress = 0;

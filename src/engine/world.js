@@ -3,6 +3,7 @@ import { Random } from './random.js';
 import { Player } from './player.js';
 import { resolveOrder } from './order.js';
 import { CELL, isqrt, distSq3, hashMix, clamp, dirVec } from './math.js';
+import { mapKinds } from './content.js';
 
 // The simulation. Everything here must be deterministic: integer state, seeded RNG,
 // iteration in actor-id order. Rendering and UI only read from it, and only change it
@@ -270,7 +271,7 @@ export class World {
       if (a.deposit) h = hashMix(h, a.deposit.amount);
       if (a.collector) h = hashMix(h, a.collector.cargo);
     }
-    const kinds = Object.keys(this.rules.content?.resources || { ore: 1 }); // fixed content order
+    const kinds = mapKinds(this.rules); // fixed content order
     for (const p of this.players) if (p.resources) for (const k of kinds) h = hashMix(h, p.resources.amounts[k] | 0);
     for (const q of this.traitsOfType('ProductionQueue')) { h = hashMix(h, q.progress); h = hashMix(h, q.queue.length); }
     h = hashMix(h, this.effects.length);

@@ -38,7 +38,7 @@ async function visit(type, { fleet, seed = 5, place = 1, stores } = {}) {
     const [ex, ey] = a.spawns[0];
     for (const f of a.fields) if (isqrt((f.at[0] - ex) ** 2 + (f.at[1] - ey) ** 2) < 18 + f.spread) clearEntry = false;
   }
-  check(TYPES.length === 5, `the core pack has five place types (${TYPES.join(', ')})`);
+  check(TYPES.length === 6, `the core pack has six place types (${TYPES.join(', ')})`);
   check(same, 'every template gives exactly the same map for the same seed');
   check(differ === TYPES.length, 'and a different map for a different seed');
   check(clearEntry, 'no asteroid field is generated on top of the Forge\'s arrival point');

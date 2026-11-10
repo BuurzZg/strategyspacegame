@@ -11,16 +11,36 @@ defineTrait('PointLayout', class extends Trait {
   worldLoaded() {
     const w = this.world, L = w.settings.layout;
     w.point = this;
-    this.log = new Map(); // player index -> { built: {}, destroyed: {}, arrived: [] }
+    this.log = new Map(); // player index -> { built, destroyed, arrived, found, crewLost, crewSaved }
     this.encounters = [];
     w.nebulae = L ? L.nebulae : [];
     w.on('produced', (u) => { const l = this.logOf(u.owner); l.built[u.type] = (l.built[u.type] || 0) + 1; });
-    w.on('killed', (a) => { if (!a.health || a.mobile === null) return; const l = this.logOf(a.owner); l.destroyed[a.type] = (l.destroyed[a.type] || 0) + 1; });
+    w.on('killed', (a) => {
+      if (!a.health) return;
+      const l = this.logOf(a.owner);
+      // the Forge itself: on the voyage, that is the end
+      if (a.has('Hangar') && w.settings.mode === 'poi' && a.owner === w.players[0] && !w.report) {
+        w.report = visitReport(w, a.owner, { forgeLost: true });
+        w.fx({ t: 'forge-lost', owner: a.owner.index, x: a.x, y: a.y, z: a.z });
+        w.gameOver = true;
+        return;
+      }
+      if (!a.mobile) return;
+      l.destroyed[a.type] = (l.destroyed[a.type] || 0) + 1;
+      // half the crew (rounded down) get away in pods and come home; the rest are lost
+      const c = a.info.traitInfo('Crew');
+      if (c && c.Count) {
+        const saved = c.Count >> 1;
+        l.crewLost[c.Role] = (l.crewLost[c.Role] || 0) + c.Count - saved;
+        l.crewSaved[c.Role] = (l.crewSaved[c.Role] || 0) + saved;
+        if (a.owner.crew) a.owner.crew.give(c.Role, saved);
+      }
+    });
     if (!L) return;
     const shape = (type) => { const h = w.rules.actor(type).traitInfo('Health'); return { radius: h.Radius, halfLength: h.HalfLength, model: w.rules.actor(type).traitInfo('WithModel')?.Model || type }; };
     const at = (p) => ({ x: p[0], y: p[1], z: p[2] });
     for (const k of L.wrecks) w.createActor('wreck', w.neutral, { ...at(k.at), yaw: k.yaw, pitch: k.pitch, of: k.of, salvage: k.salvage, ...shape(k.of) });
-    if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, ...shape(L.hulk.of) });
+    if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, relic: L.hulk.relic || '', relicAt: L.hulk.relicAt | 0, ...shape(L.hulk.of) });
     for (const c of L.clouds) w.createActor('cloud', w.neutral, { ...at(c.at), kind: c.kind, amount: c.amount, radius: c.radius });
     for (const r of L.rocks) w.createActor('spire', w.neutral, { ...at(r.at), yaw: w.rng.int(1024), radius: r.radius, shape: r.shape });
     for (const e of L.encounters) {
@@ -36,7 +56,7 @@ defineTrait('PointLayout', class extends Trait {
       this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' });
     }
   }
-  logOf(p) { if (!this.log.has(p.index)) this.log.set(p.index, { built: {}, destroyed: {}, arrived: [] }); return this.log.get(p.index); }
+  logOf(p) { if (!this.log.has(p.index)) this.log.set(p.index, { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {} }); return this.log.get(p.index); }
   tick() {
     const w = this.world;
     for (const e of this.encounters) {
@@ -99,7 +119,11 @@ defineTrait('Hangar', class Hangar extends Trait {
 // visit ends. Ships still outside are left behind. CancelSpool stops it. (Enemies that can
 // interrupt a spool-up arrive with the Ashen Gaunt's interdictors in Milestone 8.)
 defineTrait('Skein', class Skein extends Trait {
-  created() { this.spool = -1; this.self.skein = this; }
+  created() {
+    this.spool = -1; this.self.skein = this;
+    // a damaged drive spools slower (spoolPct: percent of the usual time, from the voyage)
+    this.time = Math.trunc((this.info.SpoolTime * ((this.self.owner.slot || {}).spoolPct || 100)) / 100);
+  }
   get spooling() { return this.spool >= 0; }
   resolveOrder(o) {
     const w = this.world;
@@ -108,9 +132,11 @@ defineTrait('Skein', class Skein extends Trait {
   }
   tick() {
     if (this.spool < 0) return;
-    if (++this.spool < this.info.SpoolTime) return;
+    if (++this.spool < this.time) return;
     const w = this.world, self = this.self;
     this.spool = -1;
+    // anything still being built is cancelled and refunded: the Forge is leaving
+    self.trait('ProductionQueue')?.refundAll();
     w.departed = { player: self.owner.index, frame: w.frame };
     w.report = visitReport(w, self.owner);
     w.fx({ t: 'departed', owner: self.owner.index, x: self.x, y: self.y, z: self.z });
@@ -123,9 +149,9 @@ defineTrait('Skein', class Skein extends Trait {
 // What the visit gained and cost. Stores: start, end, and every change by reason, so that
 // end = start + the sum of the changes, kind by kind. Ships: launched on arrival, built,
 // destroyed, left behind (outside the Forge when it left) and aboard (the fleet that goes on).
-export function visitReport(w, player) {
-  const res = player.resources, log = w.point ? w.point.logOf(player) : { built: {}, destroyed: {}, arrived: [] };
-  const forge = w.actors.find((a) => a.owner === player && a.has('Hangar') && !a.dead);
+export function visitReport(w, player, { forgeLost = false } = {}) {
+  const res = player.resources, log = w.point ? w.point.logOf(player) : { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {} };
+  const forge = forgeLost ? null : w.actors.find((a) => a.owner === player && a.has('Hangar') && !a.dead);
   const hangar = forge ? forge.trait('Hangar') : null;
   const kinds = Object.keys(res.amounts);
   const stores = {};
@@ -134,11 +160,22 @@ export function visitReport(w, player) {
     for (const [reason, t] of Object.entries(res.tally)) if (t[k]) changes[reason] = t[k];
     stores[k] = { start: res.start[k] | 0, end: res.amounts[k] | 0, changes };
   }
-  const outside = w.actors.filter((a) => a.owner === player && a.mobile && !a.dead && a !== forge);
+  const outside = w.actors.filter((a) => a.owner === player && a.mobile && !a.dead && a !== forge && !a.has('Hangar'));
   const count = (list) => list.reduce((m, t) => { m[t] = (m[t] || 0) + 1; return m; }, {});
+  // crew: lost with ships destroyed (half get away in pods) and with every ship left behind
+  const lost = { ...log.crewLost };
+  for (const a of outside) { const c = a.info.traitInfo('Crew'); if (c && c.Count) lost[c.Role] = (lost[c.Role] || 0) + c.Count; }
+  // hostiles destroyed
+  let kills = 0;
+  if (w.point) for (const p of w.players) if (player.isEnemy(p)) for (const n of Object.values(w.point.logOf(p).destroyed)) kills += n;
   return {
     place: w.settings.poi || null,
     seconds: Math.trunc(w.frame / 25),
+    ticks: w.frame,
+    forgeLost,
+    kills,
+    found: [...log.found],
+    crew: { lost, saved: { ...log.crewSaved } },
     stores,
     forge: forge ? { hp: forge.health.hp, maxHp: forge.health.maxHp } : null,
     ships: {

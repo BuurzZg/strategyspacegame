@@ -7,6 +7,9 @@ import { Rules } from './rules.js';
 // change existing ones, without touching the base game.
 export const DEFAULT_PACKS = ['core'];
 
+// Resource kinds that exist on point-of-interest maps (food and air live only in the galaxy hold).
+export const mapKinds = (rules) => Object.keys(rules.content?.resources || { ore: 1 }).filter((k) => !rules.content?.resources?.[k]?.Galaxy);
+
 const list = (v) => (Array.isArray(v) ? v : String(v || '').split(',').map((s) => s.trim()).filter(Boolean));
 
 // A parsed data file as plain objects: { key: { Field: value or nested object } }.
@@ -17,7 +20,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -34,12 +37,21 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content = {
     resources: Object.fromEntries([...mergeFiles(data.Resources)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]).sort((a, b) => (+a[1].Order || 99) - (+b[1].Order || 99))),
     poiTypes: Object.fromEntries([...mergeFiles(data.PoiTypes)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }])),
+    regions: Object.fromEntries([...mergeFiles(data.Regions)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }])),
+    items: Object.fromEntries([...mergeFiles(data.Items)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }])),
   };
+  const voyage = new Map(mergeFiles(data.Voyage));
+  rules.content.voyage = voyage.has('Voyage') ? nodesToObject(voyage.get('Voyage').nodes) : {};
+  rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
+  rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
 }
 
 // Cross-reference checks so broken content fails at load, not mid-game.
+// "OreReef 3, ScrapShoal 2" -> [['OreReef', 3], ['ScrapShoal', 2]]
+export const weights = (v) => list(v).map((s) => { const [k, w] = s.split(/\s+/); return [k, w === undefined ? 1 : +w]; });
+
 export function lintContent(rules) {
   const { resources, poiTypes } = rules.content;
   const errs = [];
@@ -54,6 +66,12 @@ export function lintContent(rules) {
         if (!['gaunt', 'fauna'].includes(v.Side)) errs.push(`${n.loc}: ${id}.${n.key}: Side must be gaunt or fauna`);
       }
     }
+  }
+  for (const [id, r] of Object.entries(rules.content.regions || {})) {
+    for (const [t] of weights(r.Types)) if (!poiTypes[t]) errs.push(`regions: ${id}.Types: unknown point-of-interest type "${t}"`);
+  }
+  for (const [id, it] of Object.entries(rules.content.items || {})) {
+    if (it.Region && !rules.content.regions[it.Region]) errs.push(`items: ${id}.Region: unknown region "${it.Region}"`);
   }
   for (const a of rules.actors.values()) {
     const c = a.traitInfo('Collector');

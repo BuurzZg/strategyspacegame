@@ -1,0 +1,54 @@
+# Items: the Skein Drive's four components (relics and blueprints come later).
+#   Region      where the generator hides it: in a derelict, deep in that region
+#   Range       the drive's stitch range becomes this percent of what it was
+#   Veil        lets the drive stitch through the Veil's nebula wall
+#   FinalJump   the long jump home, from the Shore's edge
+#   Install     what fitting it costs: Ore, Salvage, Days, and Engineers needed for the work
+
+coils:
+	Name: Threadwound Coils
+	Kind: drive
+	Description: Spools of thread-metal that hold a stitch open longer. The Forge's own snapped on the way in.
+	Region: Drift
+	Range: 150
+	Install:
+		Ore: 300
+		Salvage: 200
+		Days: 2
+		Engineers: 10
+
+lens:
+	Name: Stillwater Lens
+	Kind: drive
+	Description: A lens of something that is not quite glass. Through it, the Veil looks like an open door.
+	Region: Middens
+	Veil: true
+	Install:
+		Ore: 300
+		Salvage: 400
+		Days: 3
+		Engineers: 14
+
+spindle:
+	Name: Anchor Spindle
+	Kind: drive
+	Description: The heavy core that keeps a long stitch from fraying. Whoever made this one meant to go a long way.
+	Region: Hush
+	Range: 134
+	Install:
+		Ore: 500
+		Salvage: 600
+		Days: 3
+		Engineers: 18
+
+heartstone:
+	Name: Heartstone
+	Kind: drive
+	Description: A warm stone the size of a house. The old engineers' notes call it the drive's heart, and are very sure about it.
+	Region: Shore
+	FinalJump: true
+	Install:
+		Ore: 600
+		Salvage: 800
+		Days: 4
+		Engineers: 20

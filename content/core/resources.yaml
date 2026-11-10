@@ -1,7 +1,7 @@
 # Resources. The first five are gathered on point-of-interest maps; on the galaxy map (from
 # Milestone 7) ice melts into water, spores feed the hydroponics, and Glim fuels the Skein.
 #   Color: how it is drawn in the HUD and on the map
-#   Gathered by: which collectors pick it up (for the docs and the HUD)
+#   Galaxy: true for stores that only exist on the galaxy map (nothing gathers them on a map)
 
 ore:
 	Name: Ore
@@ -28,3 +28,15 @@ spores:
 	Color: 9be8a0
 	Description: Drifting biomass. The Forge's hydroponics grow it into food.
 	Order: 5
+food:
+	Name: Food
+	Color: e8c37a
+	Description: Grown in the Forge's hydroponics, from water and spores. The crew eat every day.
+	Order: 6
+	Galaxy: true
+air:
+	Name: Air
+	Color: d8f0ff
+	Description: Made from water by life support, and kept in the Forge's tanks. Three days without it ends everything.
+	Order: 7
+	Galaxy: true

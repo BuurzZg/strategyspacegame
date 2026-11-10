@@ -190,14 +190,24 @@ defineTrait('Wreck', class Wreck extends Trait {
     this.kind = 'salvage'; this.field = -1;
     this.model = i.model || ''; this.of = i.of || '';
     this.vx = i.vx | 0; this.vy = i.vy | 0; this.vz = i.vz | 0;
+    // a drive component sealed inside: found once cutters have taken relicAt salvage
+    this.relic = i.relic || ''; this.relicAt = i.relicAt | 0; this.taken = 0;
   }
   radius() { return this.size; }
   get amount() { return this.salvage; }
   get solid() { return true; }
   // Shearers cut salvage from it; when the last is taken the hulk breaks apart.
-  take(n) {
+  take(n, by = null) {
     const t = Math.min(n, this.salvage);
     this.salvage -= t;
+    this.taken += t;
+    if (this.relic && this.taken >= this.relicAt && by) {
+      const w = this.world, id = this.relic, name = w.rules.content.items?.[id]?.Name || id;
+      this.relic = '';
+      if (w.point) w.point.logOf(by.owner).found.push(id);
+      w.fx({ t: 'relic', id, name, owner: by.owner.index, actor: this.self.id, x: this.self.x, y: this.self.y, z: this.self.z });
+      w.notify(by.owner, `The cutters found the ${name}, sealed in a vault. It is aboard.`, 'good');
+    }
     if (this.salvage <= 0 && !this.self.dead) {
       const self = this.self, w = this.world;
       self.dead = true;

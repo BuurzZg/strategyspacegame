@@ -1,4 +1,5 @@
 import { defineTrait, Trait } from '../engine/traits.js';
+import { mapKinds } from '../engine/content.js';
 
 // Traits on each player's Player actor. They register themselves on the Player as
 // fast references (player.resources, player.capacity, player.tech).
@@ -10,7 +11,7 @@ import { defineTrait, Trait } from '../engine/traits.js';
 defineTrait('PlayerResources', class extends Trait {
   created() {
     const slot = this.self.owner.slot || {};
-    const kinds = Object.keys(this.world.rules.content?.resources || { ore: 1 });
+    const kinds = mapKinds(this.world.rules);
     this.amounts = Object.fromEntries(kinds.map((k) => [k, 0]));
     this.amounts.ore = slot.cash !== undefined ? slot.cash : this.info.Cash;
     if (slot.stores) for (const k of kinds) if (slot.stores[k] !== undefined) this.amounts[k] = slot.stores[k] | 0;
@@ -27,6 +28,20 @@ defineTrait('PlayerResources', class extends Trait {
   takeKind(k, n, reason = 'spent') { if ((this.amounts[k] || 0) < n) return false; this.amounts[k] -= n; this.note(reason, k, -n); return true; }
   giveKind(k, n, reason = 'gift') { if (!(k in this.amounts)) return; this.amounts[k] += n; this.note(reason, k, n); }
 }, { Cash: 1000 });
+
+// Free crew on a map, by role (engineers, pilots, miners, hands), from the voyage. A new ship
+// takes its crew from here when it is queued; cancelling gives them back. Without a roster in
+// the slot (the Proving Grounds, a single place) crew are not limited.
+defineTrait('CrewRoster', class extends Trait {
+  created() {
+    const slot = this.self.owner.slot || {};
+    this.free = slot.crew ? { ...slot.crew } : null;
+    this.self.owner.crew = this;
+  }
+  has(role, n) { return !this.free || (this.free[role] | 0) >= n; }
+  take(role, n) { if (this.free) this.free[role] = (this.free[role] | 0) - n; }
+  give(role, n) { if (this.free) this.free[role] = (this.free[role] | 0) + n; }
+}, {});
 
 // Fleet capacity: ships consume it (ConsumesCapacity), the Forge provides it (ProvidesCapacity).
 // Ships waiting in a build queue count as already built, so a queue can't overshoot the cap.
