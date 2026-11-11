@@ -1,4 +1,5 @@
 import { R } from '../render/space.js';
+import { gauge, medal } from './instruments.js';
 import { CELL } from '../engine/math.js';
 import { fieldOre } from '../traits/economy.js';
 import { FORMATIONS } from '../traits/formation.js';
@@ -98,7 +99,7 @@ export class Hud {
       const f = this.forge();
       if (!f) return;
       if (f.skein.spooling) this.input.issue('CancelSpool', [f]);
-      else { this.input.issue('SpoolSkein', [f]); this.audio.play('alert'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); this.hint('spool'); }
+      else { this.input.issue('SpoolSkein', [f]); this.audio.play('hiss'); this.toast('Spooling the Skein: one minute until the Forge leaves', 'info'); this.hint('spool'); }
     });
   }
   // On the voyage: the day, and how long water, food and air will last at today's rate.
@@ -114,7 +115,10 @@ export class Hud {
     const worst = Object.entries(d).sort((a, b) => a[1] - b[1])[0];
     // the crew's mood rides along (Milestone 17)
     const mood = v.allHands ? 'All hands' : { content: 'Content', uneasy: 'Uneasy', angry: 'Angry' }[v.mood] || '';
-    $('place').textContent = `${poi.name} · Day ${day}${worst[1] < 10 ? ` · ${worst[0]} ${worst[1]} d` : ''}${mood ? ` · ${mood}` : ''}`;
+    $('place').textContent = `${poi.name} · Day ${day}`;
+    // the instruments: days of water, food and air left at today's rate, and the crew's medallion
+    const g = (k, label) => gauge(label, d[k] === Infinity ? 1 : Math.min(1, d[k] / 30), d[k] === Infinity ? 'STEADY' : `${d[k]} D`, { low: d[k] < 4, title: `${label}: ${d[k] === Infinity ? 'steady' : `${d[k]} days left`}` });
+    $('map-gauges').innerHTML = g('water', 'Water') + g('food', 'Food') + g('air', 'Air') + (mood ? `<span title="${esc(`${mood}. ${(v.causes || []).join(' ')}`)}">${medal(v.allHands ? 'angry' : v.mood || 'content', 34)}</span>` : '');
     $('place').title = (v.causes || []).join(' ');
     $('place').classList.toggle('warn', worst[1] < 4 || v.mood === 'angry');
     if (gone > 0 && worst[1] < 4) this.toast(`Day ${day}: ${worst[1] ? `${worst[0]} for ${worst[1]} more day${worst[1] > 1 ? 's' : ''}` : `the ${worst[0]} is gone`}`, 'bad');
@@ -649,7 +653,7 @@ export class Hud {
     const w = this.world, me = this.s.viewer;
     if (!w.shroud || !w.shroud.on || !me.lastSeen) return;
     const v3 = this.tmpV ||= this.renderer.tmp.clone();
-    ctx.font = '600 10px "IBM Plex Mono", monospace';
+    ctx.font = '600 10px "Cutive Mono", monospace';
     for (const [id, e] of me.lastSeen) {
       if (me.seen.has(id) || !me.isEnemy(w.players[e.owner])) continue;
       const age = (w.frame - e.frame) / 25;
@@ -709,7 +713,7 @@ export class Hud {
     // where the camera is looking
     const f = this.s.orbit.focus;
     ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(X(f.x / R), Y(f.z / R), 7, 0, Math.PI * 2); ctx.stroke();
-    ctx.font = '600 11px "IBM Plex Sans", sans-serif'; ctx.fillStyle = '#7f8ea3';
+    ctx.font = '600 11px Spectral, Georgia, serif'; ctx.fillStyle = '#7f8ea3';
     ctx.fillText('TACTICAL PLOT  ·  click to look there  ·  Tab to close', r.x, r.y - 10);
   }
 
@@ -743,7 +747,7 @@ export class Hud {
       // veterans: a chevron per rank above the bracket
       if (a.rank) { ctx.strokeStyle = '#ffd778'; ctx.lineWidth = 1.5; for (let i = 0; i < a.rank; i++) { const cy = b.p.y - b.r - 8 - i * 4; ctx.beginPath(); ctx.moveTo(b.p.x - 5, cy + 3); ctx.lineTo(b.p.x, cy); ctx.lineTo(b.p.x + 5, cy + 3); ctx.stroke(); } }
       const gn = inp.isMine(a) ? inp.groupNumberOf(a) : 0;
-      if (gn) { ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.fillStyle = rd.styleOf(a.owner).css; ctx.fillText(String(gn), b.p.x - b.r - 2, b.p.y - b.r - 4); }
+      if (gn) { ctx.font = '600 11px "Cutive Mono", monospace'; ctx.fillStyle = rd.styleOf(a.owner).css; ctx.fillText(String(gn), b.p.x - b.r - 2, b.p.y - b.r - 4); }
       const w = Math.max(18, Math.min(b.r * 1.4, 120));
       const bar = (y, f, color) => { ctx.fillStyle = 'rgba(5,6,11,0.7)'; ctx.fillRect(b.p.x - w / 2 - 1, y - 1, w + 2, 4); ctx.fillStyle = color; ctx.fillRect(b.p.x - w / 2, y, w * f, 2); };
       if (a.deposit) { bar(b.p.y + b.r + 6, a.deposit.amount / a.deposit.maxAmount, ORE_CSS); continue; }
@@ -774,7 +778,7 @@ export class Hud {
               : hostile ? `${tname} · ${this.world.factions.get(hv.owner.faction)?.Name || hv.owner.name}`
                 : hv.owner.slot && hv.owner.slot.tier !== undefined ? `${tname} · ${hv.owner.name} · ${['Hostile', 'Wary', 'Neutral', 'Friendly', 'Allied'][hv.owner.slot.tier]}${this.s.viewer.isAlly(hv.owner) ? ' ally' : ''}` : tname;
           const text = action ? `${action}: ${name}` : name;
-          ctx.font = '500 11px "IBM Plex Mono", monospace';
+          ctx.font = '500 11px "Cutive Mono", monospace';
           const tw = ctx.measureText(text).width, tx = b.p.x + b.r + 6, ty = b.p.y - b.r + 10;
           ctx.fillStyle = 'rgba(5,6,11,0.72)'; ctx.fillRect(tx - 4, ty - 11, tw + 8, 15);
           ctx.fillStyle = action === 'Attack' || hostile || (action && action.startsWith('Attack')) ? HOSTILE_CSS : action ? ORE_CSS : hv.owner.slot && hv.owner.slot.tier !== undefined ? rd.styleOf(hv.owner).css : 'rgba(223,232,242,0.9)';
@@ -784,7 +788,7 @@ export class Hud {
     } else if (hv && inp.hoverAction(hv)) {
       // hovering something already selected that still takes an order (e.g. the Forge with Gleaners)
       const v = rd.views.get(hv.id), b = v && inp.project(v.pos);
-      if (b && b.z < 1) { ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.fillStyle = ORE_CSS; ctx.fillText(inp.hoverAction(hv), b.x + 12, b.y - 12); }
+      if (b && b.z < 1) { ctx.font = '500 11px "Cutive Mono", monospace'; ctx.fillStyle = ORE_CSS; ctx.fillText(inp.hoverAction(hv), b.x + 12, b.y - 12); }
     }
     const box = inp.box;
     if (box && box.active) {
@@ -799,7 +803,7 @@ export class Hud {
       const d = inp.project(m.dest);
       if (d.z < 1) {
         const lines = [`${m.mode === 'rally' ? 'rally  ' : ''}${fmtDist(dist)}`, `alt ${fmtAlt(alt)}${Math.abs(m.height) > 0.01 ? `  (${fmtAlt(m.height / R)})` : ''}`];
-        ctx.font = '500 12px "IBM Plex Mono", monospace';
+        ctx.font = '500 12px "Cutive Mono", monospace';
         const w = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 14;
         // place the readout beside the marker, flipping sides to stay clear of panels and edges
         let x = d.x + 14, y = d.y - 12;
@@ -816,7 +820,7 @@ export class Hud {
   // Field names and their remaining ore, at each field's centre; they fade out as you fly in.
   drawFieldLabels(ctx) {
     const inp = this.input, cam = this.s.camera;
-    ctx.font = '500 11px "IBM Plex Mono", monospace';
+    ctx.font = '500 11px "Cutive Mono", monospace';
     ctx.textAlign = 'center';
     for (const f of this.world.fields) {
       const ore = fieldOre(f);

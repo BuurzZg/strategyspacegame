@@ -59,10 +59,10 @@ function defineProjectile(name, P, defaults) { P.defaults = { Color: '', Size: 1
 defineProjectile('InstantHit', {
   launch(args, info) {
     const { world, target } = args;
-    world.fx({ t: info.Beam ? 'beam' : 'bite', from: args.firer.id, to: target.id, x0: args.sx, y0: args.sy, z0: args.sz, x1: target.x, y1: target.y, z1: target.z, color: info.Color, size: info.Size, owner: args.owner.index });
+    world.fx({ t: info.Arc ? 'arc' : info.Beam ? 'beam' : 'bite', from: args.firer.id, to: target.id, x0: args.sx, y0: args.sy, z0: args.sz, x1: target.x, y1: target.y, z1: target.z, color: info.Color, size: info.Size, owner: args.owner.index });
     applyWarheads(args, target.x, target.y, target.z, target);
   },
-}, { Beam: true });
+}, { Beam: true, Arc: false });
 
 // A straight, unguided shot at the target's predicted position. It hits if the target's hull
 // is within HitRadius of that point when the shot arrives; otherwise it misses. With

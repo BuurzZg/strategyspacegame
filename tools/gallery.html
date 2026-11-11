@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driftforge model gallery</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0b09; color: #ede6d6; font: 14px Georgia, serif; overflow: hidden; }
+  canvas { display: block; }
+  #bar { position: absolute; top: 10px; left: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #bar select, #bar button { background: #221d17; color: #ede6d6; border: 1px solid #5a4526; padding: 4px 8px; font: inherit; }
+  #stats { position: absolute; top: 44px; right: 12px; font: 11px monospace; color: #b3a385; white-space: pre; background: rgba(13,11,9,0.8); padding: 6px; }
+  .lab { position: absolute; left: 0; top: 0; font: 12px monospace; color: #c9a04e; pointer-events: none; }
+</style>
+</head>
+<body>
+<!-- Every hull in the game in one faction's plating (Milestone 23): for checking the models and their
+     budgets by eye. Drag to turn, wheel to zoom. ?faction=rivet picks the plating; ?only=forge one hull. -->
+<div id="bar"><label>Plating <select id="fac"></select></label><button id="spin" type="button">Turn</button></div>
+<div id="stats"></div>
+<script type="module">
+import * as THREE from '../lib/three.module.js';
+import { buildShip } from '../src/render/ships.js';
+import { factionStyle } from '../src/render/worldrenderer.js';
+import { loadRules } from '../src/engine/rules.js';
+import '../src/traits/index.js';
+
+const q = new URLSearchParams(location.search);
+const rules = await loadRules(async (f) => { const r = await fetch(new URL(f, new URL('../', location.href))); if (!r.ok) throw new Error(`Could not load ${f}`); return r.text(); });
+const factions = rules.actor('World').traitInfosOf('Faction');
+const sel = document.getElementById('fac');
+sel.innerHTML = factions.map((f) => `<option value="${f.InternalName}">${f.Name}</option>`).join('');
+sel.value = q.get('faction') || 'meridian';
+sel.onchange = () => { q.set('faction', sel.value); location.search = q.toString(); };
+const style = factionStyle(factions.find((f) => f.InternalName === sel.value) || factions[0]);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0b09);
+scene.add(new THREE.HemisphereLight(0xd8e4ff, 0x2a2016, 0.9));
+const sun = new THREE.DirectionalLight(0xffe2b8, 2.4); sun.position.set(30, 40, 20); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x9ef0d8, 0.8); rim.position.set(-30, 10, -30); scene.add(rim);
+
+// every hull the rules name, laid out in rows by size
+const types = [...new Set([...rules.actors.values()].map((a) => a.traitInfo && a.traitInfo('WithModel')).filter(Boolean).map((w) => w.Model))]
+  .filter((t) => !q.get('only') || t === q.get('only'));
+const built = types.map((t) => ({ t, m: buildShip(t, style) })).sort((a, b) => a.m.length - b.m.length);
+// a grid: each hull scaled to fit its cell (the real lengths are in the list), named under it
+const CELL = 12, COLS = 7;
+let tris = 0, meshes = 0;
+const lines = [], labels = [];
+built.forEach(({ t, m }, i) => {
+  const L = Math.max(2, m.length), k = (CELL * 0.72) / L;
+  m.root.position.set((i % COLS) * CELL, 0, Math.floor(i / COLS) * CELL);
+  m.root.scale.setScalar(k);
+  scene.add(m.root);
+  let tt = 0, mm = 0;
+  m.root.traverse((o) => { if (o.isMesh) { mm++; const g = o.geometry; tt += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  tris += tt; meshes += mm;
+  lines.push(`${t.padEnd(12)} ${String(mm).padStart(4)} meshes ${String(Math.round(tt)).padStart(6)} tris  ${L.toFixed(1)} long`);
+  const el = document.createElement('div');
+  el.className = 'lab'; el.textContent = t;
+  document.body.appendChild(el);
+  labels.push({ el, at: new THREE.Vector3((i % COLS) * CELL, -2.5, Math.floor(i / COLS) * CELL + 3.5) });
+});
+const z = Math.floor((built.length - 1) / COLS) * CELL;
+document.getElementById('stats').textContent = `${style.name}\n${lines.join('\n')}\nall: ${meshes} meshes, ${Math.round(tris)} triangles`;
+
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 2000);
+let yaw = 1.5708, pitch = 0.75, dist = Math.max(60, z * 1.25 + 40), turning = false;
+const centre = new THREE.Vector3(((COLS - 1) * CELL) / 2, 0, z / 2);
+if (q.get('only')) { centre.set(0, 0, 0); dist = 18; pitch = 0.35; yaw = 0.9; }
+addEventListener('pointerdown', (e) => { if (e.target === renderer.domElement) { const sx = e.clientX, sy = e.clientY, y0 = yaw, p0 = pitch; const mv = (f) => { yaw = y0 - (f.clientX - sx) * 0.006; pitch = Math.max(-1.2, Math.min(1.4, p0 + (f.clientY - sy) * 0.006)); }; addEventListener('pointermove', mv); addEventListener('pointerup', () => removeEventListener('pointermove', mv), { once: true }); } });
+addEventListener('wheel', (e) => { dist = Math.max(4, Math.min(400, dist * (e.deltaY > 0 ? 1.1 : 0.9))); });
+document.getElementById('spin').onclick = () => { turning = !turning; };
+const size = () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
+addEventListener('resize', size); size();
+let last = performance.now();
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (turning) yaw += dt * 0.3;
+  for (const { m } of built) for (const s of m.spin) s.obj.rotation.x += s.speed * dt;
+  camera.position.set(centre.x + Math.cos(yaw) * Math.cos(pitch) * dist, centre.y + Math.sin(pitch) * dist, centre.z + Math.sin(yaw) * Math.cos(pitch) * dist);
+  camera.lookAt(centre);
+  renderer.render(scene, camera);
+  for (const l of labels) { const v = l.at.clone().project(camera); l.el.style.transform = `translate(${((v.x + 1) / 2) * innerWidth}px, ${((1 - v.y) / 2) * innerHeight}px) translate(-50%, 0)`; l.el.hidden = v.z > 1; }
+});
+window.gallery = { built, style };
+</script>
+</body>
+</html>

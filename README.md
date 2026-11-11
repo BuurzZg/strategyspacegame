@@ -5,7 +5,18 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 22, the story.** The story is in, from the waking to the Shore:
+**Status: Milestone 23, the brass age.** The whole game now wears the approved steampunk style (PLAN.md section 9):
+
+- **Brass, soot and steam everywhere:** riveted soot-iron panels with dark brass edges, engraved headings in IM Fell English, a readable Spectral body and typewriter numbers in Cutive Mono. Every text colour on every background is checked at 4.5:1 or better.
+- **Instruments, not numbers:** water, food, air, Glim and the boilers are round brass gauges with cream dials, a red zone and an odometer counter, on the chart and on maps. The boilers read in PSI and drop to COLD. The crew's mood is an enamel **medallion with a face** (content, uneasy, angry) with stamped icons for what is wrong. The Skein spools in a **glass pressure tube** filling with Glim light.
+- **The star chart is a navigation parchment** laid out on the chart table: a stained, folded, burnt-edged sheet with a compass rose, a scale bar in spans and a cartouche. Places are **wax seals** coloured and lettered by kind (black wax and a gilt letter for the story's places), lanes are inked (teal where the drive can stitch now), closed hazard lanes are dashed in the hazard's colour and hatched with its mark, the Veil is hatched violet, clues are pencil rings, and the Forge is a brass token. The camera still orbits it.
+- **Factions speak by telegraph:** a telegram card types out their words on the tape, key clicking, and your answers are brass keys numbered like the keyboard. The Choir's messages come as light; the Gaunt's arrive half burned.
+- **The deck plan is a cutaway** of the Forge: lit compartments where rooms are built, dashed slots where they could be, and Deck 9 sealed at the bow until the end.
+- **Riveted ships:** every hull is plate and rivets in its faction's own metal: patched plates for the Rivet Moot and the Ragged Clans, waxy cream for the Synod, rust for the Gaunt, soot for the Cinder Pact, verdigris for the Wardens, polished brass for the Reavers. Big plates carry rows of warm portholes, **smokestacks vent Glim steam** (more under way), engines leave steam, pulse batteries are **rotary guns**, and the Spindle's lance throws **lightning** from copper coils.
+- **New sounds:** telegraph keys, steam hissing from a valve when the Skein spools, iron plates clanking when you build or repair, a crackling lance, and an organ chord whenever a memory comes back.
+- **A model gallery** (`/tools/gallery.html`) shows every hull in any faction's plating, with its mesh and triangle counts.
+
+**Milestone 22, the story:** The story is in, from the waking to the Shore:
 
 - **Twelve story memories, act by act,** each at a story place on the chart, found by cutting into its hulk or given by the people who remember: the Anchorage and the Steward in the Drift; a research hulk, a Moot tally-barge, a prison barge and the Tallow Bell's Deacon in the Middens; the Knotfolk's reliquary-ship, the Choir, the Meridian Horologe and the Tithe Barge in the Hush; the Cinder Pact's Founding Hall at the Shore. **Deck 9** opens at the Shore once every other one is known. Each story memory raises the Mainspring's attention. A chain of clues and events leads from one to the next.
 - **New peoples:** the **Wardens of Ninefold** (the Knotfolk, who fire on the hammer-and-cog on sight), the **Ragged Clans**, the **Brass Reavers**, and the **Hollowkin** holds, visited from the chart: **the Waiting**, who kept a beacon lit for six generations, and **the Unforgiving**, whose children skip to a rhyme about you.
@@ -186,7 +197,7 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
   - **A dark chart:** only the places one lane from the Forge are known, and there are no deep scans.
   - **The signal:** it draws a circle round the Anchorage, a few stitches from where you wake.
   - **The Anchorage:** cut into its hulk with Shearers on its map. The station's core gives back the **emblem** and the **radar**, and the radar lights the chart in this and every later life.
-- **Clue circles:** a clue draws a dashed gold circle on the chart, never centred on what it's about but always containing it. Another clue to the same place shrinks it. Get close enough and the watch officer pinpoints it, and the place gets a gold ring. Circles stay on the chart in later lives.
+- **Clue circles:** a clue draws a dashed pencil circle on the chart, never centred on what it's about but always containing it. Another clue to the same place shrinks it. Get close enough and the watch officer pinpoints it, and the place gets a gold ring. Circles stay on the chart in later lives.
 - **The drive:** the Threadwound Coils, Stillwater Lens, Anchor Spindle and Heartstone are memories. Once the radar works, the engineers get a fix on the next one, as a circle. Cut it out of its derelict and the drive has it at once, in every life. There is nothing to fit, and no ore, salvage or days to spend.
 - **Hulls:** a blueprint (cut from a wreck, bought, or given) brings that hull's memory back for good. The Wisp is recalled with an echo once the radar is known.
 - **Echoes:** fragments of memory. You get them from story memories and drive parts, from an old voice on a forgotten band, and from the place where an earlier life ended, which holds an echo until you go back. Spend them on the Loom.
@@ -301,7 +312,7 @@ The **Crew** tab on the star chart lists everyone with a name.
 
 ### The voyage: the star chart
 
-The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed in its colour, and the Veil is a band of violet haze.
+The chart is a 3D view of the galaxy, drawn as a navigation parchment laid out on the chart table: a stained, folded sheet with the regions inked as rings, the Veil hatched in violet, a compass rose and a scale bar. The camera orbits it like any map.
 
 | Input | Action |
 | --- | --- |
@@ -313,9 +324,9 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 | `B` | The bridge |
 | `L` | The Loom |
 
-- **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now; lanes into a hazard pocket are drawn in the hazard's colour until you remember what gets the Forge through. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
+- **What you see:** places are wax seals, coloured and lettered by kind once the sensors have seen them (a small ink ring until then; black wax with a gilt letter for the story's places; an inked ring where you have been this life, a dashed one for an earlier life). Thick teal lanes are stitches the drive can make now, from here; other lanes are ink, fainter where they are too long for the drive. Lanes into a hazard pocket are dashed in the hazard's colour, hatched and marked with its sign, until you remember what gets the Forge through. The Forge is a brass token; the teal ring round it is the drive's reach, and the dashed pencil ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
 - **The card** shows the route (stitches, days, Glim, distance) and what you will have on arrival. With no Glim, the Forge can **drift** one lane at sub-light, slowly. At the Forge's place, **Go in** plays the map, and **Rest a day** raises morale (twice as much in still water).
-- **The top bar** shows the day, the stores (water, food and air with the days they will last, and cogmarks), the crew, and the crew's mood: a medallion, the morale, and what is behind it.
+- **The top bar** shows the day and the instruments: brass gauges for water, food and air (the days they will last), Glim and the boilers' pressure, counter plates for ore, salvage, spores, cogmarks and crew, and the crew's mood: an enamel medallion with a face, the morale, and stamped icons for what is behind it.
 - **The Forge panel:**
   - **Forge:** the Loom, the Skein Drive's reach and its four parts, the deck plan and its rooms, blueprints, and the hull and six systems (drive, reactor, life support, hydroponics, foundry, sensors), each with **Repair** (a day's work by the free engineers, for ore and salvage);
   - **Crew:** the mood and its causes, strain, the nine stations and their state, strikes and parleys, the officers, engineers, pilots, miners and hands (aboard, flying ships, free), the hangar and the memorial;
@@ -853,6 +864,15 @@ Runs the headless tests:
   - Spindles beat a Sabre;
   - Darts beat Spindles;
   - Pickets beat a Gnasher pack.
+- **Style** (`tools/styletest.js`): checks that:
+  - every pair of text and background colours the screens use has a contrast of at least 4.5:1: the soot panels, the parchment chart (names, regions, the Veil, pencil, the Hands), telegrams (ink, the Gaunt's burned paper, the Choir's light, the standing stamps) and the gauges;
+  - every hull, in every faction's plating, stays within its budget: 40 meshes and 1,500 triangles under 5 units long, 80 and 3,500 under 20, 130 and 9,000 above; a 40-a-side battle of the line comes to about 1,800 meshes and 57,000 triangles;
+  - every faction that builds ships has its plating, the Rivet Moot's is patched and the Synod's is cream, and no two share a colour;
+  - the Forge has three smokestacks, a halberd and a sabre have theirs, a dart has none; big plates have portholes; halberds, pickets and sabres carry spinning rotary guns; creatures, the Choir, the Wound and wrecks get no steam;
+  - the Spindle's lance throws lightning and the Choir's light stays a beam;
+  - every kind of place has a wax seal with a colour and a letter, gauges sweep their full arc and warn when low, and the medallions and cause icons are labelled.
+
+To look at the models, open `/tools/gallery.html` on the local server (`?faction=rivet` for another plating, `?only=forge` for one hull).
 
 ```bash
 npm run check

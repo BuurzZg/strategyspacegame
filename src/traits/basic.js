@@ -12,7 +12,7 @@ defineTrait('WithModel', class extends Trait {}, { Model: '', Scale: 100 });
 defineTrait('Crew', class extends Trait {}, { Count: 0, Role: 'hands' });
 
 // World traits
-defineTrait('Faction', class extends Trait {}, { InternalName: '', Name: '', Color: 'ffffff', Glow: 'ffffff', Dark: '000000', Description: '' });
+defineTrait('Faction', class extends Trait {}, { InternalName: '', Name: '', Color: 'ffffff', Glow: 'ffffff', Dark: '000000', Description: '', Hull: '', Shine: 50 });
 
 // ---------------------------------------------------------------- Health
 // Radius: the hull's half-width. HalfLength > 0 makes the hull a capsule: a line along the

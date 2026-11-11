@@ -7,6 +7,8 @@ World:
 		Color: 5fe3d0
 		Glow: b8fff5
 		Dark: 103a3a
+		Hull: a08e70, 8f7f64
+		Shine: 60
 		Description: A foundry-city of glass-lit decks. Precise, patient, and running out of time.
 	Faction@cinder:
 		InternalName: cinder
@@ -14,6 +16,8 @@ World:
 		Color: ff6a3d
 		Glow: ffc08a
 		Dark: 4a160c
+		Hull: 3a302a, 2c241e
+		Shine: 45
 		Description: Smelter clans bound by debt and fire. They breed hulls fast and spend them faster.
 	Faction@gaunt:
 		InternalName: gaunt
@@ -21,6 +25,8 @@ World:
 		Color: c8323c
 		Glow: ffe2c4
 		Dark: 3a0d12
+		Hull: 9a3a26, 7a2e1e
+		Shine: 35
 		Description: Tall, many-jointed scavengers sealed in rust-red suits. They strip what they find, and they count debts.
 	Faction@rivet:
 		InternalName: rivet
@@ -28,6 +34,8 @@ World:
 		Color: e8b04a
 		Glow: ffe6a0
 		Dark: 3a2a0a
+		Hull: 8d7656, a98a5c, 7a6448, b8955f
+		Shine: 50
 		Description: Hullborn salvage clans. Brass, lamplight, and a great deal of hammering.
 	Faction@synod:
 		InternalName: synod
@@ -35,6 +43,8 @@ World:
 		Color: 7fd0a0
 		Glow: d8ffe8
 		Dark: 0e3a26
+		Hull: e8dcc0
+		Shine: 10
 		Description: Tallowfolk Glim-renderers with green lanterns and long memories.
 	Faction@choir:
 		InternalName: choir
@@ -63,6 +73,8 @@ World:
 		Color: c8d0e8
 		Glow: f4f0ff
 		Dark: 2a2e44
+		Hull: 6f9c8c, 5f8a7c
+		Shine: 55
 		Description: The Knotfolk's guardian ships.
 	Faction@ragged:
 		InternalName: ragged
@@ -70,6 +82,8 @@ World:
 		Color: a88a5a
 		Glow: f0d8a8
 		Dark: 3a2c18
+		Hull: 6a5a48, 857257, 554a3c
+		Shine: 40
 		Description: Gaunt scavenger tribes of the Middens.
 	Faction@reavers:
 		InternalName: reavers
@@ -77,6 +91,8 @@ World:
 		Color: d8a038
 		Glow: ffe0a0
 		Dark: 40280a
+		Hull: c9a04e, b08a3c
+		Shine: 85
 		Description: The Company's grandchildren, turned pirate.
 	Faction@hollowkin:
 		InternalName: hollowkin
@@ -84,6 +100,8 @@ World:
 		Color: b8c8a8
 		Glow: eef8e0
 		Dark: 2a3424
+		Hull: b0a68e, 978c74
+		Shine: 40
 		Description: The havens.
 	Faction@neutral:
 		InternalName: neutral
@@ -91,6 +109,8 @@ World:
 		Color: 8f97a8
 		Glow: d8dde8
 		Dark: 2a2e38
+		Hull: a09a8c
+		Shine: 50
 		Description: Abandoned hulks drifting in the ring.
 	StartingFleet:
 		Ships: forge, halberd, dart, dart, gleaner, gleaner

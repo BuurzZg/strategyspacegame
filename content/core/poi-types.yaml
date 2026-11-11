@@ -18,9 +18,12 @@
 #   Mites (under Wrecks)    percent of the wrecks that are infested with rust mites
 #   Names                   for named places (a Hulk's ship): picked from this list
 #   Noun                    the second word of a place's name on the star chart (Marrow Reef)
+#   Seal                    its wax seal on the star chart, once known: colour (hex) and letter
+#                           (story places are black wax with a gilt letter)
 
 ScrapShoal:
 	Name: Scrap Shoal
+	Seal: 8c7a62, X
 	Noun: Shoal
 	Description: A dense drift of debris: ore rocks and dead ships, and sometimes something living in the wrecks.
 	Size: 176, 176, 56
@@ -67,6 +70,7 @@ ScrapShoal:
 
 OreReef:
 	Name: Ore Reef
+	Seal: a5552f, O
 	Noun: Reef
 	Description: Rich ore among crystal arches and spires. Quiet, and very beautiful.
 	Size: 176, 176, 64
@@ -96,6 +100,7 @@ OreReef:
 
 IceTail:
 	Name: Ice Tail
+	Seal: 7fb6c9, I
 	Noun: Tail
 	Description: The long debris trail of a broken comet. The best place in the Drift for water.
 	Size: 192, 160, 48
@@ -125,6 +130,7 @@ IceTail:
 
 LanternMist:
 	Name: Lantern Mist
+	Seal: 4f9c8a, G
 	Noun: Mist
 	Description: A Glim nebula. Fuel and spore drifts, poor sight lines, and things that hunt in the haze.
 	Size: 176, 176, 64
@@ -159,6 +165,7 @@ LanternMist:
 
 Wreck:
 	Name: Wreck
+	Seal: 7b2b23, W
 	Description: One giant derelict, and the debris of whatever killed it. Rich salvage, and someone may have got here first.
 	Size: 160, 160, 56
 	Sky: 6a3a3a
@@ -192,18 +199,21 @@ Wreck:
 # A regional trader (traders.yaml) and a wayhouse: places on the chart with no map to play.
 Trader:
 	Name: Trader
+	Seal: d2a84a, M
 	Noun: Trader
 	Description: A trading post. Trade from here: there is nothing to go in for.
 	Size: 144, 144, 48
 	Sky: 3a3020
 Wayhouse:
 	Name: Wayhouse
+	Seal: a68b6a, H
 	Noun: Wayhouse
 	Description: A drifters' stop, lashed together from old hulls. People here ask to come aboard.
 	Size: 144, 144, 48
 	Sky: 2a2a30
 StillWater:
 	Name: Still Water
+	Seal: 8b8f96, S
 	Noun: Still
 	Description: Empty space, and nothing in it but a few cold rocks. A safe place to rest and make repairs.
 	Size: 144, 144, 48
@@ -229,6 +239,7 @@ StillWater:
 # faction's patrol is added from factions.yaml.
 HullTown:
 	Name: Hull-town
+	Seal: c9a04e, T
 	Noun: Town
 	Description: A Rivet Moot settlement built into a gutted capital ship. They trade, they repair, and they hate the Gaunt.
 	Size: 160, 160, 56
@@ -252,6 +263,7 @@ HullTown:
 
 SynodRefinery:
 	Name: Synod refinery
+	Seal: 5f7f5a, R
 	Noun: Refinery
 	Description: A Lantern Synod Glim works in a quiet nebula. Fuel and food for sale, and no fighting allowed.
 	Size: 160, 160, 56
@@ -274,6 +286,7 @@ SynodRefinery:
 
 GauntDen:
 	Name: Gaunt den
+	Seal: 8e3a2a, D
 	Noun: Den
 	Description: A raider base in a hollowed rock, ringed with the ships they stripped. Rich salvage, for anyone who can take it.
 	Size: 176, 176, 56
@@ -297,6 +310,7 @@ GauntDen:
 
 CinderHold:
 	Name: Cinder hold
+	Seal: b0642e, C
 	Noun: Hold
 	Description: A Cinder Pact outpost round the bones of another Forge. They watch you the way you would watch them.
 	Size: 160, 160, 56
@@ -321,6 +335,7 @@ CinderHold:
 
 ChoirBloom:
 	Name: Choir bloom
+	Seal: a98fb8, B
 	Noun: Bloom
 	Description: A gathering of Choirmoths in a bright nebula, talking in light. Glim and spores drift everywhere.
 	Size: 176, 176, 64
@@ -343,6 +358,7 @@ ChoirBloom:
 
 HollowhornGrounds:
 	Name: Hollowhorn Grounds
+	Seal: 6f5a3c, Y
 	Noun: Grounds
 	Description: A leviathan's feeding grounds: thick with Glim and ice, and with the Hollowhorn itself, singing.
 	Size: 208, 208, 72
@@ -376,6 +392,7 @@ HollowhornGrounds:
 # Our own station, destroyed (memories.yaml anchors it in the Drift, a few stitches from waking).
 Anchorage:
 	Name: The Anchorage
+	Seal: c9a04e, A
 	Description: A station torn open and gone cold. The mark painted on its plates is the same as the one on the Forge's hull.
 	Size: 160, 160, 56
 	Sky: 2e2a36
@@ -404,6 +421,7 @@ Anchorage:
 # Each is a story anchor (memories.yaml): its memory waits in the hulk, for the Shearers to cut out.
 Steward:
 	Name: The Steward
+	Seal: 2b211b, S
 	Description: A private yacht, all brass rails and broken glass, drifting with its lights out. The Company's mark on the bow, and a better name than it deserves.
 	Size: 150, 150, 52
 	Sky: 2e3240
@@ -434,6 +452,7 @@ Steward:
 		Color: 2a3448
 ResearchHulk:
 	Name: Research hulk
+	Seal: 2b211b, R
 	Description: A Company laboratory ship, its hull scored by something that was not weather. The labs are sealed. The lamps inside are still on.
 	Size: 160, 160, 56
 	Sky: 2a3a3a
@@ -464,6 +483,7 @@ ResearchHulk:
 		Color: 2a4a48
 TallyHulk:
 	Name: Tally-barge
+	Seal: 2b211b, T
 	Description: A Rivet Moot counting-house, gutted and abandoned. Ledgers to the ceiling, every page a debt. Nobody came back for them, which is not like the Moot.
 	Size: 160, 160, 56
 	Sky: 4a3a24
@@ -490,6 +510,7 @@ TallyHulk:
 		Behaviour: lurk
 PrisonBarge:
 	Name: Prison barge
+	Seal: 2b211b, P
 	Description: A long hull of cages in the Ragged Clans' fields. The clans will not go near it, and they will not let anyone else.
 	Size: 176, 176, 56
 	Sky: 3a2a2a
@@ -516,6 +537,7 @@ PrisonBarge:
 		Behaviour: lurk
 Reliquary:
 	Name: Reliquary-ship
+	Seal: 2b211b, Q
 	Description: A Knotfolk shrine-ship, very old, still on its watch. Its guardians have kept a case for a hundred and forty-seven years. The case is empty.
 	Size: 176, 176, 56
 	Sky: 3a3a5a
@@ -540,6 +562,7 @@ Reliquary:
 		Color: 3a3a6a
 Horologe:
 	Name: The Meridian Horologe
+	Seal: 2b211b, H
 	Description: A cathedral of brass round a chronometer the size of a house. It still keeps the Empire's time. The pendulum is the only thing moving.
 	Size: 160, 160, 56
 	Sky: 4a4030
@@ -563,6 +586,7 @@ Horologe:
 		Color: 5a4a2a
 TitheBarge:
 	Name: The Tithe Barge
+	Seal: 2b211b, B
 	Description: A barge with a hold built like a chapel and an altar that opens onto nothing. It smells of hot brass and old blood. The Wound has not let it go.
 	Size: 176, 176, 56
 	Sky: 4a1a24
@@ -587,6 +611,7 @@ TitheBarge:
 		Color: 5a1a2a
 FoundingHall:
 	Name: The Founding Hall
+	Seal: 2b211b, F
 	Description: The Cinder Pact's oldest hold, built round the bones of the Anchorage's last evacuation ship. They keep a book of names here, and a grudge.
 	Size: 160, 160, 56
 	Sky: 5a2a1a
@@ -614,6 +639,7 @@ FoundingHall:
 # The Mainspring's lair, at the Shore's edge: the final battle (traits/mainspring.js).
 Lair:
 	Name: The Lair
+	Seal: 5a1414, M
 	Description: Where the Shore ends and the dark begins, something vast lies coiled, winding. Its light pulses red through a field of wrecks it has been feeding on for a hundred and forty-seven years.
 	Size: 224, 224, 64
 	Sky: 3a0a14

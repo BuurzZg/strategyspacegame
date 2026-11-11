@@ -81,7 +81,7 @@ export class Audio {
     if (!this.ctx || !this.enabled || vol < 0.03) return;
     const now = performance.now();
     const gap = { shard: 60, beam: 70, blast: 120, impact: 90, explode: 80, collapse: 300, deposit: 250, alert: 4000, storm: 1500, comm: 300,
-      cannon: 45, pulse: 60, flak: 70, plasma: 110, lance: 180, torpedo: 150, bite: 90, boom: 70, 'boom-big': 220, hit: 50 }[name] || 40;
+      cannon: 45, pulse: 60, flak: 70, plasma: 110, lance: 180, torpedo: 150, bite: 90, boom: 70, 'boom-big': 220, hit: 50, key: 35, hiss: 600, clank: 200, organ: 1500 }[name] || 40;
     if (now - (this.last.get(name) || 0) < gap) return;
     this.last.set(name, now);
     const v = vol;
@@ -101,6 +101,11 @@ export class Audio {
       case 'explode': this.burst(0.5, 0.35 * v, 1800); this.tone('sine', 90, 40, 0.4, 0.25 * v); break;
       case 'storm': this.burst(2.5, 0.18 * v, 700, 0.7); this.burst(2.0, 0.08 * v, 4000, 1.5, 'bandpass'); break;
       case 'comm': this.tone('sine', 1320, 1320, 0.05, 0.06 * v); this.tone('sine', 1760, 1760, 0.05, 0.05 * v, 0.07); break;
+      // Milestone 23, the brass age: a telegraph key, steam from a valve, iron plates, the memory organ
+      case 'key': this.burst(0.018, 0.05 * v, 3400, 7, 'bandpass'); this.tone('square', 1900, 1700, 0.012, 0.01 * v); break;
+      case 'hiss': this.burst(0.9, 0.07 * v, 5200, 0.9, 'highpass'); this.burst(0.5, 0.04 * v, 2400, 1.2, 'bandpass'); break;
+      case 'clank': this.burst(0.06, 0.12 * v, 1400, 4, 'bandpass'); [180, 412, 690].forEach((f, i) => this.tone('triangle', f, f * 0.98, 0.35, (0.05 - i * 0.012) * v)); break;
+      case 'organ': [131, 196, 262, 330, 392].forEach((f, i) => { this.tone('triangle', f, f, 2.2, 0.035 * v, 0.02 * i); this.tone('sine', f * 2, f * 2, 2.0, 0.012 * v, 0.02 * i); }); break;
       // the voyage
       case 'rankup': [523, 659, 784, 1046].forEach((f, i) => this.tone('triangle', f, f, 0.14, 0.09 * v, i * 0.07)); break;
       case 'stitch': this.tone('sine', 180, 1400, 0.55, 0.1 * v); this.burst(0.6, 0.08 * v, 2600, 1.2, 'bandpass'); this.tone('sine', 1400, 300, 0.4, 0.05 * v, 0.5); break;
@@ -123,7 +128,8 @@ export class Audio {
       case 'pulse': this.tone('square', 520, 180, 0.09, 0.05 * v); this.burst(0.07, 0.06 * v, 1800); break;
       case 'flak': this.burst(0.12, 0.14 * v, 900); break;
       case 'plasma': this.tone('sine', 260, 90, 0.3, 0.12 * v); this.tone('triangle', 900, 300, 0.2, 0.05 * v); break;
-      case 'lance': this.tone('sawtooth', 2200, 400, 0.45, 0.08 * v); this.tone('sine', 140, 60, 0.5, 0.12 * v); break;
+      // the lightning lance: a crackle over a falling zap, and the thump of the capacitors
+      case 'lance': this.burst(0.35, 0.12 * v, 4800, 0.7, 'highpass'); [0, 0.06, 0.13].forEach((d) => this.tone('sawtooth', 1800 + d * 4000, 300, 0.12, 0.05 * v, d)); this.tone('sine', 140, 60, 0.5, 0.12 * v); break;
       case 'torpedo': this.burst(0.5, 0.08 * v, 700, 0.8); this.tone('sine', 180, 320, 0.4, 0.05 * v); break;
       case 'bite': this.burst(0.08, 0.12 * v, 500, 3, 'bandpass'); this.tone('square', 90, 60, 0.08, 0.06 * v); break;
       case 'hit': this.burst(0.06, 0.07 * v, 2400, 1.5, 'bandpass'); break;

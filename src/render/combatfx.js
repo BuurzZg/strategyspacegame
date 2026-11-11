@@ -99,6 +99,16 @@ export class CombatFx {
 
   // ---------------------------------------------------------------- one-off effects
   flash(x, y, z, size, color, life = 0.12) { tmp.setHex(color); this.fx.glow.spawn(x, y, z, 0, 0, 0, life, size, size * 0.4, tmp, 1); }
+  // lightning: a chain of short beams, each kink pushed sideways at random
+  bolt(a, b, color, width, life) {
+    const n = 7, d = b.clone().sub(a), len = d.length(), side = new THREE.Vector3(), prev = a.clone(), p = new THREE.Vector3();
+    for (let i = 1; i <= n; i++) {
+      p.copy(a).addScaledVector(d, i / n);
+      if (i < n) { side.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(len * 0.12); p.add(side); }
+      this.fx.beam(prev, p, color, width, life);
+      prev.copy(p);
+    }
+  }
   sparks(x, y, z, color, n, speed, size = 0.35) {
     tmp.setHex(color);
     for (let i = 0; i < n; i++) {
@@ -158,6 +168,17 @@ export class CombatFx {
           break;
         }
         case 'bite': this.sparks(e.x1 * R, e.z1 * R, e.y1 * R, colorOf(e.color, 0xe9b8ff), 8, 5); break;
+        // the lightning lance: a jagged arc from the Tesla ball to the target, and a fainter fork
+        case 'arc': {
+          v1.set(e.x0 * R, e.z0 * R, e.y0 * R); v2.set(e.x1 * R, e.z1 * R, e.y1 * R);
+          const c = colorOf(e.color, 0xd8f7ff), w = Math.max(0.1, (e.size || 100) * R * 0.5);
+          this.bolt(v1, v2, c, w, 0.3);
+          this.bolt(v1, v2, 0x9fd8ff, w * 0.5, 0.2);
+          this.flash(v1.x, v1.y, v1.z, 2.4, c, 0.2);
+          this.flash(v2.x, v2.y, v2.z, 3.6, c, 0.3);
+          this.sparks(v2.x, v2.y, v2.z, c, 12, 9);
+          break;
+        }
         case 'impact':
           if (e.missile) this.blast(x, y, z, 0.9, 0xffa24a);
           else if (e.hit) { this.flash(x, y, z, Math.max(0.6, (e.size || 100) * R * 4), colorOf(e.color), 0.12); this.sparks(x, y, z, colorOf(e.color), 4, 4, 0.25); }

@@ -17,10 +17,13 @@ const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true).translate(0, 0.5
 const beamUp = new THREE.Vector3(0, 1, 0);
 const beamRay = new THREE.Raycaster();
 const toRad = (a) => (a / 1024) * TAU;
+const steamColor = new THREE.Color(0xe4ece8), glimSteam = new THREE.Color(0xa8f2dc);
 const lerpAngle = (a, b, t) => { let d = (b - a) & 1023; if (d > 512) d -= 1024; return a + d * t; };
 
 export function factionStyle(info) {
-  return { id: info.InternalName, name: info.Name, color: parseInt(info.Color, 16), glow: parseInt(info.Glow, 16), dark: parseInt(info.Dark, 16), css: `#${info.Color}` };
+  // Hull: the plating's colours (several: patched from different wrecks); Shine: how metallic (percent)
+  const hull = String(info.Hull || '').split(',').map((x) => x.trim()).filter(Boolean).map((x) => parseInt(x, 16));
+  return { id: info.InternalName, name: info.Name, color: parseInt(info.Color, 16), glow: parseInt(info.Glow, 16), dark: parseInt(info.Dark, 16), css: `#${info.Color}`, hull, shine: +info.Shine };
 }
 
 // Reads the simulation and draws it. Never writes to it.
@@ -145,8 +148,17 @@ export class WorldRenderer {
           const p = fl.getWorldPosition(this.tmp);
           glowColor.setHex(v.style.glow);
           this.fx.glow.spawn(p.x, p.y, p.z, 0, 0, 0, 0.45 + throttle * 0.9, e.size * 0.9 * throttle + 0.15, 0.05, glowColor, 0.55 * throttle);
+          // steam thrusters: the exhaust leaves a little white steam behind
+          if (Math.random() < dt * throttle * 4) this.fx.smoke.spawn(p.x, p.y, p.z, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, (Math.random() - 0.5) * 0.4, 0.9, e.size * 0.5, e.size * 2.4, steamColor, 0.22);
         }
       });
+      // the smokestacks vent Glim steam: a trickle at rest, more under way
+      if (m.stacks && m.stacks.length && !v.hidden) for (const st of m.stacks) {
+        if (Math.random() > dt * (1.6 + throttle * 5)) continue;
+        const p = st.obj.getWorldPosition(this.tmp);
+        const glim = Math.random() < 0.3;
+        this.fx.smoke.spawn(p.x, p.y, p.z, (Math.random() - 0.5) * 0.3, 0.9 + Math.random() * 0.6, (Math.random() - 0.5) * 0.3, 1.8, st.r * 1.6, st.r * 7, glim ? glimSteam : steamColor, glim ? 0.3 : 0.26, 0, 0.6);
+      }
     }
     this.updateGoalLines(alpha);
     this.updateRally(t, alpha);

@@ -12,31 +12,87 @@ const G = (key, make) => geoCache.get(key) || (geoCache.set(key, make()), geoCac
 const matCache = new Map();
 let flareTex = null;
 
+// Milestone 23, the brass age: hulls are riveted plate in each faction's own metal (world.yaml Hull and
+// Shine: patched plates for the Rivet Moot, waxy cream for the Synod, rust for the Gaunt, soot for the
+// Cinder Pact, polished brass for the Reavers), with copper pipes, brass fittings and warm portholes.
+// Creatures and the Choir's light keep their own looks.
 export function materials(style) {
   if (matCache.has(style.id)) return matCache.get(style.id);
+  const tex = rivets();
+  const hulls = style.hull && style.hull.length ? style.hull : [0x8a8478];
+  const shine = Math.max(0, Math.min(100, style.shine ?? 50)) / 100;
+  const plate = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.75 - shine * 0.4, metalness: 0.2 + shine * 0.6, flatShading: true, map: tex, bumpMap: tex, bumpScale: 0.9 });
   const m = {
-    hull: new THREE.MeshStandardMaterial({ color: 0x9aa3b4, roughness: 0.55, metalness: 0.55, flatShading: true }),
-    dark: new THREE.MeshStandardMaterial({ color: 0x2b303d, roughness: 0.7, metalness: 0.4, flatShading: true }),
+    hull: plate(hulls[0]),
+    hullAlt: hulls.slice(1).map(plate),
+    dark: new THREE.MeshStandardMaterial({ color: 0x2b2620, roughness: 0.75, metalness: 0.45, flatShading: true, map: tex, bumpMap: tex, bumpScale: 0.6 }),
     trim: new THREE.MeshStandardMaterial({ color: style.color, roughness: 0.4, metalness: 0.3, flatShading: true, emissive: style.dark, emissiveIntensity: 0.8 }),
     light: new THREE.MeshStandardMaterial({ color: style.glow, emissive: style.glow, emissiveIntensity: 1.6, flatShading: true }),
     engine: new THREE.MeshBasicMaterial({ color: style.glow }),
     // molten metal: the same hot glow for every faction
     furnace: new THREE.MeshStandardMaterial({ color: 0xffc080, emissive: 0xff7a2a, emissiveIntensity: 2.2, flatShading: true }),
+    copper: new THREE.MeshStandardMaterial({ color: 0xb8693d, roughness: 0.35, metalness: 0.85, flatShading: true }),
+    brass: new THREE.MeshStandardMaterial({ color: 0xc9a04e, roughness: 0.3, metalness: 0.9, flatShading: true }),
+    port: new THREE.MeshBasicMaterial({ color: 0xffc070, side: THREE.DoubleSide }),
   };
   matCache.set(style.id, m);
   return m;
 }
 
+// Riveted plate: a tile of four plates with dark seams and rows of rivets, as the colour and the
+// bump of every hull (none without a document, as in the headless tests)
+let rivetTex = null;
+function rivets() {
+  if (rivetTex !== null) return rivetTex || null;
+  if (typeof document === 'undefined') { rivetTex = false; return null; }
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const x = c.getContext('2d', { willReadFrequently: true });
+  for (const [px, py, s] of [[0, 0, 246], [64, 0, 232], [0, 64, 238], [64, 64, 252]]) { x.fillStyle = `rgb(${s},${s},${s})`; x.fillRect(px, py, 64, 64); }
+  let seed = 7;
+  const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 600; i++) { x.fillStyle = `rgba(0,0,0,${r() * 0.07})`; x.fillRect(r() * 128, r() * 128, 1 + r() * 3, 1 + r() * 3); }
+  x.strokeStyle = 'rgb(96,96,96)'; x.lineWidth = 2.5;
+  x.beginPath();
+  for (const p of [0, 64, 128]) { x.moveTo(p, 0); x.lineTo(p, 128); x.moveTo(0, p); x.lineTo(128, p); }
+  x.stroke();
+  for (const p of [5, 59, 69, 123]) for (let q = 6; q < 128; q += 10) for (const [cx, cy] of [[p, q], [q, p]]) {
+    x.fillStyle = 'rgb(70,70,70)'; x.beginPath(); x.arc(cx + 0.6, cy + 0.8, 1.9, 0, Math.PI * 2); x.fill();
+    x.fillStyle = 'rgb(250,250,250)'; x.beginPath(); x.arc(cx, cy, 1.5, 0, Math.PI * 2); x.fill();
+  }
+  rivetTex = new THREE.CanvasTexture(c);
+  rivetTex.wrapS = rivetTex.wrapT = THREE.RepeatWrapping;
+  rivetTex.colorSpace = THREE.SRGBColorSpace;
+  rivetTex.anisotropy = 4;
+  return rivetTex;
+}
+
+// patched plating: hull parts take the faction's plate colours in turn
+let patch = 0;
 function part(geo, mat, x, y, z, parent, rx = 0, ry = 0, rz = 0) {
+  if (mat === curM?.hull && curM.hullAlt.length) { const k = patch++ % (curM.hullAlt.length + 1); if (k) mat = curM.hullAlt[k - 1]; }
   const o = new THREE.Mesh(geo, mat);
   o.position.set(x, y, z);
   o.rotation.set(rx, ry, rz);
   parent.add(o);
   return o;
 }
-const box = (w, h, d) => G(`b${w},${h},${d}`, () => new THREE.BoxGeometry(w, h, d));
-const cyl = (rt, rb, h, s = 8) => G(`c${rt},${rb},${h},${s}`, () => new THREE.CylinderGeometry(rt, rb, h, s));
-const cone = (r, h, s = 6) => G(`k${r},${h},${s}`, () => new THREE.ConeGeometry(r, h, s));
+// texture coordinates in plates: about two plates to a unit whatever the part's size, so the rivets
+// keep one spacing over the whole ship
+const PLATE = 0.38;
+function plateBox(g, w, h, d) {
+  const uv = g.attributes.uv, f = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let i = 0; i < uv.count; i++) { const [a, b] = f[Math.min(5, Math.floor(i / 4))]; uv.setXY(i, uv.getX(i) * a * PLATE, uv.getY(i) * b * PLATE); }
+  return g;
+}
+function plateRound(g, r, h) {
+  const uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * Math.max(0.5, 2 * Math.PI * r) * PLATE, uv.getY(i) * Math.max(0.5, h) * PLATE);
+  return g;
+}
+const box = (w, h, d) => G(`b${w},${h},${d}`, () => plateBox(new THREE.BoxGeometry(w, h, d), w, h, d));
+const cyl = (rt, rb, h, s = 8) => G(`c${rt},${rb},${h},${s}`, () => plateRound(new THREE.CylinderGeometry(rt, rb, h, s), Math.max(rt, rb), h));
+const cone = (r, h, s = 6) => G(`k${r},${h},${s}`, () => plateRound(new THREE.ConeGeometry(r, h, s), r, h));
 const torus = (r, t, s = 40) => G(`t${r},${t},${s}`, () => new THREE.TorusGeometry(r, t, 6, s));
 
 // A wedge-shaped plate: tapered box, useful for prows and fins.
@@ -49,12 +105,89 @@ function wedge(len, w0, w1, h) {
       p.setZ(i, p.getZ(i) * (w0 + (w1 - w0) * t));
     }
     g.computeVertexNormals();
-    return g;
+    return plateBox(g, len, h, Math.max(w0, w1));
   });
 }
 
+// A rotary gun: a ring of barrels round a hub, pointing along +X, that spins (out.spin)
+function rotary(body, x, y, z, r, len, n, M, out) {
+  const g = new THREE.Group();
+  g.position.set(x, y, z);
+  part(cyl(r * 0.55, r * 0.7, len * 0.3, 8), M.brass, -len * 0.35, 0, 0, g, 0, 0, Math.PI / 2);
+  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; part(cyl(r * 0.18, r * 0.18, len, 5), M.dark, 0, Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, g, 0, 0, Math.PI / 2); }
+  part(cyl(r * 0.62, r * 0.62, len * 0.06, 8), M.brass, len * 0.42, 0, 0, g, 0, 0, Math.PI / 2);
+  body.add(g);
+  out.spin.push({ obj: g, speed: 3 });
+  return g;
+}
+
+const CREATURES = new Set(['bloom', 'moth', 'wyrm', 'mites', 'hollowhorn', 'gnasher']);
+// where the stacks stand on hulls whose shape the general rule gets wrong (model units)
+const STACKS = {
+  forge: [[-8.2, 3.2, 1.2, 0.62, 3.4], [-10.4, 3.2, -1.2, 0.62, 3.4], [-12.4, 3.2, 0, 0.5, 2.8]],
+  halberd: [[-2.1, 0.45, 0, 0.16, 0.8]],
+  spindle: [[-1.9, 0.3, 0, 0.12, 0.6]],
+};
+
+// Steamwork for a built hull: a row of warm portholes along the big plates (one mesh for all of
+// them) and smokestacks that vent Glim steam (out.stacks: the renderer puffs it)
+function steamwork(type, out, M) {
+  const body = out.body, boxes = [];
+  for (const o of body.children) {
+    const p = o.isMesh && o.geometry.parameters;
+    if (!p || p.width === undefined || p.depth === undefined || o.rotation.x || o.rotation.y || o.rotation.z) continue;
+    if (o.material !== M.hull && !M.hullAlt.includes(o.material)) continue;
+    boxes.push({ x: o.position.x, y: o.position.y, z: o.position.z, w: p.width * o.scale.x, h: p.height * o.scale.y, d: p.depth * o.scale.z });
+  }
+  // portholes
+  const pos = [], s = Math.min(0.12, 0.035 + out.length * 0.003), gap = s * 5;
+  for (const b of boxes) {
+    if (b.w < 2.4 || b.h < 0.7 || pos.length > 80 * 54) continue;
+    const n = Math.min(14, Math.floor((b.w - 0.6) / gap)), y = b.y + b.h * 0.18;
+    for (let i = 0; i < n; i++) {
+      const x = b.x - ((n - 1) * gap) / 2 + i * gap;
+      for (const side of [-1, 1]) {
+        const z = b.z + side * (b.d / 2 + 0.012);
+        // a round port: a hexagon of six triangles
+        for (let k = 0; k < 6; k++) {
+          const a0 = (k / 6) * Math.PI * 2, a1 = ((k + 1) / 6) * Math.PI * 2;
+          pos.push(x, y, z, x + Math.cos(a0) * s, y + Math.sin(a0) * s, z, x + Math.cos(a1) * s, y + Math.sin(a1) * s, z);
+        }
+      }
+    }
+  }
+  if (pos.length) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    body.add(new THREE.Mesh(g, M.port));
+  }
+  // smokestacks
+  let spots = STACKS[type];
+  if (!spots) {
+    const n = out.length < 4.5 ? 0 : out.length < 9 ? 1 : 2;
+    const top = boxes.filter((b) => b.w >= out.length * 0.25).sort((a, b) => b.y + b.h / 2 - (a.y + a.h / 2))[0];
+    spots = [];
+    if (top) {
+      const k = Math.pow(out.length / 8, 0.8), r = 0.13 * k, ht = 0.65 * k;
+      for (let i = 0; i < n; i++) spots.push([top.x - top.w * (0.28 - i * 0.2), top.y + top.h / 2, top.z, r, ht]);
+    }
+  }
+  out.stacks = [];
+  for (const [x, y, z, r, ht] of spots) {
+    part(cyl(r, r * 1.18, ht, 8), M.dark, x, y + ht / 2, z, body);
+    part(cyl(r * 1.3, r * 1.3, ht * 0.14, 8), M.brass, x, y + ht * 0.95, z, body);
+    part(cyl(r * 1.22, r * 1.22, ht * 0.08, 8), M.copper, x, y + ht * 0.35, z, body);
+    const vent = new THREE.Object3D();
+    vent.position.set(x, y + ht * 1.05, z);
+    body.add(vent);
+    out.stacks.push({ obj: vent, r });
+  }
+}
+
+let curM = null;
 export function buildShip(type, style) {
   const M = materials(style);
+  curM = M; patch = 0;
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
@@ -71,10 +204,10 @@ export function buildShip(type, style) {
       part(box(1.2, 0.8, 0.7), M.hull, -0.9, 0.75, 0, body);
       part(box(0.5, 0.18, 0.72), M.light, -0.55, 1.05, 0, body);
       part(wedge(1.4, 0.05, 0.6, 0.12), M.trim, -1.0, 1.25, 0, body, 0, 0, -0.25);
-      // side pulse batteries
+      // side pulse batteries: rotary guns
       for (const z of [-0.75, 0.75]) {
         part(box(1.6, 0.35, 0.35), M.dark, 1.2, 0.05, z, body);
-        part(cyl(0.07, 0.07, 1.1, 6), M.dark, 2.3, 0.05, z, body, 0, 0, Math.PI / 2);
+        rotary(body, 2.4, 0.05, z, 0.3, 1.1, 5, M, out);
       }
       // trim stripes
       for (const z of [-0.56, 0.56]) part(box(4.4, 0.1, 0.04), M.trim, -0.1, 0.1, z, body);
@@ -225,7 +358,9 @@ export function buildShip(type, style) {
       // lance frigate: a thin spine wrapped round one long lance, capacitor rings along it
       part(cyl(0.18, 0.18, 4.4, 8), M.dark, 1.7, 0, 0, body, 0, 0, Math.PI / 2);
       part(cyl(0.32, 0.16, 0.45, 8), M.light, 4.0, 0, 0, body, 0, 0, -Math.PI / 2);
-      for (const x of [0.9, 1.8, 2.7]) part(torus(0.45, 0.09, 16), M.trim, x, 0, 0, body, 0, Math.PI / 2, 0);
+      // copper coils along the lance, and a brass ball at its tip where the lightning leaves
+      for (const x of [0.7, 1.15, 1.6, 2.05, 2.5, 2.95]) part(torus(0.36, 0.07, 14), M.copper, x, 0, 0, body, 0, Math.PI / 2, 0);
+      part(G('tesla', () => new THREE.IcosahedronGeometry(0.3, 1)), M.brass, 4.45, 0, 0, body);
       part(box(3.4, 0.6, 0.75), M.hull, -0.6, 0, 0, body);
       part(box(2.2, 0.25, 1.1), M.dark, -0.9, -0.38, 0, body);
       part(box(0.7, 0.36, 0.45), M.hull, -1.4, 0.46, 0, body);
@@ -248,7 +383,7 @@ export function buildShip(type, style) {
       part(box(1.62, 0.16, 1.22), M.light, -2.4, 1.75, 0, body);
       for (const z of [-1, 1]) {
         part(box(2.2, 0.5, 0.5), M.dark, 3.4, 0.2, z * 1.5, body);
-        part(cyl(0.07, 0.07, 1.2, 6), M.dark, 4.9, 0.2, z * 1.5, body, 0, 0, Math.PI / 2);
+        rotary(body, 5.0, 0.2, z * 1.5, 0.4, 1.3, 6, M, out);
         part(box(9, 0.12, 0.05), M.trim, -0.3, 0.35, z * 1.32, body);
         part(box(4, 0.08, 0.05), M.light, 0.5, -0.4, z * 1.32, body);
       }
@@ -458,7 +593,7 @@ export function buildShip(type, style) {
       }
       part(cyl(0.42, 0.52, 0.36, 8), M.dark, 0.5, 0.85, 0, body);
       part(box(0.5, 0.22, 0.5), M.hull, 0.55, 1.12, 0, body);
-      for (const z of [-0.13, 0.13]) part(cyl(0.05, 0.05, 1.0, 5), M.dark, 1.1, 1.14, z, body, 0, 0, Math.PI / 2);
+      rotary(body, 1.15, 1.14, 0, 0.34, 1.0, 6, M, out); // the flak turret's rotary gun
       part(box(0.4, 0.14, 0.6), M.light, -0.6, 0.78, 0, body);
       part(cyl(0.45, 0.55, 0.5, 8), M.hull, -1.9, 0, 0, body, 0, 0, Math.PI / 2);
       part(cyl(0.36, 0.36, 0.06, 8), M.engine, -2.17, 0, 0, body, 0, 0, Math.PI / 2);
@@ -482,10 +617,13 @@ export function buildShip(type, style) {
     }
     default:
       // the Wound's grown hulls (demons.js)
-      if (buildDemon(type, body, out)) break;
+      if (buildDemon(type, body, out)) { out.grown = true; break; }
       part(box(2, 0.6, 0.8), M.hull, 0, 0, 0, body);
       out.engines.push({ pos: new THREE.Vector3(-1.1, 0, 0), size: 0.5 });
   }
+  if (!CREATURES.has(type) && style.id !== 'choir' && style.id !== 'wound' && !out.grown) steamwork(type, out, M);
+  else out.stacks = [];
+  curM = null;
   body.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
 
   // engine flares: additive sprites scaled by throttle
@@ -522,7 +660,7 @@ export function buildWreck(model, seed, style) {
     if (r < 0.4) out.embers.push(m.position.clone());
   }
   for (const f of out.flares) f.parent.remove(f);
-  out.flares = []; out.engines = []; out.spin = [];
+  out.flares = []; out.engines = []; out.spin = []; out.stacks = [];
   out.body.rotation.set((rand() - 0.5) * 0.6, 0, (rand() - 0.5) * 0.8);
   out.tumble = new THREE.Vector3((rand() - 0.5) * 0.06, (rand() - 0.5) * 0.04, (rand() - 0.5) * 0.06);
   return out;

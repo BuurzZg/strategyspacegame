@@ -1,7 +1,6 @@
 import * as THREE from '../../lib/three.module.js';
 import { OrbitCamera } from './camera.js';
-import { SpaceScene } from '../render/space.js';
-import { StarChart, chartPos, TYPE_COLORS, factionColor } from '../render/galaxy.js';
+import { StarChart, chartPos, typeColor, factionColor } from '../render/galaxy.js';
 import { standingOf, tierName, hasLeave, raceStanding, TIERS } from '../galaxy/standing.js';
 import * as CM from '../galaxy/comms.js';
 import * as V from '../galaxy/voyage.js';
@@ -9,6 +8,7 @@ import { laneOpen } from '../galaxy/galaxy.js';
 import { ROLES, count, free, titleOf } from '../galaxy/crew.js';
 import * as B from '../galaxy/base.js';
 import * as Wd from '../galaxy/wound.js';
+import { gauge, medal, causeIcon } from './instruments.js';
 
 // The star chart screen: the galaxy map, where the voyage is planned and time passes only
 // when you act. Click a place to see what is known about it and the route there; stitch,
@@ -23,11 +23,12 @@ const DRAG = 5;
 const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim', 'Glim: the drive burns it for every stitch, and the boilers every day'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores'], ['cogmarks', 'Cogmarks']];
 const MOOD = { content: 'Content', uneasy: 'Uneasy', angry: 'Angry' };
 // The crew's mood as a medallion, with what is behind it (and All hands, while it lasts)
+// (Milestone 23: an enamel medallion with a face, the word, morale, and a stamped icon per cause)
 function moodBadge(rules, s) {
   const m = B.moodOf(rules, s), ah = (s.allHands && s.allHands.days) | 0;
   const tip = `Morale ${s.morale}. ${m.causes.length ? m.causes.map((c) => c.text).join(' ') : 'Nothing is wrong.'}`;
-  const chips = m.causes.map((c) => `<i class="cause${c.bad ? ' bad' : ''}" title="${esc(c.text)}">${esc(c.text.split(':')[0])}</i>`).join('');
-  return `<div class="cs mood m-${m.mark}${ah ? ' allhands' : ''}" title="${esc(tip)}"><span class="medal"></span><span class="cs-k">${ah ? `All hands · ${ah} d` : MOOD[m.mark]}</span><b>${s.morale}</b>${chips}</div>`;
+  const chips = m.causes.map((c) => causeIcon(c.id, c.text)).join('');
+  return `<div class="cs mood m-${m.mark}${ah ? ' allhands' : ''}" title="${esc(tip)}">${medal(m.mark, 38)}<span class="mood-txt"><span class="cs-k">${ah ? `All hands · ${ah} d` : MOOD[m.mark]}</span><b>${s.morale}</b></span><span class="causes">${chips}</span></div>`;
 }
 const STATE = { online: 'Online', dim: 'Dim', dark: 'Dark', striking: 'On strike', cold: 'Cold' };
 // The Mainspring's attention as a word (from Noticed on; the sensors officer's reading)
@@ -43,8 +44,8 @@ export class ChartScreen {
     this.onLoom = () => this.openLoom();
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
-    const B = 140 / (1 / 256);
-    this.space = new SpaceScene(this.scene, { x0: -B, x1: B, y0: -B, y1: B, z0: -B / 10, z1: B / 10 }, voyage.seed, '2a1a3a', { landmarks: false, sun: false });
+    // the chart table: dark oak under the parchment (Milestone 23)
+    this.scene.background = new THREE.Color(0x17110b);
     this.chart = new StarChart(this.scene, this.g, rules);
     this.orbit = new OrbitCamera(camera);
     Object.assign(this.orbit, { minDist: 18, maxDist: 330, minPitch: 0.3, maxPitch: 1.4 });
@@ -283,9 +284,10 @@ export class ChartScreen {
   panelClick(e) {
     const b = e.target.closest('button[data-act]');
     if (!b || b.disabled) return;
-    if (b.dataset.act === 'repair') this.act(V.repair, b.dataset.k);
-    else if (b.dataset.act === 'install') this.act(V.install, b.dataset.k);
-    else if (b.dataset.act === 'strip' && window.confirm('Strip this room out? Nothing comes back, and it takes a day.')) this.act(V.strip, b.dataset.k);
+    // iron work clanks
+    if (b.dataset.act === 'repair') { if (this.act(V.repair, b.dataset.k).ok) this.audio.play('clank'); }
+    else if (b.dataset.act === 'install') { if (this.act(V.install, b.dataset.k).ok) this.audio.play('clank'); }
+    else if (b.dataset.act === 'strip' && window.confirm('Strip this room out? Nothing comes back, and it takes a day.')) { if (this.act(V.strip, b.dataset.k).ok) this.audio.play('clank'); }
     else if (b.dataset.act === 'parley') this.act(V.parley, b.dataset.k);
     else if (b.dataset.act === 'home') this.act(V.jumpHome);
     else if (b.dataset.act === 'loom' && this.onLoom) this.onLoom();
@@ -309,6 +311,10 @@ export class ChartScreen {
   }
 
   refreshTop() {
+    // a memory has come back (an event, a place, a dialog): the organ
+    const nm = Object.keys((this.s.campaign && this.s.campaign.memories) || {}).length;
+    if (this.memSeen !== undefined && nm > this.memSeen) this.audio.play('organ');
+    this.memSeen = nm;
     const s = this.s, res = this.rules.content.resources, left = V.daysLeft(this.rules, s);
     const region = this.rules.content.regions[this.g.points[s.at].region];
     $('chart-day').textContent = `Life ${(s.campaign && s.campaign.life) || 1} · Day ${s.day} · ${region.Name}`;
@@ -318,10 +324,21 @@ export class ChartScreen {
     $('chart-date').title = dt.known ? `The Meridian Horologe keeps the date. ${dt.last ? `The Anchorage's last record: ${dt.last}, ${dt.gap} ago.` : ''}` : 'Nobody aboard knows what day it is.';
     const days = { ice: left.ice, food: left.food, air: left.air };
     if (Math.min(left.ice, left.food, left.air) < 7 && !(this.comms && this.comms.isOpen)) this.hint('low');
-    $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
-      const d = days[k], warn = d !== undefined && d < 3 ? 'bad' : d !== undefined && d < 7 ? 'warn' : '';
-      return `<div class="cs ${warn}" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k] | 0)}</b>${d !== undefined ? `<span class="cs-d">${d === Infinity ? '' : `${fmt(d)} d`}</span>` : ''}</div>`;
-    }).join('') + `<div class="cs" title="Everyone aboard, flying ships or not; berths for ${B.berths(this.rules, s)}"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div>` + moodBadge(this.rules, s) + attentionBadge(this.rules, s);
+    // the instruments (Milestone 23): brass gauges for what the crew live on, with days left;
+    // the boilers' pressure; brass counters for the rest
+    const VY = this.rules.content.voyage, burn = +VY.ReactorGlim || 10;
+    const lastsFor = (d) => (d === Infinity ? 'STEADY' : `${fmt(d)} D`);
+    const g = [
+      ['Water', days.ice, `${fmt(s.stores.ice | 0)} ice: ${days.ice === Infinity ? 'steady' : `${fmt(days.ice)} days`} of drinking, air and growing`],
+      ['Food', days.food, `${fmt(s.stores.food | 0)} food: ${days.food === Infinity ? 'steady' : `${fmt(days.food)} days`}`],
+      ['Air', days.air, `${fmt(s.stores.air | 0)} air: ${days.air === Infinity ? 'steady' : `${fmt(days.air)} days`}`],
+    ].map(([name, d, tip]) => gauge(name, d === Infinity ? 1 : d / 30, lastsFor(d), { low: d < 5, title: tip }));
+    const glimDays = Math.trunc((s.stores.glim | 0) / burn);
+    g.push(gauge('Glim', Math.min(1, (s.stores.glim | 0) / 2400), fmt(s.stores.glim | 0), { low: (s.stores.glim | 0) < 300, title: 'Glim: the drive burns it for every stitch, and the boilers every day' }));
+    g.push(gauge('Boilers', s.cold ? 0 : Math.min(1, 0.25 + glimDays / 80), s.cold ? 'COLD' : `${Math.min(300, 75 + glimDays * 3)} PSI`, { low: !!s.cold || glimDays < 10, title: s.cold ? 'The boilers are cold: every system works at half' : `The boilers burn ${burn} Glim a day: ${fmt(glimDays)} days of it aboard` }));
+    const plates = STORES.filter(([k]) => !['ice', 'food', 'air', 'glim'].includes(k)).map(([k, name, tip]) => `<div class="cs plate-ctr" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k] | 0)}</b></div>`).join('')
+      + `<div class="cs plate-ctr" title="Everyone aboard, flying ships or not; berths for ${B.berths(this.rules, s)}"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div>`;
+    $('chart-stores').innerHTML = `<div class="gauges">${g.join('')}</div><div class="plates">${plates}</div>${moodBadge(this.rules, s)}${attentionBadge(this.rules, s)}`;
   }
 
   refreshCard() {
@@ -331,7 +348,7 @@ export class ChartScreen {
     $('pc-status').textContent = here ? 'The Forge is here' : times ? `Visited${times > 1 ? ` ×${times}` : ''}` : known ? '' : 'Beyond the sensors';
     const Fo = known && p.owner ? this.rules.content.factions[p.owner] : null;
     const owned = Fo ? ` · <span style="color:${hex(factionColor(this.rules, p.owner))}">${esc(Fo.Name)}${p.seat ? '' : ' territory'}</span> <span class="t-${tierName(this.rules, standingOf(this.rules, s, p.owner))}">(${tierName(this.rules, standingOf(this.rules, s, p.owner))})</span>` : '';
-    $('pc-class').innerHTML = `<i style="background:${hex(known ? TYPE_COLORS[p.type] : 0x56637a)}"></i>${esc(R.Name)}${known ? ` · ${esc(T.Name)}` : ''}${p.edge && known ? ' · the Shore\'s edge' : ''}${owned}`;
+    $('pc-class').innerHTML = `<i style="background:${hex(known ? typeColor(this.rules, p.type) : 0x56637a)}"></i>${esc(R.Name)}${known ? ` · ${esc(T.Name)}` : ''}${p.edge && known ? ' · the Shore\'s edge' : ''}${owned}`;
     // something waits in this place's hulk, once the sensors have pinpointed it (or you are here)
     const anchor = p.relic && !V.anchorDone(this.rules, s, p.relic) ? p.relic : '';
     const pin = anchor && ((s.campaign && s.campaign.chart.clues) || []).some((c) => c.id === anchor && c.exact);
@@ -406,10 +423,7 @@ export class ChartScreen {
       if (d.finalJump) { const hj = V.canJumpHome(rules, s); h += `<button type="button" class="big" data-act="home" ${hj.ok ? '' : 'disabled'}>Make the final jump</button>${hj.ok ? '' : `<p class="why">${esc(hj.why)}</p>`}`; }
       // the deck plan: slots, the rooms in them, and what could be built
       const used = B.slotsUsed(rules, s), slots = B.deckSlots(rules), rooms = B.rooms(rules), cp = B.costPctOf(rules, s);
-      h += `<h3>Deck plan: ${used} of ${slots} slots</h3><div class="deck">`;
-      for (const it of rooms.filter((r) => B.built(s, r.id) && B.slotsOf(rules, r) > 0)) for (let k = 0; k < B.slotsOf(rules, it); k++) h += `<div class="slot full" title="${esc(it.Description)}">${esc(it.Name)}</div>`;
-      for (let k = used; k < slots; k++) h += '<div class="slot"></div>';
-      h += `</div><p class="fp-note">Rooms are built with ore, salvage, days and free engineers${cp !== 100 ? `, ${cp > 100 ? `${cp - 100}% dearer while the crew are ${B.moodOf(rules, s).mark === 'angry' ? 'angry' : 'uneasy'} or strained` : ''}` : ''}. They are lost with everything else when a life ends; how to build them is not.</p><ul class="items">`;
+      h += `<h3>Deck plan: ${used} of ${slots} slots</h3>${deckCutaway(rooms.filter((r) => B.built(s, r.id) && B.slotsOf(rules, r) > 0).map((r) => ({ name: r.Name, tip: r.Description, n: B.slotsOf(rules, r) })), slots, V.remembers(s, 'truth'))}<p class="fp-note">Rooms are built with ore, salvage, days and free engineers${cp !== 100 ? `, ${cp > 100 ? `${cp - 100}% dearer while the crew are ${B.moodOf(rules, s).mark === 'angry' ? 'angry' : 'uneasy'} or strained` : ''}` : ''}. They are lost with everything else when a life ends; how to build them is not.</p><ul class="items">`;
       for (const it of rooms) {
         const built = B.built(s, it.id), known = B.roomKnown(rules, s, it.id), I = it.Install, sl = B.slotsOf(rules, it);
         const where = sl === 0 ? 'no slot' : sl > 1 ? `${sl} slots` : '1 slot';
@@ -533,9 +547,9 @@ export class ChartScreen {
     if (k.has('q')) o.rotate(-dt * 300, 0);
     if (k.has('e')) o.rotate(dt * 300, 0);
     o.update(dt);
-    this.space.update(this.camera, renderer.getPixelRatio());
     const scale = renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)));
     this.chart.setScale(scale);
+    this.chart.dist = o.dist;
     this.chart.frame(dt, this.camera);
     renderer.render(this.scene, this.camera);
     this.t = (this.t || 0) + dt;
@@ -553,42 +567,82 @@ export class ChartScreen {
     const ctx = this.ctx, dpr = Math.min(2, window.devicePixelRatio || 1), w = window.innerWidth, h = window.innerHeight;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const s = this.s, d = V.drive(this.rules, s), here = this.g.points[s.at], t = V.target(this.rules, s);
+    const s = this.s, d = V.drive(this.rules, s), here = this.g.points[s.at];
     const known = new Set(s.known);
     const proj = (p) => { this.v.copy(chartPos(p)).project(this.camera); return this.v.z > 1 ? null : { x: (this.v.x + 1) * 0.5 * w, y: (1 - this.v.y) * 0.5 * h }; };
-    // region names, on the far side of each ring
-    ctx.textAlign = 'center';
-    ctx.font = '600 11px "IBM Plex Sans", sans-serif';
+    const zoom = Math.max(0.6, Math.min(1.6, 95 / this.orbit.dist));
+    // ink on parchment: every word gets a little paper behind it so lanes don't cut through it
+    const write = (text, x, y, font, fill, halo = 'rgba(233,220,188,0.85)') => {
+      ctx.font = font; ctx.lineJoin = 'round';
+      if (halo) { ctx.strokeStyle = halo; ctx.lineWidth = 3.5; ctx.strokeText(text, x, y); }
+      ctx.fillStyle = fill; ctx.fillText(text, x, y);
+    };
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    // region names, hand-lettered on the far side of each ring; the Veil in violet
+    const big = Math.round(Math.max(12, 15 * zoom));
     for (const R of Object.values(this.rules.content.regions)) {
       const [r0, r1] = this.g.rings ? this.g.rings[R.id] : String(R.Ring).split(',').map(Number), rm = (r0 + r1) / 2;
       const a = -Math.PI / 2 + 0.35;
       const q = proj({ x: Math.cos(a) * rm, y: Math.sin(a) * rm, z: 0 });
-      if (!q) continue;
-      ctx.fillStyle = `${hex(R.Color)}99`;
-      ctx.fillText(R.Name.toUpperCase().split('').join(' '), q.x, q.y);
+      if (q) write(R.Name.replace(/^The /, 'the '), q.x, q.y, `italic ${big}px 'IM Fell English', Georgia, serif`, 'rgba(59,42,26,0.78)');
     }
+    if (this.g.veil) {
+      const rm = (this.g.veil[0] + this.g.veil[1]) / 2, a = -Math.PI / 2 - 0.5;
+      const q = proj({ x: Math.cos(a) * rm, y: Math.sin(a) * rm, z: 0 });
+      if (q) write('the Veil', q.x, q.y, `italic ${big}px 'IM Fell English', Georgia, serif`, 'rgba(92,58,110,0.9)');
+    }
+    { const q = proj({ x: 0, y: 0, z: 0 }); if (q) write('Orrin', q.x, q.y + 34 * zoom, `${Math.round(13 * zoom)}px 'IM Fell English SC', Georgia, serif`, 'rgba(42,29,16,0.9)'); }
+    this.drawHazards(proj, known, zoom);
     // place names: here, the selection, the hover, the signal, and known places within reach
     const label = (id, strong) => {
       const p = this.g.points[id], q = proj(p);
       if (!q || q.x < -50 || q.x > w + 50 || q.y < -20 || q.y > h + 20) return;
-      const k = known.has(id);
-      ctx.font = strong ? '600 12px "IBM Plex Sans", sans-serif' : '11px "IBM Plex Sans", sans-serif';
-      ctx.fillStyle = strong ? '#dfe8f2' : k ? 'rgba(200,214,230,0.62)' : 'rgba(130,146,170,0.5)';
-      ctx.fillText(k ? p.name : '?', q.x, q.y - (strong ? 13 : 9));
+      // above the seal; under it where the Forge's token stands
+      const k = known.has(id), off = id === s.at ? -30 * zoom : (strong ? 17 : 13) * zoom;
+      if (strong) write(k ? p.name : '?', q.x, q.y - off, `${Math.round(14 * Math.min(1.25, zoom))}px 'IM Fell English SC', Georgia, serif`, '#2a1d10');
+      else write(k ? p.name : '?', q.x, q.y - off, `${Math.round(12 * Math.min(1.2, zoom))}px Spectral, Georgia, serif`, k ? 'rgba(59,42,26,0.82)' : 'rgba(59,42,26,0.5)');
     };
     const clues = ((s.campaign && s.campaign.chart.clues) || []).filter((c) => !V.anchorDone(this.rules, s, c.id));
     const r2 = d.range * d.range, shown = new Set([s.at, this.selected, this.hover, ...clues.filter((c) => c.exact).map((c) => c.at)]);
     if (this.orbit.dist < 200) for (const p of this.g.points) if (!shown.has(p.id) && (known.has(p.id) || V.remembers(s, 'radar')) && (p.x - here.x) ** 2 + (p.y - here.y) ** 2 <= r2 * 1.1) label(p.id, false);
     for (const id of shown) if (id >= 0) label(id, true);
-    // what each clue is about: under the pinpointed place, or at the circle's edge
-    const what = (c) => ((this.rules.content.anchors || {})[c.id]?.Name || this.rules.content.items[c.id]?.Name || c.id).toUpperCase();
-    ctx.font = '600 10px "IBM Plex Mono", monospace'; ctx.fillStyle = '#ffd778';
+    // what each clue is about, in pencil: under the pinpointed place, or at the circle's edge
+    const what = (c) => (this.rules.content.anchors || {})[c.id]?.Name || this.rules.content.items[c.id]?.Name || c.id;
     for (const c of clues) {
       const q = c.exact ? proj(this.g.points[c.at]) : proj({ x: c.x, y: c.y + c.r, z: 0 });
-      if (q) ctx.fillText(c.exact ? what(c) : `${what(c)}: SOMEWHERE IN HERE`, q.x, q.y + (c.exact ? 30 : 14));
+      if (q) write(c.exact ? what(c) : `${what(c)}: somewhere in here?`, q.x, q.y + (c.exact ? 34 * zoom : 16), `italic ${Math.round(13 * Math.min(1.2, zoom))}px 'IM Fell English', Georgia, serif`, 'rgba(60,60,60,0.92)');
     }
     this.drawWound(proj, known);
-    void t;
+  }
+
+  // Closed lanes into a hazard pocket: hatched across the middle, with the hazard's mark in a
+  // little disc of paper (close in only; from far off the dashes say enough)
+  drawHazards(proj, known, zoom) {
+    if (this.orbit.dist > 170) return;
+    const ctx = this.ctx, H = this.rules.content.hazards || {}, d = V.drive(this.rules, this.s), through = d.hazards || [];
+    const dark = !V.remembers(this.s, 'radar'), w = window.innerWidth, h = window.innerHeight;
+    ctx.save();
+    for (const l of this.g.lanes) {
+      if (!l.hazard || !H[l.hazard] || through.includes(l.hazard)) continue;
+      if (dark && !known.has(l.a) && !known.has(l.b)) continue;
+      const pa = this.g.points[l.a], pb = this.g.points[l.b], here = this.g.points[this.s.at], reach = (d.range * 1.8) ** 2;
+      if ((pa.x - here.x) ** 2 + (pa.y - here.y) ** 2 > reach && (pb.x - here.x) ** 2 + (pb.y - here.y) ** 2 > reach) continue;
+      const a = proj(this.g.points[l.a]), b = proj(this.g.points[l.b]);
+      if (!a || !b) continue;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      if (mx < -20 || mx > w + 20 || my < -20 || my > h + 20) continue;
+      const n = Math.hypot(b.x - a.x, b.y - a.y) || 1, ux = (b.x - a.x) / n, uy = (b.y - a.y) / n, k = 4 * zoom;
+      const col = hex(parseInt(H[l.hazard].Color, 16) || 0x884422);
+      ctx.strokeStyle = 'rgba(59,42,26,0.7)'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = -2; i <= 2; i++) { ctx.moveTo(mx + ux * i * k - uy * k, my + uy * i * k + ux * k); ctx.lineTo(mx + ux * i * k + uy * k, my + uy * i * k - ux * k); }
+      ctx.stroke();
+      const r = 7.5 * zoom, cx = mx - uy * (r + 6), cy = my + ux * (r + 6);
+      ctx.fillStyle = '#e9dcbc'; ctx.strokeStyle = 'rgba(59,42,26,0.8)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      hazardMark(ctx, l.hazard, cx, cy, r * 0.72, col);
+    }
+    ctx.restore();
   }
 
   // The Wound on the parchment: infested places as spreading red-ink stains (bigger the longer
@@ -617,14 +671,74 @@ export class ChartScreen {
       const q = proj(this.g.points[h.at]);
       if (!q) continue;
       const beat = 0.5 + 0.5 * Math.max(0, Math.sin(t * 2.4)) ** 4, r = (9 + beat * 4) * scale;
-      ctx.strokeStyle = `rgba(255,60,90,${0.5 + beat * 0.4})`; ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(150,22,36,${0.55 + beat * 0.4})`; ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, Math.PI * 2); ctx.stroke();
       // the hand of a clock: it sweeps
       const a = t * 1.3 + h.id;
       ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x + Math.cos(a) * r * 1.7, q.y + Math.sin(a) * r * 1.7); ctx.stroke();
-      ctx.font = '700 10px "IBM Plex Mono", monospace'; ctx.fillStyle = '#ff6a82';
-      ctx.fillText(h.caught ? 'THE HAND HAS YOU' : h.strong ? 'A HAND (STRONG)' : 'A HAND', q.x, q.y + r + 14);
+      ctx.font = '700 11px "Cutive Mono", monospace'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(233,220,188,0.85)'; ctx.lineWidth = 3.5;
+      const say = h.caught ? 'THE HAND HAS YOU' : h.strong ? 'A HAND (STRONG)' : 'A HAND';
+      ctx.strokeText(say, q.x, q.y + r + 14); ctx.fillStyle = '#8e1a24'; ctx.fillText(say, q.x, q.y + r + 14);
     }
     ctx.restore();
   }
+}
+
+// A hazard's mark, inked small: rocks for shoals, a flame for embers, a spark for static, a
+// staring sun for the Glare; anything else gets a cross
+function hazardMark(ctx, id, x, y, r, col) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = col; ctx.strokeStyle = 'rgba(42,29,16,0.9)'; ctx.lineWidth = 1;
+  if (id === 'shoals') {
+    for (const [dx, dy, rr] of [[-0.35, 0.1, 0.38], [0.3, 0.25, 0.3], [0.15, -0.4, 0.26], [-0.25, -0.35, 0.18]]) { ctx.beginPath(); ctx.arc(dx * r, dy * r, rr * r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  } else if (id === 'embers') {
+    ctx.beginPath(); ctx.moveTo(0, -r); ctx.quadraticCurveTo(r * 0.9, -r * 0.1, r * 0.55, r * 0.6); ctx.quadraticCurveTo(0, r * 1.05, -r * 0.55, r * 0.6); ctx.quadraticCurveTo(-r * 0.8, 0, -r * 0.1, -r * 0.35); ctx.quadraticCurveTo(-r * 0.05, -r * 0.7, 0, -r); ctx.fill(); ctx.stroke();
+  } else if (id === 'static') {
+    ctx.beginPath(); ctx.moveTo(r * 0.25, -r); ctx.lineTo(-r * 0.45, r * 0.1); ctx.lineTo(0, r * 0.1); ctx.lineTo(-r * 0.25, r); ctx.lineTo(r * 0.5, -r * 0.15); ctx.lineTo(0, -r * 0.15); ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if (id === 'glare') {
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; ctx.moveTo(Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.stroke();
+  } else {
+    ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.6); ctx.lineTo(r * 0.6, r * 0.6); ctx.moveTo(r * 0.6, -r * 0.6); ctx.lineTo(-r * 0.6, r * 0.6); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// The deck plan as a cutaway of the Forge (the style guide's): two decks of compartments inside the
+// hull, lit and named where a room is built, dashed where a slot is empty; Deck 9 at the bow is
+// sealed until the whole truth is remembered. rooms: [{ name, tip, n (slots) }] in build order.
+function deckCutaway(rooms, slots, open9) {
+  const cols = Math.ceil(slots / 2), W = 52, H = 40, G = 4, x0 = 30, ys = [30, 30 + H + G];
+  const cells = [];
+  for (const r of rooms) for (let k = 0; k < r.n; k++) cells.push({ r, first: k === 0 });
+  const box = (i) => ({ x: x0 + (i % cols) * (W + G), y: ys[Math.floor(i / cols)] });
+  let out = '<svg class="deck-cut" viewBox="0 0 360 150" role="img" aria-label="' + esc(`The Forge in cutaway: ${rooms.map((r) => r.name).join(', ') || 'no rooms built'}; ${slots - cells.length} empty slots; Deck 9 ${open9 ? 'open' : 'sealed'}`) + '">';
+  out += '<defs><linearGradient id="dkroom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4022"/><stop offset="1" stop-color="#2c2116"/></linearGradient></defs>';
+  out += '<path d="M8 75 Q12 16 58 12 L282 12 Q330 16 354 75 Q330 134 282 138 L58 138 Q12 134 8 75 Z" fill="#221d17" stroke="#8c6a2c" stroke-width="2.5"/>';
+  for (let x = 40; x < 330; x += 14) out += `<circle cx="${x}" cy="17" r="1.4" fill="#8c6a2c"/><circle cx="${x}" cy="133" r="1.4" fill="#8c6a2c"/>`;
+  // the decks run the length of her: a keel line between them
+  out += `<line x1="22" y1="${ys[1] - G / 2}" x2="${x0 + cols * (W + G)}" y2="${ys[1] - G / 2}" stroke="#3b2a1a" stroke-width="1"/>`;
+  const words = (name) => { const w = name.split(' '); if (name.length <= 9 || w.length < 2) return [name]; const m = Math.ceil(w.length / 2); return [w.slice(0, m).join(' '), w.slice(m).join(' ')]; };
+  for (let i = 0; i < slots; i++) {
+    const { x, y } = box(i), c = cells[i];
+    if (c) {
+      // a room that runs on from the slot before it on the same deck joins up with it
+      const joined = !c.first && i % cols !== 0;
+      out += `<g><title>${esc(`${c.r.name}: ${c.r.tip || ''}`)}</title><rect x="${joined ? x - G - 1 : x}" y="${y}" width="${joined ? W + G + 1 : W}" height="${H}" rx="3" fill="url(#dkroom)" stroke="#c9a04e" stroke-width="1.2"/>`;
+      out += `<circle cx="${x + 8}" cy="${y + 8}" r="3" fill="#ffb45a" opacity="0.9"/>`;
+      if (c.first) { const ln = words(c.r.name); ln.forEach((l, k) => { out += `<text x="${x + W / 2}" y="${y + H / 2 + 4 + (k - (ln.length - 1) / 2) * 11}" text-anchor="middle" font-family="'IM Fell English SC', Georgia, serif" font-size="10.5" fill="#ede6d6">${esc(l)}</text>`; }); }
+      out += '</g>';
+    } else out += `<rect x="${x}" y="${y}" width="${W}" height="${H}" rx="3" fill="none" stroke="#8c6a2c" stroke-width="1.1" stroke-dasharray="5 4"/><text x="${x + W / 2}" y="${y + H / 2 + 4}" text-anchor="middle" font-family="Spectral, Georgia, serif" font-size="9.5" fill="#8a7a62">empty</text>`;
+  }
+  // Deck 9, at the bow
+  const bx = x0 + cols * (W + G) + 4, by = 52;
+  if (open9) out += `<g><title>Deck 9: your quarters, open at last</title><rect x="${bx}" y="${by}" width="44" height="46" rx="3" fill="url(#dkroom)" stroke="#f1d58e" stroke-width="1.4"/><circle cx="${bx + 8}" cy="${by + 8}" r="3" fill="#ffd778"/>`;
+  else {
+    out += `<g><title>Deck 9: sealed</title><rect x="${bx}" y="${by}" width="44" height="46" rx="3" fill="#0e0c09" stroke="#c2402f" stroke-width="1.3"/>`;
+    for (let k = 0; k < 3; k++) out += `<line x1="${bx + 6 + k * 13}" y1="${by + 5}" x2="${bx + 16 + k * 13}" y2="${by + 41}" stroke="#3a3127" stroke-width="2.5"/>`;
+  }
+  out += `<text x="${bx + 22}" y="${by + 27}" text-anchor="middle" font-family="'IM Fell English SC', Georgia, serif" font-size="10.5" fill="${open9 ? '#ede6d6' : '#ff9d8a'}">Deck 9</text></g>`;
+  out += '<text x="22" y="148" font-family="\'Cutive Mono\', monospace" font-size="9" fill="#8a7a62">STERN</text><text x="338" y="148" text-anchor="end" font-family="\'Cutive Mono\', monospace" font-size="9" fill="#8a7a62">BOW</text>';
+  return out + '</svg>';
 }

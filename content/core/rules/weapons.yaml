@@ -95,6 +95,7 @@ Lance:
 	Projectile: InstantHit
 		Color: d8f7ff
 		Size: 160
+		Arc: true
 	Warhead@hit: SpreadDamage
 		Damage: 22000
 		Versus:

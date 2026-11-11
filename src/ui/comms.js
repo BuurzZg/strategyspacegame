@@ -18,6 +18,7 @@ export class CommsPanel {
     this.rules = rules; this.audio = audio; this.o = null;
     $('comms-close').addEventListener('click', () => this.close());
     $('comms-choices').addEventListener('click', (e) => this.choose(e));
+    $('comms-say').addEventListener('click', () => { if (this.typing && this.finishTape) this.finishTape(); });
     $('trade-body').addEventListener('click', (e) => this.tradeClick(e));
     $('trade-deal').addEventListener('click', () => this.makeDeal());
     $('trade-settle').addEventListener('click', () => { const { s, pointId, trader } = this.o.trade, r = C.settle(this.rules, s, this.o.fid, pointId, this.buy, this.sell, trader || ''); this.buy = r.buy; this.sell = r.sell; this.renderTrade(); });
@@ -32,15 +33,15 @@ export class CommsPanel {
     if (o.fid) {
       const F = this.rules.content.factions[o.fid];
       $('comms-who').textContent = o.who || F.Name;
-      $('comms-who').style.color = hex(factionColor(this.rules, o.fid));
+      $('comms-who').style.setProperty('--fc', hex(factionColor(this.rules, o.fid))); // the sender's wax dot
       $('comms-tier').textContent = TIERS[ctx.tier];
       $('comms-tier').className = `t-${TIERS[ctx.tier]}`;
     } else {
       $('comms-who').textContent = o.title || '';
-      $('comms-who').style.color = '';
       $('comms-tier').textContent = '';
     }
-    $('comms').classList.toggle('event', !o.fid);
+    $('comms').className = `modal${o.fid ? ` f-${o.fid}` : ' event'}`; // the Choir speak in light; the Gaunt's tape comes half burned
+    $('comms-where').textContent = [ctx.place, ctx.where === 'map' ? '' : ctx.region].filter(Boolean).join(' · ');
     $('comms-notes').innerHTML = '';
     $('comms').hidden = false;
     this.showDialog(o.start || C.dialogOf(this.rules, o.fid).Start);
@@ -50,6 +51,7 @@ export class CommsPanel {
     if (!this.o) return;
     const o = this.o;
     this.o = null;
+    clearInterval(this.typing); this.typing = null;
     $('comms').hidden = true;
     if (o.onClose) o.onClose();
   }
@@ -58,9 +60,28 @@ export class CommsPanel {
     this.node = nodeId;
     $('comms-dialog').hidden = false; $('trade').hidden = true;
     const v = C.nodeView(this.o.context(), nodeId);
-    $('comms-say').textContent = v.say;
-    $('comms-choices').innerHTML = v.choices.map((c, i) => `<button type="button" data-c="${esc(c.id)}" ${c.ok ? '' : 'disabled'} title="${esc(c.why)}"><kbd>${i + 1}</kbd>${esc(c.text)}${c.ok ? '' : ` <span class="why">${esc(c.why)}</span>`}</button>`).join('');
+    this.type(v.say);
+    $('comms-choices').innerHTML = v.choices.map((c, i) => `<button type="button" data-c="${esc(c.id)}" ${c.ok ? '' : 'disabled'} title="${esc(c.why)}"><kbd>${i + 1}</kbd><span class="t">${esc(c.text)}${c.ok ? '' : ` <span class="why">${esc(c.why)}</span>`}</span></button>`).join('');
     this.view = v;
+  }
+  // The reply comes in on the tape a few letters at a time, with the key clicking; the rest of the
+  // text is laid out already (invisible) so nothing jumps. A click on the tape finishes it.
+  type(text) {
+    clearInterval(this.typing); this.typing = null;
+    const el = $('comms-say');
+    $('comms-say-sr').textContent = text;
+    const done = () => { clearInterval(this.typing); this.typing = null; el.innerHTML = `${esc(text)}<span class="caret"></span>`; };
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !text) return done();
+    let i = 0;
+    const step = Math.max(2, Math.ceil(text.length / 45));
+    this.finishTape = done;
+    this.typing = setInterval(() => {
+      i = Math.min(text.length, i + step);
+      if (i >= text.length) return done();
+      el.innerHTML = `${esc(text.slice(0, i))}<span class="caret"></span><span class="rest">${esc(text.slice(i))}</span>`;
+      this.audio.play('key', 0.6);
+    }, 26);
   }
   choose(e) {
     const b = e.target.closest('button[data-c]');
@@ -71,6 +92,8 @@ export class CommsPanel {
   pick(id) {
     const c = this.view && this.view.choices.find((x) => x.id === id);
     if (!c || !c.ok) return;
+    const btn = $('comms-choices').querySelector(`button[data-c="${CSS.escape(id)}"]`);
+    if (btn) btn.classList.add('down');
     const r = this.o.apply(c.effects);
     for (const n of r.notes || []) $('comms-notes').insertAdjacentHTML('beforeend', `<li>${esc(n)}</li>`);
     this.audio.play('order');

@@ -162,7 +162,7 @@ export class LoomScreen {
   recall(id) {
     const r = V.recall(this.rules, this.s, id);
     if (!r.ok) { this.audio && this.audio.play('error'); return; }
-    this.audio && this.audio.play('rankup');
+    this.audio && this.audio.play('organ'); // a memory comes back: the organ
     if (this.onChange) this.onChange();
     this.render();
   }
