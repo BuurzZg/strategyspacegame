@@ -1,5 +1,6 @@
 import * as THREE from '../../lib/three.module.js';
 import { radialTexture } from './space.js';
+import { buildDemon } from './demons.js';
 
 // Procedural low-poly ship models. Model space: nose along +X, up along +Y, 1 unit = 256 world units.
 // Each builder returns { root, body, engines: [{ pos, size }], spin: [{ obj, speed }], length }.
@@ -480,6 +481,8 @@ export function buildShip(type, style) {
       break;
     }
     default:
+      // the Wound's grown hulls (demons.js)
+      if (buildDemon(type, body, out)) break;
       part(box(2, 0.6, 0.8), M.hull, 0, 0, 0, body);
       out.engines.push({ pos: new THREE.Vector3(-1.1, 0, 0), size: 0.5 });
   }

@@ -1,0 +1,332 @@
+# The Wound (PLAN.md §3): the tech demons, the Mainspring's Hands. Grown, not built: every hull
+# mirrors one of ours, gestated in pods along an Hour's flanks from ichor, the living matter and
+# stolen time their Feeders strip from wrecks and the dead (traits/demons.js). They play as an
+# RTS opponent (the WoundAI world trait). Always hostile: no reputation, no comms.
+#   Gestation   Ichor: what one costs; Time: ticks in the pod
+#   Feeds       strips wrecks: Rate salvage a second, IchorPct of it ichor; Heal: hull mended a salvage
+#   Gestates    an Hour's pods: Pods (at once), Types it can grow
+#   Buds        a Nursery: a Tick or Feeder every Interval ticks (up to Cap near it), Trickle
+#               ichor a second, and the creep: demons within Creep mend Heal a second
+#   Drags       time drags near it: enemy ships within Range fly at Pct of their speed
+#   Flees       under FleePct hull it runs to regrow (Regen a second) until ReturnPct
+
+^Demon:
+	Inherits: ^Ship
+	Armor:
+		Type: light
+	AutoTarget:
+		ScanRange: 8000
+		Leash: 16000
+	Sensors:
+		Range: 11000
+
+tick:
+	Inherits: ^Demon
+	Valued:
+		Cost: 60
+	Tooltip:
+		Name: Tick
+		Class: Swarm fighter
+		Role: The Wound's fighter
+		Description: Budded in clutches: a wet black knot of claws with a red light at its heart. Cheap, short-lived, and there are always more.
+	Gestation:
+		Ichor: 40
+		Time: 150
+	Health:
+		HP: 4500
+		Radius: 240
+	Selectable:
+		Radius: 400
+	Flight:
+		MaxSpeed: 150
+		Acceleration: 7
+		Deceleration: 7
+		TurnSpeed: 15
+		PitchSpeed: 13
+		MinSpeed: 50
+		Slip: 90
+		Bank: 55
+	WithModel:
+		Model: tick
+	Armament:
+		Weapon: TickClaw
+		Forward: 260
+		Arc: 80
+	Attacks:
+		Style: strafe
+		BreakRange: 300
+		BreakDistance: 2200
+		Jink: 600
+
+stinger:
+	Inherits: ^Demon
+	Valued:
+		Cost: 100
+	Tooltip:
+		Name: Stinger
+		Class: Strike craft
+		Role: Against big hulls
+		Description: A bone lance with a body behind it. It comes when you field frigates, and goes through their armour like a needle through cloth.
+	Gestation:
+		Ichor: 110
+		Time: 320
+	Health:
+		HP: 9000
+		Radius: 300
+	Selectable:
+		Radius: 460
+	Flight:
+		MaxSpeed: 120
+		Acceleration: 5
+		Deceleration: 5
+		TurnSpeed: 11
+		PitchSpeed: 10
+		MinSpeed: 40
+		Slip: 90
+		Bank: 45
+	WithModel:
+		Model: stinger
+	Armament:
+		Weapon: StingerLance
+		Forward: 500
+		Arc: 60
+	Attacks:
+		Style: strafe
+		BreakRange: 450
+		BreakDistance: 2800
+		Jink: 400
+
+chime:
+	Inherits: ^Demon
+	Valued:
+		Cost: 150
+	Tooltip:
+		Name: Chime
+		Class: Escort
+		Role: Against fighters
+		Description: A hollow bell of grown metal. It rings, and small craft near it come apart. They grow them when you field fighters.
+	Gestation:
+		Ichor: 150
+		Time: 400
+	Health:
+		HP: 32000
+		Radius: 520
+	Armor:
+		Type: medium
+	Selectable:
+		Radius: 700
+	Flight:
+		MaxSpeed: 70
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 7
+		PitchSpeed: 6
+		MinSpeed: 0
+		Slip: 120
+		Bank: 25
+	WithModel:
+		Model: chime
+	Armament:
+		Weapon: ChimePulse
+		Up: 200
+	Attacks:
+		StandoffPct: 60
+
+hound:
+	Inherits: ^Demon
+	Valued:
+		Cost: 450
+	Tooltip:
+		Name: Hound
+		Class: Line frigate
+		Role: The backbone of a Hand
+		Description: Long and low, ribbed like a dog's chest, spitting slugs of hot ichor. Hounds hunt in pairs, and they do not tire.
+	Gestation:
+		Ichor: 380
+		Time: 700
+	Health:
+		HP: 110000
+		Radius: 760
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 960
+	Flight:
+		MaxSpeed: 52
+		Acceleration: 2
+		Deceleration: 2
+		TurnSpeed: 5
+		PitchSpeed: 4
+		TurnInPlace: true
+		Slip: 120
+		Bank: 20
+	WithModel:
+		Model: hound
+	Armament@port:
+		Weapon: HoundSpit
+		Forward: 600
+		Side: 200
+	Armament@starboard:
+		Weapon: HoundSpit
+		Forward: 600
+		Side: -200
+	Attacks:
+	LeavesWreck:
+
+gnawer:
+	Inherits: ^Demon
+	Valued:
+		Cost: 900
+	Tooltip:
+		Name: Gnawer
+		Class: Heavy brawler
+		Role: Eats wrecks, and ships
+		Description: A slow mountain of jaws. It eats wrecks to heal itself and make ichor, and when there are no wrecks it makes some.
+	Gestation:
+		Ichor: 900
+		Time: 1400
+	Health:
+		HP: 220000
+		Radius: 1100
+		HalfLength: 600
+	Armor:
+		Type: heavy
+	Selectable:
+		Radius: 1500
+	Flight:
+		MaxSpeed: 32
+		Acceleration: 1
+		Deceleration: 2
+		TurnSpeed: 3
+		PitchSpeed: 3
+		TurnInPlace: true
+		Slip: 140
+		Bank: 12
+	WithModel:
+		Model: gnawer
+	Armament:
+		Weapon: GnawerJaws
+		Forward: 1300
+		Arc: 140
+	Attacks:
+		StandoffPct: 50
+	Feeds:
+		Rate: 30
+		IchorPct: 15
+		Heal: 120
+	LeavesWreck:
+
+feeder:
+	Inherits: ^Demon
+	Valued:
+		Cost: 100
+	Tooltip:
+		Name: Feeder
+		Class: Harvester
+		Role: The Wound's economy
+		Description: A bloated thing with a mouth like a drain. It strips wrecks, debris and the dead for ichor. Kill these and the Hand starves.
+	Gestation:
+		Ichor: 60
+		Time: 220
+	Health:
+		HP: 16000
+		Radius: 420
+	Selectable:
+		Radius: 600
+	Flight:
+		MaxSpeed: 80
+		Acceleration: 3
+		Deceleration: 4
+		TurnSpeed: 8
+		PitchSpeed: 7
+		MinSpeed: 0
+		Slip: 120
+		Bank: 25
+	WithModel:
+		Model: feeder
+	Stance:
+		Initial: passive
+	Feeds:
+		Rate: 25
+		IchorPct: 20
+
+hour:
+	Inherits: ^Demon
+	Valued:
+		Cost: 2500
+	Tooltip:
+		Name: Hour
+		Class: Living carrier
+		Role: Leads a Hand
+		Description: A lesser living carrier, coiled like a sleeping thing, its flanks crowded with pods. It gestates its pack as it hunts. Near it, time drags.
+	Health:
+		HP: 420000
+		Radius: 2400
+		HalfLength: 1800
+	Armor:
+		Type: capital
+	Selectable:
+		Radius: 3200
+	Flight:
+		MaxSpeed: 26
+		Acceleration: 1
+		Deceleration: 1
+		TurnSpeed: 2
+		PitchSpeed: 2
+		TurnInPlace: true
+		Slip: 160
+		Bank: 8
+	WithModel:
+		Model: hour
+	Armament@spines1:
+		Weapon: HourSpines
+		Forward: 1800
+		Side: 900
+	Armament@spines2:
+		Weapon: HourSpines
+		Forward: -1600
+		Side: -900
+	Attacks:
+		Style: turret
+	Stance:
+		Initial: defensive
+	Gestates:
+		Pods: 2
+		Types: feeder, tick, chime, stinger, hound, gnawer
+	Drags:
+		Range: 9000
+		Pct: 80
+	Flees:
+		FleePct: 35
+		ReturnPct: 70
+		Regen: 1200
+	Sensors:
+		Range: 15000
+	LeavesWreck:
+		Pct: 20
+
+nursery:
+	Tooltip:
+		Name: Nursery
+		Class: Growth
+		Role: Buds Ticks and Feeders
+		Description: A flesh growth anchored to a rock, pulsing with red light. It buds Ticks and Feeders, and the creep around it mends the demons. It burns.
+	Valued:
+		Cost: 600
+	Health:
+		HP: 60000
+		Radius: 900
+	Armor:
+		Type: medium
+	Selectable:
+		Radius: 1100
+	WithModel:
+		Model: nursery
+	Buds:
+		Interval: 900
+		Cap: 6
+		Trickle: 3
+		Creep: 6000
+		Heal: 400
+	Sensors:
+		Range: 8000

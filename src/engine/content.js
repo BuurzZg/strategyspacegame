@@ -65,7 +65,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   rules.content.traders = Object.fromEntries([...mergeFiles(data.Traders)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   // strain, moods and All hands (Milestone 17)
-  for (const k of ['Strain', 'Mood', 'AllHands', 'Training']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
+  for (const k of ['Strain', 'Mood', 'AllHands', 'Training', 'Wound']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -157,7 +157,7 @@ export function lintContent(rules) {
       else if (op === 'echoes' && !(+arg > 0)) errs.push(`memories: ${id}.Gives: echoes needs a number`);
       else if (op === 'open' && !(rules.content.hazards || {})[arg]) errs.push(`memories: ${id}.Gives: unknown hazard "${arg}"`);
       else if (op === 'room' && items[arg]?.Kind !== 'room') errs.push(`memories: ${id}.Gives: unknown room "${arg}"`);
-      else if (!['radar', 'drive', 'hull', 'echoes', 'open', 'room'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
+      else if (!['radar', 'drive', 'hull', 'echoes', 'open', 'room', 'silent'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
     }
   }
   for (const [id, m] of Object.entries(M)) if (m.Seen && !(rules.content.hazards || {})[m.Seen]) errs.push(`memories: ${id}.Seen: unknown hazard "${m.Seen}"`);

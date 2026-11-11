@@ -27,6 +27,8 @@ defineTrait('Flight', class Flight extends Trait {
     this.route = null; // cached steering plan: { tx, ty, tz, x, y, z, frame, direct }
     this.engaging = 0; // id of the ship being attacked this tick: not steered round (set by Attack)
   }
+  // top speed: near an Hour, time drags (demons.js)
+  get top() { const s = this.self; return s.dragUntil > this.world.frame ? Math.trunc((this.info.MaxSpeed * s.dragPct) / 100) : this.info.MaxSpeed; }
   savePrev() { this.pspeed = this.speed; this.moving = false; this.ghost = false; this.engaging = 0; }
 
   // Where to steer this tick on the way to (tx, ty, tz): the target, or a detour point round
@@ -74,7 +76,7 @@ defineTrait('Flight', class Flight extends Trait {
     // speed: cruise, brake for arrival, slow down to turn. Small craft keep MinSpeed% while
     // cruising (they swing round in wide turns) but may slow right down to arrive.
     const brake = isqrt(2 * info.Deceleration * d);
-    let want = Math.min(info.MaxSpeed, brake);
+    let want = Math.min(this.top, brake);
     const minPct = info.TurnInPlace || brake < info.MaxSpeed ? 8 : info.MinSpeed;
     const alignPct = align <= 0 ? minPct : Math.max(minPct, Math.trunc((align * align * 100) / (1024 * 1024)));
     want = Math.max(4, Math.trunc((want * alignPct) / 100));
@@ -104,7 +106,7 @@ defineTrait('Flight', class Flight extends Trait {
     if (ex * ex + ey * ey + ez * ez > 25 * CELL * CELL) { this.flyToward(tx, ty, tz); return; }
     let wx = vx + (ex >> 3), wy = vy + (ey >> 3), wz = vz + (ez >> 3);
     let w = isqrt(wx * wx + wy * wy + wz * wz);
-    const cap = info.MaxSpeed;
+    const cap = this.top;
     if (w > cap) { wx = Math.trunc((wx * cap) / w); wy = Math.trunc((wy * cap) / w); wz = Math.trunc((wz * cap) / w); w = cap; }
     this.speed = this.speed < w ? Math.min(w, this.speed + info.Acceleration * 2) : Math.max(w, this.speed - info.Deceleration * 2);
     if (w > 0 && this.speed > 0) {

@@ -105,6 +105,7 @@ function startProvingGrounds(testFleet = false) {
       { name: 'You', faction: params.get('faction') === 'cinder' ? 'cinder' : 'meridian', client: 0 },
       { name: 'Ashen Gaunt', faction: 'gaunt', team: 1, ships: [] },
       { name: 'Drift fauna', faction: 'fauna', team: 2, ships: [] },
+      { name: 'The Wound', faction: 'wound', team: 3, ships: [] },
     ],
     extraShips: testFleet ? ['dart', 'dart', 'halberd', 'dart', 'dart'] : [],
   }, { place: 'Proving Grounds' });

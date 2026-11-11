@@ -1,5 +1,6 @@
 import * as THREE from '../../lib/three.module.js';
 import { buildShip, buildWreck } from './ships.js';
+import { pulseDemons } from './demons.js';
 import { CombatFx } from './combatfx.js';
 import { buildAsteroid } from './asteroids.js';
 import { buildCloud, buildSpire, buildNebula, CLOUD_COLORS } from './deposits.js';
@@ -85,6 +86,7 @@ export class WorldRenderer {
 
   update(t, dt, alpha) {
     this.syncViews();
+    pulseDemons(t);
     const glowColor = new THREE.Color();
     for (const v of this.views.values()) {
       const a = v.actor, m = v.model;
@@ -102,6 +104,8 @@ export class WorldRenderer {
       // the Skein spooling: the foundry ring races and light gathers into the hull
       const spool = a.skein && a.skein.spooling ? a.skein.spool / a.skein.time : 0;
       for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt * (1 + spool * 14);
+      // a Chime sways as it rings
+      if (m.bell) m.bell.rotation.z = Math.sin(t * 1.7 + a.id) * 0.18;
       if (a.skein) this.spoolFx(a, v, spool, dt);
       if (a.asteroid || a.cloud || a.rock) {
         // rocks shrink as they are mined, clouds thin as they are skimmed

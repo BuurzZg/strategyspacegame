@@ -50,6 +50,13 @@ World:
 		Glow: f0c8ff
 		Dark: 2a0e40
 		Description: Things that live in the scrap. Not a people. Just hungry.
+	Faction@wound:
+		InternalName: wound
+		Name: The Wound
+		Color: d0283a
+		Glow: ff8a70
+		Dark: 3a0810
+		Description: The tech demons, the Mainspring's Hands. Grown, not built; they feed on what dies.
 	Faction@neutral:
 		InternalName: neutral
 		Name: Derelict
@@ -66,3 +73,4 @@ World:
 	Diplomacy:
 	Shroud:
 	Ranks:
+	WoundAI:

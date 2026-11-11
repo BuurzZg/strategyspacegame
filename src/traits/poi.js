@@ -56,13 +56,15 @@ defineTrait('PointLayout', class extends Trait {
     for (const e of L.encounters) {
       const side = w.players.find((p) => p.faction === e.side);
       if (!side) continue;
+      // a loose knot of ships round the first, facing the map's centre (clear of a big first hull)
+      const lead = w.rules.actor(e.ships[0]).traitInfo('Health'), ring = Math.max(2 * CELL, ((lead && lead.Radius) | 0) + 1200);
       const ids = e.ships.map((type, i) => {
-        // a loose knot of ships, facing the map's centre
-        const a = (i * 1024) / Math.max(1, e.ships.length) | 0, r = i ? 2 * CELL : 0;
+        const a = (i * 1024) / Math.max(1, e.ships.length) | 0, r = i ? ring : 0;
         const x = e.at[0] + Math.trunc((COS(a) * r) / 1024), y = e.at[1] + Math.trunc((SIN(a) * r) / 1024);
         const yaw = angleOf(((w.bounds.x0 + w.bounds.x1) >> 1) - x, ((w.bounds.y0 + w.bounds.y1) >> 1) - y);
         return w.createActor(type, side, { x, y, z: e.at[2], yaw }).id;
       });
+      // (a Hand's moves are the Wound's own: traits/demons.js)
       this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' && e.behaviour !== 'escort' });
     }
   }
@@ -213,6 +215,7 @@ export function visitReport(w, player, { forgeLost = false } = {}) {
     found: [...log.found],
     crew: { lost, saved: { ...log.crewSaved }, leadsLost, leadsSaved: [...log.leadsSaved], recruited: player.crew && player.crew.recruited ? player.crew.recruited.map((l) => ({ ...l })) : [] },
     standing: w.diplomacy && player === w.players[0] ? w.diplomacy.report() : { changes: {}, met: [] },
+    wound: w.wound && player === w.players[0] ? w.wound.report() : null,
     stores,
     forge: forge ? { hp: forge.health.hp, maxHp: forge.health.maxHp } : null,
     ships: {

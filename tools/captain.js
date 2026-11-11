@@ -4,9 +4,13 @@
 // events answered as they come: the first choice that can be taken, at every node).
 import * as V from '../src/galaxy/voyage.js';
 import { stitchGlim } from '../src/galaxy/galaxy.js';
-import { nodeView } from '../src/galaxy/comms.js';
+import { nodeView, fleetPower } from '../src/galaxy/comms.js';
+import * as Wd from '../src/galaxy/wound.js';
 import * as B from '../src/galaxy/base.js';
 import * as K from '../src/galaxy/crew.js';
+
+// what the Forge's own guns are worth in a fight with the Wound
+const FORGE_WORTH = 1500;
 
 export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => c.ok)) {
   for (let n = 0; s.queue && s.queue.length && n < 50; n++) {
@@ -40,7 +44,25 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     const stores = {};
     for (const [k, n] of Object.entries(s.stores)) stores[k] = { start: n, end: n + Math.trunc(((YIELD[p.type][k] || 0) * rich) / 100), changes: {} };
     const found = p.relic && !V.anchorDone(rules, s, p.relic) ? [p.relic] : [];
-    V.returnFromMap(rules, s, { stores, forge: { hp: s.forge.hp }, ships: { aboard: s.fleet, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0 });
+    // the Wound here: fight it if the fleet (and the Forge's guns) outweigh it, losing ships worth
+    // some of what it brought; otherwise spool out with the Hand shaken off and the hull hurt
+    const wm = Wd.mapWound(rules, s, g, s.at);
+    let wound = null, aboard = s.fleet, hp = s.forge.hp;
+    if (wm && (wm.hand || wm.infested)) {
+      const worth = (list) => list.reduce((t, x) => t + (+rules.actor(x).traitInfo('Valued').Cost || 0), 0);
+      const theirs = wm.encounters.filter((e) => e.behaviour !== 'hunt').reduce((t, e) => t + worth(e.ships), 0), ours = fleetPower(rules, s.fleet) + FORGE_WORTH;
+      const win = ours >= theirs;
+      wound = { hand: wm.hand ? 1 : 0, hours: win && wm.hand ? 1 : 0, hourPct: 100, burned: win ? wm.slot.plant : 0, nurseries: win ? 0 : wm.slot.plant, planted: wm.slot.plant };
+      if (win) {
+        // the cheapest armed ships go first, until the losses come to 40% of what it brought
+        const order = s.fleet.map((e, i) => [e, i]).filter(([e]) => rules.actor(e.type).traitInfo('Armament')).sort((a, b) => worth([a[0].type]) - worth([b[0].type]));
+        const gone = new Set();
+        let lost = 0;
+        for (const [e, i] of order) { if (lost * 100 >= theirs * 40) break; gone.add(i); lost += worth([e.type]); }
+        aboard = s.fleet.filter((_, i) => !gone.has(i));
+      } else hp = Math.max(1, hp - Math.trunc((hp * 8) / 100));
+    }
+    V.returnFromMap(rules, s, { stores, forge: { hp }, ships: { aboard, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0, wound });
     visits++;
   };
   // the nearest place (fewest days) that fits, which the Glim aboard can reach

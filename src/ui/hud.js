@@ -30,6 +30,8 @@ const HOSTILE_WAVES = [
   ['2 Halberds', 'gaunt', n('halberd', 2)], ['2 Spindles', 'gaunt', n('spindle', 2)], ['Sabre', 'gaunt', ['sabre']],
   ['Raiding party', 'gaunt', [...n('dart', 4), ...n('talon', 2), ...n('picket', 2), 'halberd']],
   ['Gnasher pack', 'fauna', n('gnasher', 8)],
+  ['10 Ticks', 'wound', n('tick', 10)], ['Hound pack', 'wound', [...n('hound', 2), ...n('tick', 4)]], ['4 Stingers', 'wound', n('stinger', 4)],
+  ['3 Chimes', 'wound', n('chime', 3)], ['Gnawer', 'wound', ['gnawer']], ['A Hand', 'wound', ['hour', ...n('hound', 2), ...n('tick', 6), ...n('feeder', 2)]],
 ];
 const OWN_WAVES = [['6 Darts', n('dart', 6)], ['4 Talons', n('talon', 4)], ['3 Pickets', n('picket', 3)], ['Halberd', ['halberd']], ['Spindle', ['spindle']], ['Sabre', ['sabre']]];
 const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
@@ -63,13 +65,17 @@ export class Hud {
     document.body.classList.toggle('voyage', voyage);
     $('help-intro').innerHTML = voyage
       ? 'Gather what the Forge needs, build what you must, and leave before the place turns on you. <b>Recall</b> your ships and <b>spool the Skein</b> (bottom right) to go on to the next place.'
-      : 'Your Forge, its escorts and two Gleaners, in a quiet corner of the Drift. Press <kbd>G</kbd> to call in Ashen Gaunt raiders or a Gnasher pack and test your fleet against them. Press <kbd>B</kbd> to build warships.';
+      : 'Your Forge, its escorts and two Gleaners, in a quiet corner of the Drift. Press <kbd>G</kbd> to call in Ashen Gaunt raiders, a Gnasher pack or the Wound, and test your fleet against them. Press <kbd>B</kbd> to build warships.';
     $('report').hidden = true;
     const poi = this.world.settings.poi;
     $('place').textContent = poi ? poi.name : 'Proving Grounds';
     $('place').classList.remove('warn');
     this.dayShown = -1;
     if (poi) this.toast(`Arrived: ${poi.name}`, 'info');
+    // the Wound is here (Milestone 21)
+    const wd = poi && poi.wound;
+    if (wd && wd.hand) { this.toast('A Hand has caught the Forge. Its Hour is coming: kill it, or spool the Skein and run.', 'bad', 10000); this.audio.play('hand'); }
+    else if (wd && wd.infested) this.toast('Infested: Nurseries on the rocks, and a spore haze. Burn every Nursery to clean it out.', 'bad', 10000);
   }
 
   // ---------------------------------------------------------------- resources
@@ -321,7 +327,7 @@ export class Hud {
   // Forge) and advance on the Forge. Your own test ships appear ahead of the Forge.
   groundsPanel() {
     const button = (label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', () => { fn(); b.blur(); }); return b; };
-    for (const [label, faction, types] of HOSTILE_WAVES) $(faction === 'fauna' ? 'pg-fauna' : 'pg-gaunt').appendChild(button(label, () => this.spawnHostile(faction, types)));
+    for (const [label, faction, types] of HOSTILE_WAVES) $(`pg-${faction}`).appendChild(button(label, () => this.spawnHostile(faction, types)));
     for (const [label, types] of OWN_WAVES) $('pg-mine').appendChild(button(label, () => this.spawnOwn(types)));
     $('pg-ore').addEventListener('click', () => { this.input.issueWorld('SandboxOre', { player: this.s.viewer.index, amount: 2000 }); this.audio.play('deposit'); });
     $('pg-clear').addEventListener('click', () => { for (const p of this.world.players) if (p !== this.s.viewer) this.input.issueWorld('SandboxClear', { player: p.index }); this.audio.play('select'); });
@@ -449,16 +455,17 @@ export class Hud {
   }
 
   // ---------------------------------------------------------------- toasts
-  toast(text, kind = 'info') {
+  // ms: how long it stays; when there are too many, warnings outlast the rest
+  toast(text, kind = 'info', ms = 3500) {
     const now = performance.now();
     const same = this.toasts.find((t) => t.text === text && t.until > now);
-    if (same) { same.count++; same.until = now + 3500; same.el.querySelector('.n').textContent = `×${same.count}`; return; }
+    if (same) { same.count++; same.until = now + ms; same.el.querySelector('.n').textContent = `×${same.count}`; return; }
     const el = document.createElement('div');
     el.className = `toast ${kind}`;
     el.innerHTML = `<span>${esc(text)}</span><span class="n"></span>`;
     $('toasts').appendChild(el);
-    this.toasts.push({ text, el, count: 1, until: now + 3500 });
-    while (this.toasts.length > 4) this.toasts.shift().el.remove();
+    this.toasts.push({ text, el, count: 1, until: now + ms, kind });
+    while (this.toasts.length > 4) { const i = Math.max(0, this.toasts.findIndex((t) => t.kind !== 'bad')); this.toasts.splice(i, 1)[0].el.remove(); }
   }
   tickToasts() {
     const now = performance.now();
@@ -484,7 +491,15 @@ export class Hud {
       else if (e.t === 'rankup' && e.owner === me) this.audio.play('rankup');
       else if (e.t === 'surface') { this.toast('Something surfaces from the rocks!', 'bad'); this.audio.play('alert'); }
       else if (e.t === 'interdicted') this.audio.play('alert');
-      else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
+      else if (e.t === 'encounter') { this.toast(e.side === 'fauna' ? 'Something is coming out of the haze' : e.side === 'wound' ? 'Ticks and a Hound, coming out of the dark' : 'Raiders inbound', 'bad'); this.audio.play('alert'); }
+      // the Wound (traits/demons.js)
+      else if (e.t === 'wound-wave') { this.toast(`The Wound attacks: ${e.n} of them`, 'bad'); this.audio.play('alert'); }
+      else if (e.t === 'wound-retreat') this.toast('The wave breaks: the demons fall back to regrow', 'good');
+      else if (e.t === 'planted') { this.toast('The Hour has planted a Nursery', 'bad'); this.audio.play('birth', 0.8); }
+      else if (e.t === 'birth') this.audio.play('birth', this.near(e) * 0.5);
+      else if (e.t === 'hour-flees') this.toast('The Hour is running, to regrow', 'good');
+      else if (e.t === 'hour-returns') { this.toast('The Hour has regrown, and turns back', 'bad'); this.audio.play('hand', 0.6); }
+      else if (e.t === 'hour-dies') this.audio.play('hand');
       else if (e.t === 'aboard' && e.owner === me) this.dirty = true;
       else if (e.t === 'killed') {
         const big = (e.radius || 0) > 600;

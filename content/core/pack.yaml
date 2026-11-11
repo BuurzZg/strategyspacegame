@@ -25,7 +25,7 @@ Pack:
 	Id: core
 	Name: Driftforge
 	Version: 1
-	Rules: rules/world.yaml, rules/player.yaml, rules/defaults.yaml, rules/ships.yaml, rules/warships.yaml, rules/fauna.yaml, rules/combat.yaml, rules/deposits.yaml, rules/stations.yaml
+	Rules: rules/world.yaml, rules/player.yaml, rules/defaults.yaml, rules/ships.yaml, rules/warships.yaml, rules/fauna.yaml, rules/combat.yaml, rules/deposits.yaml, rules/stations.yaml, rules/demons.yaml
 	Weapons: rules/weapons.yaml
 	Resources: resources.yaml
 	PoiTypes: poi-types.yaml

@@ -12,3 +12,4 @@ import './diplomacy.js';
 import './monsters.js';
 import './sensors.js';
 import './ranks.js';
+import './demons.js';

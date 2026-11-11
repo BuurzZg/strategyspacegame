@@ -5,7 +5,17 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 20, traders and crew.** Each region has a **trader**, a place of its own marked with a brass bell. There's no map to play: you trade from the chart (`C`), in the trader's own voice, at your standing with their faction:
+**Status: Milestone 21, the tech demons.** The force behind everything has a face now: **the Wound**, the Mainspring's tech demons, grown rather than built from wet blue-black metal, flesh and bone, lit from inside by a pulsing crimson. They play as a real RTS opponent:
+
+- **Their ships** mirror ours: **Ticks** (swarm fighters), **Stingers** (a bone lance against big hulls), **Chimes** (they ring, and fighters come apart), **Hounds** (the line), **Gnawers** (a mountain of jaws that eats wrecks to heal), **Feeders** (their harvesters), **Hours** (living carriers that lead a Hand) and **Nurseries** (flesh growths that bud Ticks and Feeders).
+- **Their economy is ichor:** Feeders strip it from wrecks, every ship that dies near a demon gives some up, and Nurseries trickle it. Shearers cutting the wrecks first starve them, so salvage is a weapon.
+- **Their AI** gestates a pack in the Hour's pods, counter-builds (Chimes when you field fighters, Stingers when you field big hulls), attacks in waves when it is strong enough, falls back to regrow when a wave breaks, and plants Nurseries. Near an Hour, time drags: your ships fly at 80%. A badly hurt Hour runs to regrow.
+- **On the chart, the Mainspring's attention** rises as Jacob remembers, as days pass and as the Forge lingers; silent running (now a real memory), the Choir and static fields lower it. It shows as a word: **Quiet**, **Noticed** (a lone pack roams the outer regions), **Hunted** (a **Hand** sets out from the Shore and follows where the Forge was last heard) and **Marked** (two Hands, one of them strong). Hands show on the chart, with a faint ticking, when they are two lanes away or nearer. They infest places they pass: red-ink stains on the chart, Nurseries and spore haze on the map. Burn every Nursery and the place is clean for the life, with an echo and sometimes captives.
+- **Being caught is never the end:** go in and kill the Hour (the Hand is gone for the life, and attention falls a step), spool out and shake it off for a while, or stitch away and pay for tearing free.
+
+See [The Wound](#the-wound-the-tech-demons).
+
+**Milestone 20, traders and crew:** Each region has a **trader**, a place of its own marked with a brass bell. There's no map to play: you trade from the chart (`C`), in the trader's own voice, at your standing with their faction:
 
 - **The Lamp & Ledger** in the Drift, kept by Wicket Arn, who never stops talking;
 - **the Tallow Bell** in the Middens, a Synod refinery-chapel kept by Deacon Ilmar Sloe;
@@ -453,6 +463,26 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
   - or find one in an old archive.
 - **Rooms** (the Forge tab): see [The deck plan](#the-deck-plan).
 
+### The Wound: the tech demons
+
+| Ship | Mirrors | Ichor | Strong against | Weak against | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Tick | Dart | 40 | fighters | flak (Pickets) | budded in clutches by Nurseries too |
+| Stinger | Talon | 110 | frigates and capitals | fighters | its lance can't be dodged |
+| Chime | Picket | 150 | fighters | frigates | grown when you field fighters |
+| Hound | Halberd | 380 | corvettes | Talons, Gnawers | the backbone of every Hand |
+| Gnawer | Spindle and Sabre | 900 | frigates | fighters | eats wrecks to heal; strong Hands only |
+| Feeder | Gleaner and Shearer | 60 | — | everything | strips wrecks and the dead for ichor |
+| Hour | the Forge, small | — | fighters close in | a fleet that goes for it | gestates two at a time; time drags near it; flees at 35% and regrows |
+| Nursery | — | 300 | — | anything | anchored to a rock or wreck; buds Ticks and Feeders; its creep mends demons |
+
+- **Attention.** Each memory recovered adds 5; a point every 4 days; a point a day after 4 days at one place; 2 for each Nursery burned and 4 for each Hour killed. Silent running takes a point a day, a stay with the Choir 2 a day, a stitch through a static field 4. Noticed at 20, Hunted at 45, Marked at 75. A new life wakes with 3 points for each memory (up to 60).
+- **The Hands.** One sets out from the Shore at Hunted, two at Marked, and moves a lane every 2–3 days (2 when strong) toward where the Forge was last heard, losing the trail a fifth of the time. They won't cross static fields. Running silent, the Forge is only heard where it fights. A Hand grows stronger every day it hunts.
+- **Caught.** A Hand at the Forge's place has caught it. Each day there costs 3% hull. Going in brings its Hour and pack on after 45 seconds, growing more as the fight goes on. Kill the Hour and the Hand is destroyed for the life; spool out and it loses you for a few days; stitch away without a fight and tearing free costs 12% hull, 8 morale and a hit to a system.
+- **Infested places.** Hands may infest places they leave (Hunted and on). An infested map has two or three Nurseries, a garrison, and a spore haze (sensors at 70%). Burn every Nursery to clean it: an echo, and 40% of the time 3 to 8 captives from the havens join as hands.
+- **The Proving Grounds** have a Wound section: Ticks, a Hound pack, Stingers, Chimes, a Gnawer, or a whole Hand.
+- **Where the numbers live:** `content/core/rules/demons.yaml` (the ships), `weapons.yaml` (their weapons), and the `Wound` block of `voyage.yaml` (attention and the Hands).
+
 ### Events and monsters
 
 - **Events** show on the star chart as a panel with a gold edge, and must be answered. They happen:
@@ -562,6 +592,7 @@ Choose **Proving Grounds** on the start screen: the Forge, its escorts and two G
 
 - **Ashen Gaunt:** Darts, Talons, Pickets, Halberds, Spindles, a Sabre, or a mixed raiding party. They appear about 3 km beyond where the camera is looking and advance on your Forge.
 - **Drift fauna:** a pack of eight Gnashers, monsters that hunt in packs and bite.
+- **The Wound:** ten Ticks, a Hound pack, four Stingers, three Chimes, a Gnawer, or a whole Hand (an Hour, its pack and two Feeders). The Hour grows more from the wrecks as you fight.
 - **Your ships:** test ships appear ahead of the Forge.
 - **+2,000 ore** and **Remove hostiles**.
 
@@ -587,7 +618,7 @@ Choose **Proving Grounds** on the start screen: the Forge, its escorts and two G
 | Spindle | Lance frigate | 380 | 28 s | 5 | 12 hands | One long lance (fixed, forward) | capitals | fighters |
 | Sabre | Destroyer | 900 | 50 s | 10 | 30 hands | Torpedoes, two pulse batteries | frigates | bombers, Spindles |
 
-Monsters: the **Gnasher**, a pack hunter about the size of a fighter. It bites.
+Monsters: the **Gnasher**, a pack hunter about the size of a fighter. It bites. The Wound's ships are listed under [The Wound](#the-wound-the-tech-demons).
 
 On the voyage you start with the Forge, a Halberd, two Darts, two Gleaners, a Shearer and a Skimmer (12 of 30 capacity). Everything can be built from the start for now; blueprints arrive in Milestone 11.
 
@@ -711,6 +742,13 @@ Runs the headless tests:
   - a trader has no map to play, holds its own stock, prices by standing with its faction, and won't trade with the Hostile;
   - the workshop needs its plan, which can be bought once a life; the next life, the plan is gone, the trader has one again and the chart still shows where it is; the Murmur sells echoes and a clue; the Last Stop sells Sabre plans and a chart;
   - drifters come aboard once a life, some with names; they need berths, and hiring stops at the berths.
+- **The tech demons** (`tools/demontest.js`): checks that:
+  - all eight types are in the rules, and each counter works both ways round in cost-matched fights (Pickets beat Ticks, Stingers beat Halberds, Chimes beat Darts, Talons beat Hounds, Darts beat a Gnawer, a Gnawer beats Halberds);
+  - an Hour grows Chimes against fighters, Stingers against big hulls and its own mix otherwise; Feeders strip wrecks for ichor and starve when the wrecks were salvaged first;
+  - on a real map with a Hand, the AI grows ships, attacks in waves, falls back when a wave breaks and comes again; an Hour plants Nurseries, drags time and runs to regrow; demon maps are deterministic;
+  - an infested place has its Nurseries, garrison and haze; burning them all cleans it for the life, with an echo;
+  - attention rises with memories, days and staying put, and falls with silent running, the Choir and static fields; Hunted sends a Hand from the Shore, Marked two; a new life wakes near what its memories earned;
+  - a Hand catches the Forge and harasses it but never ends the life; tearing free costs; the Forge outruns it; a Hand shaken off regrows; one destroyed is gone for the life and attention falls a step; Hands infest; old saves load.
 - **The muster and levels** (`tools/mustertest.js`): checks that:
   - the hangar berths 10, an expanded hangar three more, and no trader sells a hull with every berth full;
   - eleven ships for ten berths call a muster, nothing stitches until it is settled, and keeping all eleven is refused; scrapping returns half the ore and moves the crew into the Forge (the pilot stands by); leaving adrift loses the ship and its crew, the pilot on the memorial;
@@ -836,16 +874,18 @@ src/engine/           deterministic core: world, actors, traits, orders, lockste
                       (content.js), the place generator (poi.js)
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
-                      Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, Ranks, ...)
+                      Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, Ranks; the Wound's
+                      Feeds, Gestates, Buds, Drags, Flees and its mind, WoundAI, in demons.js, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
                       travel and saves (voyage.js), lives (life.js), the crew (crew.js), the base: rooms, strain,
                       stations, mood, strikes and All hands (base.js), standing (standing.js),
-                      comms, dialogs, trade and treaties (comms.js), events (events.js),
-                      practice runs (run.js)
-src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
-                      wrecks, combat effects, the star chart (galaxy.js)
+                      comms, dialogs, trade and treaties (comms.js), events (events.js), the Wound's
+                      attention, Hands and infested places (wound.js), practice runs (run.js)
+src/render/           three.js scene: space backdrop, procedural ships, the Wound's grown hulls
+                      (demons.js), rocks, clouds, crystal, nebulae, wrecks, combat effects, the star
+                      chart (galaxy.js)
 src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), the
                       comms and trade panel (comms.js), the Loom (loom.js), the bridge (bridge.js), audio
 tools/                dev server, headless tests, the abstract captain (captain.js), determinism lint

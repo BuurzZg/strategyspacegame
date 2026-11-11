@@ -248,7 +248,9 @@ silent:
 	Branch: forge
 	Order: 5
 	Needs: rods
-	Ready: false
+	Cost: 2
+	Gives: silent
+	Text: Baffled stacks, banked boilers, no chatter on the open bands. The Forge goes quiet, and whatever was listening loses it: the Wound's attention falls a little every day, and the Hands only hear the Forge where it fights.
 	Hint: Something out there is listening.
 
 # ---------------------------------------------------------------- the fleet

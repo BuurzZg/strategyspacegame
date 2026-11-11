@@ -183,3 +183,79 @@ Systems:
 	sensors:
 		Name: Sensors
 		Description: How far the chart can see what a place is.
+
+# The Wound on the chart (Milestone 21; PLAN.md §3, "How the Hands escalate"). There is no
+# countdown: the Mainspring's attention rises, and the Hands grow with it (galaxy/wound.js).
+# Its level is the highest one whose At the points have reached. Hands: how many hunt the
+# Forge at that level; Strong: they are faster and grow Stingers and Gnawers.
+Wound:
+	Quiet:
+		At: 0
+		Text: Nothing hunts the Forge yet. Only signs: a dead Hour drifting, the havens' stories.
+	Noticed:
+		At: 20
+		Text: Something has heard the Twain. Now and then a few Ticks and a Hound turn up.
+	Hunted:
+		At: 45
+		Hands: 1
+		Text: A Hand has set out from the Shore. It follows wherever the Forge was last heard.
+	Marked:
+		At: 75
+		Hands: 2
+		Strong: true
+		Text: Two Hands hunt the Forge, faster and stronger, and they plant Nurseries as they go.
+	Max: 100
+	# what raises it: a memory recovered (the louder the Twain sings); a point every DaysPer
+	# days; a point a day after StayFrom days at one place; each Nursery burned and Hour killed
+	Memory: 5
+	DaysPer: 4
+	StayFrom: 4
+	Burned: 2
+	HourKilled: 4
+	# what lowers it: a point a day with silent running; Choir points a day at a place of the
+	# Choir; Static points for a stitch through a static field, where the Hands won't follow.
+	# Destroying a Hand drops it to the level below.
+	Silent: 1
+	Choir: 2
+	Static: 4
+	# a new life wakes near the level its memories have earned: StartPer a memory, to StartMax
+	StartPer: 3
+	StartMax: 60
+	# the Hands: they set out from HandFrom and move a lane every MoveDays (fewer when Strong),
+	# losing the trail LosePct of the time; Power to start, Grow more a day (StrongPct when
+	# Strong). The chart shows a Hand, and ticks, when it is SeeHops lanes away or nearer.
+	HandFrom: Shore
+	MoveDays: 2-3
+	StrongDays: 2
+	LosePct: 20
+	Power: 100
+	Grow: 4
+	StrongPct: 150
+	SeeHops: 2
+	# caught: each day the Hand's pickets cost the Forge Harass percent hull; stitching away
+	# without a fight costs Escape (hull percent, morale, system wear)
+	Harass: 3
+	Escape: hull 12, morale 8, wear 10
+	# a Hand may infest each place it leaves (Hunted and on): InfestPct, up to InfestMax places
+	InfestPct: 30
+	InfestMax: 6
+	# Noticed and on: a lone pack roams these regions, turning up on RoamPct of their maps
+	Roam: Hush 20, Shore 30
+	RoamPack: hound, tick, tick, tick, tick
+	# on a map: a Hand's Hour comes on after HuntDelay seconds with a pack for its power (a
+	# Hound for every PackHound, a Tick for every PackTick, two Feeders), and IchorPer ichor a
+	# point of power to grow more. An infested place: Nurseries (a range), a garrison, sensors
+	# at Haze percent in the spore haze
+	HuntDelay: 45
+	PackHound: 120
+	PackTick: 35
+	IchorPer: 3
+	Nurseries: 2-3
+	Garrison: hound, tick, tick, tick, feeder, feeder
+	GarrisonIchor: 200
+	Haze: 70
+	# burning an infested place out (every Nursery, or the Hour): echoes, and CaptivePct of the
+	# time captives they took from the havens, rescued (Captives: a range of hands)
+	CleanseEchoes: 1
+	CaptivePct: 40
+	Captives: 3-8

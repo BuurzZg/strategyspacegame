@@ -9,6 +9,7 @@ import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, anyDrive, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
 import { lifeOf, lifeMix, remembers, markMemory, memoryOfBlueprint, givesOf, buildable } from './life.js';
 import * as B from './base.js';
+import * as Wd from './wound.js';
 import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerOf, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
 
 // The voyage: one life of a campaign on the galaxy map. Plain data (it saves as JSON) plus pure,
@@ -70,6 +71,7 @@ export function newVoyage(rules, { seed = 1, length = 'full', guided = false, ca
     log: [],
   };
   s.blueprints = buildable(rules, s); // the start list, and every hull remembered
+  s.wound = Wd.newWound(rules, s); // the Mainspring's attention: near what the memories have earned
   s.crew.life = s.campaign.life; // the same people wake each life; the dice fall differently
   assignFleet(s.crew, rules, s.fleet, { day: 1, fresh: true });
   for (const e of s.fleet) e.hp = shipMaxHp(rules, e, s); // a lead's touch on the hull
@@ -150,6 +152,8 @@ export function remember(rules, s, id, { quiet = false } = {}) {
   }
   if (M.Echoes) s.campaign.echoes = (s.campaign.echoes | 0) + (+M.Echoes | 0);
   if (!quiet) note(s, `Remembered: ${M.Name}.${M.Echoes ? ` (+${M.Echoes} echo${+M.Echoes > 1 ? 'es' : ''})` : ''}`, 'memory');
+  // the more Jacob remembers, the louder the Twain sings
+  if (s.wound) Wd.raise(rules, s, +(rules.content.wound || {}).Memory | 0, note);
   return true;
 }
 // Everything waiting at an anchor comes back (cutting into its hulk).
@@ -299,7 +303,7 @@ export function forecast(rules, s) {
 }
 
 // One day passes.
-export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
+export function dayTick(rules, s, { rest = 0, dry = false, transit = false } = {}) {
   if (s.over) return;
   const V = rules.content.voyage, st = s.stores, need = needs(rules, s);
   const out = {};
@@ -364,6 +368,8 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
   for (const t of assignFleet(s.crew, rules, s.fleet, { day: s.day })) note(s, t, 'info');
   // every station green: All hands (a long streak earns a crew moment)
   if (B.dayAllHands(rules, s)) trigger(rules, s, galaxyOf(rules, s), 'allhands');
+  // the Wound: attention, and the Hands moving (wound.js)
+  Wd.woundDay(rules, s, galaxyOf(rules, s), { transit, note });
 
   if (count(s.crew) <= 0) end(s, 'crew', 'There is nobody left aboard the Forge.');
   else s.day++;
@@ -456,16 +462,18 @@ export function stitch(rules, s, to) {
   const p = plan(rules, s, to);
   if (!p.ok) { if (p.hazard) turnedAway(rules, s, to); return p; }
   const g = galaxyOf(rules, s), V = rules.content.voyage;
+  // a Hand has the Forge here: tearing free costs
+  if (Wd.caughtBy(rules, s)) Wd.escape(rules, s, SYSTEMS, note);
   for (let i = 0; i < p.route.hops.length; i++) {
     const l = g.lanes[p.route.lanes[i]];
     s.stores.glim = Math.max(0, s.stores.glim - stitchCost(rules, s, l.len));
-    passDays(rules, s, stitchTime(rules, s, l.len));
+    passDays(rules, s, stitchTime(rules, s, l.len), { transit: true });
     if (s.over) return { ok: true };
     s.at = p.route.hops[i];
     reveal(rules, s);
   }
   note(s, `Stitched to ${g.points[s.at].name}: ${p.route.hops.length} stitch${p.route.hops.length > 1 ? 'es' : ''}, ${p.route.days} days, ${p.route.glim} Glim.`, 'travel');
-  arrived(rules, s, true);
+  arrived(rules, s, true, p.route.lanes);
   return { ok: true };
 }
 
@@ -508,19 +516,22 @@ export function drift(rules, s, to) {
   if (s.over) return no('The voyage is over.');
   const p = driftPlan(rules, s, to);
   if (!p.ok) return p;
-  passDays(rules, s, p.days);
+  if (Wd.caughtBy(rules, s)) Wd.escape(rules, s, SYSTEMS, note);
+  passDays(rules, s, p.days, { transit: true });
   if (s.over) return { ok: true };
   s.at = to;
   reveal(rules, s);
   note(s, `Drifted to ${galaxyOf(rules, s).points[to].name} at sub-light: ${p.days} days.`, 'travel');
-  arrived(rules, s, false);
+  arrived(rules, s, false, [p.lane]);
   return { ok: true };
 }
 
 // Arriving somewhere: whatever was waiting at the last place is gone, and events may happen.
-function arrived(rules, s, stitched) {
+function arrived(rules, s, stitched, lanes = []) {
   const g = galaxyOf(rules, s);
   s.ahead = (s.ahead || []).filter((a) => a.at === s.at);
+  // heard here (unless running silent); a Hand already here has caught the Forge
+  Wd.woundArrive(rules, s, g, { lanes, note });
   // where an earlier life ended, its echo waits
   const c = s.campaign, waiting = (c.echoAt || []).filter((e) => e.place === s.at);
   if (waiting.length) {
@@ -932,6 +943,12 @@ export function visitSettings(rules, s) {
     const at = a.behaviour === 'burrow' && settings.fields.length ? settings.fields[prng.int(settings.fields.length)].at.map((v) => v * CELL) : c;
     L.encounters.push({ side: a.side, ships: [...a.ships], at, behaviour: a.behaviour || 'hunt', delay: (a.delay | 0) * 25 });
   }
+  // the Wound: a Hand that has caught the Forge, an infested place, a roaming pack (wound.js)
+  const wound = Wd.mapWound(rules, s, g, p.id);
+  if (wound) for (const e of wound.encounters) {
+    const at = e.behaviour === 'hand' ? [Math.trunc((W * 88) / 100), Math.trunc((D * (30 + prng.int(40))) / 100), 0] : [Math.trunc((W * (60 + prng.int(25))) / 100), Math.trunc((D * (20 + prng.int(60))) / 100), 0];
+    L.encounters.push({ side: 'wound', ships: [...e.ships], at, behaviour: e.behaviour, delay: (e.delay | 0) * 25 });
+  }
   for (const e of L.encounters) if (F[e.side]) present.add(e.side);
   const factions = [...present].sort();
   settings.poi.owner = p.owner || '';
@@ -939,6 +956,7 @@ export function visitSettings(rules, s) {
   settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) || activeTreaties(s, p.owner).includes('Leave') : true;
   settings.poi.treaties = Object.fromEntries(factions.map((fid) => [fid, activeTreaties(s, fid)]));
   settings.poi.danger = +R.Danger || 1;
+  settings.poi.wound = wound ? { hand: wound.hand, infested: wound.infested, roam: wound.roam } : null;
   const { leads, recruits } = mapCrew(rules, s);
   const crewMood = B.moodOf(rules, s);
   settings.voyage = { mood: crewMood.mark, causes: crewMood.causes.map((c) => c.text), allHands: B.allHandsOn(rules, s), strain: { ...B.strainOf(s) }, commsDark: B.stationDown(rules, s, 'comms'), life: lifeOf(s), flags: [...(s.flags || [])], day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
@@ -955,13 +973,14 @@ export function visitSettings(rules, s) {
         xpPct: projectBonus(rules, s, 'XpPct'), buildSpeed: B.stationDown(rules, s, 'foundry') ? 0 : Math.trunc((Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100) * projectBonus(rules, s, 'BuildPct')) / 100),
         forgeDamagePct: projectBonus(rules, s, 'ForgeDamagePct'), launchPct: projectBonus(rules, s, 'LaunchPct') * (B.stationDown(rules, s, 'hangar') ? 2 : 1),
         costPct: B.costPctOf(rules, s), shipPct: B.shipPctOf(rules, s),
-        blueprints: [...(s.blueprints || [])], capacityBonus: projectBonus(rules, s, 'Capacity'), sensorPct: projectBonus(rules, s, 'SensorPct'), forgeHpPct: projectBonus(rules, s, 'HullPct'),
+        blueprints: [...(s.blueprints || [])], capacityBonus: projectBonus(rules, s, 'Capacity'), sensorPct: Math.trunc((projectBonus(rules, s, 'SensorPct') * (wound ? wound.haze : 100)) / 100), forgeHpPct: projectBonus(rules, s, 'HullPct'),
         spoolPct: Math.max(100, Math.trunc(10000 / Math.max(1, 50 + (s.systems.drive >> 1)))),
       },
       ...factions.map((fid, i) => ({ name: F[fid].Name, faction: fid, team: i + 1, ships: [], tier: tierOf(fid), standing: standingOf(rules, s, fid) })),
       { name: 'Drift fauna', faction: 'fauna', team: factions.length + 1, ships: [] },
+      ...(wound ? [{ name: 'The Wound', faction: 'wound', team: factions.length + 2, ships: [], ...wound.slot }] : []),
     ],
-    relations: relationsFor(rules, factions, (fid) => (truce(fid) && tierOf(fid) === 0 ? 1 : tierOf(fid))),
+    relations: relationsFor(rules, factions, (fid) => (truce(fid) && tierOf(fid) === 0 ? 1 : tierOf(fid)), !!wound),
   };
 }
 
@@ -991,15 +1010,18 @@ export function mapCrew(rules, s) {
 
 // Who fights whom on a map: you and each faction by your standing (Hostile: enemies, Allied:
 // allies, the rest neutral); factions by their own feuds; monsters against everyone.
-function relationsFor(rules, factions, tierOf) {
-  const out = [], fauna = factions.length + 1;
+// The Wound (when it is there) is everyone's enemy, and pays the fauna no mind.
+function relationsFor(rules, factions, tierOf, wound = false) {
+  const out = [], fauna = factions.length + 1, demons = factions.length + 2;
   factions.forEach((fid, i) => {
     const t = tierOf(fid);
     out.push([0, i + 1, t === 0 ? 'enemy' : t === 4 ? 'ally' : 'neutral']);
     factions.forEach((gid, j) => { if (j > i) out.push([i + 1, j + 1, factionsAtWar(rules, fid, gid) ? 'enemy' : 'neutral']); });
     out.push([i + 1, fauna, 'enemy']);
+    if (wound) out.push([i + 1, demons, 'enemy']);
   });
   out.push([0, fauna, 'enemy']);
+  if (wound) out.push([0, demons, 'enemy'], [fauna, demons, 'neutral']);
   return out;
 }
 
@@ -1068,6 +1090,10 @@ export function returnFromMap(rules, s, report) {
     while (wear > 0) { const k = SYSTEMS[rng.int(SYSTEMS.length)], n = Math.min(wear, 3 + rng.int(6)); s.systems[k] = Math.max(0, s.systems[k] - n); hit[k] = (hit[k] || 0) + n; wear -= n; }
     note(s, `The hull took ${hullLost}% damage. Systems hit: ${Object.entries(hit).map(([k, n]) => `${rules.content.systems[k].Name} −${n}`).join(', ')}.`, 'bad');
   }
+  // the Wound: a fight is heard, even running silent; Hours killed, Nurseries burned, a Hand
+  // destroyed or shaken off, a place burned clean (and captives rescued)
+  Wd.woundGoIn(rules, s);
+  Wd.afterMap(rules, s, g, p.id, report.wound || null, { note, gain: (n) => { s.crew.roles.hands = (s.crew.roles.hands | 0) + n; } });
   // who you met there, and what they think of what you did
   const F = rules.content.factions, st = report.standing || { changes: {}, met: [] };
   for (const fid of st.met) if (F[fid] && meet(rules, s, fid)) note(s, `First contact with the ${F[fid].Name}. They are ${tierName(rules, s.standing[fid])} toward the Forge.`, 'story');
@@ -1110,7 +1136,7 @@ export function returnFromMap(rules, s, report) {
 const shipName = (rules, type) => (rules.actors.has(type) ? rules.actor(type).traitInfo('Tooltip').Name : type);
 
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
@@ -1158,6 +1184,8 @@ export function loadVoyage(rules, text) {
     for (const e of s.fleet || []) { let r = 0; steps.forEach(([, n], i) => { if ((e.xp | 0) >= n) r = i + 1; }); e.xp = r * (num(rules.content.voyage, 'LevelPoints') || 100); e.perks = []; }
     s.version = 9;
   }
+  // from Milestone 20: the Wound's attention, as a new life would wake with it
+  if (s && s.kind === 'voyage' && s.version === 9) { s.wound = Wd.newWound(rules, s); s.version = 10; }
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   // from Milestone 10: everything could be built then, so keep it that way
   if (s && s.kind === 'voyage' && !s.blueprints) s.blueprints = [...new Set([...(rules.content.blueprintStart || []), ...Object.values(rules.content.items).filter((i) => i.Kind === 'blueprint').map((i) => i.Unlocks)])];

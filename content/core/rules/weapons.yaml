@@ -236,3 +236,110 @@ HornSong:
 			medium: 80
 			heavy: 60
 			capital: 40
+
+# ---------------------------------------------------------------- the Wound (demons.yaml)
+TickClaw:
+	ReloadDelay: 8
+	Range: 520
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: ff4a3a
+	Warhead@hit: SpreadDamage
+		Damage: 420
+		Versus:
+			light: 100
+			medium: 70
+			heavy: 45
+			capital: 30
+
+StingerLance:
+	ReloadDelay: 50
+	Burst: 2
+	BurstDelay: 8
+	Range: 1700
+	Report: lance
+	Projectile: InstantHit
+		Beam: true
+		Color: ffd0c0
+		Size: 90
+	Warhead@hit: SpreadDamage
+		Damage: 3600
+		Versus:
+			light: 15
+			medium: 70
+			heavy: 160
+			capital: 170
+
+ChimePulse:
+	ReloadDelay: 16
+	Range: 2400
+	Report: flak
+	Projectile: Bolt
+		Speed: 500
+		Detonate: true
+		HitRadius: 220
+		Inaccuracy: 100
+		Tracking: 90
+		Color: ff7a9a
+		Size: 90
+	Warhead@burst: SpreadDamage
+		Damage: 800
+		Spread: 700
+		Versus:
+			light: 130
+			medium: 40
+			heavy: 20
+			capital: 10
+
+HoundSpit:
+	ReloadDelay: 18
+	Range: 3200
+	Report: plasma
+	Projectile: Bolt
+		Speed: 340
+		HitRadius: 180
+		Inaccuracy: 70
+		Tracking: 55
+		Color: ff5a2a
+		Size: 120
+	Warhead@hit: SpreadDamage
+		Damage: 1400
+		Versus:
+			light: 45
+			medium: 100
+			heavy: 100
+			capital: 80
+
+GnawerJaws:
+	ReloadDelay: 30
+	Range: 1000
+	Report: bite
+	Projectile: InstantHit
+		Beam: false
+		Color: ff3020
+	Warhead@hit: SpreadDamage
+		Damage: 9000
+		Versus:
+			light: 3
+			medium: 90
+			heavy: 120
+			capital: 150
+
+HourSpines:
+	ReloadDelay: 9
+	Range: 2800
+	Report: cannon
+	Projectile: Bolt
+		Speed: 650
+		HitRadius: 160
+		Inaccuracy: 60
+		Color: ff6a50
+		Size: 70
+	Warhead@hit: SpreadDamage
+		Damage: 500
+		Versus:
+			light: 120
+			medium: 60
+			heavy: 30
+			capital: 20

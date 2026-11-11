@@ -69,6 +69,11 @@ export class Audio {
       case 'event': [392, 523, 659].forEach((f, i) => this.tone('sine', f, f * 1.01, 0.5, 0.06 * v, i * 0.12)); break;
       // All hands: a brass bell, then a short organ chord
       case 'allhands': [1568, 1568 * 2.76].forEach((f, i) => this.tone('sine', f, f, 1.4, (i ? 0.03 : 0.08) * v)); [262, 330, 392, 523].forEach((f) => this.tone('triangle', f, f, 1.2, 0.05 * v, 0.35)); break;
+      // a clock tick, faint: a Hand is near
+      case 'tick': this.burst(0.025, 0.05 * v, 5200, 6, 'bandpass'); this.tone('square', 2400, 2300, 0.015, 0.012 * v); break;
+      // something wet being born, and a demon's death
+      case 'birth': this.burst(0.25, 0.06 * v, 380, 1.4); this.tone('sine', 160, 70, 0.3, 0.06 * v); break;
+      case 'hand': [98, 147].forEach((f, i) => this.tone('sawtooth', f, f * 0.97, 1.6, 0.05 * v, i * 0.4)); this.burst(1.2, 0.08 * v, 300, 0.6); break;
       case 'deal': this.tone('triangle', 880, 1320, 0.08, 0.09 * v); this.tone('triangle', 1320, 1760, 0.1, 0.07 * v, 0.08); break;
       case 'hint': this.tone('sine', 988, 988, 0.08, 0.05 * v); this.tone('sine', 1319, 1319, 0.12, 0.05 * v, 0.09); break;
       case 'objective': [659, 880].forEach((f, i) => this.tone('triangle', f, f, 0.16, 0.1 * v, i * 0.1)); break;

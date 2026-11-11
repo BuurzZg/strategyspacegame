@@ -8,6 +8,7 @@ import * as V from '../galaxy/voyage.js';
 import { laneOpen } from '../galaxy/galaxy.js';
 import { ROLES, count, free, titleOf } from '../galaxy/crew.js';
 import * as B from '../galaxy/base.js';
+import * as Wd from '../galaxy/wound.js';
 
 // The star chart screen: the galaxy map, where the voyage is planned and time passes only
 // when you act. Click a place to see what is known about it and the route there; stitch,
@@ -29,6 +30,12 @@ function moodBadge(rules, s) {
   return `<div class="cs mood m-${m.mark}${ah ? ' allhands' : ''}" title="${esc(tip)}"><span class="medal"></span><span class="cs-k">${ah ? `All hands · ${ah} d` : MOOD[m.mark]}</span><b>${s.morale}</b>${chips}</div>`;
 }
 const STATE = { online: 'Online', dim: 'Dim', dark: 'Dark', striking: 'On strike', cold: 'Cold' };
+// The Mainspring's attention as a word (from Noticed on; the sensors officer's reading)
+function attentionBadge(rules, s) {
+  const a = Wd.attention(rules, s);
+  if (a.index < 1) return '';
+  return `<div class="cs att a-${a.id}" title="${esc(`The Mainspring's attention: ${a.name}. ${a.text}`)}"><span class="medal"></span><span class="cs-k">The Wound</span><b>${a.name}</b></div>`;
+}
 
 export class ChartScreen {
   constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, bridge, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
@@ -310,7 +317,7 @@ export class ChartScreen {
     $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
       const d = days[k], warn = d !== undefined && d < 3 ? 'bad' : d !== undefined && d < 7 ? 'warn' : '';
       return `<div class="cs ${warn}" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k] | 0)}</b>${d !== undefined ? `<span class="cs-d">${d === Infinity ? '' : `${fmt(d)} d`}</span>` : ''}</div>`;
-    }).join('') + `<div class="cs" title="Everyone aboard, flying ships or not; berths for ${B.berths(this.rules, s)}"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div>` + moodBadge(this.rules, s);
+    }).join('') + `<div class="cs" title="Everyone aboard, flying ships or not; berths for ${B.berths(this.rules, s)}"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div>` + moodBadge(this.rules, s) + attentionBadge(this.rules, s);
   }
 
   refreshCard() {
@@ -330,7 +337,11 @@ export class ChartScreen {
     const Tk = known && p.trader ? this.rules.content.traders[p.trader] : null;
     const tradeNote = Tk ? ` ${Tk.Keeper ? `Kept by ${Tk.Keeper}. ` : ''}A trader of the ${this.rules.content.factions[Tk.Faction].Name}: prices follow your standing with them, and they won't deal with you if you are Hostile.` : '';
     const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
-    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + tradeNote + claim;
+    // the Wound: a Hand the sensors can see, an infested place, one burned clean
+    const wd = Wd.woundOf(this.rules, s), hand = Wd.handsSeen(this.rules, s, this.g).find((h) => h.at === id);
+    const inf = known && wd.infested[id] !== undefined, clean = known && wd.cleansed.includes(id);
+    const wound = (hand ? (hand.caught && here ? ' A Hand has caught the Forge here: its Hour and its pack are waiting out in the dark. Go in and fight it (kill the Hour and the Hand is gone for this life), or stitch away and pay for tearing free.' : ` A Hand is here: an Hour and its pack${hand.strong ? ', a strong one' : ''}. It will catch the Forge if it comes here.`) : '') + (inf ? ' Infested: the Wound has settled here. Nurseries on the rocks, red veins in the wrecks, a spore haze that cuts the sensors. Burn every Nursery to clean it out.' : '') + (clean ? ' Burned clean in this life.' : '');
+    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + tradeNote + claim + wound;
     const stats = [], btns = [];
     let why = '';
     if (here) {
@@ -338,6 +349,7 @@ export class ChartScreen {
       const Tr = p.trader ? this.rules.content.traders[p.trader] : null;
       if (Tr) { const hc0 = V.canHail(this.rules, s); btns.push(['trade', `Trade with ${Tr.Name} <kbd>C</kbd>`, !hc0.ok, hc0.ok ? `${Tr.Keeper ? `${Tr.Keeper}: ` : ''}their own stock, at your standing with the ${this.rules.content.factions[Tr.Faction].Name}` : hc0.why]); }
       else if (p.wayhouse) { const dp = V.driftersPlan(this.rules, s); btns.push(['drifters', dp.ok ? `Take ${dp.n} drifters aboard: a day` : 'Take the drifters aboard', !dp.ok, dp.ok ? (dp.n < dp.want ? `${dp.want} ask, and there are berths for ${dp.n}` : 'They need berths: crew quarters add more') : dp.why]); if (!dp.ok) why = dp.why; }
+      else if (Wd.caughtBy(this.rules, s)) btns.push(['go', `Go in and fight the Hand <kbd>Enter</kbd>`, false, 'Its Hour comes on with its pack, and grows more the longer the fight lasts. Kill it fast, or spool the Skein and run']);
       else btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');
       const hc = V.canHail(this.rules, s);
@@ -356,7 +368,8 @@ export class ChartScreen {
         const r = pl.route, a = pl.arrive, use = -V.daysLeft(this.rules, s).rate.ice;
         stats.push(['Stitches', r.hops.length], ['Days', r.days], ['Glim', fmt(r.glim)], ['Distance', `${fmt(r.len)} spans`]);
         stats.push(['Glim left', fmt(Math.max(0, a.glim))], ['Water on arrival', `${use > 0 ? fmt(Math.max(0, Math.trunc(a.ice / use))) : '∞'} days`]);
-        btns.push(['stitch', `Stitch there <kbd>Enter</kbd>`, !pl.ok, pl.ok ? `${r.days} days, ${r.glim} Glim` : pl.why]);
+        const esc0 = Wd.escapePlan(this.rules, s);
+        btns.push(['stitch', esc0 ? `Tear free and stitch there <kbd>Enter</kbd>` : `Stitch there <kbd>Enter</kbd>`, !pl.ok, pl.ok ? `${r.days} days, ${r.glim} Glim${esc0 ? `; tearing free of the Hand costs ${esc0.hull}% hull, ${esc0.morale} morale and a hit to a system` : ''}` : pl.why]);
         if (!pl.ok) why = pl.why;
       } else why = pl.why;
       const dp = V.driftPlan(this.rules, s, id);
@@ -520,7 +533,14 @@ export class ChartScreen {
     this.chart.setScale(scale);
     this.chart.frame(dt, this.camera);
     renderer.render(this.scene, this.camera);
+    this.t = (this.t || 0) + dt;
     this.drawLabels();
+    // a faint ticking while a Hand is near
+    const near = Wd.handsSeen(this.rules, this.s, this.g);
+    if (near.length && !(this.comms && this.comms.isOpen)) {
+      this.tickT = (this.tickT || 0) - dt;
+      if (this.tickT <= 0) { this.tickT = near.some((h) => h.hops <= 1) ? 0.55 : 1.1; this.audio.play('tick', near.some((h) => h.hops <= 1) ? 1 : 0.6); }
+    }
     this.hud.tickToasts();
   }
 
@@ -562,6 +582,44 @@ export class ChartScreen {
       const q = c.exact ? proj(this.g.points[c.at]) : proj({ x: c.x, y: c.y + c.r, z: 0 });
       if (q) ctx.fillText(c.exact ? what(c) : `${what(c)}: SOMEWHERE IN HERE`, q.x, q.y + (c.exact ? 30 : 14));
     }
+    this.drawWound(proj, known);
     void t;
+  }
+
+  // The Wound on the parchment: infested places as spreading red-ink stains (bigger the longer
+  // they have festered), and the Hands the sensors can see, with their reach
+  drawWound(proj, known) {
+    const ctx = this.ctx, s = this.s, wd = Wd.woundOf(this.rules, s), t = this.t || 0;
+    const scale = Math.max(0.4, Math.min(2.2, 95 / this.orbit.dist));
+    ctx.save();
+    for (const [id, day] of Object.entries(wd.infested)) {
+      const pid = +id;
+      if (!known.has(pid)) continue;
+      const q = proj(this.g.points[pid]);
+      if (!q) continue;
+      const age = Math.max(0, s.day - day), r = (14 + Math.min(26, age * 1.5)) * scale;
+      for (let k = 0; k < 6; k++) {
+        const a = (pid * 2.4 + k * 1.9) % (Math.PI * 2), d = k ? r * (0.35 + ((pid + k * 7) % 5) * 0.08) : 0, rr = r * (k ? 0.55 : 0.8);
+        const x = q.x + Math.cos(a) * d, y = q.y + Math.sin(a) * d * 0.7;
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, rr);
+        gr.addColorStop(0, 'rgba(190,20,40,0.42)'); gr.addColorStop(0.6, 'rgba(140,10,30,0.22)'); gr.addColorStop(1, 'rgba(120,0,20,0)');
+        ctx.fillStyle = gr;
+        ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.75, a, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.textAlign = 'center';
+    for (const h of Wd.handsSeen(this.rules, s, this.g)) {
+      const q = proj(this.g.points[h.at]);
+      if (!q) continue;
+      const beat = 0.5 + 0.5 * Math.max(0, Math.sin(t * 2.4)) ** 4, r = (9 + beat * 4) * scale;
+      ctx.strokeStyle = `rgba(255,60,90,${0.5 + beat * 0.4})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, Math.PI * 2); ctx.stroke();
+      // the hand of a clock: it sweeps
+      const a = t * 1.3 + h.id;
+      ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x + Math.cos(a) * r * 1.7, q.y + Math.sin(a) * r * 1.7); ctx.stroke();
+      ctx.font = '700 10px "IBM Plex Mono", monospace'; ctx.fillStyle = '#ff6a82';
+      ctx.fillText(h.caught ? 'THE HAND HAS YOU' : h.strong ? 'A HAND (STRONG)' : 'A HAND', q.x, q.y + r + 14);
+    }
+    ctx.restore();
   }
 }
