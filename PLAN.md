@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** your answers to the 24 questions and your story skeleton are in (§16 and §3). Four smaller decisions are still open (§17). Milestones 1–14 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** your answers to the 24 questions, your story skeleton and your story update are in (§16 and §3). Some story decisions are still open (§17). Milestones 1–14 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -117,142 +117,262 @@ Targets, all measured by the test bot:
 
 ## 3. Story: waking with nothing
 
-*The skeleton is yours (approved as a draft). The parts marked "proposal" fill gaps you left open, and the end of this section suggests improvements. Tone: the story memories are dark and heavy, guilt slowly found out. Everything else stays lonely, beautiful and a bit strange, with dry humour.*
+*The skeleton is yours, with your story update applied (where they disagree, the update wins). The parts marked "proposal" fill gaps you left open. Tone: the story memories are dark and heavy, guilt slowly found out. Everything else stays lonely, beautiful and a bit strange, with dry humour.*
 
-### The opening
+### The opening (short, and confusing on purpose)
 
-- An old man wakes on the Forge's bridge. Alarms are sounding, the chart is dark, and he doesn't know his own name. That man is the player: Dr. Jacob Smith, though nobody aboard knows it yet.
-- The crew wake too, just as blank. They know their trades, and they read their names off their uniforms. That is the first dry joke, and the last easy one.
-- Every name in the backstory (the Company, Erik, Jacob, Ninefold, the Mainspring) is learned only through memories.
+- **Only the awakening.** Jacob and his crew wake on the Forge's bridge. White light, alarms, hot brass.
+- **Bodies remember, minds don't.** Their hands know the helm and their habits know the ship, but nobody knows where they are, what happened, or why they're here.
+- **The crew's names:** they read them off their uniforms.
+- **Then control passes to the player.** The opening is a few lines, not a cutscene. It replaces today's prologue in Milestone 15.
+- **The first guess is wrong.** At first everyone assumes they have been out for hours, or days.
 
 ### What happened before the game
 
-1. **The Smith Foundry Company** (proposed name; "the Company" in speech) is a powerful family corporation of a great empire, **the Meridian Hollow** (the approved name for "our people", now the empire). It comes to the Wrack on a mission to study **Ninefold**, the only planet in a galaxy with no planets.
-2. **The mission was good.** It was meant to cure the Fray (see below). Not everyone believed that.
-3. The Company builds **the Anchorage**, a station in the Drift, within sight of Ninefold and the dead star Orrin.
-4. **Dr. Erik Smith**, head of the family and the Company's chief, leads the mission. He lets his grandfather, **Dr. Jacob Smith**, run a private "retirement project" aboard his own mothership, **the Forge**, under the Company's protection.
-5. **The galaxy's peoples react in different ways:**
-   - Some traders and pirates help, but only because they fear the Company.
-   - Some factions try to sabotage the mission.
-   - The people of Ninefold believe the Company has come to destroy everything. They are wrong, but they believe it completely.
-6. **Jacob is too curious.** His project accidentally opens a gate at the Wrack's edge, and something comes through: **the Mainspring** (proposal, below). For now it was an accident; the twists below leave room to change that later.
-7. The Mainspring **winds the galaxy shut.** No stitch leaves the Wrack, and the Company is trapped.
-8. To calm it, the Company **kidnaps people from the scavenger clans** and gives them to it.
-9. **The captives are sacrificed.** It isn't enough. Everything collapses: the Anchorage breaks, and the Company scatters.
-10. **Jacob and his crew wake on the Forge with no memory.** The Mainspring keeps Jacob alive. Every time he dies, it winds him back to the moment of waking, and the Forge and its crew come back with him.
+1. **The Company.** The Smith Foundry Company (proposed name; "the Company" in speech) is a powerful family House of a great empire, the Meridian Hollow. It comes to the Wrack, the galaxy without worlds, on a mission to study **Ninefold**, the only planet in it.
+2. **The mission was good.** It was meant to cure **the Fray**, a sickness of people who travel through folded space. Not everyone believed that.
+3. **The Anchorage.** The Company builds the Anchorage, a station in the Drift within sight of Ninefold and the dead star Orrin.
+4. **Erik and Jacob.** Dr. Erik Smith, head of the family and the Company's chief, leads the mission. He lets his grandfather, Dr. Jacob Smith, run a private "retirement project" aboard his own mothership, the Forge, under the Company's protection.
+5. **How the galaxy's peoples react:**
+   - **traders and pirates** help, but only because they fear the Company;
+   - **some factions** sabotage the mission;
+   - **Ninefold's people, the Knotfolk,** believe the Company has come to destroy everything.
+6. **The theft (changed).**
+   - **The relic.** All his life Jacob carried half of an ancient relic, **the Twain** (proposed name). The other half was in the Wrack. Finding it was his life's work: the "retirement project" was really the search, and the Company's mission was his way to get here.
+   - **The guardians.** The Knotfolk guarded the other half. They were wrong about the Company's mission, but right about Jacob.
+   - **The waking.** Jacob stole the other half. When the halves met, something woke: **the Mainspring**.
+   - **Left open:** whether Jacob knew this would happen.
+7. **The trap.** The Mainspring winds the galaxy shut. No stitch leaves the Wrack.
+8. **The kidnappings.** To calm it, the Company takes people from the scavenger clans and gives them to it.
+9. **The sacrifices.** The captives are sacrificed. It isn't enough. The Anchorage burns for three days; Erik stays to the end. The survivors flee to moons, large asteroids and wrecks across the galaxy, and start again there.
+10. **The relic saved Jacob (changed).**
+    - When everything fell apart, the Twain stopped time around Jacob and the Forge. For them, not a minute has passed.
+    - **147 years later** (proposal, below), the Forge comes out of a fold in space and time, its crew with their memories gone.
+    - **Jacob doesn't know any of this at the start.** The player finds it out late.
+    - **Nobody knows what the Twain really is,** why it can do this, or what it means. The base game gives only hints, so future add-ons can explore it.
 
-**Why memories survive (proposal):** the Mainspring resets Jacob and his crew, but it cannot reach the Forge's drive records. Everything recovered is written into the drive's records, which is the Loom. That is why remembered things stay, and why found traders stay "in the ship's systems".
+**Why memories survive (proposal):**
+- The crew wake blank in every life, but the Forge's drive records keep everything that is recovered. That record is the Loom.
+- It is also why remembered things stay, and why found traders stay "in the ship's systems".
 
-### Ninefold (proposal: what makes it special)
+### Ninefold (proposal)
 
-- Ninefold is the dead star Orrin's one surviving world. Folded space in the Wrack is knotted there: nine folds of the Skein meet in a single knot under its crust. That knot is why the Wrack has no other planets, and why its stitches behave strangely.
-- **Nothing frays on Ninefold.** The empire is dying of **the Fray**, a wasting sickness of people who travel through folded space: their bodies and then their memories slowly come apart. Ninefold's people, **the Knotfolk**, never fray.
-- **The Company came to learn why: a cure.** The Knotfolk were told that the Company meant to unpick the knot, which would unravel their world. They believed it.
-- The Fray also gives the amnesia an echo: forgetting is what fraying feels like from the inside.
+- **Where it is:** Ninefold is the dead star Orrin's one surviving world. Folded space in the Wrack is knotted there: nine folds of the Skein meet in a single knot under its crust. That knot is why the Wrack has no other planets.
+- **Nothing frays there.** That is why the Company came: a cure for the Fray.
+- **What it kept:** the Knotfolk kept the other half of the Twain in a reliquary at the knot. Whether the knot and the Twain are connected is one of the mysteries left for add-ons.
 
 ### The force: the Mainspring (proposal)
 
-- **What it is:** a vast coiled tension from beyond the gate, a thing made of wound-up time. It looks like a dark coil of brass the size of a moon, slowly turning and ticking, with space creasing around it.
+- **What it is:** a vast coiled tension from somewhere else, a thing made of wound-up time. It looks like a dark coil of brass the size of a moon, slowly turning and ticking, with space creasing around it.
+- **Its servants:** **the Hands**, clockwork hunters.
 - **What it does:**
-  - It winds things shut: lanes, a galaxy.
-  - It feeds on the time of the living. That is what the captives gave it: their years.
-  - It keeps Jacob wound, rewinding him each time he dies. Why it keeps him is left open for the twists.
-- **Its servants:** **the Hands**, clockwork hunters that tick (see the chase clock below).
-- **Where it is:** at the Shore, by the gate, where it waits in Act 4.
-- **The confrontation:** a boss map in the existing engine, like the Hollowhorn but far larger. Defeating it breaks the loop and lets the Forge out of the galaxy.
-- **Name alternatives:** the Governor, the Escapement.
+  - it winds things shut;
+  - it feeds on the time of the living, which is what the captives gave it: their years;
+  - it waits at the Shore.
+- **What it wants:** the Twain.
+- **The confrontation:** a boss map in the existing engine, like the Hollowhorn but far larger. Defeating it breaks the loop and opens the way out.
+
+### The Twain (proposal: the relic's name)
+
+- **The name:** two halves of one thing, never meant to meet ("never the twain shall meet"). Jacob carried one half, and the Knotfolk guarded the other.
+- **What it is like:** cold, brass-dark, older than anything in the Wrack. It sings if you hold it too long.
+- **The time shield:** when it is whole, it can stop time around whatever it is close to. That is all anyone learns.
+- **Alternatives:** the Clasp, the Stillpoint.
+
+### Why Jacob comes back after each death (proposal, decision 29)
+
+**a. The creditor (recommended).**
+- While Jacob lives, the Twain shields him and the Mainspring can't take it. If he dies, the Twain would slip out of time with him and be lost to it again.
+- So the Mainspring winds Jacob back to the earliest moment it can reach: the moment the shield opened, which is the moment of waking. Then it waits for him to bring the Twain to the Shore. A creditor that won't let the debtor die before he pays.
+- This explains why every life starts at the same moment.
+
+**b. The relic.** The Twain itself rewinds its bearer, and the Mainspring only hunts.
+
+**c. Both stories exist, and the player never learns which is true.** The Choir ask: "Are you sure it is the coil that keeps winding you?"
+
+The recommendation is **a** as what Jacob believes, with hints of **c**. Your narration's line "It would not let me die" works either way.
+
+### Why we wake now (proposal, decision 30)
+
+**a. The shield is failing (recommended as the truth, as far as anyone can tell).**
+After 147 years, the Twain's song has faded. Time leaked in, and the Forge fell back into the world.
+
+**b. The ritual.** A haven of the Company's descendants, the Waiting, has kept a beacon lit for "the old man with the great ship" for generations. On the anniversary of the fall they performed a ritual to call him back, and they believe it worked.
+
+**c. The pry.** The Mainspring has been winding against the shield for a century and a half, and it finally gave way.
+
+The recommendation is all three, in layers:
+- **a** is what the late memories suggest;
+- **b** is what the Waiting believe (a strong moment, below);
+- **c** is the Choir's hint.
+
+No one is sure.
+
+### The time gap (proposal: 147 years, decision 31)
+
+**Why 147 years:**
+- **Generations:** about six, enough for tribes, twisted legends and a dead Company.
+- **Living memory:** short enough that a long-lived Tallowfolk elder still remembers Jacob's face.
+
+**How the player works it out, step by step:**
+
+1. **Waking:** everyone assumes hours, or days.
+2. **The Anchorage:** skeletons in Company uniforms and dust a finger deep. The surgeon says: "These aren't days old, Captain. Not years, either." The station's last dated log gives the **last record**: "Year 4324, Month 3, Day 2".
+3. **Our emblem on a tribal ship,** painted by people who don't know what it means.
+4. **The legend of the old man with the great ship.** It is told as old lore, and it is about you.
+5. **A Tallowfolk elder** (Deacon Ilmar Sloe of the Tallow Bell) recognises you: "You have not aged a day. I have aged more than a hundred years."
+6. **The Meridian Horologe** (below) gives the exact date. The Anchorage's last log against today's date: 147 years, 3 months and 15 days.
+
+### The havens
+
+- **Who they are:** the Company's survivors settled moons, large asteroids and wrecks. After 147 years their descendants, the **Hollowkin** (proposed name, from the Meridian Hollow), have gone different ways:
+  - **Tribes:** primitive wreck-dwellers who paint the hammer-and-cog emblem on their hulls as a tribal sign, not knowing what it means;
+  - **Holds:** havens on small moons with some industry, but no spaceflight. You visit them from the chart, and they trade, offer crew and tell legends;
+  - **Raiders:** **the Brass Reavers** (proposed name), descendants who stripped Company wrecks for brass and turned pirate.
+- **The legend:** every haven has a version of "the old man with the great ship".
+  - **The Waiting** keep a beacon lit for his return.
+  - **The Unforgiving** curse him and frighten their children with him.
+  - Both have it twisted. Their fear and hatred, handed down for generations, make the false picture stronger.
+
+### The Meridian Horologe (proposal: the clock station)
+
+- **What it is:** the Empire's timekeeping station, a cathedral of brass around a chronometer the size of a house. It still keeps official **Meridian time** (year, month, day, hour, minute, second) and has ticked alone for 147 years. Its pendulum is the only thing moving.
+- **Before it is found:** the date panel on the HUD reads **UNKNOWN**. After the Anchorage it adds the last record: "Last record: Year 4324, Month 3, Day 2 · Today: UNKNOWN". Dated logs, old records and legends let the player guess.
+- **When it is found:** a memory, so the date stays known in every later life. The panel shows the official Meridian date from then on, with the clock running: "Year 4471 · Month 6 · Day 17 · 06:42:19". Each life restarts at the moment of waking, so the date does too.
+- **The story moment:** the chronometer, the date, and the last Anchorage log beside it. Everyone you knew died a century ago.
+- **Where it is:** in the Hush (Act III), so the player usually finds it after already suspecting a long gap, but before the end.
+- **Alternative names:** the Long Clock, the Chronarium.
 
 ### The false picture
 
 The player should spend the early game believing the Company was evil. Then the truth comes in layers:
 
-1. **They hate us.** Were we the villains? (Act 1)
-2. **The mission was good.** They misunderstood it, or were lied to. (early Act 2)
-3. **But we did terrible things.** We ruled by fear, then took people. (late Act 2)
-4. **This is why:** the Mainspring trapped us, and we fed it people. (Act 3)
-5. **And the cause was Jacob,** his curiosity. (Act 4: the final memory)
+1. **They hate us. Were we the villains?** (Act I, and every haven that curses the old man)
+2. **The mission was good.** They misunderstood it, or were lied to. (Act II)
+3. **The real disaster was Jacob's private project:** his search for the relic, and the theft. The Knotfolk were wrong about the Company, but right about him. (Act III)
+4. **Then we did terrible things out of desperation:** the kidnappings, then the sacrifices. (Act II shows the lists without the reason; Act III gives the reason)
 
-Nobody is purely good or purely evil. The order differs a little from your list: Jacob's project comes last instead of third. See "Suggested improvements".
+Nobody is purely good or purely evil.
 
 ### The story by region
 
 | Act | Region | Question | What the player learns |
 | --- | --- | --- | --- |
-| I | The Drift | "Who are we?" | The destroyed Anchorage and the emblem; the radar; the Company and Erik's name; that we are Jacob. The Knotfolk attack on sight, with no explanation |
-| II | The Middens | "What did we do?" | The Fray and the mission; the Synod's oath; fear as policy; the kidnappings. The Cinder Pact are what's left of the Company, and they blame Jacob |
-| III | The Hush | "Why?" | The gate and the Mainspring; the offering; the fall. The Choir sense that Jacob keeps coming back |
-| IV | The Shore | "The truth" | The final memory. The Mainspring waits; defeating it breaks the loop and lets us escape |
+| I | The Drift | "Who are we?" | The destroyed Anchorage, the emblem and the radar; the Company and Erik's name; that we are Jacob; the first sign of how long it's been. The Knotfolk attack on sight. Our emblem on a tribal ship |
+| II | The Middens | "What did we do?" | The Fray and the mission; the Synod's oath; fear as policy; the kidnappings. The havens, the Waiting and the Unforgiving. The Cinder Pact, what's left of the Company, blame Jacob |
+| III | The Hush | "Why?" | The other half of the Twain; the theft and the waking; the offering. The Meridian Horologe and the date. The Choir sense that Jacob keeps coming back |
+| IV | The Shore | "The truth" | The fall, the time shield, and why we woke. The Mainspring waits; defeating it breaks the loop and lets us escape |
 
-### The story memories (draft, 11 of the 31)
+### The story memories (draft: 12, plus the Horologe)
 
 Each one is darker than the last. Each is found at a story location placed by the seed within its act's region (§2), and costs no echoes.
 
 | # | Act | Memory | Where it is found | What it reveals |
 | --- | --- | --- | --- | --- |
-| 1 | I | **The emblem** | The Anchorage's hulk, with the radar | A hammer inside a cog: the mark of the Smith Foundry Company. It is on the station, on the Forge, and on the crew's uniforms. We were the Company |
-| 2 | I | **"We are here to help"** | The Steward, Erik's yacht, wrecked nearby in the Drift | A recording of Dr. Erik Smith opening the Anchorage: "We are here to help." After the first Knotfolk attack, the line sounds hollow |
-| 3 | I | **The old man's ship** | The Forge's own registry, readable after the first fight with the Knotfolk | The Forge is not Company property: it is the private ship of Dr. Jacob Smith, Erik's grandfather. You are Jacob. Deck 9 is sealed, and nobody aboard knows why |
-| 4 | II | **The Fray** | A Company research hulk in the Middens | Why the Company came: the Fray is killing the empire, and it killed Erik's mother. Ninefold does not fray. The mission was a cure |
-| 5 | II | **The oath** | The Tallow Bell's archive (the Lantern Synod) | The Synod are sworn to guard Ninefold's knot. They believed the Company meant to unpick it, told the Knotfolk so, and sabotaged the mission. Erik refused to explain himself to any of them |
-| 6 | II | **"Afraid is cooperative"** | A Rivet Moot ledger, or the Ashen Gaunt's den | The traders and pirates who helped were paid in fear. The Company's security chief: "Let them be afraid. Afraid is cooperative." |
-| 7 | II | **The lists** | A prison-barge wreck in the Ragged Clans' fields | Names: men, women and children of the Ragged Clans, taken in Company ships, some of them sold by the Rivet Moot. Cages on the Anchorage's lower ring. Nothing says why |
-| 8 | III | **The gate** | A Company listening post behind the Veil | Something came through a gate at the Shore: the Mainspring. It wound the galaxy shut. The record of who opened the gate is burned out |
-| 9 | III | **The offering** | The tithe barge, where the captives were given | The Company fed the captives to the Mainspring to make it loosen its grip, on Erik's order, with Jacob standing beside him. It took their years, and it wanted more |
-| 10 | III | **The fall** | The Choir, who sense that Jacob keeps coming back | The Anchorage broke and the Company scattered. The Cinder Pact are what is left, and they blame Jacob. The Mainspring keeps Jacob alive and winds him back to waking every time he dies |
-| 11 | IV | **The whole truth** | Deck 9, which opens at the Shore once every other memory is known | Jacob's retirement project: a gate-engine, built to look through Ninefold's knot to the other side. He opened it out of curiosity, and everything followed from that. Then the confrontation |
+| 1 | I | **The emblem** | The Anchorage's hulk, with the radar | The hammer-in-cog of the Smith Foundry Company is on the station, the Forge and the uniforms. The skeletons are old. The last log gives the **last record** date |
+| 2 | I | **"We are here to help"** | The Steward, Erik's wrecked yacht | Erik's recording opening the Anchorage: "We are here to help." After the Knotfolk's attacks and a tribal ship wearing our emblem, it sounds hollow |
+| 3 | I | **The old man's ship** | The Forge's registry, after the first fight with the Knotfolk | The Forge is the private ship of Dr. Jacob Smith, Erik's grandfather. You are Jacob, and you are the old man in the havens' legend. Deck 9 is sealed |
+| 4 | II | **The Fray** | A Company research hulk | The Fray is killing the empire, and it killed Erik's mother. Ninefold does not fray. The mission was a cure |
+| 5 | II | **The oath** | The Tallow Bell, where the Deacon remembers you | The Synod swore to guard Ninefold's knot, told the Knotfolk the Company would unpick it, and sabotaged the mission. Erik never explained himself. The Deacon has aged more than a hundred years; you haven't |
+| 6 | II | **"Afraid is cooperative"** | A Rivet Moot ledger, or the Ashen Gaunt's den | The traders and pirates who helped were paid in fear. "Let them be afraid. Afraid is cooperative." The Ashen Gaunt guided Company ships to their own kin's camps |
+| 7 | II | **The lists** | A prison-barge wreck in the Ragged Clans' fields | Names of clan captives, some of them sold by the Rivet Moot. Cages on the Anchorage's lower ring. Nothing says why |
+| 8 | III | **The other half** | The Knotfolk's reliquary-ship in the Hush, still guarding an empty case | Jacob's life's work: half of the Twain, carried for decades, and the other half here. The retirement project was the search, and the mission was his way in. The Knotfolk were right about him |
+| 9 | III | **The waking** | The Choir, who felt the two halves meet | Jacob stole the other half. When the halves met, everything that keeps time flinched, and the Mainspring woke and wound the galaxy shut. Whether he knew is not said |
+| — | III | **The Meridian Horologe** (knowledge, not a story memory) | The clock station in the Hush | The official date, running from then on: 147 years since the last record |
+| 10 | III | **The offering** | The tithe barge, where the captives were given | The Company fed the captives to the Mainspring to buy time, on Erik's order, with Jacob beside him. It took their years and wanted more |
+| 11 | IV | **The fall** | The Cinder Pact's founding hall, at the Shore | The Anchorage burned for three days, and Erik stayed to the end. The survivors fled to moons and wrecks: the havens' ancestors. The Pact keep the story and blame the old man |
+| 12 | IV | **The whole truth** | Deck 9, which opens at the Shore once every other memory is known | The Twain stopped time around Jacob and the Forge, and saved him; he did not deserve it. Why it did, and what it is, nobody knows. Why he woke now, and why he keeps coming back (decisions 29 and 30). Then the confrontation |
 
 ### Who plays which part
 
-| Story role | Who | Existing or new | What changes |
+| Story role | Who | Native or descendant | What changes |
 | --- | --- | --- | --- |
-| The empire | The Meridian Hollow | Existing name | Was "our people"; now the empire, seen only in memories |
-| The Company | The Smith Foundry Company: Erik, Jacob, the Anchorage, the Forge | New names | — |
-| Traders who helped out of fear | **Rivet Moot** (Hullborn) | Existing | Still Friendly. Act II reveals they sold the Clans' names to the Company |
-| Pirates who helped out of fear | **Ashen Gaunt** (Gaunt) | Existing | Default Hostile → Wary: they remember fearing the emblem, and now they smell weakness |
-| Saboteurs | **Lantern Synod** (Tallowfolk) | Existing | Their strict code becomes an oath to guard the knot. They still trade, coldly |
-| Ninefold's people | **The Knotfolk**, flying as the **Wardens of Ninefold** | **New** race and faction | Hostile on sight of the emblem: Act I's unexplained attacks. Their world is near the start |
-| The kidnapped tribes | **The Ragged Clans** (Hullborn) | **New** faction of an existing race | Tribal scavengers in the Middens' wreck fields; Hostile, with atonement possible |
-| Erik's people | **Cinder Pact** (Humans) | Existing | No longer "another Forge": they are the scattered Company, and they blame Jacob. What they say changes with what you remember |
-| Those who sense the loop | **The Choir** (Choirmoths) | Existing | They remember Jacob across lives (decision 7), and they tell memory 10 |
-| The force | **The Mainspring** and its **Hands** | **New** | It waits at the Shore. Its Hands may hunt you (decision 25) |
-| Monsters | Scrapwyrms, rust mites, Gnashers, the Hollowhorn | Existing | Unchanged. A lore hook: the Hollowhorn is older than the Mainspring, and hates it |
+| Traders who helped out of fear | **Rivet Moot** (Hullborn) | Native alien | Still Friendly. They sold the clans' names, 147 years ago, and keep quiet about it |
+| Pirates who helped out of fear | **Ashen Gaunt** (Gaunt) | Native alien | Hostile → Wary. They remember the emblem as old fear, and guided the Company to their own kin |
+| Saboteurs | **Lantern Synod** (Tallowfolk) | Native alien, long-lived | An oath to guard the knot. Their elders remember Jacob in person |
+| Ninefold's people, guardians of the other half | **The Knotfolk**, flying as the **Wardens of Ninefold** | **New** native race and faction | Hostile to the emblem on sight: Act I's unexplained attacks |
+| The kidnapped tribes | **The Ragged Clans** | **New** faction, native **Gaunt** (not Hullborn, as in the last draft) | Gaunt scavenger tribes whose ancestors were taken. Hostile; making peace is possible |
+| Erik's people | **Cinder Pact** (Humans) | Human descendants | The Company's most organised remnant: records, ships and a grudge. They tell the fall, and they blame the old man |
+| The havens | **The Hollowkin** (Humans): tribes and holds | **New** faction, human descendants | Small and scattered. Some carry the emblem without knowing it, some wait for the old man, some curse him |
+| Human pirates | **The Brass Reavers** (Humans) | **New** faction, human descendants | Strip the Company's wrecks; the emblem means loot to them |
+| Those who sense the loop | **The Choir** (Choirmoths) | Native alien | They remember Jacob across lives (decision 7). They felt the halves meet, and give memory 9 |
+| The force | **The Mainspring** and its **Hands** | From elsewhere | Wants the Twain; waits at the Shore; may hunt you (decision 25) |
+| Monsters | Scrapwyrms, rust mites, Gnashers, the Hollowhorn | Native | Unchanged. The Hollowhorn is older than the Mainspring, and hates it |
+
+### Strong moments (proposals)
+
+1. **Our mark on their hull** (Act I). A Hollowkin tribal skiff limps into view with the hammer-in-cog painted on its hull, crudely, upside down. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
+2. **The ones who waited** (Act II). A Hollowkin hold has kept a landing beacon lit for six generations. When the Forge arrives they kneel, and their elder says their ritual brought him back. Then she asks Jacob to keep a promise he doesn't remember making. What the promise was is left open for a later memory or an add-on.
+3. **The ones who curse** (Act II). At an Unforgiving haven, children chant a skipping rhyme: "Old man, old man, great black ship, took the clans and fed the coil." The player hears it long before knowing it's true.
+4. **Smaller moments:**
+   - the dust and skeletons at the Anchorage;
+   - the Deacon who recognises you;
+   - the Horologe's pendulum, the only thing moving in the station.
 
 ### Endings
 
-- **Escape:** defeat the Mainspring at the Shore and jump out with the Heartstone, without every memory. You get out, but you never learn the whole truth. A skilled player can do this in their first life (decision 3).
-- **The true ending:** every memory, then the confrontation knowing the whole truth. What Jacob says and chooses at the end draws on what he now knows.
+- **Escape:** defeat the Mainspring at the Shore and jump out with the Heartstone, without every memory. You get out, but you never learn the whole truth. The narration has gaps (below). A skilled player can do this in their first life (decision 3).
+- **The true ending:** every memory, then the confrontation knowing the whole truth, and a final choice.
 
-### Deeper twists for later (not locked)
+**Options for the final choice** (not decided; each keeps the Twain a mystery):
 
-1. **The bargain.** It wasn't curiosity. Jacob was dying of the Fray, and the Mainspring offered him time. It is paying him still: every life is another instalment. Breaking the loop means Jacob finally dies.
-2. **The jailers were right.** Ninefold's knot was the Mainspring's prison, and the Knotfolk were its keepers. Jacob's "gate" was the knot itself. The cure the Company came for was the lock on the cage.
-3. **Not the first time.** Jacob has broken the loop before, and chose to come back, or forgot that he did. The Choir are what remains of an earlier crew that looped too long. Or: Erik is inside the Mainspring.
+**a. Pay the debt.**
+Give the Twain to the Mainspring. It unwinds and goes back to wherever it came from, taking the Twain, and the Wrack opens. As the shield falls, 147 years arrive at once: the crew go home, and Jacob doesn't.
 
-### Suggested improvements to the skeleton
+**b. Part the halves.**
+Return the stolen half to the Knotfolk. The Mainspring fell asleep once before, when the halves were apart, and it falls asleep again. Jacob leaves carrying the half he came with, as he arrived. If he has made peace with them, the Knotfolk see him off.
 
-- **Make each memory darker than the last by keeping Jacob's guilt for the end.** Your layering puts Jacob's project third and the kidnappings and sacrifices fourth. The table above reveals the kidnappings (II) and the sacrifices (III) first, and Jacob's project last. This matches your acts, where the final memory comes at the Shore. Hint at it from Act I with sealed Deck 9, which no one aboard can open.
-- **Make the guilt playable.** Atonement acts change who stands with you at the end, and what standing allows:
-  - free the captives' survivors, if any;
-  - return the Anchorage's records to the Knotfolk;
-  - make peace with the Ragged Clans.
-- **Keep Erik human.** His recordings run through several memories: tired, decent, and then giving the order. His fate stays open, as a hook for the twists.
-- **Let the world react to what you know.** The Cinder Pact, the Synod and the Choir say different things as memories are found ("You've got a nerve, old man").
+**c. Keep it whole.**
+Leave with the whole Twain and the Mainspring broken behind you. As the Forge passes the Shore, the Twain begins to sing. An ending that opens a door for add-ons.
+
+### Deeper mysteries, left open
+
+- Did Jacob know the theft would wake the Mainspring?
+- What is the Twain? Is the Mainspring its keeper, its creditor or its prisoner?
+- Is it the Mainspring or the Twain that keeps winding Jacob back?
+- What did Jacob promise the Waiting?
+
+The base game hints at all of these and answers none.
+
+### The ending narration (built in Milestone 20)
+
+When the player finishes the game, the whole story plays from beginning to end, narrated by old Jacob himself.
+
+- **Format:** illustrated still scenes in the steampunk style, with slow camera moves, Jacob's narration as dramatic text, and music and sound.
+- **Only what you found:** each scene needs certain memories. A scene whose memories weren't found plays blacked out, and Jacob falters ("...I don't remember this part."). The escape ending therefore has gaps; the true ending tells it all.
+- **The voice:** old, tired, guilty, with dry humour. Your draft sets the tone and the beats; the final text gets written in Milestone 20.
+
+| Scene | From your draft | Needs |
+| --- | --- | --- |
+| I | The Empire | Memory 1 |
+| II | The mission | Memories 2 and 4 |
+| III | Those who greeted us | Memories 5 and 6 |
+| IV | My project | Memory 8 |
+| V | The theft | Memory 9 |
+| VI | The price | Memories 7 and 10 |
+| VII | The fall | Memory 11 |
+| VIII | The relic | Memory 12 |
+| IX | The awakening | Memory 3 and the Horologe |
+| X | The end | Always shown; differs by ending |
+
+- **Data:** `content/core/narration.yaml`. Each scene has a title, the memories it needs, a still, a camera path, a music cue, and its lines. A scene also has gap lines, used when its memories are missing. Every line has its own id (for example `narr.vi.gap.2`), so a recorded voice can be added later as one audio file per line id, with no code change.
+- **The stills:** built from the game's own procedural models (the Forge, the Anchorage burning, Ninefold, the tithe barge, the Mainspring), posed and rendered once through an engraved, sepia "etching" filter. They use slow pans and parallax, so no imported art is needed. A blacked-out scene is black with faint scratches.
+- **Sound:** a slow organ and strings under ticking clocks. Each scene has its own sounds, such as the Anchorage burning or the Horologe's pendulum.
 
 ### The chase clock: the Hands (proposal, decision 25)
 
-Borrowing from your option B, the Mainspring hunts you within each life:
+The Mainspring wants the Twain back, so its Hands hunt it within each life:
 
-- **Who:** packs of **Hands**, clockwork hulls that tick.
-- **When:** not in Act I, when it hasn't noticed you yet. From the first Act II memory, a pack sets out from the Shore early in each life.
-- **How they move:** along lanes toward where the Forge was last heard, about one lane every 2 days. They move faster the more you remember, because the more Jacob knows, the louder he is to it.
-- **What you see:** they appear on the chart only within radar range, with a ticking sound when they are near. A dial in the top bar shows how many days away the nearest pack is.
-- **Caught:** when a pack reaches the Forge's place, they come for it on the next map, after a short delay. Destroy them and that pack is gone for the rest of the life. Or spool the Skein and run.
-- **Counters:** silent running makes them lose the trail for some days; some hazard lanes stop them; the Choir can hide you for a while.
+- **When:** not in Act I, while it hasn't noticed you. From the first Act II memory, a pack sets out from the Shore early in each life.
+- **How they move:** along lanes toward where the Forge was last heard, about one lane every 2 days. They move faster the more you remember, because the more Jacob knows, the louder the Twain sings to it.
+- **What you see:** the Hands appear only within radar range, with a ticking sound when near. A dial in the top bar shows how many days away the nearest pack is.
+- **Caught:** they come for the Forge on the next map. Destroy them and that pack is gone for the rest of the life, or spool the Skein and run.
+- **Counters:** silent running, some hazard lanes, and the Choir.
 - **Alternatives:**
-  - **b.** A winding clock: after a set day, the Mainspring starts closing lanes, one by one.
-  - **c.** No chase: the Mainspring only waits at the Shore.
+  - **b.** A winding clock that closes lanes one by one.
+  - **c.** No chase.
 
-Recommended: **a**, with every number in YAML so it can be tuned or switched off.
+Recommended: **a**, with every number in YAML.
 
 ## 4. The memory tree: the Loom
 
@@ -295,31 +415,35 @@ Option 2 gives every life something to gather, makes a death worth something, an
 
 ### Draft tree (31 memories in five branches)
 
-The structure is approved. The story memories are rebuilt on your skeleton, so Origins is now the radar plus the 11 story memories from §3. To keep the total at 31, three of the earlier drafts go: Blind stitch, the emergency cache, and the Workshop (which becomes a trader's plan).
+The structure is approved. Origins now holds the radar, the Meridian Horologe and the 12 story memories from §3. To keep the total at 31, five of the earlier drafts go:
+- Blind stitch;
+- the emergency cache;
+- the Workshop, which becomes a trader's plan;
+- Boiler overdrive;
+- the Second hangar deck, which becomes a room you can build from the first life.
 
 | # | Memory | Kind | Branch | Needs | What it gives |
 | --- | --- | --- | --- | --- | --- |
 | 1 | The radar | Ability | Origins | Found at the Anchorage, with story memory 1 | The chart lights up within sensor range; deep scans |
-| 2–12 | The story memories: the emblem, "We are here to help", the old man's ship, the Fray, the oath, "Afraid is cooperative", the lists, the gate, the offering, the fall, the whole truth | Knowledge | Origins | Their story locations, act by act (§3); the whole truth needs every other memory | The story. Some also reveal places: Ninefold, the Shore's gate, the Ragged Clans' fields |
-| 13 | Threadwound Coils | Ability | The Skein | A story location in the Drift | Stitches 1.5× longer: the Middens |
-| 14 | Stillwater Lens | Ability | The Skein | The Choir, or a location in the Middens | Stitches through the Veil: the Hush |
-| 15 | Anchor Spindle | Ability | The Skein | The Ashen Gaunt, or a location in the Hush | Long stitches; holds against the Undertow: the Shore |
-| 16 | Heartstone | Ability | The Skein | A location in the Shore | The final jump, once the Mainspring is down |
-| 17 | Boiler overdrive | Ability (option) | The Skein | 13 | Once a day, burn double Glim to stitch one lane past the drive's reach |
-| 18 | Shields | Ability | The Forge | Turned away from a shoal | The asteroid shoals open |
-| 19 | Heat baffles | Ability | The Forge | Turned away from an ember lane | The ember lanes near Orrin open |
-| 20 | Lightning rods | Ability | The Forge | Turned away from a static field | The static fields open |
-| 21 | Lead-lined decks | Ability | The Forge | Turned away from the Glare | The radiation belts open |
-| 22 | Silent running | Ability (option) | The Forge | 20 | Fewer ambushes on the chart; on maps the Forge starts unseen; the Hands lose the trail (if chosen) |
-| 23 | Wisp | Ability | The fleet | Seeing one | The scout hull |
-| 24 | Talon | Ability | The fleet | A Talon wreck | The bomber hull |
-| 25 | Sabre | Ability | The fleet | A Sabre wreck, or the Shore's trader | The frigate hull |
-| 26 | Spindle | Ability | The fleet | A Spindle wreck | The heavy frigate hull |
-| 27 | Monolith (new hull) | Ability | The fleet | Deep in the Shore | A capital ship |
-| 28 | Mess hall | Ability | The decks | — | A room: mood rises faster |
-| 29 | Infirmary | Ability | The decks | 28 | A room: fewer deaths from hunger and bad air; a pilot sometimes gets out of a lost ship |
-| 30 | Chart room | Ability | The decks | 1 | A room: clue circles shrink, deep scans are cheaper |
-| 31 | Second hangar deck | Ability | The decks | — | A room: +5 hangar berths |
+| 2 | The Meridian Horologe | Knowledge | Origins | Found at the clock station in the Hush | The official date on the HUD, running, in every later life |
+| 3–14 | The 12 story memories: the emblem, "We are here to help", the old man's ship, the Fray, the oath, "Afraid is cooperative", the lists, the other half, the waking, the offering, the fall, the whole truth | Knowledge | Origins | Their story locations, act by act (§3); the whole truth needs every other memory | The story, and the ending narration's scenes. Some also reveal places: Ninefold, the Ragged Clans' fields, the Knotfolk's reliquary-ship |
+| 15 | Threadwound Coils | Ability | The Skein | A story location in the Drift | Stitches 1.5× longer: the Middens |
+| 16 | Stillwater Lens | Ability | The Skein | The Choir, or a location in the Middens | Stitches through the Veil: the Hush |
+| 17 | Anchor Spindle | Ability | The Skein | The Ashen Gaunt, or a location in the Hush | Long stitches; holds against the Undertow: the Shore |
+| 18 | Heartstone | Ability | The Skein | A location in the Shore | The final jump, once the Mainspring is down |
+| 19 | Shields | Ability | The Forge | Turned away from a shoal | The asteroid shoals open |
+| 20 | Heat baffles | Ability | The Forge | Turned away from an ember lane | The ember lanes near Orrin open |
+| 21 | Lightning rods | Ability | The Forge | Turned away from a static field | The static fields open |
+| 22 | Lead-lined decks | Ability | The Forge | Turned away from the Glare | The radiation belts open |
+| 23 | Silent running | Ability (option) | The Forge | 21 | Fewer ambushes on the chart; on maps the Forge starts unseen; the Hands lose the trail (if chosen) |
+| 24 | Wisp | Ability | The fleet | Seeing one | The scout hull |
+| 25 | Talon | Ability | The fleet | A Talon wreck | The bomber hull |
+| 26 | Sabre | Ability | The fleet | A Sabre wreck, or the Shore's trader | The frigate hull |
+| 27 | Spindle | Ability | The fleet | A Spindle wreck | The heavy frigate hull |
+| 28 | Monolith (new hull) | Ability | The fleet | Deep in the Shore | A capital ship |
+| 29 | Mess hall | Ability | The decks | — | A room: mood rises faster |
+| 30 | Infirmary | Ability | The decks | 29 | A room: fewer deaths from hunger and bad air; a pilot sometimes gets out of a lost ship |
+| 31 | Chart room | Ability | The decks | 1 | A room: clue circles shrink, deep scans are cheaper |
 
 Most of this already exists in some form:
 - the four drive parts and their effects;
@@ -608,12 +732,12 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | # | Milestone | Playable result | Checks |
 | --- | --- | --- | --- |
 | ~~14~~ | ~~Campaigns and lives~~ (done, §12) | Start a campaign on a seed; die and wake again in the same galaxy; the chart remembers places; maps vary each life; the wake screen; a campaign save, with old saves migrated. The goal is still today's drive parts | What persists and what resets; same layout but different map contents per life; determinism; old saves load; the bot plays several lives |
-| **15** | **The Loom: memories** | The memory tree screen with question marks; memories in YAML; echoes (if chosen); the first life's opening: the dark chart, the signal, the Anchorage, the radar; clue circles; drive parts become memories | Memories persist; the radar beat works on every seed; a clue circle always contains its place; content lint for memories |
+| **15** | **The Loom: memories** | The memory tree screen with question marks; memories in YAML; echoes; the first life's opening: the short, confusing awakening, the dark chart, the signal, the Anchorage, the radar; clue circles; drive parts become memories | Memories persist; the radar beat works on every seed; a clue circle always contains its place; content lint for memories |
 | **16** | **Routes closed until remembered** | Hazard lanes and pockets; officers report closed routes by name; anchors placed within areas; shields, heat baffles, lightning rods and lead-lined decks | No way in without the memory; reports come from the right officer (or whoever is acting); the bot completes 50 seeds, and a single-life escape is possible on each |
 | **17** | **The Forge as a base** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers (if chosen) | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life |
 | **18** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
 | **19** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
-| **20** | **The story** | Your skeleton (§3): the 11 story memories and their locations, act by act; the Knotfolk and the Ragged Clans; the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the endings play |
+| **20** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
 | **21** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
 | **22** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
 
@@ -714,9 +838,13 @@ Proposed now, for the story (decision 26):
 | The empire's sickness | **The Fray** | The Unthreading |
 | The force | **The Mainspring** | The Governor, the Escapement |
 | Its hunters | **The Hands** | Pendulums, Tickers |
-| The kidnapped tribes | **The Ragged Clans** (Hullborn) | The Wreckclans |
+| The kidnapped tribes | **The Ragged Clans** (Gaunt) | The Wreckclans |
 | Erik's yacht | **The Steward** | — |
 | The sealed deck | **Deck 9** | — |
+| The relic | **The Twain** | The Clasp, the Stillpoint |
+| The clock station | **The Meridian Horologe**; its time is **Meridian time** | The Long Clock, the Chronarium |
+| The Company's descendants | **The Hollowkin**: tribes and holds; the **Waiting** and the **Unforgiving** | The Emblem-folk |
+| Human pirates | **The Brass Reavers** | — |
 
 ## 16. Decisions already made
 
@@ -744,9 +872,9 @@ The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 an
 | # | Question | Decision |
 | --- | --- | --- |
 | 1 | Map contents per life | **Vary each life**; the layout, story locations and traders stay fixed |
-| 2 | Why we wake again | **No Skein time loop.** The force (the Mainspring) keeps Jacob alive and returns him after each death; defeating it breaks the loop. Memories are kept in the Forge's drive records |
+| 2 | Why we wake again | **No Skein time loop.** The force (the Mainspring) returns Jacob after each death, and defeating it breaks the loop. Memories are kept in the Forge's drive records. *Story update:* the relic, the Twain, saved Jacob with a time shield; why he comes back is decision 29 |
 | 3 | Endings | **A skilled player can escape in their first life; the true ending needs every memory** |
-| 4 | Story direction | **Your story skeleton** (§3). The force waits at the Shore and must be defeated to escape. It may hunt you within a life (decision 25) |
+| 4 | Story direction | **Your story skeleton, with your story update** (§3): the theft of the Twain woke the force; 147 years have passed; the havens; the Meridian Horologe; the opening and the ending narration. The force waits at the Shore and must be defeated to escape. It may hunt you within a life (decision 25) |
 | 5 | What carries over | **As proposed** (§2) |
 | 6 | Crew across lives | **The same people wake again**, alive, remembering nothing |
 | 7 | Faction standing | **Resets each life**, except the Choir's |
@@ -770,14 +898,30 @@ The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 an
 
 ## 17. Decisions still open
 
-These don't block Milestone 14, but the later milestones need them.
+None of these block the current milestones; the story milestone (20) needs them.
 
-25. **The chase clock** (§3): the Hands hunt you within each life (a, recommended); a winding clock that closes lanes (b); or no chase (c).
-26. **The story names** in §15: the Smith Foundry Company, Ninefold, the Knotfolk and the Wardens of Ninefold, the Fray, the Mainspring, the Hands, the Ragged Clans, the Steward, Deck 9. *Recommended: approve, or rename any.*
-27. **The reveal order:** keep Jacob's guilt for the final memory, with Deck 9 hinting at it from Act I (recommended), or reveal his project in Act III, before the sacrifices.
-28. **The cast:** two new factions (the Knotfolk and the Ragged Clans), and the new story roles of the five existing ones, including the Ashen Gaunt moving from Hostile to Wary (§3). *Recommended: yes.*
+25. **The chase clock** (§3): the Hands hunt the Twain within each life (a, recommended); a winding clock that closes lanes (b); or no chase (c).
+26. **The story names** in §15:
+    - people and places: the Smith Foundry Company, Ninefold, the Steward, Deck 9, the Meridian Horologe;
+    - the forces: the Fray, the Mainspring, the Hands, the Twain;
+    - the peoples: the Knotfolk and the Wardens of Ninefold, the Ragged Clans, the Hollowkin, the Brass Reavers.
 
-The deeper twist (§3) stays open on purpose; nothing is locked in.
+    *Recommended: approve, or rename any.*
+27. **The order of the story memories** as drafted in §3: the kidnapping lists in Act II, Jacob's search and the theft in Act III before the offering, and the time shield last. *Recommended: yes.*
+28. **The cast** (§3):
+    - native aliens: the Rivet Moot, the Lantern Synod, the Ashen Gaunt, the Ragged Clans (now Gaunt), the Knotfolk and the Choir;
+    - human descendants: the Cinder Pact, the Hollowkin and the Brass Reavers;
+    - the Ashen Gaunt move from Hostile to Wary.
+
+    *Recommended: yes.*
+29. **Why Jacob comes back after each death:**
+    - a. the creditor: the Mainspring won't let the Twain slip out of time with him (recommended, with hints of c);
+    - b. the Twain rewinds its bearer;
+    - c. both stories exist, and the player never learns which is true.
+30. **Why we wake now:** the shield failing, the Waiting's ritual and the Mainspring prying, layered so no one is sure (recommended), or just one of them.
+31. **The time gap:** 147 years (recommended), with the clues in order as in §3.
+
+Not to decide yet, as you asked: the true ending's final choice (three options in §3) and the deeper mysteries. Both stay open.
 
 ---
 
