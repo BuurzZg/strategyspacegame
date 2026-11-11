@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** your answers to the 24 questions, your story skeleton and your story update are in (§16 and §3). Some story decisions are still open (§17). Milestones 1–14 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–14 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -143,10 +143,11 @@ Targets, all measured by the test bot:
    - **The guardians.** The Knotfolk guarded the other half. They were wrong about the Company's mission, but right about Jacob.
    - **The waking.** Jacob stole the other half. When the halves met, something woke: **the Mainspring**.
    - **Left open:** whether Jacob knew this would happen.
-7. **The trap.** The Mainspring winds the galaxy shut. No stitch leaves the Wrack.
-8. **The kidnappings.** To calm it, the Company takes people from the scavenger clans and gives them to it.
-9. **The sacrifices.** The captives are sacrificed. It isn't enough. The Anchorage burns for three days; Erik stays to the end. The survivors flee to moons, large asteroids and wrecks across the galaxy, and start again there.
-10. **The relic saved Jacob (changed).**
+7. **The trap.** The Mainspring, lord of the tech demons, winds the galaxy shut. No stitch leaves the Wrack.
+8. **A hostage.** The Company becomes the demons' hostage: do as we say, or the Anchorage is unmade. Under that threat it does terrible things across the galaxy, including taking people from the scavenger clans.
+9. **The sacrifices.** The captives are given to the Mainspring, on Erik's orders. Each offering makes it stronger.
+10. **Enough.** Erik realises the offerings are feeding the demon lord, not calming it, and refuses to give any more. The demons' punishment is the fall (decision 37, recommended a): the Hands fall on the Anchorage, and it burns for three days. Erik holds the line so the evacuation ships can get away, and stays to the end. The survivors flee to moons, large asteroids and wrecks across the galaxy, and start again there. The havens exist because he finally stood up.
+11. **The relic saved Jacob (changed).**
     - When everything fell apart, the Twain stopped time around Jacob and the Forge. For them, not a minute has passed.
     - **147 years later** (proposal, below), the Forge comes out of a fold in space and time, its crew with their memories gone.
     - **Jacob doesn't know any of this at the start.** The player finds it out late.
@@ -162,16 +163,86 @@ Targets, all measured by the test bot:
 - **Nothing frays there.** That is why the Company came: a cure for the Fray.
 - **What it kept:** the Knotfolk kept the other half of the Twain in a reliquary at the knot. Whether the knot and the Twain are connected is one of the mysteries left for add-ons.
 
-### The force: the Mainspring (proposal)
+### The force: the tech demons, and the Mainspring (decided: a faction)
 
-- **What it is:** a vast coiled tension from somewhere else, a thing made of wound-up time. It looks like a dark coil of brass the size of a moon, slowly turning and ticking, with space creasing around it.
-- **Its servants:** **the Hands**, clockwork hunters.
+The force is not a monster but a **faction**: the **tech demons**, which the Company's records call **the Wound** (proposed name, decision 36). Their ruler is **the Mainspring** (the approved name): a living mothership, part flesh and part machine, the mirror of our Forge.
+
+- **What it is:** the Mainspring is a vast coiled body of wet dark metal grown through with flesh. Its spine is a coiled spring that winds time, and organic light pulses along its veins. It came through the gate when the halves of the Twain met.
 - **What it does:**
-  - it winds things shut;
-  - it feeds on the time of the living, which is what the captives gave it: their years;
-  - it waits at the Shore.
-- **What it wants:** the Twain.
-- **The confrontation:** a boss map in the existing engine, like the Hollowhorn but far larger. Defeating it breaks the loop and opens the way out.
+  - it winds things shut: the galaxy, the lanes out;
+  - it **feeds on the time of the living**: every captive given to it made it stronger;
+  - it wants the Twain back.
+- **The Hands are its fleets.** Each Hand is led by an **Hour**, a lesser living carrier that gestates ships as it hunts. The Hands hunt the Forge in every life (decision 25, below).
+- **They play as a real RTS opponent.** We meet them on strategy maps, and they gather, build, attack, retreat and rebuild.
+- **The final battle** at the Shore is mothership against mothership: the Forge and its fleet against the Mainspring and its forces, in a full RTS battle.
+
+#### Their ships (proposal)
+
+Each one mirrors a hull of ours, grown instead of built. Names follow the clock and the body.
+
+| Ship | Role | Mirrors | Notes |
+| --- | --- | --- | --- |
+| **Tick** | Swarm fighter | Dart | Budded in clutches, cheap, short-lived; always more of them. Pickets' flak eats them |
+| **Stinger** | Strike craft against big hulls | Talon | A bone lance that pierces armour; comes in when you field frigates and capitals |
+| **Chime** | Escort against fighters | Picket | Rings with a resonant pulse that bursts small craft; built when you field fighters |
+| **Hound** | Line frigate | Halberd | The backbone of every Hand; tough, steady, hunts in pairs |
+| **Gnawer** | Heavy brawler | Spindle and Sabre | Slow; eats wrecks to heal itself and to make ichor |
+| **Feeder** | Harvester | Gleaner and Shearer | Strips wrecks, debris and the dead for ichor; the demons' economy. Kill these and the Hand starves |
+| **Hour** | Living carrier, leads a Hand | The Forge, small | Gestates Ticks, Hounds, Chimes, Stingers and Feeders in pods along its flanks; plants Nurseries; flees to regrow when badly hurt |
+| **The Mainspring** | The demon lord's mothership | The Forge | Gestates everything, including Gnawers and Hours. It has **organs** (hearts and a coil) that must be broken before its core can be hit. It regrows from the battle's own dead |
+
+**Nurseries** are flesh growths an Hour plants on rocks and wrecks. They are anchored structures that bud Ticks and Feeders, and they can be burned.
+
+#### How they produce (proposal)
+
+- **Their resource is ichor:** living matter and stolen time. Where ours is ore, theirs is what dies. Feeders strip it from wrecks, debris and the dead, including every ship you lose. Nurseries add a slow trickle.
+- **Gestation:** Hours and the Mainspring gestate ships in pods, which work like our production queue. Their losses become wrecks, and wrecks become ichor, so a long fight in a wreck-strewn place favours them. Your Shearers salvaging wrecks starves them, which makes salvage a weapon.
+- **Their AI:** a real RTS opponent, built on our engine's production, harvesting, formations and orders.
+  - **An economy:** Feeders out, Nurseries planted.
+  - **Counter-building:** Chimes against your fighters, Stingers against your big hulls.
+  - **Attacks in waves** when its strength passes a threshold.
+  - **Retreats** to regrow when a wave breaks.
+  - **Expands** by planting new Nurseries.
+
+#### Their maps (proposal)
+
+- **Infested places.** Where a Hand has settled, the place turns: wrecks overgrown with flesh, Nurseries anchored to rocks, veins of red light, a spore haze that cuts sensor range.
+  - **Burn it out:** kill the Hour, or every Nursery, to cleanse the place for the rest of the life.
+  - **The rewards:** echoes, salvage, and sometimes captives they took from the havens, rescued.
+- **The creep.** Around Nurseries the flesh spreads slowly. Inside it, demons heal and your ships repair slower. Near an Hour, time drags: your ships move a little slower.
+- **When a Hand catches the Forge,** an Hour arrives on the next map with its pack and keeps gestating the longer the fight lasts. Kill it fast, or spool the Skein and run.
+- **On the chart:** infested places appear as spreading red-ink stains on the parchment.
+- **The Mainspring's lair at the Shore:** a vast map built around the living mothership. Its organs are weak points, and it regrows from the field's dead. The Twain answers it as the battle goes on. This is the final battle.
+
+#### How the Hands escalate (proposal for decision 25: a soft, growing threat)
+
+There is no countdown. The Mainspring's **attention** rises, and the Hands grow with it.
+
+- **What raises attention:**
+  - every memory recovered, because the more Jacob remembers, the louder the Twain sings;
+  - days passing, slowly;
+  - Nurseries burned and Hours killed (it notices);
+  - staying long at one place.
+- **What lowers it:** silent running; hiding with the Choir; long stitches through static fields, where the Hands won't follow.
+- **What you see:** the sensors station shows attention as a word, not a number: **Quiet**, **Noticed**, **Hunted** and **Marked**. A faint ticking plays on the chart when a Hand is near.
+- **What each level brings:**
+
+| Attention | Typically | What hunts you |
+| --- | --- | --- |
+| **Quiet** | Act I | Nothing yet. Signs only: a dead Hour drifting, havens' stories |
+| **Noticed** | Act II | A lone Hound pack roams the outer regions. Now and then Ticks and a Hound turn up on a map |
+| **Hunted** | Act III | A Hand (an Hour and its pack) sets out from the Shore and follows where the Forge was last heard, about one lane every 2–3 days, sometimes losing the trail. Infested places begin to appear |
+| **Marked** | Act IV, or many memories | Two Hands, faster and stronger (Stingers and Gnawers), with Nurseries planted along their way |
+
+- **Across the campaign:** attention starts each life near the level your memories have earned. Later lives are more dangerous because Jacob knows more.
+- **Being caught isn't the end:** it means a hard fight, or a costly escape. Destroying a Hand removes it for the rest of the life and lowers attention a step.
+- **Data:** every number lives in YAML.
+
+#### Their look (added to the style guide)
+
+- **Materials:** biomechanical. Wet, cold, blue-black metal grown together with flesh, and pale bone.
+- **Light:** pulsing organic light in arterial crimson and magenta. It is the opposite of our warm brass, steam and teal Glim, and it reads at a glance on any map.
+- **On screen:** their comms come through as a wet, distorted signal, not a telegram. Their places stain the parchment chart.
 
 ### The Twain (proposal: the relic's name)
 
@@ -280,8 +351,8 @@ Each one is darker than the last. Each is found at a story location placed by th
 | 8 | III | **The other half** | The Knotfolk's reliquary-ship in the Hush, still guarding an empty case | Jacob's life's work: half of the Twain, carried for decades, and the other half here. The retirement project was the search, and the mission was his way in. The Knotfolk were right about him |
 | 9 | III | **The waking** | The Choir, who felt the two halves meet | Jacob stole the other half. When the halves met, everything that keeps time flinched, and the Mainspring woke and wound the galaxy shut. Whether he knew is not said |
 | — | III | **The Meridian Horologe** (knowledge, not a story memory) | The clock station in the Hush | The official date, running from then on: 147 years since the last record |
-| 10 | III | **The offering** | The tithe barge, where the captives were given | The Company fed the captives to the Mainspring to buy time, on Erik's order, with Jacob beside him. It took their years and wanted more |
-| 11 | IV | **The fall** | The Cinder Pact's founding hall, at the Shore | The Anchorage burned for three days, and Erik stayed to the end. The survivors fled to moons and wrecks: the havens' ancestors. The Pact keep the story and blame the old man |
+| 10 | III | **The offering** | The tithe barge, where the captives were given | The Company was the demons' hostage: feed the Mainspring, or lose the Anchorage. Its ships took captives from the clans and gave them to it, on Erik's orders, with Jacob beside him. Erik signed every order and kept every name. Each offering made it stronger |
+| 11 | IV | **Enough** | The Cinder Pact's founding hall, at the Shore | Erik saw that the offerings were feeding the demon lord, not calming it, and refused. As punishment the Hands fell on the Anchorage, and it burned for three days. Erik held the line so the evacuation ships could get away (the havens' ancestors), and stayed to the end. The Pact keep his story, and blame the old man |
 | 12 | IV | **The whole truth** | Deck 9, which opens at the Shore once every other memory is known | The Twain stopped time around Jacob and the Forge, and saved him; he did not deserve it. Why it did, and what it is, nobody knows. Why he woke now, and why he keeps coming back (decisions 29 and 30). Then the confrontation |
 
 ### Who plays which part
@@ -297,7 +368,7 @@ Each one is darker than the last. Each is found at a story location placed by th
 | The havens | **The Hollowkin** (Humans): tribes and holds | **New** faction, human descendants | Small and scattered. Some carry the emblem without knowing it, some wait for the old man, some curse him |
 | Human pirates | **The Brass Reavers** (Humans) | **New** faction, human descendants | Strip the Company's wrecks; the emblem means loot to them |
 | Those who sense the loop | **The Choir** (Choirmoths) | Native alien | They remember Jacob across lives (decision 7). They felt the halves meet, and give memory 9 |
-| The force | **The Mainspring** and its **Hands** | From elsewhere | Wants the Twain; waits at the Shore; may hunt you (decision 25) |
+| The force | **The tech demons (the Wound)**: the **Mainspring**, their living mothership and lord, and its fleets, the **Hands** | From elsewhere | A real RTS faction. Wants the Twain; its Hands hunt the Forge in every life, as a growing threat; the final battle at the Shore |
 | Monsters | Scrapwyrms, rust mites, Gnashers, the Hollowhorn | Native | Unchanged. The Hollowhorn is older than the Mainspring, and hates it |
 
 ### Strong moments (proposals)
@@ -335,13 +406,13 @@ Leave with the whole Twain and the Mainspring broken behind you. As the Forge pa
 
 The base game hints at all of these and answers none.
 
-### The ending narration (built in Milestone 21)
+### The ending narration (built in Milestone 22)
 
 When the player finishes the game, the whole story plays from beginning to end, narrated by old Jacob himself.
 
 - **Format:** illustrated still scenes in the steampunk style, with slow camera moves, Jacob's narration as dramatic text, and music and sound.
 - **Only what you found:** each scene needs certain memories. A scene whose memories weren't found plays blacked out, and Jacob falters ("...I don't remember this part."). The escape ending therefore has gaps; the true ending tells it all.
-- **The voice:** old, tired, guilty, with dry humour. Your draft sets the tone and the beats; the final text gets written in Milestone 21.
+- **The voice:** old, tired, guilty, with dry humour. Your draft sets the tone and the beats; the final text gets written in Milestone 22.
 
 | Scene | From your draft | Needs |
 | --- | --- | --- |
@@ -350,30 +421,27 @@ When the player finishes the game, the whole story plays from beginning to end, 
 | III | Those who greeted us | Memories 5 and 6 |
 | IV | My project | Memory 8 |
 | V | The theft | Memory 9 |
-| VI | The price | Memories 7 and 10 |
-| VII | The fall | Memory 11 |
+| VI | The price (rewritten: the hostage) | Memories 7 and 10 |
+| VII | The fall (rewritten: Erik's refusal) | Memory 11 |
 | VIII | The relic | Memory 12 |
 | IX | The awakening | Memory 3 and the Horologe |
 | X | The end | Always shown; differs by ending |
+
+- **Scenes VI and VII, redrafted** for Erik's new role (a guide to tone; the final text comes in the story milestone):
+
+  > **VI. The price.** The thing shut us in, and then it named its terms. We were not its enemies. We were its hostages. Do as we were told, or watch the Anchorage unmade with everyone in it. So we did as we were told. We took people from the scavenger clans and gave them to it. Erik signed the orders. I stood beside him and said nothing useful, which I am very good at. Every name went into his ledger. Every one of them made it stronger. We didn't know that yet. I would like to say it would have stopped me.
+
+  > **VI, if memory 10 is missing.** The thing shut us in. It named its terms, and we... no. I don't remember this. I know I did something. I feel it like cold in my bones. But the picture won't come.
+
+  > **VII. The fall.** Erik worked it out before I did. He was always quicker than me at the things that matter. Every offering fed it. We weren't buying time; we were paying for its teeth. So my grandson said "enough", to a god, in front of everyone. It answered with fire. The Anchorage burned for three days. Erik held the docks while the last ships got away, and then he did not get away. Everyone you will meet out there, every haven, every child who curses my name, is alive because of him. I'd like him to have known that.
 
 - **Data:** `content/core/narration.yaml`. Each scene has a title, the memories it needs, a still, a camera path, a music cue, and its lines. A scene also has gap lines, used when its memories are missing. Every line has its own id (for example `narr.vi.gap.2`), so a recorded voice can be added later as one audio file per line id, with no code change.
 - **The stills:** built from the game's own procedural models (the Forge, the Anchorage burning, Ninefold, the tithe barge, the Mainspring), posed and rendered once through an engraved, sepia "etching" filter. They use slow pans and parallax, so no imported art is needed. A blacked-out scene is black with faint scratches.
 - **Sound:** a slow organ and strings under ticking clocks. Each scene has its own sounds, such as the Anchorage burning or the Horologe's pendulum.
 
-### The chase clock: the Hands (proposal, decision 25)
+### The chase clock: the Hands (decided: yes, a soft, growing threat)
 
-The Mainspring wants the Twain back, so its Hands hunt it within each life:
-
-- **When:** not in Act I, while it hasn't noticed you. From the first Act II memory, a pack sets out from the Shore early in each life.
-- **How they move:** along lanes toward where the Forge was last heard, about one lane every 2 days. They move faster the more you remember, because the more Jacob knows, the louder the Twain sings to it.
-- **What you see:** the Hands appear only within radar range, with a ticking sound when near. A dial in the top bar shows how many days away the nearest pack is.
-- **Caught:** they come for the Forge on the next map. Destroy them and that pack is gone for the rest of the life, or spool the Skein and run.
-- **Counters:** silent running, some hazard lanes, and the Choir.
-- **Alternatives:**
-  - **b.** A winding clock that closes lanes one by one.
-  - **c.** No chase.
-
-Recommended: **a**, with every number in YAML.
+The Hands hunt the Forge in every life, as a threat that grows rather than a countdown. How they escalate is proposed under "How the Hands escalate", above.
 
 ## 4. The memory tree: the Loom
 
@@ -750,9 +818,9 @@ A light version of Frostpunk's coal. Three options:
 - **New named crew:** sometimes a newcomer is named: a pilot looking for a ship, or someone who could fill an empty post.
 - **New ship types arrive over time:** from memories (Fleet branch), from traders (plans), and from cutting wrecks of a hull, as blueprints work today.
 
-## 9. Steampunk space: style guide (proposal)
+## 9. Steampunk space: style guide (approved)
 
-The art changes only after you approve a **style guide page** with real examples. It is delivered with Milestone 14. Here is what it will propose.
+The **style guide page** is approved as shown, with the chart on parchment: https://claude.ai/artifact/H5PG1TSmFj8ersC413TQrz. New screens are built in it from Milestone 15 on, and the old ones are restyled in Milestone 23. The tech demons' biomechanical look is added to it (§3).
 
 ### Materials and mood
 
@@ -853,6 +921,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 - The campaign loop comes first, because everything else depends on what survives a death.
 - Memories come next, then the routes they open.
 - The base, the muster and the traders are independent of each other. Survival that weakens comes with the base, because strain needs stations. The bridge follows straight after, because it is where the stations, moods and training are shown.
+- The tech demons come just before the story, which needs them for the Hands and the final battle.
 - The story builds on your skeleton, and benefits from every system being in place.
 - The reskin waits for your approval of the style guide. Once you approve it, new screens are built in the new style straight away.
 
@@ -865,9 +934,10 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | **18** | **The bridge** | The crew screen as the Forge's bridge: Jacob's chair, nine stations with their officers, moods, lamps and states; station panels with skills (known, trainable, "?"), training with cogmarks and days, and what keeps a station dark; the signals officer, a new post; muscle memory (a known memory lights its station from day 1); the All hands moment in full (light, bell, organ sting, streak); built in the approved style | Memory-given skills persist across lives and trained levels reset; a known memory starts its station at level 1; training costs less where Jacob remembers; the bridge matches the voyage state; a browser run at desktop and phone width |
 | **19** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
 | **20** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
-| **21** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
-| **22** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
-| **23** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
+| **21** | **The tech demons** | The Wound as a real RTS faction: Ticks, Stingers, Chimes, Hounds, Gnawers, Feeders, Hours and Nurseries; ichor from wrecks and the dead; gestation; an AI that gathers, counter-builds, attacks in waves, retreats and expands; infested places and the creep; the Mainspring's attention and the Hands hunting the Forge across the chart (Quiet, Noticed, Hunted, Marked); their biomechanical look | The AI builds, attacks and rebuilds; it counter-builds against your fleet; Feeders starve when wrecks are salvaged; attention rises and falls as specified and never forces an instant loss; a Hand can be outrun or destroyed; determinism on demon maps |
+| **22** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the final battle at the Shore, the Forge against the living Mainspring and its forces; the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
+| **23** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
+| **24** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
 
 **Later, as add-on packs:** new regions beyond the Shore, new traders, races and factions, more memories and story arcs, and co-op multiplayer (the engine stays lockstep-ready).
 
@@ -1024,36 +1094,40 @@ The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 an
 | 23 | Art | **Style guide first** (with Milestone 14), then new screens in the new style, then the full reskin |
 | 24 | New names | **All approved** for now (§15) |
 
+The decisions made after the story update:
+
+| # | Question | Decision |
+| --- | --- | --- |
+| 25 | The chase clock | **Yes:** the Hands hunt the Forge in every life, as a soft, growing threat, not a countdown. The Hands are the tech demons' fleets (§3) |
+| 26 | Story names | **Approved** |
+| 27 | Memory order | **Approved**, with memory 10 and Erik's role changed: the Company was the demons' hostage; Erik saw the offerings were feeding the demon lord and refused; he is a tragic, good man |
+| 28 | The cast | **Approved** |
+| 29 | Why Jacob comes back | **The creditor**, with hints that it might be the Twain |
+| 30 | Why he wakes now | **All three layers**, and no one is sure |
+| 31 | The time gap | **147 years** |
+| 32 | Instead of desertion | **Strikes** |
+| 33 | All hands | **Approved** |
+| 34 | What lasts on the bridge | **Approved** |
+| 35 | The bridge's details | **Nine stations, the signals officer, a layered 2D drawing** |
+| — | The style guide | **Approved as shown**: palette, type, the chart on parchment, instruments, ships |
+| — | The force | **A real RTS faction: the tech demons.** Their lord is a living mothership (the Mainspring), their fleets are the Hands, and the final battle is mothership against mothership |
+
 ## 17. Decisions still open
 
-None of these block the current milestones. The story milestone (21) needs 25–31, and the base and the bridge (17 and 18) need 32–35.
+Neither blocks Milestones 15 to 20.
 
-25. **The chase clock** (§3): the Hands hunt the Twain within each life (a, recommended); a winding clock that closes lanes (b); or no chase (c).
-26. **The story names** in §15:
-    - people and places: the Smith Foundry Company, Ninefold, the Steward, Deck 9, the Meridian Horologe;
-    - the forces: the Fray, the Mainspring, the Hands, the Twain;
-    - the peoples: the Knotfolk and the Wardens of Ninefold, the Ragged Clans, the Hollowkin, the Brass Reavers.
+36. **The tech demons' names:**
+    - the faction: **the Wound**, the Company's name for them;
+    - the ships: **Ticks, Stingers, Chimes, Hounds, Gnawers, Feeders, Hours** and **Nurseries**;
+    - their resource: **ichor**.
 
-    *Recommended: approve, or rename any.*
-27. **The order of the story memories** as drafted in §3: the kidnapping lists in Act II, Jacob's search and the theft in Act III before the offering, and the time shield last. *Recommended: yes.*
-28. **The cast** (§3):
-    - native aliens: the Rivet Moot, the Lantern Synod, the Ashen Gaunt, the Ragged Clans (now Gaunt), the Knotfolk and the Choir;
-    - human descendants: the Cinder Pact, the Hollowkin and the Brass Reavers;
-    - the Ashen Gaunt move from Hostile to Wary.
+    *Recommended: approve, or rename any.* The Mainspring keeps its approved name.
+37. **How Erik's refusal brings the fall:**
+    - a. **Punishment (recommended).** The Hands fall on the Anchorage. Erik holds the docks so the evacuation ships get away, and the havens exist because of him.
+    - b. **He strikes first.** Erik throws the Company fleet at the Mainspring; it fails, and the counter-attack burns the Anchorage.
+    - c. **He asks for the Twain.** Erik demands the Twain from Jacob, to give it back and end it. Jacob refuses, and the demon lord punishes the Company. This is darker for Jacob, and could be kept as a later twist.
 
-    *Recommended: yes.*
-29. **Why Jacob comes back after each death:**
-    - a. the creditor: the Mainspring won't let the Twain slip out of time with him (recommended, with hints of c);
-    - b. the Twain rewinds its bearer;
-    - c. both stories exist, and the player never learns which is true.
-30. **Why we wake now:** the shield failing, the Waiting's ritual and the Mainspring prying, layered so no one is sure (recommended), or just one of them.
-31. **The time gap:** 147 years (recommended), with the clues in order as in §3.
-32. **Instead of desertion:** strikes, where a station goes dark until morale recovers or you parley (recommended); or desertion only at havens, never officers or leads, with a floor of 60% of the crew (§6).
-33. **All hands:** the trigger (every station green), the bonus (+10% work, ships +5%, −10% Glim a stitch, no overnight morale loss) and the streak. *Recommended: yes, tuned in play.*
-34. **What lasts on the bridge:** memories give the skills and light a station at level 1 from day 1 (muscle memory); training with cogmarks and days, rooms, and trader gear reset each life (§6). *Recommended: yes.*
-35. **The bridge's details:** the nine stations, including a new **signals officer** for comms, and the bridge drawn as a layered 2D illustration rather than a 3D interior. *Recommended: yes.*
-
-Not to decide yet, as you asked: the true ending's final choice (three options in §3) and the deeper mysteries. Both stay open.
+The true ending's final choice and the deeper mysteries stay open, as you asked.
 
 ---
 
