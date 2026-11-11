@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 17, the Forge as a base, and survival that weakens.** Running out of water, food, air or Glim **never kills** now. Each shortage builds **strain** (thirst, hunger, bad air, cold), a level a day up to 3, and every level makes the Forge weaker: slower work, dearer building, more Glim a stitch, weaker ships. At strain 2 and 3, stations go dark: life support stops making air, the foundry stops building, comms falls silent. The **boilers** burn 10 Glim a day; with none they go cold and everything works at half. The crew's **mood** is a medallion in the top bar (Content, Uneasy or Angry), with its causes beside it, and it changes what things cost. Under morale 15, stations' crews **strike** instead of leaving, until morale recovers or you **parley** (a day of talking, or cogmarks). When every station is green it's **All hands**: the bell rings, work is faster, stitches cheaper, ships better, and a long streak earns a song. The Forge has a **deck plan** of 8 slots for 17 **rooms** (today's projects, plus crew quarters, a mess hall, an infirmary, a chart room, a workshop and a still room), lost with each life. **Cogmarks**, stamped brass cogs, are money now: traders pay them from a purse, take them for anything, and make up the difference in a swap. See [Staying alive](#staying-alive) and [The deck plan](#the-deck-plan).
+**Status: Milestone 18, the bridge.** The crew screen is now the Forge's **bridge** (press `B`), drawn in the brass style. You look down from behind Jacob's chair at nine stations, each a console with its officer's name plate, a mood medallion, three level lamps and a state gauge. Lit consoles glow, their needles waver and steam drifts from their vents. Dark ones are grey glass and still needles, and every lamp goes gold for All hands. A new **signals officer** runs comms. Click a station for its panel: its officer, what it runs, what Jacob remembers for it (lit, or a question mark), and **training**. Every open station wakes at level 1 each life. Cogmarks and a day or two train it to level 2, then 3, and each level brings a skill: field repairs, plotted courses, quick stitch, long watch, ration plan, drills, long-range hails, signal decoding, triage, ledgers and more. Training is relearned every life, but it costs half where Jacob remembers something for that station. An officer's work counts half until their station is trained. Click the chair for the captain's panel: the life, the day, the Meridian date (UNKNOWN), the All hands streak, the Loom and Let go. On a phone the ring becomes a column. See [The bridge](#the-bridge).
+
+**Milestone 17, the Forge as a base, and survival that weakens:** Running out of water, food, air or Glim **never kills** now. Each shortage builds **strain** (thirst, hunger, bad air, cold), a level a day up to 3, and every level makes the Forge weaker: slower work, dearer building, more Glim a stitch, weaker ships. At strain 2 and 3, stations go dark: life support stops making air, the foundry stops building, comms falls silent. The **boilers** burn 10 Glim a day; with none they go cold and everything works at half. The crew's **mood** is a medallion in the top bar (Content, Uneasy or Angry), with its causes beside it, and it changes what things cost. Under morale 15, stations' crews **strike** instead of leaving, until morale recovers or you **parley** (a day of talking, or cogmarks). When every station is green it's **All hands**: the bell rings, work is faster, stitches cheaper, ships better, and a long streak earns a song. The Forge has a **deck plan** of 8 slots for 17 **rooms** (today's projects, plus crew quarters, a mess hall, an infirmary, a chart room, a workshop and a still room), lost with each life. **Cogmarks**, stamped brass cogs, are money now: traders pay them from a purse, take them for anything, and make up the difference in a swap. See [Staying alive](#staying-alive) and [The deck plan](#the-deck-plan).
 
 **Milestone 16, routes closed until remembered:** Every galaxy now has **hazard pockets**: a few places off to the side of a region, cut off on every side by **asteroid shoals**, **ember lanes** near the dead star, **static fields** or **the Glare**. Their lanes are drawn in the hazard's colour, and nothing gets the Forge through until Jacob remembers what does: Shields, Heat baffles, Lightning rods or Lead-lined decks. Try for a place behind one and the officer at that post tells you why, by name (*Chief engineer Lune Tennant: "Shields are dead, Captain. Take her into that field and the rocks will open us like a tin."*), or whoever is acting in the post. From then on that memory can be recalled on the Loom for two echoes, and the hazard stays open in every life. Places inside are half again as rich, and each pocket hides a wreck with a strongbox worth two echoes, once in a campaign. The navigator now reports the Veil and the drive's reach the same way. Pockets never block the way home: a single life can always escape. See [Hazards: closed routes](#hazards-closed-routes).
 
@@ -13,7 +15,7 @@ See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions
 
 **Milestone 14, campaigns and lives:** The game is being rebuilt around a new design (see [PLAN.md](PLAN.md), version 3): one galaxy per campaign, played over many lives. Start a **new campaign** from the title screen. When the Forge is destroyed, the crew are gone or the air runs out, the life ends, and you **wake** again at the moment you first woke, in the same galaxy. The chart remembers every place you found and marks the ones you visited before. The memorial keeps everyone you lost, and the Choir remember you. Everything else (stores, fleet, hull, systems, standing) starts over. The galaxy's layout never changes, but what is on each map, which events happen and how the dice fall differ from life to life. A **Let go** button gives up a life that is going nowhere. The campaign saves as you play. Saves from earlier versions load as a campaign's first life. Memories, closed routes and the story come next. See [Starting a campaign, lives and saving](#starting-a-campaign-lives-and-saving).
 
-**Milestone 13, named crew:** The people who run the Forge have names now. Eight officers head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
+**Milestone 13, named crew:** The people who run the Forge have names now. Eight officers (nine from Milestone 18, with the signals officer) head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
 
 **Milestone 12, the first full run:** start a new voyage from the title screen and choose:
 
@@ -221,12 +223,15 @@ The **Crew** tab on the star chart lists everyone with a name.
 | Navigator | pilots | the Glim each stitch burns |
 | Watch officer | hands | how far the sensors reach |
 | Quartermaster | hands | what traders ask |
-| Surgeon | hands | how many are lost to hunger and bad air |
+| Surgeon | hands | how hard strain hits the Forge |
 | Wing commander | pilots | how fast ships earn experience |
+| Signals officer | hands | how tight new clue circles are drawn |
+
+  Their work counts half while their station is at level 1, and in full once it is trained (see [The bridge](#the-bridge)).
 
 - **Pilots and captains:** every armed ship has a named lead: a pilot, or a captain for ships crewed by hands. Select a ship on a map to see who flies it and what their trait does (damage, hull, faster experience). New ships built on a map get a new pilot from the crew. A lead whose ship is lost dies with it, or is left behind with it. A **Lucky** pilot gets out in a pod, once, and comes home **Shaken**. A lead with no ship stands by and takes the next one.
 - **Traits** are defined in `content/core/crew.yaml`: a trait's work, damage, hull, learning and morale modifiers, who can have it, and when it holds. **Fair-weather** officers are brilliant only while morale is 60 or more; **Iron** ones only when it is 40 or less; the **Homesick** start to flag after day 250. Some traits grow into others: the **Green** become **Steady** after 50 days, and so do the **Shaken** after 40.
-- **Losses pick who dies.** Hunger, bad air, desertion and events take people at random from the role they hit, named or not: each officer is as likely to die as anyone else in their role. The log says who. When an officer is gone, someone from their role steps up, Green.
+- **Losses pick who dies.** Fights and events take people at random from the role they hit, named or not: each officer is as likely to die as anyone else in their role. The log says who. When an officer is gone, someone from their role steps up, Green.
 - **Head counts and names always agree.** Officers are counted in their role, never fly, and are not offered for new ships on maps.
 - **Events by name:** crew events include a fever, a quarrel between officers, the chief engineer's ideas, drills, a fold in the Skein and letters home. Some only happen if a certain officer is aboard, or someone with a certain trait. When three named people are gone, the crew ask for a memorial.
 
@@ -241,6 +246,8 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 | Right-drag, scroll | Rotate, zoom |
 | Drag, `W A S D` | Pan |
 | `F` or `Home` | Back to the Forge |
+| `B` | The bridge |
+| `L` | The Loom |
 
 - **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now; lanes into a hazard pocket are drawn in the hazard's colour until you remember what gets the Forge through. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
 - **The card** shows the route (stitches, days, Glim, distance) and what you will have on arrival. With no Glim, the Forge can **drift** one lane at sub-light, slowly. At the Forge's place, **Go in** plays the map, and **Rest a day** raises morale (twice as much in still water).
@@ -271,7 +278,32 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
   The medallion's causes say why: thirst, hunger, bad air, cold, grief after deaths, crowding (more crew than berths), a strike. Resting, a mess hall and full stores pull the mood back up.
 - **Strikes:** under morale 15, one station's crew walk off each day, and it stops working. They come back when morale is over 30, or after a **parley** on the Crew tab: a day of talking, or 40 cogmarks a station. Nobody leaves for good.
 - **All hands:** when every station is green (morale 60 or more, nothing short, no strain, every station that is open online and staffed, no strike), the bell rings. While it lasts, work is a further 10% faster, stitches cost 10% less Glim, ships do 5% better, and morale doesn't fall overnight. Six days in a row earns a song.
-- **Stations** (the Crew tab): engineering, navigation, sensors, foundry, life support, hangar, comms, infirmary and stores, each run by an officer. A station is online, dim (no officer, or its system under half), dark, on strike or cold. Dark, it loses what it does: no repairs or building; stitches 50% dearer; the chart dark past the next lane; no ships built; no air made; launches at half speed; nobody to hail; strain eases no faster; traders charge a quarter more. Sensors open with the radar, and the infirmary with its memory and room. Training and the bridge itself come in Milestone 18.
+- **Stations** (the Crew tab): engineering, navigation, sensors, foundry, life support, hangar, comms, infirmary and stores, each run by an officer. A station is online, dim (no officer, or its system under half), dark, on strike or cold. Dark, it loses what it does: no repairs or building; stitches 50% dearer; the chart dark past the next lane; no ships built; no air made; launches at half speed; nobody to hail; strain eases no faster; traders charge a quarter more. Sensors open with the radar, and the infirmary with its memory and room. See [The bridge](#the-bridge) for levels and training.
+
+### The bridge
+
+Press `B`, or **The bridge** in the top bar or the Crew tab.
+
+- **The view:** Jacob's chair in the middle, under the great window. Engineering and navigation stand on the left; sensors, foundry, life support, hangar and comms along the back; the infirmary and stores on the right. Each console shows its name plate, officer, mood medallion (green, amber, red), three level lamps and a state gauge (online, dim, cold, dark or on strike).
+- **Levels:** 0 while a station is dark or not open yet; every open station wakes at **1** (manned) each life. Once Jacob remembers what opens a station, it is lit from day 1 of every life: sensors with the radar, the infirmary with its memory (and its room). An officer's work counts half at level 1 and in full from level 2.
+- **Training** (the station's panel): to level 2 for 30 cogmarks and a day, then level 3 for 60 and two days. It is half price where Jacob remembers anything for that station. Each level brings a skill for this life:
+
+| Station | Officer | Level 2 | Level 3 |
+| --- | --- | --- | --- |
+| Engineering | Chief engineer | Field repairs: repairs a fifth cheaper | Damage control: hull damage wears systems half as much |
+| Navigation | Navigator | Plotted courses: a tenth less Glim a stitch | Quick stitch: stitches of three days or more take a day less |
+| Sensors | Watch officer | Long watch: sensors reach a quarter further | Cheap scans: deep scans on half the Glim |
+| Foundry | Foundry master | Shift work: ships built a fifth faster | Salvage line: twice the cogmarks from salvage |
+| Life support | Grower | Ration plan: a tenth less food and air | Recyclers: a sixth less water |
+| Hangar | Wing commander | Drills: experience a quarter faster | Fast launch: launches a quarter faster |
+| Comms | Signals officer | Long-range hails: talk to whoever holds the next place over | Signal decoding: on arrival, a chance a clue circle tightens |
+| Infirmary | Surgeon | Triage: a third of leads lost with their ships are pulled out alive | Field hospital: strain costs a fifth less |
+| Stores | Quartermaster | Ledgers: traders ask a tenth less | Tight holds: a tenth more of what each map brings home |
+
+- **What Jacob remembers for a station** is listed on its panel, lit or as a question mark: the hazard memories for engineering, the drive parts for navigation, the radar and chart room for sensors, the hulls for the foundry, silent running for the hangar, story memories for comms, the infirmary for the infirmary. These last for good; training is relearned every life.
+- **The captain's chair:** the life, the day, the Meridian date (UNKNOWN until the Horologe is found), morale and its causes, the All hands streak and the best this life, the Loom, and Let go.
+- **All hands:** every lamp goes gold at once, with the bell and the organ, and the streak shows in the header.
+- **On a phone** the stations stack in a column under the chair.
 - **The Forge's systems** wear down when its hull is damaged on a map. A damaged reactor slows everything; a damaged drive reaches less far and spools slower; a damaged foundry builds slower.
 - **Crew:** building a ship takes its crew from the free crew. When a ship is destroyed, half its crew get away in pods; ships left behind take all theirs.
 
@@ -595,7 +627,7 @@ Runs the headless tests:
   - an upgrade that needs another is refused until that is built;
   - two hangars give 50 capacity; launch rails and the foundry line are faster; fire control is set.
 - **Named crew** (`tools/crewtest.js`): checks that:
-  - a new voyage fills all eight posts and gives every armed ship a named lead (and the miners none); the same seed gives the same people;
+  - a new voyage fills all nine posts and gives every armed ship a named lead (and the miners none); the same seed gives the same people;
   - traits work through their conditions: repairs with a Gifted, a Green and a neutral chief engineer; a Fair-weather grower at morale 70 and 50; a Homesick one on day 100 and 260; a Gifted navigator and quartermaster; morale pulled up by the Beloved and down by the Grim; the Green turning Steady after 50 days;
   - losses are fair: losing half the free hands, 200 times, kills about half the named officers among them; forty days of losses kill named people, the memorial names them and every post is refilled; forty days of hunger kill nobody;
   - on a map: an Ace's Dart hits 20% harder, a Careful pilot's has 20% more hull, a Quick study learns faster; a new Dart gets a new pilot; a lead dies with their ship, a Lucky one gets out and comes home Shaken; the report and the voyage agree on who; a lead standing by takes the next ship;
@@ -631,6 +663,13 @@ Runs the headless tests:
   - cogmarks are worth 1 either way; a trader's purse limits what they pay out; settling makes the difference exactly; a dark stores station charges more; a new life has 60; Shearers find them in wrecks;
   - a map is told the mood, its causes, ship cost and strength; on the map a Dart costs 150% at 150%;
   - strain, strikes and All hands save and load exactly; older saves load with none.
+- **The bridge** (`tools/bridgetest.js`): checks that:
+  - there are nine stations, each with its officer (the signals officer runs comms), and two trained skills each;
+  - the first life wakes with sensors and the infirmary dark and the rest manned; once the radar is remembered, sensors are lit from day 1 of every life; the infirmary opens with its memory and room; strain takes a station to level 0;
+  - training costs 30 cogmarks and a day to level 2, 60 and two days to 3, half where Jacob remembers; not without the cogmarks, on strike or before a station opens; an officer's work counts half at level 1;
+  - every one of the 18 trained skills does what it says, decoding tightens a circle within a few arrivals, and triage pulls about a third of lost leads out alive;
+  - in the next life memories last and every station is back at level 1;
+  - training saves and loads exactly; an older save loads untrained, and a signals officer steps up the next day.
 - **Campaigns and lives** (`tools/campaigntest.js`): checks that:
   - a new campaign starts on life 1 with one save; the first life opens with the prologue, later ones with waking;
   - after letting go, the next life is life 2, in the same galaxy, on day 1, at the wake-up point, with stores, systems, hull, fleet and drive parts as they were at waking;
@@ -752,7 +791,7 @@ src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day cloc
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
                       wrecks, combat effects, the star chart (galaxy.js)
 src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), the
-                      comms and trade panel (comms.js), audio
+                      comms and trade panel (comms.js), the Loom (loom.js), the bridge (bridge.js), audio
 tools/                dev server, headless tests, the abstract captain (captain.js), determinism lint
 ```
 

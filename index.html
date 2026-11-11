@@ -462,19 +462,19 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
 </style>
 <style>
 /* ---------------------------------------------------------------- the Loom: the approved brass style (Milestone 15) */
-#loom { --l-iron: #16130f; --l-soot: #221d17; --l-soot2: #2c251d; --l-brass: #c9a04e; --l-brassdk: #8c6a2c; --l-copper: #b8693d; --l-glim: #9ef0d8; --l-steam: #ede6d6; --l-muted: #a8997f; --l-line: #3a3127;
+#loom, #bridge { --l-iron: #16130f; --l-soot: #221d17; --l-soot2: #2c251d; --l-brass: #c9a04e; --l-brassdk: #8c6a2c; --l-copper: #b8693d; --l-glim: #9ef0d8; --l-steam: #ede6d6; --l-muted: #a8997f; --l-line: #3a3127;
   --l-display: 'IM Fell English SC', 'Iowan Old Style', Georgia, serif; --l-body: 'Spectral', 'Iowan Old Style', Georgia, serif; --l-mono: 'Cutive Mono', 'Courier New', monospace;
   background: radial-gradient(ellipse at center, rgba(10, 8, 6, 0.7), rgba(5, 4, 3, 0.94)); z-index: 40; }
 #loom .loom-card { width: min(1240px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--l-soot); color: var(--l-steam); border: 1px solid var(--l-line); border-radius: 6px; padding: 18px clamp(14px, 2.5vw, 26px) 22px; font: 16px/1.55 var(--l-body); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7); }
-#loom .loom-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
-#loom .loom-plate { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px; background: linear-gradient(180deg, #d9b462, var(--l-brass) 45%, var(--l-brassdk)); color: #241a0c; font: 19px var(--l-display); letter-spacing: 0.08em; border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.5); }
-#loom .loom-count { font: 15px var(--l-mono); color: var(--l-muted); }
-#loom .loom-echoes { font: 15px var(--l-mono); color: var(--l-glim); text-shadow: 0 0 10px rgba(158, 240, 216, 0.45); margin-left: auto; }
-#loom .loom-btn { font: 600 14px var(--l-body); padding: 6px 14px; border-radius: 4px; cursor: pointer; color: var(--l-steam); background: linear-gradient(180deg, #3a3027, #241e18); border: 1px solid var(--l-brassdk); }
-#loom .loom-btn:hover { border-color: var(--l-brass); }
-#loom .loom-btn.primary { color: #1d1309; background: linear-gradient(180deg, #d4875a, var(--l-copper) 55%, #8a4a28); border-color: #e0b36a; }
-#loom .loom-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-#loom .loom-btn kbd { font: 12px var(--l-mono); margin-left: 4px; color: inherit; background: none; border: 0; }
+#loom .loom-head, #bridge .loom-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+#loom .loom-plate, #bridge .loom-plate { display: inline-flex; align-items: center; gap: 10px; padding: 6px 16px; background: linear-gradient(180deg, #d9b462, var(--l-brass) 45%, var(--l-brassdk)); color: #241a0c; font: 19px var(--l-display); letter-spacing: 0.08em; border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.5); }
+#loom .loom-count, #bridge .loom-count { font: 15px var(--l-mono); color: var(--l-muted); }
+#loom .loom-echoes, #bridge .loom-echoes { font: 15px var(--l-mono); color: var(--l-glim); text-shadow: 0 0 10px rgba(158, 240, 216, 0.45); margin-left: auto; }
+#loom .loom-btn, #bridge .loom-btn { font: 600 14px var(--l-body); padding: 6px 14px; border-radius: 4px; cursor: pointer; color: var(--l-steam); background: linear-gradient(180deg, #3a3027, #241e18); border: 1px solid var(--l-brassdk); }
+#loom .loom-btn:hover, #bridge .loom-btn:hover { border-color: var(--l-brass); }
+#loom .loom-btn.primary, #bridge .loom-btn.primary { color: #1d1309; background: linear-gradient(180deg, #d4875a, var(--l-copper) 55%, #8a4a28); border-color: #e0b36a; }
+#loom .loom-btn:disabled, #bridge .loom-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+#loom .loom-btn kbd, #bridge .loom-btn kbd { font: 12px var(--l-mono); margin-left: 4px; color: inherit; background: none; border: 0; }
 #loom .loom-lede { color: var(--l-muted); font-size: 15px; margin: 10px 0 12px; max-width: 75ch; }
 #loom .loom-body { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 #loom .loom-tree { overflow-x: auto; background: radial-gradient(ellipse at 50% 40%, #1d1813, #110e0b 75%); border: 1px solid var(--l-line); border-radius: 5px; }
@@ -482,15 +482,54 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
 #loom .loom-tree svg .node { cursor: pointer; }
 #loom .loom-tree svg .node:focus-visible { outline: none; }
 #loom .loom-tree svg .node:focus-visible .sel, #loom .loom-tree svg .node.chosen .sel { opacity: 1; }
-#loom .loom-detail { background: var(--l-soot2); border: 1px solid var(--l-line); border-radius: 5px; padding: 14px 16px; display: grid; gap: 8px; position: sticky; top: 0; }
-#loom .loom-detail h3 { font: 22px/1.15 var(--l-display); color: var(--l-brass); margin: 0; }
-#loom .loom-detail .kind { font: 13px var(--l-mono); color: var(--l-muted); letter-spacing: 0.04em; }
-#loom .loom-detail p { margin: 0; }
-#loom .loom-detail .how { font-size: 14px; color: var(--l-muted); border-top: 1px solid var(--l-line); padding-top: 8px; }
-#loom .loom-detail .when { font: 13px var(--l-mono); color: var(--l-glim); }
-#loom .loom-detail .why { font-size: 13px; color: #e3a33b; }
+#loom .loom-detail, #bridge .loom-detail { background: var(--l-soot2); border: 1px solid var(--l-line); border-radius: 5px; padding: 14px 16px; display: grid; gap: 8px; position: sticky; top: 0; }
+#loom .loom-detail h3, #bridge .loom-detail h3 { font: 22px/1.15 var(--l-display); color: var(--l-brass); margin: 0; }
+#loom .loom-detail .kind, #bridge .loom-detail .kind { font: 13px var(--l-mono); color: var(--l-muted); letter-spacing: 0.04em; }
+#loom .loom-detail p, #bridge .loom-detail p { margin: 0; }
+#loom .loom-detail .how, #bridge .loom-detail .how { font-size: 14px; color: var(--l-muted); border-top: 1px solid var(--l-line); padding-top: 8px; }
+#loom .loom-detail .when, #bridge .loom-detail .when { font: 13px var(--l-mono); color: var(--l-glim); }
+#loom .loom-detail .why, #bridge .loom-detail .why { font-size: 13px; color: #e3a33b; }
 @media (max-width: 860px) { #loom .loom-body { grid-template-columns: 1fr; } #loom .loom-detail { position: static; } }
 @media (prefers-reduced-motion: reduce) { #loom .pulse { animation: none !important; } }
+/* ---------------------------------------------------------------- the bridge (Milestone 18), in the same brass style */
+#bridge .bridge-card { width: min(1320px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--l-soot); color: var(--l-steam); border: 1px solid var(--l-line); border-radius: 6px; padding: 18px clamp(12px, 2.5vw, 26px) 22px; font: 16px/1.55 var(--l-body); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7); }
+#bridge .bridge-hands { font: 15px var(--l-mono); color: #ffd36a; text-shadow: 0 0 12px rgba(255, 211, 106, 0.6); }
+#bridge .bridge-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; margin-top: 12px; }
+#bridge .bridge-view { background: #0d0b09; border: 1px solid var(--l-line); border-radius: 5px; overflow: hidden; }
+#bridge .bridge-view svg { display: block; width: 100%; height: auto; }
+#bridge .br-st, #bridge .br-chair { cursor: pointer; }
+#bridge .br-st:focus-visible, #bridge .br-chair:focus-visible { outline: none; }
+#bridge .br-st.chosen .sel-plate, #bridge .br-chair.chosen .sel-plate, #bridge .br-st:focus-visible .sel-plate, #bridge .br-chair:focus-visible .sel-plate { stroke: #9ef0d8; stroke-width: 2; }
+#bridge .br-plate { font: 13px var(--l-display); fill: #241a0c; letter-spacing: 0.06em; }
+#bridge .br-st:not(.lit) .br-plate { fill: #c9bba3; }
+#bridge .br-small { font: 12px var(--l-mono); fill: var(--l-muted); }
+#bridge .br-strike { font: 12px var(--l-mono); fill: #d9573c; letter-spacing: 0.12em; }
+#bridge .br-st:not(.lit) .br-glass { fill: #1b1d20; }
+#bridge .st-notyet { opacity: 0.45; }
+#bridge .br-needle { animation: br-waver 3.2s ease-in-out infinite; transform-box: view-box; }
+@keyframes br-waver { 50% { transform: translateX(0.6px); } }
+#bridge .br-steam { opacity: 0; animation: br-steam 4.5s ease-out infinite; }
+#bridge .br-steam.s1 { animation-delay: 2.2s; }
+@keyframes br-steam { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 25% { opacity: 0.22; } 100% { opacity: 0; transform: translateY(-30px) scale(2.4); } }
+#bridge .br-steam { transform-box: fill-box; transform-origin: center; }
+#bridge .br-stars { animation: br-drift 90s linear infinite alternate; }
+@keyframes br-drift { to { transform: translateX(-24px); } }
+#bridge svg.allhands .br-lamp.on { filter: drop-shadow(0 0 4px #ffd36a); }
+#bridge svg.allhands .br-halo { animation: br-gold 2.4s ease-in-out infinite; }
+@keyframes br-gold { 50% { opacity: 0.6; } }
+#bridge .bridge-detail h4 { font: 15px var(--l-display); color: var(--l-brass); margin: 6px 0 0; letter-spacing: 0.04em; }
+#bridge .bridge-detail .date b { font-family: var(--l-mono); color: #e3a33b; letter-spacing: 0.12em; }
+#bridge .bridge-detail .who { font-size: 14px; }
+#bridge .bridge-detail .note { font: 13px var(--l-mono); color: var(--l-glim); }
+#bridge .bridge-detail .row { display: flex; gap: 8px; flex-wrap: wrap; }
+#bridge ul.skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+#bridge ul.skills li { font-size: 14px; color: var(--l-steam); border-left: 3px solid var(--l-brass); padding-left: 8px; }
+#bridge ul.skills li span { display: block; font-size: 13px; color: var(--l-muted); }
+#bridge ul.skills li i { font: 12px var(--l-mono); color: var(--l-muted); font-style: normal; }
+#bridge ul.skills li.q, #bridge ul.skills li.later { border-left-color: #4a3f31; color: var(--l-muted); }
+#bridge ul.skills li.q { font-family: var(--l-mono); }
+@media (max-width: 860px) { #bridge .bridge-body { grid-template-columns: 1fr; } #bridge .bridge-detail { position: static; } }
+@media (prefers-reduced-motion: reduce) { #bridge .br-needle, #bridge .br-steam, #bridge .br-stars, #bridge .br-halo { animation: none !important; } }
 @keyframes loompulse { 50% { opacity: 0.25; } }
 #loom .pulse { animation: loompulse 2.4s ease-in-out infinite; }
 </style>
@@ -628,6 +667,7 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
       <span class="tag" id="chart-day"></span>
       <div id="chart-stores" aria-label="Stores"></div>
       <div class="top-btns">
+        <button id="chart-bridgebtn" type="button">The bridge <kbd>B</kbd></button>
         <button id="chart-loombtn" type="button">The Loom <kbd>L</kbd></button>
         <button id="chart-helpbtn" type="button">Controls <kbd>H</kbd></button>
         <button id="chart-save" type="button" hidden>Save…</button>
@@ -672,6 +712,21 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
     </div>
   </div>
 
+  <div id="bridge" class="modal" hidden role="dialog" aria-labelledby="bridge-title">
+    <div class="bridge-card">
+      <header class="loom-head">
+        <span class="loom-plate" id="bridge-title">The bridge</span>
+        <span class="loom-count" id="bridge-sub"></span>
+        <span class="bridge-hands" id="bridge-hands" hidden></span>
+        <span class="loom-echoes" id="bridge-cog" title="Cogmarks: training a station costs them"></span>
+        <button id="bridge-close" type="button" class="loom-btn">Close <kbd>B</kbd></button>
+      </header>
+      <div class="bridge-body">
+        <div class="bridge-view" id="bridge-view"><svg id="bridge-svg" viewBox="0 0 1000 690" role="img" aria-label="The bridge of the Forge"></svg></div>
+        <aside class="loom-detail bridge-detail" id="bridge-detail" aria-live="polite"></aside>
+      </div>
+    </div>
+  </div>
   <div id="loom" class="modal" hidden role="dialog" aria-labelledby="loom-title">
     <div class="loom-card">
       <header class="loom-head">

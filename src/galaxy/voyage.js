@@ -63,7 +63,7 @@ export function newVoyage(rules, { seed = 1, length = 'full', guided = false, ca
     forge: { hp: rules.actor('forge').traitInfo('Health').HP },
     fleet: START_FLEET.map((type) => ({ type, hp: rules.actor(type).traitInfo('Health').HP })),
     items: {}, airless: 0, dry: false, over: null, visits: 0,
-    strain: { thirst: 0, hunger: 0, air: 0, cold: 0 }, cold: 0, strikes: [], allHands: { days: 0, best: 0 },
+    strain: { thirst: 0, hunger: 0, air: 0, cold: 0 }, cold: 0, strikes: [], allHands: { days: 0, best: 0 }, training: {},
     standing: {}, met: {}, treaties: [], flags: [], stock: {},
     queue: [], seen: [], ahead: [], rolls: 0,
     blueprints: [],
@@ -106,8 +106,8 @@ export function addClue(rules, s, anchor) {
   const list = clueList(s), old = list.find((c) => c.id === anchor);
   if (old && old.exact) return old;
   const p = g.points[at], A = (rules.content.anchors || {})[anchor];
-  // (the chart room draws new circles smaller)
-  const r0 = old ? Math.max(20, Math.trunc((old.r * 55) / 100)) : Math.max(20, Math.trunc((+((A && A.Clue) || rules.content.voyage.ClueSpan || 90) * B.roomPct(rules, s, 'CluePct')) / 100));
+  // (the chart room and the signals officer draw new circles smaller)
+  const r0 = old ? Math.max(20, Math.trunc((old.r * 55) / 100)) : Math.max(20, Math.trunc((+((A && A.Clue) || rules.content.voyage.ClueSpan || 90) * projectBonus(rules, s, 'CluePct')) / 100));
   const rng = new Random(hashMix(hashMix(s.seed | 0, at + 101), (old ? old.n : 0) + 7) || 1);
   const d = Math.trunc((r0 * (20 + rng.int(41))) / 100), ang = rng.int(1024);
   const c = { id: anchor, at, x: p.x + Math.trunc((COS(ang) * d) / 1024), y: p.y + Math.trunc((SIN(ang) * d) / 1024), r: r0, n: old ? old.n + 1 : 1, exact: false };
@@ -124,9 +124,11 @@ function clues(rules, s) {
     addClue(rules, s, t.id);
     note(s, `The engineers have a fix on the ${rules.content.items[t.id].Name}: somewhere in ${rules.content.regions[g.points[t.at].region].Name}, inside the circle on the chart.`, 'story');
   }
-  const here = g.points[s.at], near = Math.max(30, sensorRange(rules, s) >> 1);
+  const here = g.points[s.at], near = Math.max(30, sensorRange(rules, s) >> 1), decode = B.skillSum(rules, s, 'Decode');
   for (const c of clueList(s)) {
     if (c.exact) continue;
+    // signal decoding: a scrap of an old signal tightens the circle
+    if (decode && (hashMix(hashMix(lifeMix(s, s.seed | 0), s.day | 0), c.at + 0xdec0) >>> 0) % 100 < decode && !c.decoded) { c.decoded = s.day; addClue(rules, s, c.id); note(s, 'The signals officer pieces together a scrap of an old signal. A circle on the chart tightens.', 'story'); }
     const p = g.points[c.at], dx = p.x - here.x, dy = p.y - here.y;
     if (s.at === c.at || (remembers(s, 'radar') && dx * dx + dy * dy <= near * near)) {
       c.exact = true;
@@ -204,7 +206,8 @@ export function projectBonus(rules, s, key) {
     if (st !== 'installed' || !it || it.Kind !== 'room' || it[key] === undefined) continue;
     v = ADDITIVE.includes(key) ? v + (+it[key] | 0) : Math.trunc((v * +it[key]) / 100);
   }
-  if (!ADDITIVE.includes(key) && s.crew.people) v = Math.trunc((v * officerPct(rules, s.crew, key, crewHolds(rules, s))) / 100);
+  // the officers, at their stations' levels, and the stations' trained skills (base.js)
+  if (!ADDITIVE.includes(key) && s.crew.people) v = Math.trunc((Math.trunc((v * B.officerPctAt(rules, s, key)) / 100) * B.skillPct(rules, s, key)) / 100);
   return v;
 }
 // A ship's lead and what they bring to it now (null if it has none)
@@ -229,7 +232,9 @@ export function rankName(rules, xp) {
 export const forgeMaxHp = (rules, s) => Math.trunc((rules.actor('forge').traitInfo('Health').HP * projectBonus(rules, s, 'HullPct')) / 100);
 // The Glim a stitch of `len` spans burns: the recycler and the navigator, then the crew's mood,
 // strain, All hands and a dark navigation station (base.js). `pct`: that last part, if known.
-export const stitchCost = (rules, s, len, pct = B.glimPctOf(rules, s)) => Math.trunc((Math.trunc((stitchGlim(rules.content.voyage, len) * projectBonus(rules, s, 'GlimPct') + 99) / 100) * pct + 99) / 100);
+export const stitchCost = (rules, s, len, pct = B.glimPctOf(rules, s), pb = projectBonus(rules, s, 'GlimPct')) => Math.trunc((Math.trunc((stitchGlim(rules.content.voyage, len) * pb + 99) / 100) * pct + 99) / 100);
+// Days a stitch takes: a navigator trained in quick stitching takes a day off the long ones (3+)
+export const stitchTime = (rules, s, len, quick = B.skillSum(rules, s, 'QuickStitch')) => { const d = stitchDays(rules.content.voyage, len, s.length === 'short'); return d >= 3 ? Math.max(1, d - quick) : d; };
 
 // A system's working output in percent: its condition, slowed by a damaged reactor.
 export function output(s, sys) {
@@ -271,8 +276,9 @@ export function reveal(rules, s) {
 export function needs(rules, s) {
   const V = rules.content.voyage, N = V.Need, n = count(s.crew);
   const per = (k) => Math.trunc((n * (+N[k] | 0) + 9) / 10);
-  // the still room wins water back
-  return { water: Math.trunc((per('Water') * B.roomPct(rules, s, 'WaterPct') + 99) / 100), food: per('Food'), air: per('Air'), crew: n };
+  // the still room and recyclers win water back; a ration plan saves food and air
+  const ration = (x) => Math.trunc((x * B.skillPct(rules, s, 'NeedPct') + 99) / 100);
+  return { water: Math.trunc((per('Water') * B.roomPct(rules, s, 'WaterPct') + 99) / 100), food: ration(per('Food')), air: ration(per('Air')), crew: n };
 }
 export function daysLeft(rules, s) {
   const n = needs(rules, s), f = forecast(rules, s);
@@ -424,8 +430,8 @@ export function plan(rules, s, to) {
   if (to === s.at) return { ok: false, why: 'The Forge is here.' };
   const d = drive(rules, s);
   if (d.range <= 0) return no('The Skein Drive is wrecked. Repair it to stitch.');
-  const r = route(g, rules, s.at, to, d), gp = B.glimPctOf(rules, s);
-  if (r) r.glim = r.lanes.reduce((t, li) => t + stitchCost(rules, s, g.lanes[li].len, gp), 0);
+  const r = route(g, rules, s.at, to, d), gp = B.glimPctOf(rules, s), pb = projectBonus(rules, s, 'GlimPct'), quick = B.skillSum(rules, s, 'QuickStitch');
+  if (r) { r.glim = r.lanes.reduce((t, li) => t + stitchCost(rules, s, g.lanes[li].len, gp, pb), 0); if (quick) r.days = r.lanes.reduce((t, li) => t + stitchTime(rules, s, g.lanes[li].len, quick), 0); }
   if (!r) {
     // in the way, in this order: a hazard (the officer at its post says why), the Veil, the
     // drive's reach (the navigator says those)
@@ -454,7 +460,7 @@ export function stitch(rules, s, to) {
   for (let i = 0; i < p.route.hops.length; i++) {
     const l = g.lanes[p.route.lanes[i]];
     s.stores.glim = Math.max(0, s.stores.glim - stitchCost(rules, s, l.len));
-    passDays(rules, s, stitchDays(V, l.len, s.length === 'short'));
+    passDays(rules, s, stitchTime(rules, s, l.len));
     if (s.over) return { ok: true };
     s.at = p.route.hops[i];
     reveal(rules, s);
@@ -555,7 +561,7 @@ export function learn(rules, s, id) {
 
 // A day spent with every sensor turned outward: places within twice the sensor range become known.
 export function scanPlan(rules, s) {
-  const glim = num(rules.content.voyage, 'ScanGlim');
+  const glim = Math.trunc((num(rules.content.voyage, 'ScanGlim') * B.skillPct(rules, s, 'ScanPct')) / 100);
   if (s.stores.glim < glim) return no(`Scanning takes ${glim} Glim.`);
   if (s.systems.sensors <= 0) return no('The sensors are wrecked.');
   if (!remembers(s, 'radar')) return no('The sensors are dark. Nobody remembers how to work the long watch.');
@@ -692,8 +698,31 @@ export function parley(rules, s, how = 'day') {
   note(s, how === 'pay' ? `You pay the strikers ${p.cogmarks} cogmarks, and ${names} go back to work.` : `A day of talking on the bridge. ${names} go back to work, for now.`, 'info');
   return { ok: true };
 }
-// Can anyone be hailed? (Comms is dark under bad air and on strike.)
-export function canHail(rules, s) { return B.stationDown(rules, s, 'comms') ? no('Comms is dark: nobody at the set to hail them.') : { ok: true }; }
+// Can anyone be hailed? (Comms is dark under bad air and on strike.) `at`: a place other than the
+// Forge's, which long-range hails reach when it is that many lanes away (HailReach).
+export function canHail(rules, s, at = s.at) {
+  if (B.stationDown(rules, s, 'comms')) return no('Comms is dark: nobody at the set to hail them.');
+  if (at === s.at) return { ok: true };
+  const g = galaxyOf(rules, s), reach = B.skillSum(rules, s, 'HailReach');
+  if (!reach) return no('Only the place the Forge is at can be hailed. Long-range hails need a trained comms station.');
+  const near = g.adj[s.at].some((li) => { const l = g.lanes[li]; return (l.a === s.at ? l.b : l.a) === at; });
+  return near ? { ok: true, far: true } : no('Long-range hails reach one lane away.');
+}
+
+// Training a station (the bridge): to its next level for this life, with cogmarks and days.
+export function trainPlan(rules, s, id) { return B.trainPlan(rules, s, id); }
+export function train(rules, s, id) {
+  if (s.over) return no('The voyage is over.');
+  const p = B.trainPlan(rules, s, id);
+  if (!p.ok) return p;
+  s.stores.cogmarks -= p.cogmarks;
+  s.training ||= {};
+  s.training[id] = (s.training[id] | 0) + 1;
+  passDays(rules, s, p.days);
+  const st = rules.content.crew.stations[id], sk = rules.content.crew.skills[String(st.Train || '').split(',').map((x) => x.trim())[p.level - 2]];
+  note(s, `${st.Name} trained to level ${p.level}${sk ? `: ${sk.Name.toLowerCase()}` : ''}. ${p.cheaper ? 'Jacob remembers how to teach it.' : ''}`.trim(), 'good');
+  return { ok: true, level: p.level };
+}
 
 export function canJumpHome(rules, s) {
   const g = galaxyOf(rules, s);
@@ -866,7 +895,10 @@ export function returnFromMap(rules, s, report) {
   const V = rules.content.voyage, g = galaxyOf(rules, s), p = g.points[s.at];
   for (const [k, st] of Object.entries(report.stores)) s.stores[k] = st.end;
   // the Shearers find loose cogmarks in the wrecks they cut
-  const cut = (report.stores.salvage && report.stores.salvage.changes && report.stores.salvage.changes.gathered) | 0, cogs = Math.trunc(cut / Math.max(1, num(rules.content.voyage, 'SalvagePerCogmark') || 20));
+  // (tight holds bring a little more home)
+  const cargo = B.skillPct(rules, s, 'CargoPct');
+  if (cargo > 100) for (const [k, st] of Object.entries(report.stores)) { const got = (st.changes && st.changes.gathered) | 0; if (got > 0) s.stores[k] += Math.trunc((got * (cargo - 100)) / 100); }
+  const cut = (report.stores.salvage && report.stores.salvage.changes && report.stores.salvage.changes.gathered) | 0, cogs = Math.trunc((Math.trunc(cut / Math.max(1, num(rules.content.voyage, 'SalvagePerCogmark') || 20)) * B.skillPct(rules, s, 'SalvageCogPct')) / 100);
   if (cogs > 0) { s.stores.cogmarks = (s.stores.cogmarks | 0) + cogs; note(s, `The Shearers found ${cogs} cogmarks in the wrecks.`, 'good'); }
   const maxHp = forgeMaxHp(rules, s), hpBefore = s.forge.hp;
   s.forge.hp = report.forge ? report.forge.hp : 0;
@@ -887,9 +919,17 @@ export function returnFromMap(rules, s, report) {
   }
   const kills = {};
   for (const e of report.ships.aboard) if (e.lead && e.kills) kills[e.lead] = (kills[e.lead] | 0) + e.kills;
+  // triage: the infirmary's rescue crews pull some of them out alive
+  const triage = B.skillSum(rules, s, 'Triage');
   for (const l of C.leadsLost || []) {
     const q = personById(c, l.id);
     if (!q) continue;
+    if (triage && l.how !== 'left' && (hashMix(hashMix(s.seed | 0, q.id), s.visits | 0) >>> 0) % 100 < triage) {
+      q.kills = (q.kills | 0) + (l.kills | 0);
+      if (rules.content.crew.traits.shaken) { q.trait = 'shaken'; q.traitDay = s.day; }
+      note(s, `The rescue crew pulled ${fullName(rules, q)} out of the wreck of the ${shipName(rules, l.type)}. Shaken, but alive.`, 'good');
+      continue;
+    }
     q.kills = (q.kills | 0) + (l.kills | 0);
     kill(c, q.id, { day: s.day, how: l.how === 'left' ? `left behind at ${p.name} with the ${shipName(rules, l.type)}` : `killed at ${p.name}, flying the ${shipName(rules, l.type)}` });
     lost[q.role] = Math.max(0, (lost[q.role] | 0) - 1);
@@ -906,7 +946,7 @@ export function returnFromMap(rules, s, report) {
   const hullLost = Math.trunc(((hpBefore - s.forge.hp) * 100) / maxHp);
   if (hullLost > 0 && report.forge) {
     const rng = new Random(hashMix(hashMix(s.seed, s.visits), 77) || 1);
-    let wear = hullLost * num(V, 'SystemWear');
+    let wear = Math.trunc((hullLost * num(V, 'SystemWear') * B.skillPct(rules, s, 'SystemWearPct')) / 100); // (damage control)
     const hit = {};
     while (wear > 0) { const k = SYSTEMS[rng.int(SYSTEMS.length)], n = Math.min(wear, 3 + rng.int(6)); s.systems[k] = Math.max(0, s.systems[k] - n); hit[k] = (hit[k] || 0) + n; wear -= n; }
     note(s, `The hull took ${hullLost}% damage. Systems hit: ${Object.entries(hit).map(([k, n]) => `${rules.content.systems[k].Name} −${n}`).join(', ')}.`, 'bad');
@@ -953,7 +993,7 @@ export function returnFromMap(rules, s, report) {
 const shipName = (rules, type) => (rules.actors.has(type) ? rules.actor(type).traitInfo('Tooltip').Name : type);
 
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
@@ -993,6 +1033,8 @@ export function loadVoyage(rules, text) {
     s.stores.cogmarks = s.stores.cogmarks | 0;
     s.version = 7;
   }
+  // from Milestone 17: stations train, and the signals officer joins (at the next day)
+  if (s && s.kind === 'voyage' && s.version === 7) { s.training = {}; s.version = 8; }
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   // from Milestone 10: everything could be built then, so keep it that way
   if (s && s.kind === 'voyage' && !s.blueprints) s.blueprints = [...new Set([...(rules.content.blueprintStart || []), ...Object.values(rules.content.items).filter((i) => i.Kind === 'blueprint').map((i) => i.Unlocks)])];

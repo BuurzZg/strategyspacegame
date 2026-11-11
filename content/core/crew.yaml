@@ -8,8 +8,11 @@
 #   Bonus  what their work changes (the same percent keys engineering projects use):
 #          RepairPct (a day's repairs), BuildPct (the foundry), FoodPct (the hydroponics),
 #          GlimPct (Glim a stitch), SensorPct (sensor range), TradePct (prices you pay),
-#          CarePct (what strain costs the Forge), XpPct (experience ships earn)
-#   Less   true when their work lowers the number (GlimPct, TradePct, CarePct)
+#          CarePct (what strain costs the Forge), XpPct (experience ships earn), CluePct (how
+#          big new clue circles are drawn)
+#          An officer's work counts half while their station is at level 1, and in full once it
+#          is trained to level 2 (Stations, below).
+#   Less   true when their work lowers the number (GlimPct, TradePct, CarePct, CluePct)
 #
 # Traits: what someone is like. An officer's Work adds to their post's bonus, in percent;
 # a lead's Damage, Hull and Learn (experience) change their ship, in percent. Morale adds to
@@ -67,26 +70,42 @@ Posts:
 		Role: pilots
 		Bonus: XpPct
 		Text: Drills the pilots and captains. Their work changes how fast ships earn experience.
+	signals:
+		Name: Signals officer
+		Role: hands
+		Bonus: CluePct
+		Less: true
+		Text: Works the comms set and the listening watch. Their work changes how tight new clue circles are drawn.
 
 # Stations: the Forge's departments, each run by an officer's post (PLAN.md §6). A station is
 # online, dim (no officer, or its system under half), dark (strain, or what it needs is not
 # there yet), striking (its crew have walked off) or cold (the boilers are out: half its work).
+# Its level (the bridge, Milestone 18): 0 while it is dark or not yet open; every open station
+# wakes at 1 each life; training (voyage.yaml Training) takes it to 2 and 3 for this life,
+# each level bringing one of its trained skills (Skills, below).
 #   Post       the officer who runs it (none: the hands keep it)
 #   System     the Forge system it works through (voyage.yaml Systems)
 #   Needs      a memory it needs before it can open; Room: a room it needs on the deck plan
 #   Text       what it runs; Dark: what is lost while it is dark or striking
+#   Memories   what Jacob remembers for it, for good (memories.yaml): shown on the bridge;
+#              any one of them known makes its training cheaper
+#   Train      its trained skills, at level 2 and level 3
 Stations:
 	engineering:
 		Name: Engineering
 		Post: engineer
 		Text: Repairs, the hull, the Forge's systems, and building rooms.
 		Dark: No repairs and no building on the deck plan.
+		Memories: shields, baffles, rods, lead
+		Train: field-repairs, damage-control
 	navigation:
 		Name: Navigation
 		Post: navigator
 		System: drive
 		Text: Stitches and routes.
 		Dark: Every stitch burns half again as much Glim.
+		Memories: coils, lens, spindle, heartstone
+		Train: plotted-courses, quick-stitch
 	sensors:
 		Name: Sensors
 		Post: watch
@@ -94,27 +113,37 @@ Stations:
 		Needs: radar
 		Text: The chart's reach, deep scans and clue circles.
 		Dark: The chart goes dark past the next lane; no deep scans.
+		Memories: radar, chartroom
+		Train: long-watch, cheap-scans
 	foundry:
 		Name: Foundry
 		Post: foundry
 		System: foundry
 		Text: Building ships on maps.
 		Dark: No ships can be built.
+		Memories: hull-wisp, hull-talon, hull-sabre, hull-spindle, hull-monolith
+		Train: shift-work, salvage-line
 	lifesupport:
 		Name: Life support
 		Post: grower
 		System: life
 		Text: Air, water and the hydroponics.
 		Dark: No air is made.
+		Train: ration-plan, recyclers
 	hangar:
 		Name: Hangar
 		Post: wing
 		Text: Launches, and the fleet between maps.
 		Dark: Launches take twice as long.
+		Memories: silent
+		Train: drills, fast-launch
 	comms:
 		Name: Comms
-		Text: Hailing, trade and signals. The hands keep it until there is a signals officer.
+		Post: signals
+		Text: Hailing, trade, signals and clues.
 		Dark: Nobody can be hailed.
+		Memories: help, afraid, lists, otherhalf
+		Train: long-hails, signal-decoding
 	infirmary:
 		Name: Infirmary
 		Post: surgeon
@@ -122,11 +151,96 @@ Stations:
 		Room: infirmary
 		Text: Strain recovery and care.
 		Dark: Strain eases no faster than a level a day.
+		Memories: infirmary
+		Train: triage, field-hospital
 	stores:
 		Name: Stores
 		Post: quartermaster
 		Text: The hold, trade and cogmarks.
 		Dark: Traders charge a quarter more.
+		Train: ledgers, tight-holds
+
+# Skills: what a trained station can do (Stations, Train). Each is relearned every life.
+# Percent keys multiply like a room's (items.yaml): RepairCostPct, GlimPct, SensorPct, BuildPct,
+# WaterPct, XpPct, LaunchPct, CarePct, TradePct; and SystemWearPct (systems worn by hull damage),
+# ScanPct (a deep scan's Glim), SalvageCogPct (cogmarks found in wrecks), NeedPct (food and air
+# the crew need), CargoPct (what a map brings home). Counts add: QuickStitch (days off a stitch
+# of three days or more), HailReach (lanes away you can hail), Decode (percent chance, on each
+# arrival, of a clue tightening a circle), Triage (percent of leads lost with their ships who
+# are pulled out alive).
+Skills:
+	field-repairs:
+		Name: Field repairs
+		Text: Patches that hold. Repairs take a fifth less ore and salvage.
+		RepairCostPct: 80
+	damage-control:
+		Name: Damage control
+		Text: Crews at every bulkhead. Hull damage wears the systems half as much.
+		SystemWearPct: 50
+	plotted-courses:
+		Name: Plotted courses
+		Text: Every stitch planned to the span. A tenth less Glim.
+		GlimPct: 90
+	quick-stitch:
+		Name: Quick stitch
+		Text: Long stitches cut short. A stitch of three days or more takes a day less.
+		QuickStitch: 1
+	long-watch:
+		Name: Long watch
+		Text: Someone at the scopes every hour. The sensors reach a quarter further.
+		SensorPct: 125
+	cheap-scans:
+		Name: Cheap scans
+		Text: Deep scans on half the Glim.
+		ScanPct: 50
+	shift-work:
+		Name: Shift work
+		Text: The foundry never stops. Ships are built a fifth faster.
+		BuildPct: 120
+	salvage-line:
+		Name: Salvage line
+		Text: Every wreck sorted to the last cog. Twice the cogmarks from salvage.
+		SalvageCogPct: 200
+	ration-plan:
+		Name: Ration plan
+		Text: Measured portions, and slow breathing on the night watch. A tenth less food and air.
+		NeedPct: 90
+	recyclers:
+		Name: Recyclers
+		Text: Water goes round twice. The crew drink a sixth less.
+		WaterPct: 85
+	drills:
+		Name: Drills
+		Text: Live drills off the bow. Ships earn experience a quarter faster.
+		XpPct: 125
+	fast-launch:
+		Name: Fast launch
+		Text: Crews in their cockpits before the Forge arrives. Launches a quarter faster.
+		LaunchPct: 75
+	long-hails:
+		Name: Long-range hails
+		Text: The big set, tuned. Hail whoever holds a place one lane away.
+		HailReach: 1
+	signal-decoding:
+		Name: Signal decoding
+		Text: Scraps of old signals, pieced together. On each arrival, a chance that a clue circle tightens.
+		Decode: 25
+	triage:
+		Name: Triage
+		Text: A rescue crew on every launch. A third of the leads lost with their ships are pulled out alive.
+		Triage: 33
+	field-hospital:
+		Name: Field hospital
+		Text: Cots in the corridors when it counts. Strain costs a fifth less.
+		CarePct: 80
+	ledgers:
+		Name: Ledgers
+		Text: The quartermaster knows every price in the Wrack. Traders ask a tenth less.
+		TradePct: 90
+	tight-holds:
+		Name: Tight holds
+		Text: The hold packed to the rivets. A tenth more of what each map brings home.
+		CargoPct: 110
 
 Leads:
 	pilots: Pilot

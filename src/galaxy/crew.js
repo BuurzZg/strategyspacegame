@@ -76,14 +76,17 @@ export function mods(rules, p, holds = () => true) {
   if (t.When && !holds(t.When)) return { work: 0, damage: 0, hull: 0, learn: 0, morale: 0 };
   return { work: +t.Work | 0, damage: +t.Damage | 0, hull: +t.Hull | 0, learn: +t.Learn | 0, morale: +t.Morale | 0 };
 }
-// The officers' part of a bonus key, in percent (100: no change).
-export function officerPct(rules, c, key, holds) {
+// The officers' part of a bonus key, in percent (100: no change). `level(post)`: the level their
+// station works at (the bridge): their work counts half at level 1, in full from level 2.
+export function officerPct(rules, c, key, holds, level = null) {
   let v = 100;
   for (const post of Object.values(rules.content.crew?.posts || {})) {
     if (post.Bonus !== key) continue;
     const o = officerOf(c, post.id);
     if (!o) continue;
-    const w = mods(rules, o, holds).work;
+    const lv = level ? level(post.id) : 2;
+    if (lv <= 0) continue;
+    const w = lv >= 2 ? mods(rules, o, holds).work : Math.trunc(mods(rules, o, holds).work / 2);
     v = Math.trunc((v * (100 + (post.Less === 'true' ? -w : w))) / 100);
   }
   return v;

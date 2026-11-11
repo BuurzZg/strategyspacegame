@@ -57,14 +57,14 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   const crew = new Map(mergeFiles(data.Crew));
   const crewPart = (k) => (crew.has(k) ? Object.fromEntries(crew.get(k).nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {});
-  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), stations: crewPart('Stations'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
+  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), stations: crewPart('Stations'), skills: crewPart('Skills'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
   const mem = [...mergeFiles(data.Memories)];
   rules.content.memories = Object.fromEntries(mem.filter(([k]) => k !== 'Anchors').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   const anc = mem.find(([k]) => k === 'Anchors');
   rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   // strain, moods and All hands (Milestone 17)
-  for (const k of ['Strain', 'Mood', 'AllHands']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
+  for (const k of ['Strain', 'Mood', 'AllHands', 'Training']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -113,7 +113,7 @@ export function lintContent(rules) {
   }
   // named crew: posts come from a role and change a known bonus; traits point at traits
   const crew = rules.content.crew || { posts: {}, traits: {}, leads: {} };
-  const BONUS = ['RepairPct', 'BuildPct', 'FoodPct', 'GlimPct', 'SensorPct', 'TradePct', 'CarePct', 'XpPct', 'HullPct', 'LaunchPct', 'ForgeDamagePct'];
+  const BONUS = ['RepairPct', 'BuildPct', 'FoodPct', 'GlimPct', 'SensorPct', 'TradePct', 'CarePct', 'XpPct', 'HullPct', 'LaunchPct', 'ForgeDamagePct', 'CluePct'];
   const ROLES = ['engineers', 'pilots', 'miners', 'hands'];
   for (const [id, p] of Object.entries(crew.posts)) {
     if (!ROLES.includes(p.Role)) errs.push(`crew: Posts.${id}.Role: unknown role "${p.Role}"`);
@@ -125,7 +125,11 @@ export function lintContent(rules) {
     if (st.System && !(rules.content.systems || {})[st.System]) errs.push(`crew: Stations.${id}.System: unknown system "${st.System}"`);
     if (st.Room && (rules.content.items || {})[st.Room]?.Kind !== 'room') errs.push(`crew: Stations.${id}.Room: unknown room "${st.Room}"`);
     if (st.Needs && !(rules.content.memories || {})[st.Needs]) errs.push(`crew: Stations.${id}.Needs: unknown memory "${st.Needs}"`);
+    for (const m of list(st.Memories)) if (!(rules.content.memories || {})[m]) errs.push(`crew: Stations.${id}.Memories: unknown memory "${m}"`);
+    for (const k of list(st.Train)) if (!(crew.skills || {})[k]) errs.push(`crew: Stations.${id}.Train: unknown skill "${k}"`);
   }
+  const SKILL = ['RepairCostPct', 'SystemWearPct', 'GlimPct', 'QuickStitch', 'SensorPct', 'ScanPct', 'BuildPct', 'SalvageCogPct', 'NeedPct', 'WaterPct', 'XpPct', 'LaunchPct', 'HailReach', 'Decode', 'Triage', 'CarePct', 'TradePct', 'CargoPct'];
+  for (const [id, sk] of Object.entries(crew.skills || {})) if (!Object.keys(sk).some((k) => SKILL.includes(k))) errs.push(`crew: Skills.${id}: no effect (one of ${SKILL.join(', ')})`);
   for (const [k, ids] of Object.entries((rules.content.strain || {}).Dark || {})) for (const id of list(ids)) if (!(crew.stations || {})[id]) errs.push(`voyage: Strain.Dark.${k}: unknown station "${id}"`);
   for (const [id, it] of Object.entries(rules.content.items || {})) if (it.Kind === 'room' && it.Requires && rules.content.items[it.Requires]?.Kind !== 'room') errs.push(`items: ${id}.Requires: unknown room "${it.Requires}"`);
   for (const [id, tr] of Object.entries(crew.traits)) {

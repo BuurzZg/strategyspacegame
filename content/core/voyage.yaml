@@ -93,6 +93,14 @@ Voyage:
 	# cogmarks: Shearers find one in the wrecks for every this much salvage cut
 	SalvagePerCogmark: 20
 
+# Training a station (the bridge, Milestone 18): to level 2, then 3, for this life. Cogmarks and
+# Days for each level; Remembered: the percent it costs where Jacob remembers any of the
+# station's memories (crew.yaml Stations, Memories).
+Training:
+	Cogmarks: 30, 60
+	Days: 1, 2
+	Remembered: 50
+
 # Strain (PLAN.md §6): running out of water, food, air or boiler heat weakens the Forge; it never
 # kills. Each kind rises a level (to 3) for each day it is out, and falls a level a day once it
 # is back (the mess hall and infirmary take off more: items.yaml Recover). Every level, of any

@@ -2,7 +2,7 @@ import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
 import { lifeMix, lifeOf, remembers, markMemory, memoryOfBlueprint } from './life.js';
 import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
-import { stationDown, strainOf, KINDS } from './base.js';
+import { stationDown, strainOf, KINDS, officerPctAt, skillPct } from './base.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
 // offer choices; a choice shows when its conditions hold and does a short list of effects from
@@ -437,7 +437,7 @@ export function quote(rules, s, fid, pointId, buy, sell) {
   }
   if (tier === 0) why.push('They will not trade with you.');
   // the quartermaster's haggling (or nobody at the ledgers while the stores station is dark)
-  if (s.crew.people) cost = Math.trunc((cost * officerPct(rules, s.crew, 'TradePct', crewHolds(rules, s))) / 100);
+  if (s.crew.people) cost = Math.trunc((Math.trunc((cost * officerPctAt(rules, s, 'TradePct')) / 100) * skillPct(rules, s, 'TradePct')) / 100);
   if (s.crew.people && stationDown(rules, s, 'stores')) cost = Math.trunc((cost * 125) / 100);
   cost = Math.ceil((cost + cogs) / 100); pay = Math.trunc(pay / 100);
   // ships need room in the hangar

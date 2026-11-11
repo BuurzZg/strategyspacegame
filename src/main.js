@@ -14,6 +14,7 @@ import * as V from './galaxy/voyage.js';
 import { ChartScreen } from './ui/chart.js';
 import { CommsPanel } from './ui/comms.js';
 import { LoomScreen } from './ui/loom.js';
+import { BridgeScreen } from './ui/bridge.js';
 import { replayInto } from './engine/replay.js';
 
 const $ = (id) => document.getElementById(id);
@@ -29,6 +30,7 @@ const audio = new Audio();
 const hud = new Hud();
 hud.audio = audio; // hint cards and toasts can play before any map has been visited
 let loom = null; // the memory tree, made once the content is loaded
+let bridge = null; // the bridge (the crew screen)
 let rules = null, run = null, session = null, input = null, acc = 0;
 // the voyage (galaxy map) and its star chart screen, when one is open
 let voyage = null, chart = null;
@@ -225,8 +227,9 @@ function startChart() {
   closeChart();
   hud.showLauncher(false);
   loom ||= new LoomScreen(rules, audio);
+  bridge ||= new BridgeScreen(rules, audio);
   chart = new ChartScreen({
-    canvas, camera, rules, voyage, audio, hud, comms: hud.comms, loom, hint,
+    canvas, camera, rules, voyage, audio, hud, comms: hud.comms, loom, bridge, hint,
     onGoIn: () => goIn(),
     onChange: () => (voyage.won ? deleteSave() : writeSave()),
     onQuit: () => { writeSave(); showLauncher(); },
@@ -346,6 +349,6 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 // Console helpers (also used by the browser tests)
 window.driftforge = {
   get session() { return session; }, get world() { return session && session.world; }, get input() { return input; },
-  get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; },
+  get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; }, get bridge() { return bridge; },
   startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData,
 };

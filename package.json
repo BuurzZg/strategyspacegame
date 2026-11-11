@@ -6,7 +6,7 @@
   "description": "Real-time 3D space strategy in the browser, built on three.js with a deterministic engine",
   "scripts": {
     "start": "node tools/serve.js",
-    "test": "node tools/check-determinism.js && node tools/flighttest.js && node tools/productiontest.js && node tools/miningtest.js && node tools/avoidtest.js && node tools/combattest.js && node tools/formationtest.js && node tools/poitest.js && node tools/voyagetest.js && node tools/factiontest.js && node tools/commstest.js && node tools/eventtest.js && node tools/fogtest.js && node tools/ranktest.js && node tools/crewtest.js && node tools/campaigntest.js && node tools/memorytest.js && node tools/hazardtest.js && node tools/basetest.js && node tools/runtest.js && node tools/balancetest.js",
+    "test": "node tools/check-determinism.js && node tools/flighttest.js && node tools/productiontest.js && node tools/miningtest.js && node tools/avoidtest.js && node tools/combattest.js && node tools/formationtest.js && node tools/poitest.js && node tools/voyagetest.js && node tools/factiontest.js && node tools/commstest.js && node tools/eventtest.js && node tools/fogtest.js && node tools/ranktest.js && node tools/crewtest.js && node tools/campaigntest.js && node tools/memorytest.js && node tools/hazardtest.js && node tools/basetest.js && node tools/bridgetest.js && node tools/runtest.js && node tools/balancetest.js",
     "check": "node tools/check-determinism.js"
   }
 }

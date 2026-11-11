@@ -31,8 +31,8 @@ function moodBadge(rules, s) {
 const STATE = { online: 'Online', dim: 'Dim', dark: 'Dark', striking: 'On strike', cold: 'Cold' };
 
 export class ChartScreen {
-  constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
-    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, loom, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
+  constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, bridge, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
+    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, loom, bridge, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
     this.onLoom = () => this.openLoom();
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
@@ -82,6 +82,7 @@ export class ChartScreen {
     document.body.classList.remove('at-chart');
     $('chart').hidden = true; $('chart-end').hidden = true;
     if (this.loom) this.loom.close();
+    if (this.bridge) this.bridge.close();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
@@ -117,9 +118,11 @@ export class ChartScreen {
       if (e.target.closest && e.target.closest('input, textarea')) return;
       if (!$('chart-end').hidden) return;
       if (this.loom && this.loom.isOpen) { if (this.loom.key(e.key)) e.preventDefault(); return; }
+      if (this.bridge && this.bridge.isOpen) { if (this.bridge.key(e.key)) e.preventDefault(); return; }
       if (this.comms && this.comms.isOpen) { if (this.comms.key(e.key)) e.preventDefault(); return; }
       const k = e.key.toLowerCase();
       if (k === 'l') { this.openLoom(); return; }
+      if (k === 'b') { this.openBridge(); return; }
       if (k === 'c' && this.g.points[this.s.at].owner) { this.hail(this.g.points[this.s.at].owner); return; }
       this.keys.add(k);
       if (k === 'f' || e.key === 'Home') { this.select(this.s.at); this.orbit.focusOn(chartPos(this.g.points[this.s.at])); }
@@ -140,10 +143,19 @@ export class ChartScreen {
     const Hz = Object.values(this.rules.content.hazards || {});
     $('chart-hazards').innerHTML = Hz.length ? `Lanes into hazard pockets: ${Hz.map((h) => `<span style="color:#${esc(h.Color)}">${esc(h.Name)}</span>`).join(', ')}. Nothing gets through until you remember what does.` : '';
     this.on($('chart-loombtn'), 'click', () => this.openLoom());
+    this.on($('chart-bridgebtn'), 'click', () => this.openBridge());
   }
 
   // The memory tree, over the chart.
   openLoom() { if (this.loom && !(this.comms && this.comms.isOpen)) this.loom.open(this.s, { onChange: () => { this.onChange(this.s); this.refresh(); } }); }
+  openBridge() {
+    if (!this.bridge || (this.comms && this.comms.isOpen)) return;
+    this.bridge.open(this.s, {
+      onChange: () => { this.onChange(this.s); this.refresh(); this.pumpEvents(); },
+      onLoom: () => this.openLoom(),
+      onLetGo: () => { if (window.confirm('Let this life go? You will wake again at the start, and the chart keeps what you found. Everything else is lost.')) this.act(V.letGo); },
+    });
+  }
 
   // The place under the mouse (screen distance, nearest first), or -1.
   pick(x, y) {
@@ -192,17 +204,19 @@ export class ChartScreen {
     else if (a === 'scan') this.act(V.scan);
     else if (a === 'home') this.act(V.jumpHome);
     else if (a === 'go') this.onGoIn();
+    else if (a === 'hailfar') this.hail(this.g.points[id].owner, true);
     else if (a === 'hail') { const h = V.canHail(this.rules, this.s); if (h.ok) this.hail(this.g.points[this.s.at].owner); else { this.hud.toast(h.why, 'bad'); this.audio.play('error'); } }
   }
   // Talk to the faction that holds the Forge's place: their dialog, trade and hiring.
-  hail(fid) {
+  // far: across a lane, by long-range hails: talk, but no trade or hiring at that distance
+  hail(fid, far = false) {
     if (!this.comms || !fid || this.s.over) return;
     const s = this.s, g = this.g, rules = this.rules;
     this.comms.open({
       fid,
-      context: () => CM.chartContext(rules, s, g, fid),
+      context: () => ({ ...CM.chartContext(rules, s, g, fid), ...(far ? { station: false } : {}) }),
       apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
-      trade: { s, pointId: s.at, onDeal: () => { this.onChange(s); this.refresh(); } },
+      trade: far ? null : { s, pointId: s.at, onDeal: () => { this.onChange(s); this.refresh(); } },
       onClose: () => { this.refresh(); this.pumpEvents(); },
     });
   }
@@ -215,6 +229,7 @@ export class ChartScreen {
     else if (b.dataset.act === 'parley') this.act(V.parley, b.dataset.k);
     else if (b.dataset.act === 'home') this.act(V.jumpHome);
     else if (b.dataset.act === 'loom' && this.onLoom) this.onLoom();
+    else if (b.dataset.act === 'bridge') this.openBridge();
     else if (b.dataset.act === 'letgo' && window.confirm('Let this life go? You will wake again at the start, and the chart keeps what you found. Everything else is lost.')) this.act(V.letGo);
   }
 
@@ -287,6 +302,9 @@ export class ChartScreen {
       } else why = pl.why;
       const dp = V.driftPlan(this.rules, s, id);
       if (dp.ok && (!pl.route || !pl.ok)) btns.push(['drift', `Drift there: ${dp.days} days, no Glim`, false, 'Sub-light, slowly; the crew still eat, drink and breathe']);
+      // long-range hails (a trained comms station): whoever holds the place next door
+      const far = known && p.owner && this.rules.content.factions[p.owner] ? V.canHail(this.rules, s, id) : null;
+      if (far && far.ok) btns.push(['hailfar', `Hail the ${this.rules.content.factions[p.owner].Name} from here`, false, 'Long-range hails: talk across the lane (no trade at this distance)']);
     }
     $('pc-stats').innerHTML = stats.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     $('pc-btns').innerHTML = btns.map(([a, label, dis, tip]) => `<button type="button" data-act="${a}" ${dis ? 'disabled' : ''} title="${esc(tip || '')}">${label}</button>`).join('');
@@ -343,8 +361,8 @@ export class ChartScreen {
       h += `<p class="fp-note">Content (morale ${Mo.Content} or more, nothing short): work goes 10% faster. Uneasy: building, ships and Glim a stitch cost 10% more. Angry (morale under ${Mo.Angry}, or a store gone): 30% more. Under ${Mo.Strike}, a station's crew walk off each day.${ah.best ? ` All hands: ${ah.days ? `${ah.days} days and counting` : 'not now'}; the best so far, ${ah.best} days.` : ''}</p>`;
       const strain = B.strainOf(s);
       if (B.strainTotal(s)) h += `<h3>Strain</h3><div class="strain">${B.KINDS.map((k) => `<span class="${strain[k] ? 'on' : ''}">${{ thirst: 'Thirst', hunger: 'Hunger', air: 'Bad air', cold: 'Cold' }[k]} <b>${strain[k]}</b></span>`).join('')}</div><p class="fp-note">Shortages never kill. Each day a store is out, its strain rises a level (to 3); every level makes work slower, building, ships and stitches dearer, and ships weaker. At 2 and 3, stations go dark. It eases off a level a day once the store is back; the mess hall and infirmary ease it faster.</p>`;
-      h += '<h3>Stations</h3><ul class="stations">';
-      for (const st of B.stations(rules, s)) h += `<li class="st-${st.notYet ? 'notyet' : st.state}" title="${esc(st.text)}"><span class="lamp ${st.mood ? `m-${st.mood}` : ''}"></span><b>${esc(st.name)}</b><span class="who">${st.officer ? esc(st.officer) : st.post ? 'nobody' : 'the hands'}</span><span class="state">${st.notYet ? 'Not yet' : STATE[st.state]}</span>${st.why ? `<p>${esc(st.why)}${st.state === 'dark' || st.state === 'striking' ? ` ${esc(st.dark)}` : ''}</p>` : ''}</li>`;
+      h += '<h3>Stations</h3><button type="button" data-act="bridge">Go to the bridge <kbd>B</kbd></button><ul class="stations">';
+      for (const st of B.stations(rules, s)) h += `<li class="st-${st.notYet ? 'notyet' : st.state}" title="${esc(st.text)}"><span class="lamp ${st.mood ? `m-${st.mood}` : ''}"></span><b>${esc(st.name)} <i class="lv">${'●'.repeat(B.levelOf(rules, s, st.id, st))}${'○'.repeat(3 - B.levelOf(rules, s, st.id, st))}</i></b><span class="who">${st.officer ? esc(st.officer) : st.post ? 'nobody' : 'the hands'}</span><span class="state">${st.notYet ? 'Not yet' : STATE[st.state]}</span>${st.why ? `<p>${esc(st.why)}${st.state === 'dark' || st.state === 'striking' ? ` ${esc(st.dark)}` : ''}</p>` : ''}</li>`;
       h += '</ul>';
       if ((s.strikes || []).length) {
         const pd = V.parleyPlan(rules, s, 'day'), pp = V.parleyPlan(rules, s, 'pay');

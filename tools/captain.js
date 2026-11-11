@@ -77,6 +77,8 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 3;
     const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.max(10, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
     if (trace) trace(s, goal, urgent);
+    // spare cogmarks: train navigation, which saves the most Glim and days
+    if (!urgent && left.ice > 10) { const tr = ['navigation'].find((id) => V.trainPlan(rules, s, id).ok); if (tr) { V.train(rules, s, tr); settle(); continue; } }
     // a crowded Forge is an unhappy one: build crew quarters when it can
     if (!urgent && B.berths(rules, s) < K.count(s.crew) && V.installPlan(rules, s, 'quarters').ok && left.ice > 10) { V.install(rules, s, 'quarters'); settle(); continue; }
     // already at the drive part's derelict: cut it open before running for supplies

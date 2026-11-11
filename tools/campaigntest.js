@@ -44,7 +44,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
   check(t.campaign.life === 2 && t.seed === s.seed && V.galaxyOf(rules, t) === g && t.day === 1 && t.at === g.start, 'the next life: life 2, the same galaxy, day 1, back at the wake-up point');
   check(JSON.stringify(t.stores) === JSON.stringify(fresh.stores) && JSON.stringify(t.systems) === JSON.stringify(fresh.systems) && t.forge.hp === fresh.forge.hp && t.fleet.length === fresh.fleet.length && !t.items.coils && t.over === null, 'stores, systems, hull, fleet and drive parts are back as they were at waking');
   const officers2 = t.crew.people.filter((p) => p.post).map((p) => `${p.name}/${p.trait}`);
-  check(officers2.length === 8 && officers.split(',').every((o) => officers2.includes(o)) && t.crew.people.some((p) => p.name === lost.name) && K.count(t.crew) === K.count(fresh.crew), `the same crew wake, alive: ${lost.name}, the surgeon who died, is back`);
+  check(officers2.length === Object.keys(rules.content.crew.posts).length && officers.split(',').every((o) => officers2.includes(o)) && t.crew.people.some((p) => p.name === lost.name) && K.count(t.crew) === K.count(fresh.crew), `the same crew wake, alive: ${lost.name}, the surgeon who died, is back`);
   check(t.known.length >= knownBefore && s.known.every((id) => t.known.includes(id)) && t.known.length > fresh.known.length, `the chart remembers: ${t.known.length} places known at waking (a fresh campaign knows ${fresh.known.length})`);
   check(V.visitedBefore(t, hop) && !t.visited[hop], 'the place visited in life 1 is marked as visited in an earlier life');
   check(t.campaign.memorial.some((f) => f.name === lost.name && f.life === 1), 'the memorial keeps the surgeon, lost in life 1');
@@ -88,7 +88,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
   check(m.version === V.SAVE_VERSION && m.campaign.life === 1 && m.saves === 'campaign' && m.campaign.chart.known.length === s.known.length, 'a voyage saved before campaigns (permanent death or free saves) loads as the first life of a campaign');
   const v3 = clone(old); v3.version = 3; v3.crew = { roles: { ...s.crew.roles }, assigned: { ...s.crew.assigned } }; for (const e of v3.fleet) delete e.lead;
   const m3 = V.loadVoyage(rules, JSON.stringify(v3));
-  check(m3.version === V.SAVE_VERSION && m3.crew.people.length === 11 && m3.campaign.life === 1, 'so does a save from before named crew');
+  check(m3.version === V.SAVE_VERSION && m3.crew.people.length === 12 && m3.campaign.life === 1, 'so does a save from before named crew');
   const after = V.newLife(rules, Object.assign(m, { over: { reason: 'air', day: 4, text: '' } }));
   check(after.campaign.life === 2, 'and its next life is life 2');
 }

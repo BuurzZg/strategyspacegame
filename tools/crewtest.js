@@ -22,7 +22,7 @@ const officer = (s, post) => K.officerOf(s.crew, post);
 {
   const s = V.newVoyage(rules, { seed: 11 });
   const posts = Object.keys(CR.posts), filled = posts.filter((p) => officer(s, p));
-  check(posts.length === 8 && filled.length === 8, `8 posts, all filled: ${filled.map((p) => `${CR.posts[p].Name} ${officer(s, p).name} (${K.traitOf(rules, officer(s, p)).Name})`).join(', ')}`);
+  check(posts.length === 9 && filled.length === 9, `9 posts, all filled: ${filled.map((p) => `${CR.posts[p].Name} ${officer(s, p).name} (${K.traitOf(rules, officer(s, p)).Name})`).join(', ')}`);
   const armed = s.fleet.filter((e) => K.leadRole(rules, e.type)), led = armed.filter((e) => e.lead);
   check(armed.length === 3 && led.length === 3 && s.fleet.filter((e) => !K.leadRole(rules, e.type)).every((e) => !e.lead), `every armed ship has a named lead (${led.map((e) => `${K.fullName(rules, K.personById(s.crew, e.lead))} of the ${e.type}`).join(', ')}); the miners have none`);
   check(!sound(s).length && K.count(s.crew) === 150, `head counts and names agree (${sound(s).join('; ') || '150 aboard, 11 named'})`);
@@ -36,6 +36,8 @@ const officer = (s, post) => K.officerOf(s.crew, post);
 {
   const s = V.newVoyage(rules, { seed: 11 });
   s.queue = []; s.systems.life = 50; s.stores.ore = s.stores.salvage = 9999;
+  // (an officer's work counts in full once their station is trained to level 2: the bridge)
+  s.training = { engineering: 1, lifesupport: 1 };
   const eng = officer(s, 'engineer');
   eng.trait = 'gifted'; const gifted = V.repairPlan(rules, s, 'life').points;
   eng.trait = 'green'; const green = V.repairPlan(rules, s, 'life').points;
@@ -47,6 +49,9 @@ const officer = (s, post) => K.officerOf(s.crew, post);
   check(good === 120 && bad === 100, `a fair-weather grower: food ${good}% at morale 70, ${bad}% at morale 50 (When: morale >= 60)`);
   gr.trait = 'homesick'; s.day = 100; const early = V.projectBonus(rules, s, 'FoodPct'); s.day = 260; const late = V.projectBonus(rules, s, 'FoodPct');
   check(early === 100 && late === 85, `a homesick grower: food ${early}% on day 100, ${late}% on day 260`);
+  gr.trait = 'fairweather'; s.morale = 70; s.training = {};
+  check(V.projectBonus(rules, s, 'FoodPct') === 110, `at level 1, before the station is trained, an officer's work counts half (the fair-weather grower: ${V.projectBonus(rules, s, 'FoodPct')}%)`);
+  s.training = { engineering: 1, lifesupport: 1 };
   s.day = 50; s.morale = 70;
   const g = V.galaxyOf(rules, s), len = g.lanes[g.adj[s.at][0]].len, nav = officer(s, 'navigator');
   nav.trait = 'beloved'; const g0 = V.stitchCost(rules, s, len);
@@ -208,7 +213,7 @@ async function visit(prep) {
   old.crew = { roles: { ...s.crew.roles }, assigned: { ...s.crew.assigned } };
   for (const e of old.fleet) delete e.lead;
   const t = V.loadVoyage(rules, JSON.stringify(old));
-  check(t.version === V.SAVE_VERSION && t.crew.people.length === 11 && !sound(t).length && K.count(t.crew) === K.count(s.crew), `a save from before named crew loads: version ${t.version}, ${t.crew.people.length} people named, counts unchanged (${K.count(t.crew)})`);
+  check(t.version === V.SAVE_VERSION && t.crew.people.length === 12 && !sound(t).length && K.count(t.crew) === K.count(s.crew), `a save from before named crew loads: version ${t.version}, ${t.crew.people.length} people named, counts unchanged (${K.count(t.crew)})`);
   for (const e of t.fleet) if (e.lead) K.personById(t.crew, e.lead).trait = 'ace';
   const named = Object.values(V.mapCrew(rules, t).leads);
   check(named.length === 3 && named.every((l) => !l.damage && !l.hull && !l.learn && !l.escape), 'a map visit in progress in that save replays without the new traits, as it was played');
