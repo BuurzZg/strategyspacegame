@@ -11,7 +11,9 @@ import { newRun, visitSettings, applyReport } from '../src/galaxy/run.js';
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
 const rules = await loadRules();
-const TYPES = Object.keys(rules.content.poiTypes);
+// (traders and wayhouses are dealt with from the chart: no map to play, so they are left out here)
+const CHART_ONLY = ['Trader', 'Wayhouse'];
+const TYPES = Object.keys(rules.content.poiTypes).filter((t) => !CHART_ONLY.includes(t));
 
 async function visit(type, { fleet, seed = 5, place = 1, stores } = {}) {
   const run = newRun(rules, { seed });
@@ -38,7 +40,7 @@ async function visit(type, { fleet, seed = 5, place = 1, stores } = {}) {
     const [ex, ey] = a.spawns[0];
     for (const f of a.fields) if (isqrt((f.at[0] - ex) ** 2 + (f.at[1] - ey) ** 2) < 18 + f.spread) clearEntry = false;
   }
-  check(TYPES.length === 13, `the core pack has thirteen place types, the Anchorage among them (${TYPES.join(', ')})`);
+  check(TYPES.length === 13 && CHART_ONLY.every((t) => rules.content.poiTypes[t]), `the core pack has thirteen place types with maps, the Anchorage among them (${TYPES.join(', ')}), and two dealt with from the chart`);
   check(same, 'every template gives exactly the same map for the same seed');
   check(differ === TYPES.length, 'and a different map for a different seed');
   check(clearEntry, 'no asteroid field is generated on top of the Forge\'s arrival point');

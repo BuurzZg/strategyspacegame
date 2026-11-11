@@ -369,9 +369,10 @@ function threatenOnChart(rules, s, galaxy, fid) {
 
 // ---------------------------------------------------------------- trade
 // What a station has, restocking a little each day since you last traded there.
-export function stockOf(rules, s, fid, pointId) {
-  const F = rules.content.factions[fid];
-  const max = Object.fromEntries([...weights(F.Sells), ...weights(F.Hires)]);
+// `trader`: a regional trader's id (traders.yaml): its own goods, one of each Unique.
+export function stockOf(rules, s, fid, pointId, trader = '') {
+  const F = trader ? rules.content.traders[trader] : rules.content.factions[fid];
+  const max = Object.fromEntries([...weights(F.Sells), ...weights(F.Hires), ...weights(F.Unique).map(([g]) => [g, 1])]);
   for (const t of list(F.Ships)) max[`ship:${t}`] = 2;
   // their purse: the cogmarks they can pay out
   max.cogmarks = F.Purse !== undefined ? +F.Purse | 0 : num(rules.content.trade, 'Purse', 300);
@@ -400,10 +401,10 @@ export function buyPrice(rules, tier, good, stock, max) {
   return Math.trunc((base * (100 + standingPct(rules, tier)) * (100 + scarce)) / 100);
 }
 // What they give you for one unit, sold to them: more for what they want, less when they dislike you.
-export function sellPrice(rules, tier, fid, good) {
+export function sellPrice(rules, tier, fid, good, trader = '') {
   if (good === 'cogmarks') return 100;
   const T = rules.content.trade, base = valueOf(rules, good);
-  const wants = list(rules.content.factions[fid].Wants).includes(good) ? num(T, 'Wants', 70) : num(T, 'Unwanted', 30);
+  const wants = list((trader ? rules.content.traders[trader] : rules.content.factions[fid]).Wants).includes(good) ? num(T, 'Wants', 70) : num(T, 'Unwanted', 30);
   return Math.trunc((base * wants * (100 - standingPct(rules, tier))) / 100);
 }
 
@@ -411,17 +412,17 @@ export function sellPrice(rules, tier, fid, good) {
 export const sellable = (rules, s) => Object.keys(s.stores).filter((k) => valueOf(rules, k) > 0 && s.stores[k] > 0);
 // Settle a deal in cogmarks: the bags with cogmarks added to whichever side is short, as far
 // as your cogmarks or their purse allow. Returns { buy, sell }.
-export function settle(rules, s, fid, pointId, buy, sell) {
+export function settle(rules, s, fid, pointId, buy, sell, trader = '') {
   const b = { ...buy, cogmarks: 0 }, l = { ...sell, cogmarks: 0 };
-  const q = quote(rules, s, fid, pointId, b, l), purse = stockOf(rules, s, fid, pointId).goods.cogmarks | 0;
+  const q = quote(rules, s, fid, pointId, b, l, trader), purse = stockOf(rules, s, fid, pointId, trader).goods.cogmarks | 0;
   if (q.cost > q.pay) l.cogmarks = Math.min(s.stores.cogmarks | 0, q.cost - q.pay);
   else if (q.pay > q.cost) b.cogmarks = Math.min(purse, q.pay - q.cost);
   return { buy: b, sell: l };
 }
 
 // Price a deal: buy { good: n } from them, sell { store: n } to them.
-export function quote(rules, s, fid, pointId, buy, sell) {
-  const tier = tierIndex(rules, standingOf(rules, s, fid)), { max, goods } = stockOf(rules, s, fid, pointId);
+export function quote(rules, s, fid, pointId, buy, sell, trader = '') {
+  const tier = tierIndex(rules, standingOf(rules, s, fid)), { max, goods } = stockOf(rules, s, fid, pointId, trader);
   let cost = 0, pay = 0, cogs = 0;
   const why = [];
   for (const [g, n] of Object.entries(buy)) {
@@ -435,13 +436,16 @@ export function quote(rules, s, fid, pointId, buy, sell) {
   for (const [g, n] of Object.entries(sell)) {
     if (n <= 0) continue;
     if ((s.stores[g] | 0) < n) why.push(`You have only ${s.stores[g] | 0} ${g}.`);
-    pay += sellPrice(rules, tier, fid, g) * n;
+    pay += sellPrice(rules, tier, fid, g, trader) * n;
   }
   if (tier === 0) why.push('They will not trade with you.');
   // the quartermaster's haggling (or nobody at the ledgers while the stores station is dark)
   if (s.crew.people) cost = Math.trunc((Math.trunc((cost * officerPctAt(rules, s, 'TradePct')) / 100) * skillPct(rules, s, 'TradePct')) / 100);
   if (s.crew.people && stationDown(rules, s, 'stores')) cost = Math.trunc((cost * 125) / 100);
   cost = Math.ceil((cost + cogs) / 100); pay = Math.trunc(pay / 100);
+  // crew need somewhere to sleep: hiring stops at the berths (crew quarters add more)
+  const hires = ROLES.reduce((t, r) => t + ((buy[r] | 0) > 0 ? buy[r] : 0), 0);
+  if (hires) { const room = num(rules.content.voyage, 'Berths', 160) + roomSum(rules, s, 'Berths') - ROLES.reduce((t, r) => t + (s.crew.roles[r] | 0), 0); if (hires > room) why.push(room > 0 ? `There are berths for ${room} more aboard.` : 'There are no berths for anyone else: build crew quarters.'); }
   // ships need room in the hangar
   const ships = Object.entries(buy).filter(([g, n]) => g.startsWith('ship:') && n > 0);
   if (ships.length) {
@@ -458,16 +462,21 @@ export function quote(rules, s, fid, pointId, buy, sell) {
 
 // Make the deal: goods change hands, crew and ships come aboard, their stock goes down, and
 // trading warms them a little (+1 a deal).
-export function deal(rules, s, fid, pointId, buy, sell) {
-  const q = quote(rules, s, fid, pointId, buy, sell);
+export function deal(rules, s, fid, pointId, buy, sell, trader = '') {
+  const q = quote(rules, s, fid, pointId, buy, sell, trader);
   if (!q.ok) return { ok: false, why: q.why || 'Nothing to trade.' };
-  const { goods } = stockOf(rules, s, fid, pointId);
+  const { goods } = stockOf(rules, s, fid, pointId, trader);
+  const specials = {};
   for (const [g, n] of Object.entries(sell)) if (n > 0) { s.stores[g] -= n; if (g === 'cogmarks') goods.cogmarks = (goods.cogmarks | 0) + n; } // cogmarks paid go in their purse
   for (const [g, n] of Object.entries(buy)) {
     if (n <= 0) continue;
     goods[g] -= n;
     if (ROLES.includes(g)) s.crew.roles[g] += n;
     else if (g.startsWith('bp-')) learnBlueprint(rules, s, g);
+    // a trader's special goods: a room's plan (this life), an echo, a clue or a chart (the voyage applies those two)
+    else if (rules.content.items[g]?.Kind === 'plan') s.items[g] = 'found';
+    else if (g === 'echo') s.campaign.echoes = (s.campaign.echoes | 0) + n;
+    else if (g === 'clue' || g === 'chart') specials[g] = (specials[g] | 0) + n;
     else if (g.startsWith('ship:')) {
       const t = g.slice(5), info = rules.actor(t), crew = info.traitInfo('Crew');
       for (let i = 0; i < n; i++) s.fleet.push({ type: t, hp: info.traitInfo('Health').HP });
@@ -480,5 +489,5 @@ export function deal(rules, s, fid, pointId, buy, sell) {
   s.stock[String(pointId)] = { day: s.day, goods };
   meet(rules, s, fid);
   change(rules, s, fid, num(rules.content.reputation, 'Trade', 1));
-  return { ok: true, cost: q.cost, pay: q.pay };
+  return { ok: true, cost: q.cost, pay: q.pay, specials };
 }

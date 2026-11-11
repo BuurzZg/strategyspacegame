@@ -76,6 +76,18 @@ bp-sabre:
 	Unlocks: sabre
 	Description: How to build a destroyer with torpedoes and two pulse batteries.
 
+# Plans: a room's plan, bought from a trader (traders.yaml). The room it Unlocks can be built
+# in this life; the plan is lost with everything else when the life ends.
+plan-workshop:
+	Name: Workshop plan
+	Kind: plan
+	Unlocks: workshop
+	Description: How to fit out a workshop: lathes, a forge and racks of spares.
+plan-stillroom:
+	Name: Still room plan
+	Kind: plan
+	Unlocks: stillroom
+	Description: How to rig the coils and condensers of a still room.
 # Rooms: the Forge's deck plan (PLAN.md §6), built from the Forge panel with ore, salvage, days
 # and free engineers. The deck plan has DeckSlots (voyage.yaml) slots; each room takes Slots of
 # them (1 unless given; 0 for what goes on the hull or in the hangar). Rooms are physical: they
@@ -87,6 +99,7 @@ bp-sabre:
 #   can live aboard), Bays (ships the hangar berths between maps), Recover (strain levels it takes off each day, on top of one: Strain lists
 #   which kinds, or all), MoraleUp (to the morale the crew settle at), CluePct (the size of new
 #   clue circles), RepairCostPct (ore and salvage a repair takes), WaterPct (water the crew drink)
+#   Plan: a plan (Kind plan, above) that must be bought this life before it can be built
 #   Requires: another room that must be built first. A memory that Gives "room <id>" must be
 #   remembered before it can be built (memories.yaml).
 hangar:
@@ -255,6 +268,7 @@ workshop:
 	Kind: room
 	Description: Lathes, a forge and racks of spares. Repairs take a quarter less ore and salvage.
 	RepairCostPct: 75
+	Plan: plan-workshop
 	Install:
 		Ore: 500
 		Salvage: 200
@@ -265,6 +279,7 @@ stillroom:
 	Kind: room
 	Description: Coils and condensers that win back every drop the crew sweat and breathe. They drink a fifth less water.
 	WaterPct: 80
+	Plan: plan-stillroom
 	Install:
 		Ore: 300
 		Salvage: 400

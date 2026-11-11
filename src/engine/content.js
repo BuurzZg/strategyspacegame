@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [], Hazards: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [], Hazards: [], Traders: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -63,6 +63,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   const anc = mem.find(([k]) => k === 'Anchors');
   rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
+  rules.content.traders = Object.fromEntries([...mergeFiles(data.Traders)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   // strain, moods and All hands (Milestone 17)
   for (const k of ['Strain', 'Mood', 'AllHands', 'Training']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
@@ -164,6 +165,20 @@ export function lintContent(rules) {
     if (!M[h.Opens]) errs.push(`hazards: ${id}.Opens: unknown memory "${h.Opens}"`);
     if (!crew.posts[h.Report]) errs.push(`hazards: ${id}.Report: unknown post "${h.Report}"`);
     for (const [r] of weights(h.Pockets)) if (!(rules.content.regions || {})[r]) errs.push(`hazards: ${id}.Pockets: unknown region "${r}"`);
+  }
+  // traders: a region, a faction, a dialog, and goods that exist
+  const SPECIAL = ['echo', 'clue', 'chart'], value = Object.fromEntries(weights((rules.content.trade || {}).Value));
+  for (const [id, tr] of Object.entries(rules.content.traders || {})) {
+    if (!(rules.content.regions || {})[tr.Region]) errs.push(`traders: ${id}.Region: unknown region "${tr.Region}"`);
+    if (!(rules.content.factions || {})[tr.Faction]) errs.push(`traders: ${id}.Faction: unknown faction "${tr.Faction}"`);
+    if (!(rules.content.dialogs || {})[tr.Dialog]) errs.push(`traders: ${id}.Dialog: no dialog "${tr.Dialog}"`);
+    for (const [g] of [...weights(tr.Sells), ...weights(tr.Unique)]) if (!resources[g] && !SPECIAL.includes(g) && !items[g]) errs.push(`traders: ${id}: unknown good "${g}"`);
+    for (const [g] of [...weights(tr.Sells), ...weights(tr.Unique)]) if (!value[g]) errs.push(`traders: ${id}: "${g}" has no Value in trade.yaml`);
+    for (const t of list(tr.Ships)) if (!rules.actors.has(t)) errs.push(`traders: ${id}.Ships: unknown ship "${t}"`);
+  }
+  for (const [id, it] of Object.entries(items)) {
+    if (it.Kind === 'plan' && items[it.Unlocks]?.Kind !== 'room') errs.push(`items: ${id}.Unlocks: unknown room "${it.Unlocks}"`);
+    if (it.Kind === 'room' && it.Plan && items[it.Plan]?.Kind !== 'plan') errs.push(`items: ${id}.Plan: unknown plan "${it.Plan}"`);
   }
   for (const [id, a] of Object.entries(A)) {
     if (!(rules.content.regions || {})[a.Region]) errs.push(`memories: Anchors.${id}.Region: unknown region "${a.Region}"`);

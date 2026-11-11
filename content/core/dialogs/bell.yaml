@@ -1,0 +1,29 @@
+# The Tallow Bell, in the Middens: a Lantern Synod refinery-chapel, kept by Deacon Ilmar Sloe.
+# Formal, and honest to the letter. (The format is at the top of rivet.yaml.)
+
+bell:
+	Start: hello
+	Node@hello:
+		Say: The Tallow Bell receives you, Forge. Glim refined under vow, food blessed and sealed, and the plan of a still room, entrusted to me for one ship only. State your need plainly.
+		Say@Wary: The Bell receives everyone. It does not have to like them. State your need.
+		Say@Hostile: The Bell is silent to you. Go in peace, or go.
+		Choice@trade:
+			Text: We would trade.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: Are any of your engineers free to travel?
+			If: tier >= Neutral, where chart
+			Do: hire
+		Choice@vow:
+			Text: What is the vow?
+			If: tier >= Neutral
+			Goto: vow
+		Choice@bye:
+			Text: Peace on the Bell.
+			Do: close
+	Node@vow:
+		Say: That no Glim leaves this chapel short-weighted, and none goes to the hulls that bear the cog. We broke the second part, once, long ago, and the Synod has never forgiven itself. You will not ask me how long ago.
+		Choice@bye:
+			Text: We won't.
+			Do: standing 1, close

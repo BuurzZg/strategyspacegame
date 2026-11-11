@@ -249,8 +249,12 @@ export function generateGalaxy(rules, seed, { short = false } = {}) {
     components[A.id] = p.id;
   }
   const pockets = carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, short });
+  // 10. Traders and wayhouses (Milestone 20): one trader in each region, and a few wayhouses,
+  // in places that are nothing else (never the wake-up point, an anchor, a derelict, a station
+  // or a pocket), reachable at the region's own tier. Their own dice, so nothing else moves.
+  const traders = placeTraders(C, seed, { points, lanes, start, regions, tierFor });
 
-  return { seed: seed | 0, short, points, lanes, adj, start, components, veil, pockets, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
+  return { seed: seed | 0, short, points, lanes, adj, start, components, veil, pockets, traders, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
 }
 
 // 9. Hazard pockets (hazards.yaml): a few places in a region, cut off by a hazard on every lane
@@ -314,6 +318,31 @@ function carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, sh
     }
   }
   return pockets;
+}
+
+function placeTraders(C, seed, { points, lanes, start, regions, tierFor }) {
+  const trng = new Random(hashMix(seed | 0, 0x7a0e) || 1), out = {};
+  const free = (p, ri) => p.ri === ri && p.id !== start && !p.relic && !p.seat && !p.pocket && !p.trader && !p.wayhouse && p.type !== 'StillWater';
+  regions.forEach((R, ri) => {
+    const seen = reach(points.length, lanes, start, tierFor(ri));
+    const cand = () => points.filter((p) => free(p, ri) && seen[p.id]);
+    for (const T of Object.values(C.traders || {})) {
+      if (T.Region !== R.id) continue;
+      const c = cand();
+      if (!c.length) continue;
+      const p = c[trng.int(c.length)];
+      p.type = 'Trader'; p.trader = T.id; p.name = T.Name;
+      out[T.id] = p.id;
+    }
+    for (let k = 0; k < (+C.voyage.Wayhouses || 0); k++) {
+      const c = cand();
+      if (!c.length) break;
+      const p = c[trng.int(c.length)];
+      const words = String(R.Names || 'Drifters').split(',').map((s) => s.trim());
+      p.type = 'Wayhouse'; p.wayhouse = true; p.ship = ''; p.name = `${trng.pick(words)} Wayhouse`;
+    }
+  });
+  return out;
 }
 
 // lanes per place: arrays of lane indices

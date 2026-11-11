@@ -189,6 +189,19 @@ Wreck:
 		Behaviour: lurk
 	Names: Patient Hour, Ninth Lantern, Ashgrove, Quiet Tithe, Long Answer, Salt Meridian, Glass Orchard, Ember Psalm
 
+# A regional trader (traders.yaml) and a wayhouse: places on the chart with no map to play.
+Trader:
+	Name: Trader
+	Noun: Trader
+	Description: A trading post. Trade from here: there is nothing to go in for.
+	Size: 144, 144, 48
+	Sky: 3a3020
+Wayhouse:
+	Name: Wayhouse
+	Noun: Wayhouse
+	Description: A drifters' stop, lashed together from old hulls. People here ask to come aboard.
+	Size: 144, 144, 48
+	Sky: 2a2a30
 StillWater:
 	Name: Still Water
 	Noun: Still

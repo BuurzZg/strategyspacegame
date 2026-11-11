@@ -1,0 +1,25 @@
+# The Murmur, in the Hush: a Choirmoth swarm that trades in light. It sells clue circles and
+# echoes, and pays in strange coin. (The format is at the top of rivet.yaml.)
+
+murmur:
+	Start: hello
+	Node@hello:
+		Say: The light around the Forge folds into shapes, and the shapes are almost words. Something here remembers you, and would trade what it remembers.
+		Say@Wary: The swarm dims as you come near. It still listens.
+		Say@Hostile: The swarm scatters. There is nothing here.
+		Choice@trade:
+			Text: Show us what you hold.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@ask:
+			Text: What do you remember of us?
+			If: tier >= Friendly
+			Goto: ask
+		Choice@bye:
+			Text: Shine on.
+			Do: close
+	Node@ask:
+		Say: A man asleep for a long time, with something broken in his hands. The light did not hold him. Something else did.
+		Choice@bye:
+			Text: Something else?
+			Do: close

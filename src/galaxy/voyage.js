@@ -3,7 +3,7 @@ import { hashMix, sin as SIN, cos as COS } from '../engine/math.js';
 import { mapKinds, weights } from '../engine/content.js';
 import { CELL } from '../engine/math.js';
 import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
-import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart, crewHolds } from './comms.js';
+import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart, crewHolds, deal as dealWith } from './comms.js';
 import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, anyDrive, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
@@ -638,6 +638,7 @@ export function installPlan(rules, s, id) {
   if (it.Kind !== 'room') return no('That cannot be built.');
   if (B.built(s, id)) return no('Already built.');
   if (!B.roomKnown(rules, s, id)) return no(`Nobody remembers how. Recall the ${B.roomMemory(rules, id).Name.toLowerCase()} on the Loom.`);
+  if (it.Plan && !s.items[it.Plan]) { const T = Object.values(rules.content.traders || {}).find((x) => String(x.Unique || '').includes(it.Plan)); return no(`It needs the ${rules.content.items[it.Plan].Name.toLowerCase()}${T ? `, from ${T.Name}` : ''}.`); }
   if (it.Requires && !B.built(s, it.Requires)) return no(`Build the ${rules.content.items[it.Requires]?.Name || it.Requires} first.`);
   const slots = B.slotsOf(rules, it), left = B.deckSlots(rules) - B.slotsUsed(rules, s);
   if (slots > left) return no(left ? `It needs ${slots} slots on the deck plan, and ${left} are free.` : 'The deck plan is full. Strip a room to make space.');
@@ -741,6 +742,59 @@ export function choosePerk(rules, s, i, perk) {
   e.perks = [...(e.perks || []), perk];
   delete e.offer;
   note(s, `${fullName(rules, personById(s.crew, e.lead))} of the ${shipName(rules, e.type)}: ${rules.content.crew.perks[perk].Name.toLowerCase()}.`, 'good');
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------- traders and wayhouses (PLAN.md §8)
+// The trader at the Forge's place (its id), or ''.
+export const traderAt = (rules, s) => galaxyOf(rules, s).points[s.at].trader || '';
+// Trading with a regional trader: their faction's standing, their own stock; a clue draws a circle
+// round the next drive part, a chart shows the whole region.
+export function traderDeal(rules, s, buy, sell) {
+  const id = traderAt(rules, s), T = rules.content.traders[id];
+  if (!T) return no('There is no trader here.');
+  const r = dealWith(rules, s, T.Faction, s.at, buy, sell, id);
+  if (!r.ok) return r;
+  const g = galaxyOf(rules, s);
+  for (let k = 0; k < ((r.specials && r.specials.clue) | 0); k++) { const t = target(rules, s); if (t && t.at >= 0) { addClue(rules, s, t.id); note(s, `${T.Name}: a clue to the ${rules.content.items[t.id].Name}. A circle on the chart.`, 'story'); } }
+  if (r.specials && r.specials.chart) note(s, revealPlaces(rules, s, g, 'chart'), 'info');
+  note(s, `Traded at ${T.Name}.`, 'info');
+  return r;
+}
+// Places with nothing to go in for: traders and wayhouses are dealt with from the chart.
+export function canGoIn(rules, s) { const p = galaxyOf(rules, s).points[s.at]; return p.trader || p.wayhouse ? no(p.trader ? 'There is nothing to go in for: trade from here.' : 'There is nothing to go in for: the drifters come to you.') : s.muster ? no('Settle the muster first.') : { ok: true }; }
+// Drifters at a wayhouse ask to come aboard: once a life at each. Some have names: someone for
+// an empty post, or a pilot looking for a ship. They need berths.
+export function driftersPlan(rules, s) {
+  const p = galaxyOf(rules, s).points[s.at], V = rules.content.voyage;
+  if (!p.wayhouse) return no('There is no wayhouse here.');
+  if ((s.wayhouses || []).includes(p.id)) return no('The drifters here have already come aboard, or gone their own way.');
+  const [lo, hi] = String(V.Drifters || '4-10').split('-').map(Number);
+  const h = hashMix(hashMix(lifeMix(s, s.seed | 0), p.id + 0x3a9), 7) >>> 0;
+  const want = lo + (h % Math.max(1, (hi || lo) - lo + 1)), room = B.berths(rules, s) - count(s.crew);
+  if (room <= 0) return no(`${want} drifters ask to come aboard, and there are no berths for them. Build crew quarters.`);
+  return { ok: true, n: Math.min(want, room), want, named: (h >>> 8) % 100 < num(V, 'NamedPct') };
+}
+export function takeDrifters(rules, s) {
+  if (s.over) return no('The voyage is over.');
+  const p = driftersPlan(rules, s);
+  if (!p.ok) return p;
+  const g = galaxyOf(rules, s), c = s.crew, pl = g.points[s.at];
+  (s.wayhouses ||= []).push(s.at);
+  const roles = ['hands', 'miners', 'hands', 'engineers', 'hands', 'pilots'], got = {};
+  for (let k = 0; k < p.n; k++) { const r = roles[(hashMix(s.seed | 0, s.at * 31 + k) >>> 0) % roles.length]; c.roles[r] = (c.roles[r] | 0) + 1; got[r] = (got[r] | 0) + 1; }
+  let named = '';
+  if (p.named) {
+    // someone for an empty post, or else a pilot looking for a ship
+    const post = Object.values(rules.content.crew.posts).find((x) => !officerOf(c, x.id));
+    const role = post ? post.Role : 'pilots', q = newPerson(rules, c, c.next++, role, { day: s.day, taken: namesInUse(c), lead: !post });
+    if (post) q.post = post.id;
+    c.people.push(q); c.roles[role] = (c.roles[role] | 0) + 1;
+    named = ` Among them, ${q.name} (${traitOf(rules, q).Name.toLowerCase()}), ${post ? `who takes the empty post of ${post.Name.toLowerCase()}` : 'a pilot looking for a ship'}.`;
+  }
+  for (const t of assignFleet(c, rules, s.fleet, { day: s.day })) note(s, t, 'info');
+  passDays(rules, s, 1);
+  note(s, `${Object.values(got).reduce((a, b) => a + b, 0) + (p.named ? 1 : 0)} drifters at ${pl.name} come aboard: ${Object.entries(got).map(([r, n]) => `${n} ${r}`).join(', ')}.${named}${p.n < p.want ? ` (${p.want - p.n} more had to stay: no berths.)` : ''}`, 'good');
   return { ok: true };
 }
 

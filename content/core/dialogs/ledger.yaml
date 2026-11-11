@@ -1,0 +1,37 @@
+# The Lamp & Ledger, in the Drift: Wicket Arn, a Hullborn scrap-broker of the Rivet Moot who
+# never stops talking. (The format is at the top of rivet.yaml.)
+
+ledger:
+	Start: hello
+	Node@hello:
+		Say: Lamp and Ledger, Wicket Arn speaking, and yes, that's the Forge, isn't it, I'd know that hull anywhere, well, I wouldn't, but the cousins would. Food, salvage, fittings. And a workshop plan, if you've the coin. One. I only drew the one.
+		Say@Wary: Oh. You. The cousins say you're bad for business. Talk quick, and keep your hands where I can see them.
+		Say@Hostile: No. The Moot says no. I say no. The ledger says no.
+		Choice@trade:
+			Text: Show us what you're selling.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: Anyone here looking for work?
+			If: tier >= Neutral, where chart
+			Do: hire
+		Choice@gossip:
+			Text: What's the talk in the Drift?
+			If: tier >= Neutral
+			Goto: gossip
+		Choice@bye:
+			Text: Another time, Wicket.
+			Do: close
+	Node@gossip:
+		Say: Talk? Talk is all there is. Somebody saw a station with your mark on it, the hammer in the cog, burnt out, years back. Somebody else says there's a light near the dead star that eats ships. Somebody says you've been here before. Not you, obviously. A ship like you.
+		Choice@back:
+			Text: A ship like us?
+			Goto: like
+		Choice@bye:
+			Text: Thanks, Wicket.
+			Do: close
+	Node@like:
+		Say: Same lines, same stacks, same everything. Came through, traded, went off toward the Middens. Never came back. Never paid either, now I think of it.
+		Choice@bye:
+			Text: We'll settle it next time.
+			Do: standing 1, close

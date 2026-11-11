@@ -1,0 +1,52 @@
+# Regional traders (PLAN.md §8, decision 21): one in each region, a place of their own on the
+# chart (a brass bell), traded with from the chart: no map to play. They belong to a faction,
+# and prices follow your standing with it; nobody trades if you are Hostile. Once found, a
+# trader stays on the chart in every later life. Stock resets each life; Unique goods, one each.
+#   Name, Keeper  the place and who keeps it; Region; Faction; Dialog (dialogs/<id>.yaml)
+#   Sells         goods and how many they hold (as factions.yaml); Unique: one per life
+#   Wants         what they pay well for; Hires, Ships: crew and hulls (as factions.yaml)
+# Special goods: plan-* (a room's plan, items.yaml: build it this life), echo (an echo for the
+# Loom), clue (a clue circle round the next drive part), chart (the whole region).
+
+ledger:
+	Name: The Lamp & Ledger
+	Keeper: Wicket Arn
+	Region: Drift
+	Faction: rivet
+	Dialog: ledger
+	Sells: food 500, salvage 600, spores 200
+	Unique: plan-workshop
+	Wants: ore, ice
+	Hires: hands 10, miners 6
+	Ships: gleaner, shearer
+
+bell:
+	Name: The Tallow Bell
+	Keeper: Deacon Ilmar Sloe
+	Region: Middens
+	Faction: synod
+	Dialog: bell
+	Sells: glim 1800, food 900, spores 300
+	Unique: plan-stillroom
+	Wants: salvage, ice
+	Hires: engineers 4
+
+murmur:
+	Name: The Murmur
+	Region: Hush
+	Faction: choir
+	Dialog: murmur
+	Sells: glim 900, echo 2, clue 2
+	Wants: ice, spores
+
+laststop:
+	Name: The Last Stop
+	Keeper: Ossory Vell
+	Region: Shore
+	Faction: cinder
+	Dialog: laststop
+	Sells: ore 1000, ice 800, chart 1
+	Unique: bp-sabre
+	Wants: salvage, spores
+	Hires: pilots 6, hands 8
+	Ships: talon, halberd

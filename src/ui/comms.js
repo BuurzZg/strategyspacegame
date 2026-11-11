@@ -20,7 +20,7 @@ export class CommsPanel {
     $('comms-choices').addEventListener('click', (e) => this.choose(e));
     $('trade-body').addEventListener('click', (e) => this.tradeClick(e));
     $('trade-deal').addEventListener('click', () => this.makeDeal());
-    $('trade-settle').addEventListener('click', () => { const { s, pointId } = this.o.trade, r = C.settle(this.rules, s, this.o.fid, pointId, this.buy, this.sell); this.buy = r.buy; this.sell = r.sell; this.renderTrade(); });
+    $('trade-settle').addEventListener('click', () => { const { s, pointId, trader } = this.o.trade, r = C.settle(this.rules, s, this.o.fid, pointId, this.buy, this.sell, trader || ''); this.buy = r.buy; this.sell = r.sell; this.renderTrade(); });
     $('trade-back').addEventListener('click', () => this.showDialog(this.node));
   }
   get isOpen() { return !!this.o; }
@@ -31,7 +31,7 @@ export class CommsPanel {
     const ctx = o.context();
     if (o.fid) {
       const F = this.rules.content.factions[o.fid];
-      $('comms-who').textContent = F.Name;
+      $('comms-who').textContent = o.who || F.Name;
       $('comms-who').style.color = hex(factionColor(this.rules, o.fid));
       $('comms-tier').textContent = TIERS[ctx.tier];
       $('comms-tier').className = `t-${TIERS[ctx.tier]}`;
@@ -97,46 +97,49 @@ export class CommsPanel {
   }
   goods() {
     const { s, pointId } = this.o.trade, rules = this.rules;
-    const { goods } = C.stockOf(rules, s, this.o.fid, pointId);
+    const { goods } = C.stockOf(rules, s, this.o.fid, pointId, this.o.trade.trader || '');
     return Object.keys(goods).filter((g) => (this.mode === 'hire' ? ROLES.includes(g) || g.startsWith('ship:') : !ROLES.includes(g) && !g.startsWith('ship:')));
   }
   label(g) {
     if (g.startsWith('ship:')) { const t = this.rules.actor(g.slice(5)), c = t.traitInfo('Crew'); return `${t.traitInfo('Tooltip').Name}${c && c.Count ? ` <span class="sub">with ${c.Count} ${c.Role}</span>` : ''}`; }
     if (ROLES.includes(g)) return g[0].toUpperCase() + g.slice(1);
-    if (g.startsWith('bp-')) return esc(this.rules.content.items[g]?.Name || g);
+    if (g.startsWith('bp-') || this.rules.content.items[g]) return esc(this.rules.content.items[g]?.Name || g);
+    if (g === 'echo') return 'An echo <span class="sub">for the Loom</span>';
+    if (g === 'clue') return 'A clue <span class="sub">to the next drive part</span>';
+    if (g === 'chart') return 'A chart <span class="sub">of the whole region</span>';
     return esc(this.rules.content.resources[g]?.Name || g);
   }
   renderTrade() {
-    const { s, pointId } = this.o.trade, rules = this.rules, fid = this.o.fid, ctx = this.o.context();
-    const { goods, max } = C.stockOf(rules, s, fid, pointId);
-    const step = (g) => (g.startsWith('ship:') || ROLES.includes(g) ? 1 : 50);
+    const { s, pointId } = this.o.trade, rules = this.rules, fid = this.o.fid, ctx = this.o.context(), tr = this.o.trade.trader || '';
+    const { goods, max } = C.stockOf(rules, s, fid, pointId, tr);
+    const step = (g) => (g.startsWith('ship:') || ROLES.includes(g) || g.startsWith('bp-') || this.rules.content.items[g] || ['echo', 'clue', 'chart'].includes(g) ? 1 : 50);
     const row = (side, g, have, each) => `<tr><th>${this.label(g)}</th><td>${fmt(have)}</td><td>${each}</td><td class="q"><button type="button" data-s="${side}" data-g="${g}" data-d="-${step(g)}">−</button><b>${fmt((side === 'buy' ? this.buy : this.sell)[g] || 0)}</b><button type="button" data-s="${side}" data-g="${g}" data-d="${step(g)}">+</button></td></tr>`;
     const theirs = this.goods().map((g) => row('buy', g, goods[g], (C.buyPrice(rules, ctx.tier, g, goods[g], max[g]) / 100).toFixed(2).replace(/\.00$/, ''))).join('');
-    const yours = C.sellable(rules, s).map((g) => row('sell', g, s.stores[g], (C.sellPrice(rules, ctx.tier, fid, g) / 100).toFixed(2).replace(/\.00$/, ''))).join('');
+    const yours = C.sellable(rules, s).map((g) => row('sell', g, s.stores[g], (C.sellPrice(rules, ctx.tier, fid, g, tr) / 100).toFixed(2).replace(/\.00$/, ''))).join('');
     $('trade-body').innerHTML = `<div><h3>They offer</h3><table><thead><tr><th></th><th>Stock</th><th>Each</th><th>You take</th></tr></thead><tbody>${theirs || '<tr><td colspan="4">Nothing today.</td></tr>'}</tbody></table></div>
       <div><h3>You offer</h3><table><thead><tr><th></th><th>Aboard</th><th>Each</th><th>You give</th></tr></thead><tbody>${yours}</tbody></table></div>`;
-    const q = C.quote(rules, s, fid, pointId, this.buy, this.sell);
+    const q = C.quote(rules, s, fid, pointId, this.buy, this.sell, tr);
     const pct = q.cost ? Math.min(100, (q.pay / q.cost) * 100) : 0;
     $('trade-balance').innerHTML = `<span>You give <b>${fmt(q.pay)}</b> · they ask <b>${fmt(q.cost)}</b></span><div class="bar"><i style="width:${pct}%;background:${q.ok ? 'var(--good)' : 'var(--height)'}"></i></div><p>${esc(q.why)}</p>`;
     $('trade-deal').disabled = !q.ok;
     // cogmarks can make up the difference, either way
-    const st = C.settle(rules, s, fid, pointId, this.buy, this.sell);
+    const st = C.settle(rules, s, fid, pointId, this.buy, this.sell, tr);
     $('trade-settle').hidden = this.mode === 'hire' && !(s.stores.cogmarks | 0);
     $('trade-settle').disabled = (st.sell.cogmarks | 0) === (this.sell.cogmarks | 0) && (st.buy.cogmarks | 0) === (this.buy.cogmarks | 0);
-    $('trade-settle').textContent = q.cost > q.pay ? 'Pay the difference in cogmarks' : 'Take the change in cogmarks';
+    $('trade-settle').textContent = q.cost > q.pay ? 'Pay the difference in cogmarks' : q.pay > q.cost ? 'Take the change in cogmarks' : 'Settle in cogmarks';
   }
   tradeClick(e) {
     const b = e.target.closest('button[data-g]');
     if (!b) return;
     const side = b.dataset.s, g = b.dataset.g, d = +b.dataset.d, bag = side === 'buy' ? this.buy : this.sell;
     const { s, pointId } = this.o.trade;
-    const cap = side === 'buy' ? C.stockOf(this.rules, s, this.o.fid, pointId).goods[g] | 0 : s.stores[g] | 0;
+    const cap = side === 'buy' ? C.stockOf(this.rules, s, this.o.fid, pointId, this.o.trade.trader || '').goods[g] | 0 : s.stores[g] | 0;
     bag[g] = Math.max(0, Math.min(cap, (bag[g] || 0) + d));
     this.renderTrade();
   }
   makeDeal() {
-    const { s, pointId, onDeal } = this.o.trade;
-    const r = C.deal(this.rules, s, this.o.fid, pointId, this.buy, this.sell);
+    const { s, pointId, onDeal, trader, deal } = this.o.trade;
+    const r = deal ? deal(this.buy, this.sell) : C.deal(this.rules, s, this.o.fid, pointId, this.buy, this.sell, trader || '');
     if (!r.ok) { this.audio.play('error'); return; }
     this.audio.play('deal');
     const got = Object.entries(this.buy).filter(([, n]) => n > 0).map(([g, n]) => `${n} ${g.replace('ship:', '')}`).join(', ');

@@ -124,6 +124,7 @@ export class ChartScreen {
       const k = e.key.toLowerCase();
       if (k === 'l') { this.openLoom(); return; }
       if (k === 'b') { this.openBridge(); return; }
+      if (k === 'c' && this.g.points[this.s.at].trader) { this.tradeWith(); return; }
       if (k === 'c' && this.g.points[this.s.at].owner) { this.hail(this.g.points[this.s.at].owner); return; }
       this.keys.add(k);
       if (k === 'f' || e.key === 'Home') { this.select(this.s.at); this.orbit.focusOn(chartPos(this.g.points[this.s.at])); }
@@ -240,9 +241,26 @@ export class ChartScreen {
     else if (a === 'home') this.act(V.jumpHome);
     else if (a === 'go') { if (this.s.muster) { this.showMuster(); return; } this.onGoIn(); }
     else if (a === 'hailfar') this.hail(this.g.points[id].owner, true);
+    else if (a === 'trade') this.tradeWith();
+    else if (a === 'drifters') this.act(V.takeDrifters);
     else if (a === 'hail') { const h = V.canHail(this.rules, this.s); if (h.ok) this.hail(this.g.points[this.s.at].owner); else { this.hud.toast(h.why, 'bad'); this.audio.play('error'); } }
   }
   // Talk to the faction that holds the Forge's place: their dialog, trade and hiring.
+  // A regional trader (traders.yaml): their own dialog and stock, at your standing with their faction.
+  tradeWith() {
+    const s = this.s, g = this.g, rules = this.rules, id = g.points[s.at].trader, T = rules.content.traders[id];
+    if (!this.comms || !T || s.over) return;
+    const h = V.canHail(rules, s);
+    if (!h.ok) { this.hud.toast(h.why, 'bad'); this.audio.play('error'); return; }
+    const d = rules.content.dialogs[T.Dialog], fid = T.Faction;
+    this.comms.open({
+      fid, who: `${T.Name}${T.Keeper ? ` · ${T.Keeper}` : ''}`, start: d.Start,
+      context: () => ({ ...CM.chartContext(rules, s, g, fid), station: true, dialog: d }),
+      apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
+      trade: { s, pointId: s.at, trader: id, deal: (buy, sell) => V.traderDeal(rules, s, buy, sell), onDeal: () => { this.onChange(s); this.refresh(); } },
+      onClose: () => { this.refresh(); this.pumpEvents(); },
+    });
+  }
   // far: across a lane, by long-range hails: talk, but no trade or hiring at that distance
   hail(fid, far = false) {
     if (!this.comms || !fid || this.s.over) return;
@@ -309,12 +327,18 @@ export class ChartScreen {
     const relic = !pin ? '' : (this.rules.content.anchors || {})[anchor] ? 'A signal comes from deep in the wreck. Cut into the hulk with Shearers to reach it. ' : `The ${this.rules.content.items[anchor].Name} is aboard: cut into the hulk with Shearers to find it. `;
     const Hz = known && p.pocket ? (this.rules.content.hazards || {})[p.pocket] : null;
     const pocket = !Hz ? '' : V.drive(this.rules, s).hazards.includes(Hz.id) ? ` Through the ${Hz.Name}: it yields half again as much as anywhere else.` : ` Cut off by the ${Hz.Name} on every side.`;
+    const Tk = known && p.trader ? this.rules.content.traders[p.trader] : null;
+    const tradeNote = Tk ? ` ${Tk.Keeper ? `Kept by ${Tk.Keeper}. ` : ''}A trader of the ${this.rules.content.factions[Tk.Faction].Name}: prices follow your standing with them, and they won't deal with you if you are Hostile.` : '';
     const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
-    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + claim;
+    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + tradeNote + claim;
     const stats = [], btns = [];
     let why = '';
     if (here) {
-      btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
+      // a trader or a wayhouse: dealt with from the chart, nothing to go in for
+      const Tr = p.trader ? this.rules.content.traders[p.trader] : null;
+      if (Tr) { const hc0 = V.canHail(this.rules, s); btns.push(['trade', `Trade with ${Tr.Name} <kbd>C</kbd>`, !hc0.ok, hc0.ok ? `${Tr.Keeper ? `${Tr.Keeper}: ` : ''}their own stock, at your standing with the ${this.rules.content.factions[Tr.Faction].Name}` : hc0.why]); }
+      else if (p.wayhouse) { const dp = V.driftersPlan(this.rules, s); btns.push(['drifters', dp.ok ? `Take ${dp.n} drifters aboard: a day` : 'Take the drifters aboard', !dp.ok, dp.ok ? (dp.n < dp.want ? `${dp.want} ask, and there are berths for ${dp.n}` : 'They need berths: crew quarters add more') : dp.why]); if (!dp.ok) why = dp.why; }
+      else btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');
       const hc = V.canHail(this.rules, s);
       if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, !hc.ok, hc.ok ? (p.seat ? 'Talk, trade and hire at their station' : 'Talk to them') : hc.why]);

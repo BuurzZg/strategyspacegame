@@ -1,0 +1,29 @@
+# The Last Stop, at the Shore: Ossory Vell, a Cinder Pact quartermaster descended from a Forge
+# that never got home. Dry and bitter. (The format is at the top of rivet.yaml.)
+
+laststop:
+	Start: hello
+	Node@hello:
+		Say: Last Stop. Last chart of the Shore, last Sabre plans this side of the edge, last crews who'll fly for a cog-marked hull. Ossory Vell. Don't make me regret it.
+		Say@Wary: Another Forge. My grandmother came in on one of those. Say what you want and go.
+		Say@Hostile: The Pact remembers. So do I. Get off my band.
+		Choice@trade:
+			Text: Let's see the stock.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: We need pilots.
+			If: tier >= Neutral, where chart
+			Do: hire
+		Choice@forge:
+			Text: Your grandmother came in on a Forge?
+			If: tier >= Neutral
+			Goto: forge
+		Choice@bye:
+			Text: We'll be going.
+			Do: close
+	Node@forge:
+		Say: Same as yours, near enough. Lost its drive at the edge and never jumped. Its crew built this place out of it. Every plate you see. So when you jump, and you will, think of the ones who didn't.
+		Choice@bye:
+			Text: We will.
+			Do: standing 2, close

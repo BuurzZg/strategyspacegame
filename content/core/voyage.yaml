@@ -55,6 +55,11 @@ Voyage:
 	# ScrapPct percent of its ore, and its crew move into the Forge
 	HangarBerths: 10
 	ScrapPct: 50
+	# wayhouses (Milestone 20): this many in each region; drifters who ask to come aboard (once a
+	# life at each), and the percent chance one of them has a name (a pilot, or an officer)
+	Wayhouses: 2
+	Drifters: 4-10
+	NamedPct: 35
 	# ships aboard the Forge mend this percent of their hull a day (repair bays add more)
 	FleetHeal: 5
 	# a day's deep scan from the chart: Glim it costs (it sees twice the sensor range)

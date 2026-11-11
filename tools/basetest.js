@@ -33,6 +33,7 @@ const state = (s, id) => B.stations(rules, s).find((x) => x.id === id).state;
   check(rooms.length === 17 && B.deckSlots(rules) === 8, `17 rooms (today's eleven projects and six new ones) for a deck plan of ${B.deckSlots(rules)} slots`);
   const s = fresh();
   check(!V.installPlan(rules, s, 'messhall').ok && /Recall the mess hall/.test(V.installPlan(rules, s, 'messhall').why) && V.installPlan(rules, s, 'quarters').ok, 'the mess hall needs its memory; the crew quarters do not');
+  s.items['plan-workshop'] = s.items['plan-stillroom'] = 'found'; // (their plans come from traders: tradertest)
   for (const id of ['quarters', 'workshop', 'stillroom', 'racks', 'array', 'recycler', 'hangar', 'repair-bays']) V.install(rules, s, id);
   const full = V.installPlan(rules, s, 'foundry-line');
   check(B.slotsUsed(rules, s) === 8 && !full.ok && /deck plan is full/.test(full.why) && V.installPlan(rules, s, 'plating').ok, `eight rooms fill the deck plan; a ninth won't fit ("${full.why}"), but plating on the hull takes no slot`);

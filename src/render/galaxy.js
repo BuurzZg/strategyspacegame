@@ -11,6 +11,7 @@ export const chartPos = (p, v = new THREE.Vector3()) => v.set(p.x * GS, p.z * GS
 export const TYPE_COLORS = {
   IceTail: 0xa8e4ff, LanternMist: 0xffe08a, OreReef: 0xe0a36a, ScrapShoal: 0xc9b8a6, Wreck: 0xe0705a, StillWater: 0x8fd8d0,
   HullTown: 0xffe6a0, SynodRefinery: 0xd8ffe8, GauntDen: 0xff8a7a, CinderHold: 0xffc08a, ChoirBloom: 0xf0f6ff,
+  Trader: 0xf0c060, Wayhouse: 0xd0aa80, Anchorage: 0xc9a04e,
 };
 const UNKNOWN = 0x8090ac;
 
@@ -169,6 +170,14 @@ export class StarChart {
     this.select = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTexture('rgba(255,255,255,0.9)'), depthWrite: false, transparent: true }));
     this.select.visible = false;
     this.group.add(this.signal, this.select);
+    // traders: a brass bell over the place, once it is known
+    const bell = bellTexture();
+    this.bells = this.g.points.filter((p) => p.trader).map((p) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: bell, depthWrite: false, transparent: true }));
+      sp.position.copy(this.pos[p.id]); sp.position.y += 2.4; sp.scale.set(2.6, 2.6, 1); sp.visible = false; sp.userData.id = p.id;
+      this.group.add(sp);
+      return sp;
+    });
   }
 
   // Colours, sizes and lines from the voyage as it is now.
@@ -225,6 +234,7 @@ export class StarChart {
     this.sensorRing.material.dashSize = this.sensorRing.material.gapSize = 0.02;
     this.signal.visible = view.signal >= 0;
     if (view.signal >= 0) this.signal.position.copy(this.pos[view.signal]);
+    for (const b of this.bells) b.visible = view.known.has(b.userData.id);
     this.select.visible = view.selected >= 0 && view.selected !== view.at;
     if (this.select.visible) this.select.position.copy(this.pos[view.selected]);
   }
@@ -275,6 +285,21 @@ function glowTexture(inner, outer) {
   const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
   gr.addColorStop(0, inner); gr.addColorStop(1, outer);
   x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+// a small brass bell, for traders
+function bellTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const x = c.getContext('2d');
+  const gr = x.createLinearGradient(0, 8, 0, 54);
+  gr.addColorStop(0, '#f2d27a'); gr.addColorStop(1, '#9a6e28');
+  x.fillStyle = gr; x.strokeStyle = '#3a2a10'; x.lineWidth = 2.5;
+  x.beginPath(); x.moveTo(32, 8); x.bezierCurveTo(16, 10, 18, 34, 10, 46); x.lineTo(54, 46); x.bezierCurveTo(46, 34, 48, 10, 32, 8); x.closePath(); x.fill(); x.stroke();
+  x.beginPath(); x.arc(32, 52, 5, 0, Math.PI * 2); x.fill(); x.stroke();
+  x.beginPath(); x.arc(32, 6, 3, 0, Math.PI * 2); x.stroke();
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;

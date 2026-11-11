@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–19 are built (§12); names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–20 are built (§12); names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -840,13 +840,19 @@ A light version of Frostpunk's coal. Three options:
 - **Factions:** each trader belongs to a faction, and prices follow your standing with it (as today). They won't trade if you are Hostile. Faction stations stay as maps you can enter, for fights and missions (decision 22).
 - **Stock:** resets each life. Unique items are one per life.
 
+**As built (Milestone 20):**
+- Traders are their own place type (`Trader`), placed with their own dice after the pockets: never the wake-up point, an anchor, a derelict, a station or a pocket, and always reachable at the region's drive level. They have no map; Go in is replaced by **Trade**.
+- Their goods and dialogs are in `traders.yaml` and `dialogs/<trader>.yaml`. *Unique* goods are one a life. Special goods: `plan-*` (build that room this life), `echo`, `clue` (a circle round the next drive part), `chart` (the region).
+- The workshop and still room, buildable from the start in Milestone 17, now need their plan each life, from the Lamp & Ledger and the Tallow Bell.
+- The Murmur's "strange coin" and the Monolith plans wait for the story (Milestone 22).
+
 ### Crew
 
 - **Where new crew come from:**
   - hull-towns hire crew out, as today;
   - survivor pods and refugee convoys, in events and on maps;
   - places of a new type, **wayhouses**, where drifters ask to come aboard.
-- **Limits:** crew quarters set the maximum aboard.
+- **Limits:** crew quarters set the maximum aboard. (As built: hiring and wayhouse drifters stop at the berths; events and pods can still crowd the Forge past them, which costs morale.)
 - **New named crew:** sometimes a newcomer is named: a pilot looking for a ship, or someone who could fill an empty post.
 - **New ship types arrive over time:** from memories (Fleet branch), from traders (plans), and from cutting wrecks of a hull, as blueprints work today.
 
@@ -965,7 +971,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | ~~17~~ | ~~The Forge as a base, and survival that weakens~~ (done, §12) | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers burning Glim; **strain instead of death** for every shortage; stations as data (online, dim, dark, striking); strikes instead of desertion (if chosen); All hands and its bonus | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life; **no shortage ever kills or ends a life**; strain rises and falls a level a day and its penalties are capped; the right stations go dark for each shortage; All hands starts and stops exactly when every station is green |
 | ~~18~~ | ~~The bridge~~ (done, §12) | The crew screen as the Forge's bridge: Jacob's chair, nine stations with their officers, moods, lamps and states; station panels with skills (known, trainable, "?"), training with cogmarks and days, and what keeps a station dark; the signals officer, a new post; muscle memory (a known memory lights its station from day 1); the All hands moment in full (light, bell, organ sting, streak); built in the approved style | Memory-given skills persist across lives and trained levels reset; a known memory starts its station at level 1; training costs less where Jacob remembers; the bridge matches the voyage state; a browser run at desktop and phone width |
 | ~~19~~ | ~~The muster and levels~~ (done, §12) | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
-| **20** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
+| ~~20~~ | ~~Traders and crew~~ (done, §12) | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
 | **21** | **The tech demons** | The Wound as a real RTS faction: Ticks, Stingers, Chimes, Hounds, Gnawers, Feeders, Hours and Nurseries; ichor from wrecks and the dead; gestation; an AI that gathers, counter-builds, attacks in waves, retreats and expands; infested places and the creep; the Mainspring's attention and the Hands hunting the Forge across the chart (Quiet, Noticed, Hunted, Marked); their biomechanical look | The AI builds, attacks and rebuilds; it counter-builds against your fleet; Feeders starve when wrecks are salvaged; attention rises and falls as specified and never forces an instant loss; a Hand can be outrun or destroyed; determinism on demon maps |
 | **22** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the final battle at the Shore, the Forge against the living Mainspring and its forces; the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
 | **23** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
@@ -973,7 +979,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 
 **Later, as add-on packs:** new regions beyond the Shore, new traders, races and factions, more memories and story arcs, and co-op multiplayer (the engine stays lockstep-ready).
 
-## 12. Milestones done (1–19)
+## 12. Milestones done (1–20)
 
 | # | Milestone | Result |
 | --- | --- | --- |
@@ -996,6 +1002,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | 17 | The Forge as a base, and survival that weakens | A deck plan of 8 slots for 17 rooms (the eleven projects, plus crew quarters, mess hall, infirmary, chart room, workshop and still room; three need their memory), stripped to free a slot, lost each life; strain from thirst, hunger, bad air and cold, a level a day to 3, capped penalties, stations dark at 2 and 3; nobody dies of a shortage; the boilers burn 10 Glim a day and go cold without it; nine stations as data (online, dim, dark, striking, cold) with what each loses when dark; the crew's mood (Content, Uneasy, Angry) with causes and costs; strikes and parleys instead of desertion; All hands with its bonus, bell and song; cogmarks in trade, from a trader's purse, from wrecks, and to pay strikers; the mood on maps changes ship costs and strength |
 | 18 | The bridge | The crew screen as the Forge's bridge in the approved brass style: Jacob's chair under the great window and nine consoles in a horseshoe (name plates, officers, mood medallions, level lamps, state gauges; lit ones glow, waver and steam; all lamps gold for All hands), a column on phones; station panels (officer, what it runs, memories for it lit or "?", training, what keeps it dark) and the captain's panel (life, day, Meridian date UNKNOWN, morale, All hands streak, the Loom, Let go); the signals officer, a ninth post, runs comms; levels 0 to 3, every open station waking at 1, trained to 2 and 3 each life with cogmarks and days (half price where Jacob remembers), officers' work half at level 1; 18 trained skills |
 | 19 | The muster and levels | Levels replace kill experience: a level for each map a ship launched on, survived and came home from (once a map), 1 to 5 at +5% damage and hull; perks at levels 3 and 5, picked from three on offer (Covers the Forge, Holds formation, Hunter, Finisher, Gets them home), each changing how the ship fights; 10 hangar berths by count, three more per hangar room; the muster after a map with more ships than berths (scrap: half the ore back, the crew into the Forge; leave adrift: ship and crew lost), with nothing stitching until it is settled; traders refuse hulls without a berth; old saves turn ranks into levels |
+| 20 | Traders and crew | Four regional traders placed by the generator, one per region (the Lamp & Ledger, the Tallow Bell, the Murmur, the Last Stop), with a brass bell on the chart, traded with from the chart in their own dialogs, prices by their faction's standing, their own stock reset each life with one of each unique good (room plans, echoes, clues, a chart, Sabre plans), and on the chart for good once found; the workshop and still room need plans; two wayhouses a region, where drifters come aboard once a life, sometimes with a name (an empty post, or a pilot); hiring and drifters stop at the berths |
 
 ## 13. How each milestone is tested
 

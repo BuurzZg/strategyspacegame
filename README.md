@@ -5,7 +5,16 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 19, the muster and levels.** Ships no longer rank up from kills. A ship gains a **level** for every map it launches on, survives and comes home from, once per map, up to level 5, and each level adds 5% damage and hull. A good wing commander, drills or a quick-study pilot can make levels come sooner. At **levels 3 and 5** the ship's pilot picks a **perk**, from three on offer, that changes how it fights: *Covers the Forge*, *Holds formation*, *Hunter*, *Finisher* or *Gets them home*. The hangar **berths 10 ships**, plus three for each hangar room. When more come aboard, **the muster** asks who continues. A ship scrapped gives back half its ore, its crew move into the Forge and its pilot stands by; one left adrift is lost with everyone aboard. Nothing stitches until it is settled, and no trader will sell a hull you have no berth for. See [The muster and levels](#the-muster-and-levels).
+**Status: Milestone 20, traders and crew.** Each region has a **trader**, a place of its own marked with a brass bell. There's no map to play: you trade from the chart (`C`), in the trader's own voice, at your standing with their faction:
+
+- **The Lamp & Ledger** in the Drift, kept by Wicket Arn, who never stops talking;
+- **the Tallow Bell** in the Middens, a Synod refinery-chapel kept by Deacon Ilmar Sloe;
+- **the Murmur** in the Hush, a Choirmoth swarm that sells **echoes** and **clues**;
+- **the Last Stop** at the Shore, where Ossory Vell sells **Sabre plans** and a chart of the Shore.
+
+Their stock comes back each life, with one of each unique good, and once found they stay on the chart in every life. The **workshop** and **still room** now need their plans from the Drift and Middens traders. **Wayhouses** (two in each region) are where drifters ask to come aboard, once a life, sometimes with a name: someone for an empty post, or a pilot looking for a ship. Crew are limited by the **berths**: nobody hires on, and no drifter joins, without somewhere to sleep. See [Traders and wayhouses](#traders-and-wayhouses).
+
+**Milestone 19, the muster and levels:** Ships no longer rank up from kills. A ship gains a **level** for every map it launches on, survives and comes home from, once per map, up to level 5, and each level adds 5% damage and hull. A good wing commander, drills or a quick-study pilot can make levels come sooner. At **levels 3 and 5** the ship's pilot picks a **perk**, from three on offer, that changes how it fights: *Covers the Forge*, *Holds formation*, *Hunter*, *Finisher* or *Gets them home*. The hangar **berths 10 ships**, plus three for each hangar room. When more come aboard, **the muster** asks who continues. A ship scrapped gives back half its ore, its crew move into the Forge and its pilot stands by; one left adrift is lost with everyone aboard. Nothing stitches until it is settled, and no trader will sell a hull you have no berth for. See [The muster and levels](#the-muster-and-levels).
 
 **Milestone 18, the bridge:** The crew screen is now the Forge's **bridge** (press `B`), drawn in the brass style. You look down from behind Jacob's chair at nine stations, each a console with its officer's name plate, a mood medallion, three level lamps and a state gauge. Lit consoles glow, their needles waver and steam drifts from their vents. Dark ones are grey glass and still needles, and every lamp goes gold for All hands. A new **signals officer** runs comms. Click a station for its panel: its officer, what it runs, what Jacob remembers for it (lit, or a question mark), and **training**. Every open station wakes at level 1 each life. Cogmarks and a day or two train it to level 2, then 3, and each level brings a skill: field repairs, plotted courses, quick stitch, long watch, ration plan, drills, long-range hails, signal decoding, triage, ledgers and more. Training is relearned every life, but it costs half where Jacob remembers something for that station. An officer's work counts half until their station is trained. Click the chair for the captain's panel: the life, the day, the Meridian date (UNKNOWN), the All hands streak, the Loom and Let go. On a phone the ring becomes a column. See [The bridge](#the-bridge).
 
@@ -211,6 +220,21 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Mending:** ships aboard mend 5% of their hull a day; repair bays make it 20%.
 - **Forge upgrades** are rooms on the deck plan now (Milestone 17): see [The deck plan](#the-deck-plan).
 
+### Traders and wayhouses
+
+| Trader | Region | Kept by | Faction | Sells | One a life |
+| --- | --- | --- | --- | --- | --- |
+| The Lamp & Ledger | the Drift | Wicket Arn | Rivet Moot | food, salvage, spores; hands and miners; Gleaners and Shearers | the workshop plan |
+| The Tallow Bell | the Middens | Deacon Ilmar Sloe | Lantern Synod | Glim, food, spores; engineers | the still room plan |
+| The Murmur | the Hush | (a Choirmoth swarm) | the Choir | Glim, two echoes, two clues | |
+| The Last Stop | the Shore | Ossory Vell | Cinder Pact | ore, ice, a chart of the Shore; pilots and hands; Talons and Halberds | Sabre plans |
+
+- **Trading:** at a trader's place the card offers **Trade** (`C`) instead of Go in. Their own dialog opens, then the usual trade screen with their stock, cogmarks included. Prices follow your standing with their faction, and they won't deal if you are Hostile.
+- **Special goods:** a room's plan lets you build that room this life; an echo goes to the Loom; a clue draws a circle round the next drive part; the chart shows the whole region; Sabre plans are remembered for good, like any blueprint.
+- **Lives:** once found, a trader stays on the chart in every later life. Its stock, and its one-of-each goods, come back each life.
+- **Wayhouses:** two in each region. At one, **Take the drifters aboard** (a day) brings 4 to 10 people, once a life. About a third of the time one of them has a name: someone who takes an empty post, or a pilot looking for a ship.
+- **Berths:** hiring and drifters stop at the berths (160, plus 40 for crew quarters). Events can still crowd the Forge, which costs morale.
+
 ### The muster and levels
 
 - **Levels:** a ship gains a level for every map it **launched on, survived and came home from**, once a map however often it docks, up to **level 5**. A ship that never leaves the bays gains nothing, and kills don't count (they stay on the pilot's record). Each level above the first adds 5% damage and hull. A good wing commander, a hangar trained in drills and a quick-study pilot can earn an extra level now and then. They never slow a level down.
@@ -345,8 +369,8 @@ The Forge tab shows a deck plan of **8 slots**. Rooms are built with ore, salvag
 | Mess hall (remember it first) | 1 | Morale settles 5 higher; hunger and thirst ease off twice as fast |
 | Infirmary (remember it first) | 1 | Every strain eases off faster, strain costs less, and the infirmary station opens |
 | Chart room (remember it first) | 1 | New clue circles are a third smaller |
-| Workshop | 1 | Repairs take a quarter less ore and salvage |
-| Still room | 1 | The crew drink a fifth less water |
+| Workshop (its plan first, from the Lamp & Ledger) | 1 | Repairs take a quarter less ore and salvage |
+| Still room (its plan first, from the Tallow Bell) | 1 | The crew drink a fifth less water |
 
 ### The drive's parts
 
@@ -682,6 +706,11 @@ Runs the headless tests:
   - cogmarks are worth 1 either way; a trader's purse limits what they pay out; settling makes the difference exactly; a dark stores station charges more; a new life has 60; Shearers find them in wrecks;
   - a map is told the mood, its causes, ship cost and strength; on the map a Dart costs 150% at 150%;
   - strain, strikes and All hands save and load exactly; older saves load with none.
+- **Traders and crew** (`tools/tradertest.js`): checks that:
+  - there are four traders, one in each region, never in a pocket or on a story place, reachable at the region's drive level; there are two wayhouses a region; the same seed places them the same way;
+  - a trader has no map to play, holds its own stock, prices by standing with its faction, and won't trade with the Hostile;
+  - the workshop needs its plan, which can be bought once a life; the next life, the plan is gone, the trader has one again and the chart still shows where it is; the Murmur sells echoes and a clue; the Last Stop sells Sabre plans and a chart;
+  - drifters come aboard once a life, some with names; they need berths, and hiring stops at the berths.
 - **The muster and levels** (`tools/mustertest.js`): checks that:
   - the hangar berths 10, an expanded hangar three more, and no trader sells a hull with every berth full;
   - eleven ships for ten berths call a muster, nothing stitches until it is settled, and keeping all eleven is refused; scrapping returns half the ore and moves the crew into the Forge (the pilot stands by); leaving adrift loses the ship and its crew, the pilot on the memorial;
@@ -779,6 +808,7 @@ content/core/voyage.yaml        every number behind the voyage (needs, life supp
 content/core/names.yaml         name generators (derelicts, and people)
 content/core/crew.yaml          named crew: officers' posts, the stations they run, traits, ship leads (the format is at the top)
 content/core/memories.yaml      the Loom: 31 memories, and the anchors where story memories wait
+content/core/traders.yaml       the four regional traders: where, whose, their dialog and stock
 content/core/hazards.yaml       hazards: what each closes, who reports it and what they say, the memory
                                 that opens it, its pockets per region and its colour on the chart
 content/core/races.yaml         races, and where their factions start
