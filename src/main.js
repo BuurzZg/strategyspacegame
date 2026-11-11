@@ -17,8 +17,10 @@ import { LoomScreen } from './ui/loom.js';
 import { BridgeScreen } from './ui/bridge.js';
 import { NarrationScreen } from './ui/narration.js';
 import { replayInto } from './engine/replay.js';
+import { watchErrors, initBugReport } from './ui/bugreport.js';
 
 const $ = (id) => document.getElementById(id);
+watchErrors(); // keep the last errors for a bug report (F8)
 const params = new URLSearchParams(location.search);
 const canvas = $('view');
 
@@ -158,6 +160,14 @@ function parseSave(t) {
   const raw = d && d.kind === 'voyage' ? { voyage: d } : d; // saves from before Milestone 12 held only the voyage
   raw.voyage = V.loadVoyage(rules, JSON.stringify(raw.voyage));
   return raw;
+}
+// A tester's bug report (F8), pasted whole or just its save: replays their game from the console,
+// driftforge.loadReport(text)
+function loadReport(text) {
+  const t = String(text), i = t.indexOf('\nSAVE\n');
+  const d = parseSave(i >= 0 ? t.slice(i + 6).trim() : t.trim());
+  if (!d) throw new Error('There is no save in that report');
+  loadData(d);
 }
 function readSave() { try { return parseSave(localStorage.getItem(SAVE_KEY)); } catch (e) { console.warn(e); return null; } }
 function writeSave(withMap = false) {
@@ -354,9 +364,23 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
   }
 })();
 
+// Reporting a bug (F8): what the game is doing, and the save to replay it
+initBugReport({
+  renderer,
+  save: () => (voyage ? snapshot() : null),
+  state: () => {
+    const v = voyage, w = session && session.world;
+    const o = {};
+    o.screen = w ? (session.onVoyage ? 'map' : 'practice map') : chart ? 'chart' : 'title';
+    if (v) Object.assign(o, { seed: v.seed, galaxy: v.length || 'full', life: (v.campaign && v.campaign.life) || 1, day: v.day });
+    if (w) Object.assign(o, { place: session.place || '', tick: w.frame, ships: w.actors.filter((a) => a.mobile && !a.dead).length });
+    return o;
+  },
+});
+
 // Console helpers (also used by the browser tests)
 window.driftforge = {
   get session() { return session; }, get world() { return session && session.world; }, get input() { return input; },
   get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; }, get bridge() { return bridge; },
-  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData,
+  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData, loadReport,
 };

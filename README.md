@@ -639,6 +639,7 @@ Choose **Proving Grounds** on the start screen: the Forge, its escorts and two G
 | Key | Action |
 | --- | --- |
 | `H` or `?` | Show or hide the controls card |
+| `F8` | Report a bug: what happened, what you expected, with the build, your browser and your save |
 
 ## The ships in this build
 
@@ -866,13 +867,27 @@ Runs the headless tests:
   - Pickets beat a Gnasher pack.
 - **Style** (`tools/styletest.js`): checks that:
   - every pair of text and background colours the screens use has a contrast of at least 4.5:1: the soot panels, the parchment chart (names, regions, the Veil, pencil, the Hands), telegrams (ink, the Gaunt's burned paper, the Choir's light, the standing stamps) and the gauges;
-  - every hull, in every faction's plating, stays within its budget: 40 meshes and 1,500 triangles under 5 units long, 80 and 3,500 under 20, 130 and 9,000 above; a 40-a-side battle of the line comes to about 1,800 meshes and 57,000 triangles;
+  - every hull, in every faction's plating, stays within its budget: 40 meshes and 1,500 triangles under 5 units long, 80 and 3,500 under 20, 130 and 9,000 above; a 40-a-side battle of the line stays under 1,400 meshes and 70,000 triangles (about 1,310 and 57,000: gun barrels, coils and stack fittings are merged into one mesh each);
   - every faction that builds ships has its plating, the Rivet Moot's is patched and the Synod's is cream, and no two share a colour;
   - the Forge has three smokestacks, a halberd and a sabre have theirs, a dart has none; big plates have portholes; halberds, pickets and sabres carry spinning rotary guns; creatures, the Choir, the Wound and wrecks get no steam;
   - the Spindle's lance throws lightning and the Choir's light stays a beam;
   - every kind of place has a wax seal with a colour and a letter, gauges sweep their full arc and warn when low, and the medallions and cause icons are labelled.
 
 To look at the models, open `/tools/gallery.html` on the local server (`?faction=rivet` for another plating, `?only=forge` for one hull).
+
+### Tester builds
+
+```bash
+bash tools/build-qa.sh qa-1
+```
+
+Copies the game into `dist/driftforge-qa-1/`, stamps the build (its name, the commit and the date) into `src/version.js` so it shows at the foot of the title screen and in every bug report, adds a README for players, and zips it as `dist/driftforge-qa-1-itch.zip` with `index.html` at the top, ready for itch.io (a project of kind HTML, played in the browser). `guide.html` is the tester guide: the controls, what to test and how to report a bug.
+
+Testers report bugs with `F8` (or **Report a bug** on the title screen): what happened and what they expected, plus the build, the browser, the screen, what the game was doing (seed, life, day, place), its last errors and, unless they untick it, the save. They copy it or save it as a file and send it on. To replay their game, paste the whole report into the browser console:
+
+```js
+driftforge.loadReport(`...the report...`)
+```
 
 ```bash
 npm run check

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driftforge tester guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cutive+Mono&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root { --paper: #e9dcbc; --ink: #3b2a1a; --ink-soft: #5d4519; --brass: #c9a04e; --brass-dk: #8c6a2c; --rule: rgba(59, 42, 26, 0.25); --table: #16130f; }
+  * { box-sizing: border-box; }
+  html { background: var(--table); }
+  body { margin: 0; padding: 32px 16px 48px; color: var(--ink); font: 17px/1.6 'Spectral', Georgia, serif; }
+  main { max-width: 760px; margin: 0 auto; background: var(--paper); padding: 34px clamp(18px, 5vw, 48px) 40px; border-radius: 3px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), inset 0 0 80px rgba(120, 80, 30, 0.25); }
+  h1 { margin: 0; font: 40px/1.1 'IM Fell English SC', Georgia, serif; letter-spacing: 0.04em; }
+  h2 { margin: 30px 0 8px; font: 25px 'IM Fell English SC', Georgia, serif; letter-spacing: 0.03em; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+  h3 { margin: 18px 0 6px; font: italic 19px 'IM Fell English', Georgia, serif; }
+  .lede { font-style: italic; font-family: 'IM Fell English', Georgia, serif; font-size: 19px; margin: 6px 0 0; }
+  .build { font: 13px 'Cutive Mono', monospace; color: var(--ink-soft); margin: 4px 0 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 6px 0 4px; }
+  th, td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { width: 38%; font-weight: 500; }
+  kbd { font: 13px 'Cutive Mono', monospace; background: #f3e8cc; border: 1px solid var(--brass-dk); border-radius: 3px; padding: 0 5px; white-space: nowrap; }
+  ul, ol { padding-left: 22px; margin: 6px 0; }
+  li { margin: 3px 0; }
+  .box { border: 1px solid var(--brass-dk); background: rgba(201, 160, 78, 0.14); border-radius: 3px; padding: 10px 14px; margin: 12px 0; }
+  a { color: #1f5a50; }
+  .play { display: inline-block; margin-top: 14px; padding: 8px 18px; border-radius: 3px; text-decoration: none; color: #241a0c; font: 18px 'IM Fell English SC', Georgia, serif;
+    background: radial-gradient(circle at 35% 30%, #f1d58e, var(--brass) 55%, var(--brass-dk)); box-shadow: 0 3px 0 #5d4519; }
+  @media (max-width: 560px) { body { padding: 0; } main { border-radius: 0; } th { width: 45%; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Driftforge</h1>
+  <p class="lede">A tester's guide: what to play, what to look for, and how to tell us when something breaks.</p>
+  <p class="build">Tester build. The exact build is printed at the bottom of the title screen.</p>
+  <a class="play" href="index.html">Play</a>
+
+  <h2>What this is</h2>
+  <p>You wake on the bridge of the <b>Forge</b>, a kilometre-long foundry ship stranded in a galaxy of scrap, with no memory of who you are. You cross the star chart place by place, keep your people fed, watered and breathing, fight what you have to, and piece together what happened. <b>When you die, you wake again</b> in the same galaxy: what you remembered stays, almost everything else is lost. A whole campaign takes several lives.</p>
+  <p>It's an early build. Balance isn't final (that's the next milestone), and some things will be rough. That's why we need you.</p>
+
+  <h2>Before you start</h2>
+  <ul>
+    <li>Play on a <b>desktop or laptop with a mouse</b> (a scroll wheel and right button matter). Chrome, Edge, Firefox and Safari all work. Phones run it, but it's not made for them yet.</li>
+    <li>Turn the sound on. It starts after your first click.</li>
+    <li>Your campaign <b>saves by itself in this browser</b>. Clearing your browser's site data, or a private window, loses it.</li>
+    <li>For your first life, leave <b>Guide me through my first life</b> ticked. Hint cards explain each screen the first time you see it.</li>
+    <li>Press <kbd>H</kbd> any time on a map for the full list of controls.</li>
+  </ul>
+
+  <h2>Controls</h2>
+  <h3>The star chart (between places)</h3>
+  <table>
+    <tr><th>Click a place</th><td>Its card: what is known, and the route there</td></tr>
+    <tr><th><kbd>Enter</kbd></th><td>The card's first action: stitch there, or go in</td></tr>
+    <tr><th>Right-drag, scroll</th><td>Rotate, zoom</td></tr>
+    <tr><th>Drag, <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></th><td>Pan</td></tr>
+    <tr><th><kbd>F</kbd> or <kbd>Home</kbd></th><td>Back to the Forge</td></tr>
+    <tr><th><kbd>B</kbd> / <kbd>L</kbd></th><td>The bridge (your crew) / the Loom (your memories)</td></tr>
+    <tr><th><kbd>C</kbd></th><td>Hail whoever holds the place you're at, or trade with a trader</td></tr>
+    <tr><th><kbd>1</kbd>–<kbd>9</kbd></th><td>Answer a message (the brass keys)</td></tr>
+  </table>
+  <h3>On a map (inside a place)</h3>
+  <table>
+    <tr><th>Right-drag / scroll / middle-drag</th><td>Rotate / zoom / pan the camera</td></tr>
+    <tr><th>Left-click, left-drag</th><td>Select a ship, box-select</td></tr>
+    <tr><th>Right-click empty space</th><td>Open the movement disc; move the mouse to place the point, hold <kbd>Shift</kbd> to raise or lower it, left-click to go</td></tr>
+    <tr><th>Right-click an enemy</th><td>Attack it (with warships selected)</td></tr>
+    <tr><th><kbd>B</kbd></th><td>Build ships</td></tr>
+    <tr><th><kbd>Home</kbd> / <kbd>F</kbd></th><td>Find the Forge / follow the selection</td></tr>
+    <tr><th><kbd>Tab</kbd></th><td>The tactical plot: the whole map from above</td></tr>
+    <tr><th><kbd>T</kbd> / <kbd>V</kbd></th><td>Formation / stance of the selected ships</td></tr>
+    <tr><th>Spool the Skein (bottom right)</th><td>Leave the place: recall your ships first, or they're left behind</td></tr>
+    <tr><th><kbd>H</kbd></th><td>All the controls</td></tr>
+  </table>
+
+  <h2>What to test</h2>
+  <p>Just play, as long as you like. We especially want to hear about:</p>
+  <ol>
+    <li><b>The first hour.</b> Did you understand what to do after waking? Which hint or screen confused you?</li>
+    <li><b>The star chart.</b> Can you read it: the wax seals, the inked lanes, the dashed hazard lanes, the pencil clue circles? Could you plan a route?</li>
+    <li><b>Staying alive.</b> Water, food, air, Glim and the boilers are the brass gauges at the top. Did a shortage surprise you, or feel unfair?</li>
+    <li><b>Fights on maps.</b> Selecting, moving in 3D, building ships, leaving with the Skein. What felt clumsy?</li>
+    <li><b>Dying and waking.</b> Was it clear what you kept (memories, the chart) and what you lost? Did the next life feel like progress?</li>
+    <li><b>The Loom, the bridge and the deck plan.</b> Did you find them? Did they make sense?</li>
+    <li><b>Talking to factions and traders</b> (the telegraph cards).</li>
+    <li><b>Speed.</b> If it stutters, tell us when (a big fight, the chart, opening a screen) and on what computer.</li>
+    <li><b>Anything that looks wrong:</b> text you can't read, things overlapping, a ship flying through something, a screen that won't close.</li>
+  </ol>
+  <p>How far you got matters too: what life, what day, and which region (the Drift, the Middens, the Hush, the Shore).</p>
+
+  <h2>How to report a bug</h2>
+  <div class="box">
+    <ol>
+      <li>When something goes wrong, press <kbd>F8</kbd> right away (or <b>Report a bug</b> on the title screen).</li>
+      <li>Write what happened and what you expected. A sentence each is enough.</li>
+      <li>Leave <b>Include my save</b> ticked: it lets us replay your game exactly up to that moment.</li>
+      <li>Press <b>Copy the report</b> and paste it into a message, or <b>Save it as a file</b> and attach it.</li>
+      <li>Send it to whoever gave you the game. A screenshot helps too.</li>
+    </ol>
+  </div>
+  <p>The report holds the build, your browser and screen size, what the game was doing (seed, life, day, place), its last error messages, and your save. Nothing is sent anywhere by itself: you choose what to share.</p>
+  <p>For things that aren't bugs (ideas, "this was boring", "this was great") just write to us. That's as useful as a bug.</p>
+
+  <h2>Known rough edges</h2>
+  <ul>
+    <li>A full campaign is long, and lives can be too long; the balance across lives comes in the next build.</li>
+    <li>Very big fights can be slow on older computers: tell us if it stutters, and on what.</li>
+    <li>Saves from older builds should load. If yours doesn't, start a new campaign and tell us.</li>
+  </ul>
+  <p>Thank you for playing.</p>
+</main>
+</body>
+</html>

@@ -76,7 +76,7 @@ check(!over_.length, `every hull within its budget (40 meshes / 1500 triangles u
 const line = ['dart', 'talon', 'picket', 'halberd', 'spindle', 'sabre'], meridian = styles.find((s) => s.id === 'meridian'), gauntS = styles.find((s) => s.id === 'gaunt');
 let calls = 0, tris = 0;
 for (let i = 0; i < 40; i++) for (const st of [meridian, gauntS]) { const c = count(buildShip(line[i % line.length], st)); calls += c.meshes; tris += c.tris; }
-check(calls <= 2400 && tris <= 120000, `40 a side: ${calls} meshes and ${tris} triangles (budget 2400 and 120000)`);
+check(calls <= 1400 && tris <= 70000, `40 a side: ${calls} meshes and ${tris} triangles (budget 1400 and 70000; gun barrels, coils and stack fittings are merged into one mesh each)`);
 
 // ---------------------------------------------------------------- the pieces
 const plated = styles.filter((s) => !['choir', 'fauna', 'wound'].includes(s.id));

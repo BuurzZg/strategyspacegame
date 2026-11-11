@@ -569,6 +569,20 @@ kbd { background: #2c251d; border-color: var(--brass-dk); color: #f3e2b8; font-f
 /* the deck plan: the Forge in cutaway (Milestone 23) */
 #fp-body .deck-cut { display: block; width: 100%; height: auto; margin: 4px 0 6px; }
 
+/* testing: the bug report and the title screen's foot */
+.title-foot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 16px 0 0 !important; max-width: none !important; font-size: 13px; }
+.title-foot button { background: none; border: 1px solid var(--brass-dk); border-radius: 3px; padding: 3px 10px; color: var(--text); }
+.title-foot button:hover { border-color: var(--brass); }
+.title-foot a { color: var(--accent); }
+.title-foot [data-build] { margin-left: auto; font: 11px var(--f-mono); color: var(--muted); letter-spacing: 0.06em; }
+#bugreport { z-index: 70; }
+#bugreport .modal-card { width: min(620px, 100%); }
+#bugreport .br-field { display: grid; gap: 4px; margin: 10px 0; font-size: 14px; color: var(--muted); }
+#bugreport textarea { width: 100%; box-sizing: border-box; background: #14110d; color: var(--text); border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; font: 14px var(--f-body); resize: vertical; }
+#bugreport #br-text { font: 11px var(--f-mono); margin-top: 6px; }
+#bugreport .br-done { min-height: 1.4em; margin: 6px 0 !important; color: var(--good); font-size: 13px; }
+#bugreport details { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
 /* the map's instruments: water, food and air gauges and the crew's medallion beside the place plate */
 /* two rows: the brand, the place and the buttons; then the instruments and the hold */
 #top { flex-wrap: wrap; row-gap: 4px; }
@@ -810,6 +824,7 @@ body.at-narration #chart, body.at-narration #overlay { visibility: hidden; }
           <button id="launch-new" type="button" hidden>Reset practice</button>
         </div>
       </details>
+      <p class="title-foot"><button type="button" data-bugreport>Report a bug <kbd>F8</kbd></button><a href="guide.html" target="_blank" rel="noopener">Tester guide</a><span data-build></span></p>
     </div>
   </div>
 
@@ -1004,6 +1019,10 @@ body.at-narration #chart, body.at-narration #overlay { visibility: hidden; }
       <dt><kbd>Left-click</kbd></dt><dd>Engage</dd>
       <dt><kbd>Right-click</kbd> <kbd>Esc</kbd></dt><dd>Cancel</dd>
     </dl>
+    <h3>Testing</h3>
+    <dl>
+      <dt><kbd>F8</kbd></dt><dd>Report a bug: what happened, with your save</dd>
+    </dl>
   </aside>
 
   <div id="fleetbar" hidden aria-label="Fleet orders">
@@ -1020,6 +1039,18 @@ body.at-narration #chart, body.at-narration #overlay { visibility: hidden; }
     <span><kbd>Right-click</kbd> cancel</span>
   </div>
   <p id="boot-error" hidden role="alert"></p>
+</div>
+<div id="bugreport" class="modal" hidden role="dialog" aria-labelledby="br-title">
+  <div class="modal-card">
+    <h2 id="br-title">Report a bug</h2>
+    <p class="setup-note">Say what happened and what you expected. The report adds the build, your browser and what the game was doing, and your save if the box is ticked, so the bug can be replayed exactly. Then copy it or save it, and send it to whoever gave you the game.</p>
+    <label class="br-field">What happened?<textarea id="br-what" rows="3" placeholder="I stitched to the Quill Still and the chart went black..."></textarea></label>
+    <label class="br-field">What did you expect?<textarea id="br-expect" rows="2" placeholder="To arrive and see the place card."></textarea></label>
+    <label class="check"><input id="br-save" type="checkbox" checked> Include my save (it helps us replay the bug)</label>
+    <div class="launch-row"><button id="br-copy" type="button" class="primary">Copy the report</button><button id="br-download" type="button">Save it as a file</button><button id="br-close" type="button">Close</button></div>
+    <p id="br-done" class="br-done" aria-live="polite"></p>
+    <details><summary>The report (<span id="br-size"></span>)</summary><textarea id="br-text" rows="8" readonly aria-label="The full report"></textarea></details>
+  </div>
 </div>
 <script type="module" src="src/main.js"></script>
 <!--DF:BODY-END-->

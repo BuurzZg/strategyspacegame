@@ -109,13 +109,32 @@ function wedge(len, w0, w1, h) {
   });
 }
 
-// A rotary gun: a ring of barrels round a hub, pointing along +X, that spins (out.spin)
+// Several parts as one geometry, so they cost one draw call: [geometry, x, y, z, rx, ry, rz]
+const mtx = new THREE.Matrix4(), eul = new THREE.Euler();
+function merged(key, parts) {
+  return G(key, () => {
+    const pos = [], nor = [], uv = [];
+    for (const [geo, x, y, z, rx = 0, ry = 0, rz = 0] of parts) {
+      const g = (geo.index ? geo.toNonIndexed() : geo.clone()).applyMatrix4(mtx.compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(eul.set(rx, ry, rz)), new THREE.Vector3(1, 1, 1)));
+      pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); if (g.attributes.uv) uv.push(...g.attributes.uv.array);
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    if (uv.length === (pos.length / 3) * 2) out.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    return out;
+  });
+}
+
+// A rotary gun: a ring of barrels round a brass hub, pointing along +X, that spins (out.spin).
+// Two draw calls: the barrels, and the brass.
 function rotary(body, x, y, z, r, len, n, M, out) {
   const g = new THREE.Group();
   g.position.set(x, y, z);
-  part(cyl(r * 0.55, r * 0.7, len * 0.3, 8), M.brass, -len * 0.35, 0, 0, g, 0, 0, Math.PI / 2);
-  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; part(cyl(r * 0.18, r * 0.18, len, 5), M.dark, 0, Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, g, 0, 0, Math.PI / 2); }
-  part(cyl(r * 0.62, r * 0.62, len * 0.06, 8), M.brass, len * 0.42, 0, 0, g, 0, 0, Math.PI / 2);
+  const barrels = [];
+  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; barrels.push([cyl(r * 0.18, r * 0.18, len, 5), 0, Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, 0, 0, Math.PI / 2]); }
+  part(merged(`rotb${r},${len},${n}`, barrels), M.dark, 0, 0, 0, g);
+  part(merged(`roth${r},${len}`, [[cyl(r * 0.55, r * 0.7, len * 0.3, 8), -len * 0.35, 0, 0, 0, 0, Math.PI / 2], [cyl(r * 0.62, r * 0.62, len * 0.06, 8), len * 0.42, 0, 0, 0, 0, Math.PI / 2]]), M.brass, 0, 0, 0, g);
   body.add(g);
   out.spin.push({ obj: g, speed: 3 });
   return g;
@@ -174,9 +193,9 @@ function steamwork(type, out, M) {
   }
   out.stacks = [];
   for (const [x, y, z, r, ht] of spots) {
+    // the stack in iron; its brass cap and band as one part
     part(cyl(r, r * 1.18, ht, 8), M.dark, x, y + ht / 2, z, body);
-    part(cyl(r * 1.3, r * 1.3, ht * 0.14, 8), M.brass, x, y + ht * 0.95, z, body);
-    part(cyl(r * 1.22, r * 1.22, ht * 0.08, 8), M.copper, x, y + ht * 0.35, z, body);
+    part(merged(`stk${r},${ht}`, [[cyl(r * 1.3, r * 1.3, ht * 0.14, 8), 0, ht * 0.95, 0], [cyl(r * 1.22, r * 1.22, ht * 0.08, 8), 0, ht * 0.35, 0]]), M.brass, x, y, z, body);
     const vent = new THREE.Object3D();
     vent.position.set(x, y + ht * 1.05, z);
     body.add(vent);
@@ -359,7 +378,7 @@ export function buildShip(type, style) {
       part(cyl(0.18, 0.18, 4.4, 8), M.dark, 1.7, 0, 0, body, 0, 0, Math.PI / 2);
       part(cyl(0.32, 0.16, 0.45, 8), M.light, 4.0, 0, 0, body, 0, 0, -Math.PI / 2);
       // copper coils along the lance, and a brass ball at its tip where the lightning leaves
-      for (const x of [0.7, 1.15, 1.6, 2.05, 2.5, 2.95]) part(torus(0.36, 0.07, 14), M.copper, x, 0, 0, body, 0, Math.PI / 2, 0);
+      part(merged('coils', [0.7, 1.15, 1.6, 2.05, 2.5, 2.95].map((x) => [torus(0.36, 0.07, 14), x, 0, 0, 0, Math.PI / 2, 0])), M.copper, 0, 0, 0, body);
       part(G('tesla', () => new THREE.IcosahedronGeometry(0.3, 1)), M.brass, 4.45, 0, 0, body);
       part(box(3.4, 0.6, 0.75), M.hull, -0.6, 0, 0, body);
       part(box(2.2, 0.25, 1.1), M.dark, -0.9, -0.38, 0, body);
