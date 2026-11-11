@@ -18,6 +18,7 @@
 #   Hints       hint cards for a guided first voyage
 #   Crew        named crew: officers' posts, traits, ship leads
 #   Memories    the Loom: memories, and the anchors where story memories wait
+#   Hazards     routes closed until remembered: asteroid shoals, ember lanes, static fields, the Glare
 
 Pack:
 	Id: core
@@ -39,3 +40,4 @@ Pack:
 	Hints: hints.yaml
 	Crew: crew.yaml
 	Memories: memories.yaml
+	Hazards: hazards.yaml

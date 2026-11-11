@@ -1,0 +1,49 @@
+# Hazards: routes closed until Jacob remembers what gets the Forge through (PLAN.md §5). The
+# generator carves pockets out of a region: a few places whose every lane in from outside
+# carries the hazard. No way in with damage: the lanes stay closed until the memory is known,
+# and then they open in every life. Trying to go in, the officer at that post says why.
+#
+#   Name        what the chart and the officers call it
+#   Opens       the memory that gets the Forge through (memories.yaml)
+#   Report      the post whose officer reports it (crew.yaml), and Say: what they say
+#   Pockets     how many pockets in each region; Size: places in each one (min-max)
+#   Inner       true: the pocket is cut from the region's inner edge (near the dead star)
+#   Color       how its lanes are drawn on the chart
+# Places in a pocket yield more, and each pocket keeps a sealed cache of echoes.
+
+shoals:
+	Name: asteroid shoals
+	Opens: shields
+	Report: engineer
+	Say: Shields are dead, Captain. Take her into that field and the rocks will open us like a tin.
+	Pockets: Drift 1, Middens 1
+	Size: 3-5
+	Color: c8873a
+
+embers:
+	Name: ember lanes
+	Opens: baffles
+	Report: engineer
+	Say: The boilers can't shed that heat. We'd cook before we got through.
+	Pockets: Drift 1
+	Size: 3-4
+	Inner: true
+	Color: e0602a
+
+static:
+	Name: static fields
+	Opens: rods
+	Report: watch
+	Say: Every needle on the board is spinning. We'd be stitching blind.
+	Pockets: Middens 1, Hush 1
+	Size: 3-5
+	Color: 6aa8ff
+
+glare:
+	Name: the Glare
+	Opens: lead
+	Report: surgeon
+	Say: Half the crew would be sick in a day. The rest in two.
+	Pockets: Middens 1, Hush 1
+	Size: 3-5
+	Color: c8d84a

@@ -15,6 +15,11 @@ import { weights } from '../engine/content.js';
 //   tier 3  + Anchor Spindle (200)        the Shore
 // The generator checks this: each region can be reached, all of it, at its own tier and not
 // before, and each component lies where the drive that can fetch it can get to.
+//
+// Hazard pockets (hazards.yaml) are the exception: a few places in a region whose every lane
+// in from outside carries a hazard, closed until the memory that gets the Forge through is
+// remembered (a drive's `hazards`). Everything outside the pockets stays reachable without
+// them, so a single life can always get home.
 
 const nums = (v) => String(v).split(',').map((s) => +s.trim());
 const LANES_PER_POINT = 4;
@@ -31,11 +36,13 @@ export function driveOf(rules, installed = []) {
     if (it.Veil === 'true' || it.Veil === true) veil = true;
     if (it.FinalJump === 'true' || it.FinalJump === true) finalJump = true;
   }
-  return { range, veil, finalJump };
+  return { range, veil, finalJump, hazards: [] };
 }
 
-// Can a lane be stitched with this drive?
-export const laneOpen = (lane, drive) => lane.len <= drive.range && (!lane.veil || drive.veil);
+// Can a lane be stitched with this drive? (drive.hazards: the hazards it can go through)
+export const laneOpen = (lane, drive) => lane.len <= drive.range && (!lane.veil || drive.veil) && (!lane.hazard || (!!drive.hazards && drive.hazards.includes(lane.hazard)));
+// A drive that can go anywhere: for asking what is in the way
+export const anyDrive = (rules) => ({ range: 1e9, veil: true, finalJump: true, hazards: Object.keys(rules.content.hazards || {}) });
 
 // The drive levels in repair order: what you have after fitting each component in turn.
 export function tiers(rules) {
@@ -240,8 +247,70 @@ export function generateGalaxy(rules, seed, { short = false } = {}) {
     p.type = A.Type; p.relic = A.id; p.name = A.Name ? A.Name[0].toUpperCase() + A.Name.slice(1) : p.name;
     components[A.id] = p.id;
   }
+  const pockets = carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, short });
 
-  return { seed: seed | 0, short, points, lanes, adj, start, components, veil, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
+  return { seed: seed | 0, short, points, lanes, adj, start, components, veil, pockets, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
+}
+
+// 9. Hazard pockets (hazards.yaml): a few places in a region, cut off by a hazard on every lane
+// in from outside. Never the wake-up point, an anchor, a derelict, a station or a place next to
+// another pocket; and everything outside the pockets can still be reached at its region's tier
+// without any hazard opened. Each pocket keeps one cache (relic `cache-N`) in a wreck. Its own
+// dice, so nothing else moves. Returns [ { id: 'cache-N', hazard, places: [ids], cache: id } ].
+function carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, short }) {
+  const hrng = new Random(hashMix(seed | 0, 0x4a2d) || 1), pockets = [];
+  const hops = hopsFrom(points.length, lanes, start);
+  const other = (li, i) => { const l = lanes[li]; return l.a === i ? l.b : l.a; };
+  const taken = (p) => p.id === start || !!p.relic || !!p.seat || p.type === 'StillWater' || !!p.pocket;
+  const nearPocket = (i) => adj[i].some((li) => !!points[other(li, i)].pocket);
+  const ok = (p, region) => p.region === region && !taken(p) && !nearPocket(p.id) && hops[p.id] >= 2;
+  // everything outside the pockets (and outside `cell`) reachable at its own tier?
+  const outsideOk = (cell) => regions.every((R, ri) => {
+    const seen = reach(points.length, lanes, start, tierFor(ri));
+    return points.every((p) => p.ri !== ri || p.pocket || cell.has(p.id) || seen[p.id]);
+  });
+  const W = C.names.Wrecks || {}, first = String(W.First || 'Lost').split(',').map((s) => s.trim()), second = String(W.Second || 'Ship').split(',').map((s) => s.trim());
+  const names = new Set(points.map((p) => p.name));
+  for (const H of Object.values(C.hazards || {})) {
+    const [smin, smax] = String(H.Size || '3-5').split('-').map(Number);
+    for (const [region, n] of weights(H.Pockets)) {
+      const ri = regions.findIndex((R) => R.id === region);
+      if (ri < 0) continue;
+      for (let k = 0; k < n; k++) {
+        for (let tries = 0; tries < 12; tries++) {
+          let cand = points.filter((p) => ok(p, region));
+          // ember lanes: the region's inner edge, nearest the dead star
+          if (H.Inner === 'true' || H.Inner === true) cand = cand.sort((a, b) => a.r - b.r || a.id - b.id).slice(0, Math.max(1, Math.trunc(cand.length / 3)));
+          if (!cand.length) break;
+          const size = short ? smin : smin + hrng.int(Math.max(1, (smax || smin) - smin + 1));
+          const cell = [cand[hrng.int(cand.length)].id], inCell = new Set(cell);
+          while (cell.length < size) {
+            const front = new Set();
+            for (const i of cell) for (const li of adj[i]) { const j = other(li, i); if (!inCell.has(j) && ok(points[j], region) && laneOpen(lanes[li], tierFor(ri))) front.add(j); }
+            if (!front.size) break;
+            const f = [...front].sort((a, b) => a - b), j = f[hrng.int(f.length)];
+            cell.push(j); inCell.add(j);
+          }
+          if (cell.length < smin) continue;
+          const border = [];
+          lanes.forEach((l, li) => { if (inCell.has(l.a) !== inCell.has(l.b)) border.push(li); });
+          for (const li of border) lanes[li].hazard = H.id;
+          if (!outsideOk(inCell)) { for (const li of border) delete lanes[li].hazard; continue; }
+          const id = `cache-${pockets.length + 1}`, at = cell[hrng.int(cell.length)], q = points[at];
+          for (const i of cell) points[i].pocket = H.id;
+          q.relic = id;
+          if (q.type !== 'Wreck') {
+            q.type = 'Wreck'; q.ship = '';
+            for (let m = 0; m < 40 && (!q.ship || names.has(`Wreck of the ${q.ship}`)); m++) q.ship = `${hrng.pick(first)} ${hrng.pick(second)}`;
+            q.name = `Wreck of the ${q.ship}`; names.add(q.name);
+          }
+          pockets.push({ id, hazard: H.id, places: cell.sort((a, b) => a - b), cache: at });
+          break;
+        }
+      }
+    }
+  }
+  return pockets;
 }
 
 // lanes per place: arrays of lane indices

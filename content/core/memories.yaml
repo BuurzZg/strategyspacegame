@@ -12,8 +12,10 @@
 #                it needs are known
 #   Blueprint    a blueprint item that also brings it back (a wreck of that hull, a trader)
 #   Gives        what it does: radar (the chart's sensors), drive <part> (a Skein Drive part,
-#                items.yaml), hull <ship> (the foundry can build it), echoes <n>
+#                items.yaml), hull <ship> (the foundry can build it), echoes <n>, open <hazard>
+#                (its lanes open, hazards.yaml)
 #   Echoes       echoes it gives when it comes back
+#   Seen         a hazard (hazards.yaml): it can be recalled only once you have been turned away by it
 #   Ready        false: its system comes in a later milestone; until then it stays a question mark
 #
 # Anchors: where story memories wait. The generator places each one in its region, a number of
@@ -200,32 +202,44 @@ shields:
 	Kind: ability
 	Branch: forge
 	Order: 1
-	Ready: false
-	Hint: The rocks are thick in some lanes.
+	Seen: shoals
+	Cost: 2
+	Gives: open shoals
+	Text: The shield generators hum awake. The asteroid shoals open.
+	Hint: Turned away from a shoal, the engineers can't stop talking about the shields. Two echoes, and someone remembers how they worked.
 
 baffles:
 	Name: Heat baffles
 	Kind: ability
 	Branch: forge
 	Order: 2
-	Ready: false
-	Hint: Close to the dead star, the hull would cook.
+	Seen: embers
+	Cost: 2
+	Gives: open embers
+	Text: The boilers' heat baffles, rebuilt from memory. The ember lanes near Orrin open.
+	Hint: Close to the dead star, the hull would cook. Someone once knew how to shed that heat.
 
 rods:
 	Name: Lightning rods
 	Kind: ability
 	Branch: forge
 	Order: 3
-	Ready: false
-	Hint: Every needle spins in the storms.
+	Seen: static
+	Cost: 2
+	Gives: open static
+	Text: Brass rods along the spine to bleed the storms off. The static fields open.
+	Hint: Every needle spins in the storms. There used to be rods for that.
 
 lead:
 	Name: Lead-lined decks
 	Kind: ability
 	Branch: forge
 	Order: 4
-	Ready: false
-	Hint: A light that makes people sick.
+	Seen: glare
+	Cost: 2
+	Gives: open glare
+	Text: The crew line the decks with lead, and the surgeon stops looking worried. The Glare opens.
+	Hint: A light that makes people sick. The old decks had lead in them for a reason.
 
 silent:
 	Name: Silent running

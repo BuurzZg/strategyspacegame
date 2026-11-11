@@ -80,6 +80,10 @@ Voyage:
 	# a place yields less each time it is visited again (percent per visit; never below Floor)
 	RevisitPct: 35
 	RevisitFloor: 30
+	# hazard pockets (hazards.yaml): their places yield more (percent), and each one's cache
+	# holds this many echoes, once in a campaign
+	PocketRichness: 150
+	CacheEchoes: 2
 
 # The Forge's systems, in the order the Forge screen lists them.
 Systems:

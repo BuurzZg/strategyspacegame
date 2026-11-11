@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [], Hazards: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -62,6 +62,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.memories = Object.fromEntries(mem.filter(([k]) => k !== 'Anchors').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   const anc = mem.find(([k]) => k === 'Anchors');
   rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
+  rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -95,7 +96,7 @@ export function lintContent(rules) {
   for (const e of Object.values(rules.content.events || {})) {
     errs.push(...lintDialog(rules, e));
     if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
-    if (e.Item && !rules.content.items[e.Item] && !(rules.content.memories || {})[e.Item]) errs.push(`events: ${e.id}.Item: unknown item or memory "${e.Item}"`);
+    if (e.Item && !rules.content.items[e.Item] && !(rules.content.memories || {})[e.Item] && !(rules.content.hazards || {})[e.Item]) errs.push(`events: ${e.id}.Item: unknown item, memory or hazard "${e.Item}"`);
   }
   for (const [id, f] of Object.entries(factions)) {
     if (f.Dialog && !(rules.content.dialogs || {})[f.Dialog]) errs.push(`factions: ${id}.Dialog: no dialog "${f.Dialog}"`);
@@ -139,8 +140,15 @@ export function lintContent(rules) {
       if (op === 'drive' && items[arg]?.Kind !== 'drive') errs.push(`memories: ${id}.Gives: unknown drive part "${arg}"`);
       else if (op === 'hull' && !rules.actors.has(arg)) errs.push(`memories: ${id}.Gives: unknown ship "${arg}"`);
       else if (op === 'echoes' && !(+arg > 0)) errs.push(`memories: ${id}.Gives: echoes needs a number`);
-      else if (!['radar', 'drive', 'hull', 'echoes'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
+      else if (op === 'open' && !(rules.content.hazards || {})[arg]) errs.push(`memories: ${id}.Gives: unknown hazard "${arg}"`);
+      else if (!['radar', 'drive', 'hull', 'echoes', 'open'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
     }
+  }
+  for (const [id, m] of Object.entries(M)) if (m.Seen && !(rules.content.hazards || {})[m.Seen]) errs.push(`memories: ${id}.Seen: unknown hazard "${m.Seen}"`);
+  for (const [id, h] of Object.entries(rules.content.hazards || {})) {
+    if (!M[h.Opens]) errs.push(`hazards: ${id}.Opens: unknown memory "${h.Opens}"`);
+    if (!crew.posts[h.Report]) errs.push(`hazards: ${id}.Report: unknown post "${h.Report}"`);
+    for (const [r] of weights(h.Pockets)) if (!(rules.content.regions || {})[r]) errs.push(`hazards: ${id}.Pockets: unknown region "${r}"`);
   }
   for (const [id, a] of Object.entries(A)) {
     if (!(rules.content.regions || {})[a.Region]) errs.push(`memories: Anchors.${id}.Region: unknown region "${a.Region}"`);

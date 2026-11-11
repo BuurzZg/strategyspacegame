@@ -6,9 +6,9 @@ import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar 
 import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart, crewHolds } from './comms.js';
 import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
-import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
+import { generateGalaxy, driveOf, anyDrive, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
 import { lifeOf, lifeMix, remembers, markMemory, memoryOfBlueprint, givesOf, buildable } from './life.js';
-import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
+import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerOf, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
 
 // The voyage: one life of a campaign on the galaxy map. Plain data (it saves as JSON) plus pure,
 // deterministic functions that act on it. The campaign (what outlasts a death) rides along in
@@ -149,10 +149,22 @@ export function remember(rules, s, id, { quiet = false } = {}) {
 }
 // Everything waiting at an anchor comes back (cutting into its hulk).
 export function recover(rules, s, anchor) {
+  if (isCache(anchor)) { openCache(rules, s, anchor); return []; }
   const got = [];
   for (const m of Object.values(rules.content.memories)) if (m.Found === anchor && m.Ready !== 'false' && remember(rules, s, m.id)) got.push(m.id);
   if (got.length) { trigger(rules, s, galaxyOf(rules, s), 'found', { item: got.find((x) => rules.content.memories[x].Kind === 'knowledge') || got[0] }); clues(rules, s); }
   return got;
+}
+// A pocket's cache (galaxy.js): opened once in the whole campaign, for echoes.
+const isCache = (id) => /^cache-/.test(String(id || ''));
+function openCache(rules, s, id) {
+  const caches = (s.campaign.caches ||= {});
+  if (caches[id]) return 0;
+  const n = num(rules.content.voyage, 'CacheEchoes') || 2;
+  caches[id] = { life: lifeOf(s), day: s.day | 0 };
+  s.campaign.echoes = (s.campaign.echoes | 0) + n;
+  note(s, `Inside the strongbox: letters in your own hand, that you don't remember writing. +${n} echoes.`, 'memory');
+  return n;
 }
 // Recalling a memory on the Loom with echoes: { ok, why, cost }.
 export function recallPlan(rules, s, id) {
@@ -160,6 +172,7 @@ export function recallPlan(rules, s, id) {
   if (!M) return no('No such memory.');
   if (remembers(s, id)) return no('Already remembered.');
   if (M.Ready === 'false') return no('Not yet.');
+  if (M.Seen && !(s.campaign.hazards || []).includes(M.Seen)) return no(`Not yet: it comes back once the ${rules.content.hazards[M.Seen].Name} turn the Forge away.`);
   if (M.Cost === undefined) return no(M.Found ? 'It waits somewhere out there.' : M.Blueprint ? 'Cut up a wreck of one, or buy its plans.' : 'It cannot be recalled.');
   const need = String(M.Needs || '').split(',').map((x) => x.trim()).filter(Boolean).filter((n) => !remembers(s, n));
   if (need.length) return no(`First remember: ${need.map((n) => rules.content.memories[n].Name).join(', ')}.`);
@@ -225,9 +238,13 @@ export function workPct(rules, s) { const V = rules.content.voyage; return s.mor
 export function drive(rules, s) {
   const installed = Object.values(rules.content.items).filter((it) => it.Kind === 'drive' && remembers(s, it.id)).map((it) => it.id);
   const d = driveOf(rules, installed);
-  const c = s.systems.drive | 0;
-  return { ...d, range: c <= 0 ? 0 : Math.trunc((d.range * (50 + (c >> 1))) / 100) };
+  const c = s.systems.drive | 0, hazards = hazardsOpen(rules, s), here = galaxyOf(rules, s).points[s.at];
+  // already inside a pocket (a save from before pockets): she got in, so she can get out
+  if (here && here.pocket && !hazards.includes(here.pocket)) hazards.push(here.pocket);
+  return { ...d, hazards, range: c <= 0 ? 0 : Math.trunc((d.range * (50 + (c >> 1))) / 100) };
 }
+// The hazards the Forge can go through: those a remembered memory opens (Gives: open <hazard>)
+export const hazardsOpen = (rules, s) => Object.values(rules.content.memories).filter((m) => remembers(s, m.id)).flatMap((m) => givesOf(m).filter(([op]) => op === 'open').map(([, h]) => h));
 export const sensorRange = (rules, s) => Math.trunc((Math.trunc((num(rules.content.voyage, 'SensorRange') * projectBonus(rules, s, 'SensorPct')) / 100) * (40 + Math.trunc((output(s, 'sensors') * 60) / 100))) / 100);
 
 // Places within sensor range of the Forge become known (their type shows on the chart).
@@ -402,11 +419,19 @@ export function plan(rules, s, to) {
   const r = route(g, rules, s.at, to, d);
   if (r) r.glim = r.lanes.reduce((t, li) => t + stitchCost(rules, s, g.lanes[li].len), 0);
   if (!r) {
-    if (!d.veil && route(g, rules, s.at, to, { range: d.range, veil: true })) return no('The Veil is in the way: the drive cannot stitch through it yet.');
-    const full = route(g, rules, s.at, to, { range: 1000, veil: true });
+    // in the way, in this order: a hazard (the officer at its post says why), the Veil, the
+    // drive's reach (the navigator says those)
+    const all = anyDrive(rules), past = route(g, rules, s.at, to, { ...d, hazards: all.hazards });
+    if (past) {
+      const H = rules.content.hazards[past.lanes.map((li) => g.lanes[li].hazard).find((h) => h && !d.hazards.includes(h))];
+      return { ok: false, hazard: H.id, why: `${reporter(rules, s, H.Report)}: "${H.Say}" Closed until you remember ${rules.content.memories[H.Opens].Name}.` };
+    }
+    const nav = (text) => no(`${reporter(rules, s, 'navigator')}: "${text}"`);
+    if (!d.veil && route(g, rules, s.at, to, { ...d, veil: true, hazards: all.hazards })) return nav('The Veil is in the way. The drive can\'t stitch through it yet.');
+    const full = route(g, rules, s.at, to, all);
     if (!full) return no('No lane reaches it.');
-    const need = full.lanes.map((li) => g.lanes[li]).filter((l) => !laneOpen(l, d)).reduce((m, l) => Math.min(m, l.len), Infinity);
-    return no(!d.veil && full.lanes.some((li) => g.lanes[li].veil) && need > d.range ? `Out of the drive's reach, and behind the Veil: it needs a stitch of ${need} spans, and the drive can do ${d.range}.` : `Out of the drive's reach: it needs a stitch of ${need} spans, and the drive can do ${d.range}.`);
+    const need = full.lanes.map((li) => g.lanes[li]).filter((l) => l.len > d.range).reduce((m, l) => Math.min(m, l.len), Infinity);
+    return nav(!d.veil && full.lanes.some((li) => g.lanes[li].veil) ? `Out of reach, and behind the Veil. It needs a stitch of ${need} spans, and the drive can do ${d.range}.` : `Out of reach. It needs a stitch of ${need} spans, and the drive can do ${d.range}.`);
   }
   const f = forecast(rules, s);
   const arrive = { ...s.stores, glim: s.stores.glim - r.glim - r.days * num(rules.content.voyage, 'ReactorGlim'), ice: s.stores.ice + f.ice * r.days, food: Math.max(0, s.stores.food + f.food * r.days), air: Math.max(0, Math.min(num(rules.content.voyage, 'AirTank'), s.stores.air + f.air * r.days)) };
@@ -416,7 +441,7 @@ export function plan(rules, s, to) {
 export function stitch(rules, s, to) {
   if (s.over) return no('The voyage is over.');
   const p = plan(rules, s, to);
-  if (!p.ok) return p;
+  if (!p.ok) { if (p.hazard) turnedAway(rules, s, to); return p; }
   const g = galaxyOf(rules, s), V = rules.content.voyage;
   for (let i = 0; i < p.route.hops.length; i++) {
     const l = g.lanes[p.route.lanes[i]];
@@ -431,13 +456,38 @@ export function stitch(rules, s, to) {
   return { ok: true };
 }
 
+// Who speaks for a post: its officer; if it is vacant, whoever is acting in it (a named member
+// of its crew not leading a ship); failing that, its crew. 'Chief engineer Ada Vos'
+export function reporter(rules, s, post) {
+  const P = rules.content.crew.posts[post];
+  if (!P) return 'The crew';
+  const o = officerOf(s.crew, post);
+  if (o) return `${P.Name} ${o.name}`;
+  const a = idle(s.crew, s.fleet, P.Role)[0];
+  return a ? `Acting ${P.Name.toLowerCase()} ${a.name}` : `The ${P.Role}`;
+}
+// Trying for a place a hazard keeps closed: the Forge is turned away, and from then on (in every
+// life) the memory that opens it can be recalled on the Loom. Returns the hazard, or ''.
+export function turnedAway(rules, s, to) {
+  const p = plan(rules, s, to);
+  if (!p.hazard) return '';
+  const seen = (s.campaign.hazards ||= []), H = rules.content.hazards[p.hazard];
+  if (!seen.includes(H.id)) {
+    seen.push(H.id);
+    note(s, `Turned away by the ${H.Name}. ${p.why.replace(/ Closed until.*$/, '')} Something about ${rules.content.memories[H.Opens].Name.toLowerCase()} is coming back: it can be recalled on the Loom.`, 'memory');
+    trigger(rules, s, galaxyOf(rules, s), 'hazard', { item: H.id });
+  }
+  return H.id;
+}
+
 // Without Glim: drift to a neighbouring place at sub-light, along a lane the drive could use.
 export function driftPlan(rules, s, to) {
   const g = galaxyOf(rules, s), d = drive(rules, s);
   const li = g.adj[s.at].find((i) => { const l = g.lanes[i]; return (l.a === to || l.b === to); });
   if (li === undefined) return no('Drifting only reaches places one lane away.');
   const l = g.lanes[li];
-  if (!laneOpen(l, { range: Math.max(d.range, num(rules.content.voyage, 'BaseRange')), veil: d.veil })) return no('Too far to drift, or through the Veil.');
+  if (l.hazard && !d.hazards.includes(l.hazard)) { const H = rules.content.hazards[l.hazard]; return no(`${reporter(rules, s, H.Report)}: "${H.Say}" Closed until you remember ${rules.content.memories[H.Opens].Name}.`); }
+  if (!laneOpen(l, { ...d, range: Math.max(d.range, num(rules.content.voyage, 'BaseRange')) })) return no('Too far to drift, or through the Veil.');
   return { ok: true, days: Math.max(2, Math.trunc((l.len * num(rules.content.voyage, 'DriftDaysPer10')) / 10)), lane: li };
 }
 export function drift(rules, s, to) {
@@ -633,8 +683,8 @@ export function crewView(rules, s) {
 // An anchor (a story place, or a drive part's derelict) is done when every memory waiting
 // there is remembered; until then its hulk still holds something.
 const waitingAt = (rules, anchor) => Object.values(rules.content.memories).filter((m) => m.Found === anchor && m.Ready !== 'false');
-export const anchorDone = (rules, s, anchor) => { const w = waitingAt(rules, anchor); return w.length ? w.every((m) => remembers(s, m.id)) : !!(s.items && s.items[anchor]); };
-const relicName = (rules, anchor) => { const A = (rules.content.anchors || {})[anchor]; return A ? A.Relic || A.Name : anchor && rules.content.items[anchor] ? `the ${rules.content.items[anchor].Name}` : ''; };
+export const anchorDone = (rules, s, anchor) => { if (isCache(anchor)) return !!(s.campaign && s.campaign.caches && s.campaign.caches[anchor]); const w = waitingAt(rules, anchor); return w.length ? w.every((m) => remembers(s, m.id)) : !!(s.items && s.items[anchor]); };
+const relicName = (rules, anchor) => { if (isCache(anchor)) return 'a strongbox with your own mark on it'; const A = (rules.content.anchors || {})[anchor]; return A ? A.Relic || A.Name : anchor && rules.content.items[anchor] ? `the ${rules.content.items[anchor].Name}` : ''; };
 
 // World settings for going in to the place the Forge is at.
 export function visitSettings(rules, s) {
@@ -643,7 +693,8 @@ export function visitSettings(rules, s) {
   const settings = generatePoi(rules, {
     seed: lifeMix(s, poiSeed(s.seed, p.id, times)), type: p.type, visit: times,
     danger: +R.Danger || 1, name: p.name, ship: p.ship,
-    richness: Math.max(num(V, 'RevisitFloor'), 100 - times * num(V, 'RevisitPct')),
+    // places in a hazard pocket are richer (PocketRichness)
+    richness: Math.trunc((Math.max(num(V, 'RevisitFloor'), 100 - times * num(V, 'RevisitPct')) * (p.pocket ? num(V, 'PocketRichness') || 150 : 100)) / 100),
     relic: p.relic && !anchorDone(rules, s, p.relic) ? p.relic : '', relicName: relicName(rules, p.relic),
   });
   const stores = {};
