@@ -143,6 +143,9 @@ export class StarChart {
     };
     this.rangeRing = circle(0x5fe3d0, 0.55, false);
     this.sensorRing = circle(0x8fa3c0, 0.35, true);
+    // clue circles: "somewhere in here" (a pool, reused)
+    this.circle = circle;
+    this.clueRings = [];
   }
 
   makeRoute() {
@@ -169,14 +172,27 @@ export class StarChart {
   }
 
   // Colours, sizes and lines from the voyage as it is now.
-  // view: { at, known: Set, visited: {}, before: Set (visited in an earlier life), range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool }
+  // Clue circles: [{ x, y, r }] in galaxy spans, drawn as dashed gold rings on the disc.
+  setClues(list) {
+    while (this.clueRings.length < list.length) this.clueRings.push(this.circle(0xffd778, 0.75, true));
+    this.clueRings.forEach((ring, i) => {
+      const c = list[i];
+      ring.visible = !!c;
+      if (!c) return;
+      chartPos({ x: c.x, y: c.y, z: 0 }, ring.position);
+      ring.scale.setScalar(c.r * GS);
+      ring.material.dashSize = ring.material.gapSize = 0.04;
+    });
+  }
+
+  // view: { at, known: Set, visited: {}, before: Set (visited in an earlier life), range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool, dark (no radar yet) }
   update(view) {
     const g = this.g, n = g.points.length, c = new THREE.Color();
     const col = this.points.geometry.attributes.color, size = this.points.geometry.attributes.size, ring = this.points.geometry.attributes.ring, tint = this.points.geometry.attributes.tint;
     for (let i = 0; i < n; i++) {
       const p = g.points[i], known = view.known.has(i);
       c.setHex(known ? TYPE_COLORS[p.type] || 0xffffff : UNKNOWN);
-      if (!known) c.multiplyScalar(0.55);
+      if (!known) c.multiplyScalar(view.dark ? 0.12 : 0.55); // before the radar, the chart is dark
       col.setXYZ(i, c.r, c.g, c.b);
       size.setX(i, (known ? 3.2 : 2.2) * (i === view.selected ? 1.5 : 1) * (p.edge && known ? 1.15 : 1));
       ring.setX(i, view.visited[i] ? 1 : view.before && view.before.has(i) ? 0.3 : 0);
@@ -189,9 +205,11 @@ export class StarChart {
     const lc = this.lanes.geometry.attributes.color;
     g.lanes.forEach((l, i) => {
       const near = l.a === view.at || l.b === view.at;
+      const seen = !view.dark || view.known.has(l.a) || view.known.has(l.b);
       if (view.open[i]) c.setRGB(0.07, 0.25, 0.24).multiplyScalar(near ? 3 : 1);
       else if (l.veil && !view.veil) c.setRGB(0.2, 0.09, 0.26);
       else c.setRGB(0.05, 0.06, 0.09);
+      if (!seen) c.multiplyScalar(0.15);
       lc.setXYZ(i * 2, c.r, c.g, c.b); lc.setXYZ(i * 2 + 1, c.r, c.g, c.b);
     });
     lc.needsUpdate = true;

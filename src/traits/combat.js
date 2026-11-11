@@ -193,7 +193,7 @@ defineTrait('Wreck', class Wreck extends Trait {
     this.model = i.model || ''; this.of = i.of || '';
     this.vx = i.vx | 0; this.vy = i.vy | 0; this.vz = i.vz | 0;
     // a drive component sealed inside: found once cutters have taken relicAt salvage
-    this.relic = i.relic || ''; this.relicAt = i.relicAt | 0; this.taken = 0;
+    this.relic = i.relic || ''; this.relicName = i.relicName || ''; this.relicAt = i.relicAt | 0; this.taken = 0;
     // rust mites: an infested wreck hatches a swarm when it is first cut into
     this.infested = !!i.infested;
   }
@@ -208,11 +208,11 @@ defineTrait('Wreck', class Wreck extends Trait {
     if (this.infested && this.taken >= 30 && by) this.hatch(by);
     if (by && !this.bpGiven && this.taken * 2 >= this.maxAmount) this.blueprint(by);
     if (this.relic && this.taken >= this.relicAt && by) {
-      const w = this.world, id = this.relic, name = w.rules.content.items?.[id]?.Name || id;
+      const w = this.world, id = this.relic, name = this.relicName || `the ${w.rules.content.items?.[id]?.Name || id}`;
       this.relic = '';
       if (w.point) w.point.logOf(by.owner).found.push(id);
       w.fx({ t: 'relic', id, name, owner: by.owner.index, actor: this.self.id, x: this.self.x, y: this.self.y, z: this.self.z });
-      w.notify(by.owner, `The cutters found the ${name}, sealed in a vault. It is aboard.`, 'good');
+      w.notify(by.owner, `The cutters found ${name}, sealed in a vault. It is aboard.`, 'good');
     }
     if (this.salvage <= 0 && !this.self.dead) {
       const self = this.self, w = this.world;

@@ -87,7 +87,7 @@ const place = (a, x, y, z) => { a.x = x; a.y = y; a.z = z; a.px = x; a.py = y; a
   const m = await map(5);
   m.tick(25 * 6);
   const q = m.forge.trait('ProductionQueue');
-  check(!!q.canQueue('talon') && /blueprint/.test(q.canQueue('talon')) && !q.canQueue('dart') && !q.canQueue('wisp'), `without blueprints: Darts and Wisps yes, Talons no ("${q.canQueue('talon')}")`);
+  check(!!q.canQueue('talon') && /blueprint/.test(q.canQueue('talon')) && !q.canQueue('dart') && /blueprint/.test(q.canQueue('wisp') || ''), `without their memories: Darts yes, Wisps and Talons no ("${q.canQueue('talon')}")`);
   // cut up a Talon wreck: half-way, its plans turn up
   const sh = m.w.actors.find((a) => a.owner === m.me && a.type === 'shearer');
   const wreck = m.w.createActor('wreck', m.w.neutral, { x: sh.x + 3000, y: sh.y, z: sh.z, of: 'talon', salvage: 120, radius: 400 });
@@ -126,10 +126,12 @@ const place = (a, x, y, z) => { a.x = x; a.y = y; a.z = z; a.px = x; a.py = y; a
   check(m.me.capacity.cap() === 40 && m.forge.health.maxHp === V.forgeMaxHp(rules, s) && m.me.sensorPct === V.projectBonus(rules, s, 'SensorPct'), `on a map: fleet capacity ${m.me.capacity.cap()}, the plated Forge's hull, and sensors at ${m.me.sensorPct}% (the array's 150%, and the watch officer)`);
 }
 
-// 5. A deep scan
+// 5. A deep scan (it needs the radar)
 {
   const s = V.newVoyage(rules, { seed: 9 });
   s.queue = [];
+  check(!V.scanPlan(rules, s).ok, `before the radar is remembered, no deep scan ("${V.scanPlan(rules, s).why}")`);
+  V.remember(rules, s, 'radar', { quiet: true });
   const k0 = s.known.length, day0 = s.day, glim0 = s.stores.glim;
   const r = V.scan(rules, s);
   check(r.ok && s.known.length > k0 && s.day === day0 + 1 && s.stores.glim < glim0, `a day's deep scan: ${r.found} more places known, for ${rules.content.voyage.ScanGlim} Glim`);

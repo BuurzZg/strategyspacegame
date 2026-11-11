@@ -1,6 +1,6 @@
 import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
-import { lifeMix, lifeOf } from './life.js';
+import { lifeMix, lifeOf, remembers, markMemory, memoryOfBlueprint } from './life.js';
 import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
@@ -41,6 +41,8 @@ export function parseCond(text) {
   if (w[0] === 'here' && w[1] === 'relic' && w[2]) return { op: 'relic', item: w[2] };
   if (w[0] === 'crew' && w[1] === '>=' && +w[2] >= 0) return { op: 'crew', n: +w[2] };
   if (w[0] === 'life' && (w[1] === '>=' || w[1] === '<=') && +w[2] >= 1) return { op: 'life', cmp: w[1], n: +w[2] };
+  if (w[0] === 'remembers' && w[1]) return { op: 'remembers', id: w[1], want: true };
+  if (w[0] === 'not' && w[1] === 'remembers' && w[2]) return { op: 'remembers', id: w[2], want: false };
   // the named crew (traits' When, and events)
   if (w[0] === 'morale' && (w[1] === '>=' || w[1] === '<=') && Number.isFinite(+w[2])) return { op: 'morale', cmp: w[1], n: +w[2] };
   if (w[0] === 'officer' && w[1]) return { op: 'officer', post: w[1], trait: w[2] || '' };
@@ -70,6 +72,9 @@ export function parseEffect(text) {
     case 'monster': return w[1] ? { op: 'ambush', side: 'fauna', ships: w[1].split('+'), delay: +w[2] || 0, behaviour: w[1] === 'wyrm' ? 'burrow' : 'hunt' } : { op: 'bad', text };
     case 'roll': return +w[1] > 0 && w[2] && w[3] ? { op: 'roll', chance: +w[1], yes: w[2], no: w[3] } : { op: 'bad', text };
     case 'faction': return w[1] && Number.isFinite(+w[2]) ? { op: 'fstanding', fid: w[1], n: +w[2] } : { op: 'bad', text };
+    // memories: a clue circle on the chart round an anchor, and echoes to recall memories with
+    case 'clue': return w[1] ? { op: 'clue', anchor: w[1] } : { op: 'bad', text };
+    case 'echoes': return +w[1] > 0 ? { op: 'echoes', n: +w[1] } : { op: 'bad', text };
     // the named crew: someone dies, someone changes; repairs; the fleet drills
     case 'kill': return w[1] ? { op: 'kill', who: w[1] } : { op: 'bad', text };
     case 'mark': return w[1] && w[2] ? { op: 'mark', who: w[1], trait: w[2] } : { op: 'bad', text };
@@ -99,7 +104,7 @@ export function lintDialog(rules, d) {
       for (const x of list(c.If)) { const p = parseCond(x); if (p.op === 'bad') errs.push(`${where}: unknown condition "${x}"`); else if (p.op === 'has' && !stores.includes(p.store)) errs.push(`${where}: unknown store "${p.store}"`); }
       for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'bad') errs.push(`${where}: unknown effect "${x}"`); else if (p.op === 'pay' && !stores.includes(p.store)) errs.push(`${where}: unknown store "${p.store}"`); }
       if (c.Goto && !d[nodeKey(c.Goto)]) errs.push(`${where}: Goto "${c.Goto}" is not a node`);
-      for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'roll') for (const n of [p.yes, p.no]) if (!d[nodeKey(n)]) errs.push(`${where}: roll goes to "${n}", which is not a node`); if (p.op === 'item' && !rules.content.items[p.item]) errs.push(`${where}: unknown item "${p.item}"`); if (p.op === 'fstanding' && !rules.content.factions[p.fid]) errs.push(`${where}: unknown faction "${p.fid}"`); if (p.op === 'ambush' && p.side !== 'fauna' && !rules.content.factions[p.side]) errs.push(`${where}: unknown side "${p.side}"`); if (p.op === 'ambush') for (const t of p.ships) if (!rules.actors.has(t)) errs.push(`${where}: unknown ship "${t}"`); }
+      for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'roll') for (const n of [p.yes, p.no]) if (!d[nodeKey(n)]) errs.push(`${where}: roll goes to "${n}", which is not a node`); if (p.op === 'item' && !rules.content.items[p.item] && !(rules.content.memories || {})[p.item]) errs.push(`${where}: unknown item "${p.item}"`); if (p.op === 'clue' && !(rules.content.anchors || {})[p.anchor] && rules.content.items[p.anchor]?.Kind !== 'drive') errs.push(`${where}: unknown anchor "${p.anchor}"`); if (p.op === 'fstanding' && !rules.content.factions[p.fid]) errs.push(`${where}: unknown faction "${p.fid}"`); if (p.op === 'ambush' && p.side !== 'fauna' && !rules.content.factions[p.side]) errs.push(`${where}: unknown side "${p.side}"`); if (p.op === 'ambush') for (const t of p.ships) if (!rules.actors.has(t)) errs.push(`${where}: unknown ship "${t}"`); }
       if (!c.Goto && !list(c.Do).some((x) => ['close', 'trade', 'hire', 'roll'].includes(x.trim().split(/\s+/)[0]))) errs.push(`${where}: neither Goto nor close, trade, hire or roll`);
       errs.push(...lintCrew(rules, where, list(c.If).map(parseCond), list(c.Do).map(parseEffect), [c.Text]));
     }
@@ -140,7 +145,13 @@ function holds(ctx, c) {
     case 'region': return !!ctx.s && ctx.point && ctx.point.region === c.region;
     case 'type': return !!ctx.s && ctx.point && (ctx.point.type === c.type) === c.want;
     case 'day': return !!ctx.s && ctx.s.day >= c.n;
-    case 'item': { if (!ctx.s) return false; const st = ctx.s.items[c.item]; return c.state === 'missing' ? !st : st === c.state; }
+    case 'item': {
+      if (!ctx.s) return false;
+      // a drive part is a memory now: found and fitted both mean remembered
+      if ((ctx.rules.content.memories || {})[c.item]) return c.state === 'missing' ? !remembers(ctx.s, c.item) : remembers(ctx.s, c.item);
+      const st = ctx.s.items[c.item]; return c.state === 'missing' ? !st : st === c.state;
+    }
+    case 'remembers': return !!ctx.s && remembers(ctx.s, c.id) === c.want;
     case 'relic': return !!ctx.s && ctx.point && ctx.point.relic === c.item;
     case 'crew': return !!ctx.s && ROLES.reduce((t, r) => t + ctx.s.crew.roles[r], 0) >= c.n;
     case 'morale': return !!ctx.s && (c.cmp === '>=' ? ctx.s.morale >= c.n : ctx.s.morale <= c.n);
@@ -279,18 +290,25 @@ function applyEventEffect(rules, s, galaxy, e, out, why) {
     out.notes.push(`${e.system === 'hull' ? 'Hull' : sys[e.system].Name} −${e.n}%.`);
   } else if (e.op === 'morale') { s.morale = Math.max(0, Math.min(100, s.morale + e.n)); out.notes.push(`Morale ${e.n > 0 ? '+' : ''}${e.n}.`); }
   else if (e.op === 'item') {
-    if (rules.content.items[e.item]?.Kind === 'blueprint') { if (learnBlueprint(rules, s, e.item)) out.notes.push(`Learned: the ${rules.content.items[e.item].Name}.`); }
+    const M = (rules.content.memories || {})[e.item];
+    if (rules.content.items[e.item]?.Kind === 'blueprint') { if (learnBlueprint(rules, s, e.item)) out.notes.push(`Remembered: the ${rules.content.items[e.item].Name.replace(/ blueprint$/, '')}.`); }
+    else if (M) { if (markMemory(s, e.item)) { if (M.Echoes) s.campaign.echoes = (s.campaign.echoes | 0) + (+M.Echoes | 0); out.notes.push(`Remembered: ${M.Name}.`); out.found = e.item; } }
     else if (!s.items[e.item]) { s.items[e.item] = 'found'; out.notes.push(`The ${rules.content.items[e.item].Name} is aboard.`); out.found = e.item; }
   }
+  else if (e.op === 'clue') { if (s.campaign && galaxy.components[e.anchor] !== undefined) { out.clue = e.anchor; out.notes.push('A circle on the chart: somewhere in there.'); } }
+  else if (e.op === 'echoes') { if (s.campaign) { s.campaign.echoes = (s.campaign.echoes | 0) + e.n; out.notes.push(`+${e.n} echo${e.n > 1 ? 'es' : ''}.`); } }
   else if (e.op === 'days') { out.days = (out.days || 0) + e.n; }
   else if (e.op === 'ambush') { (s.ahead ||= []).push({ at: s.at, side: e.side, ships: e.ships, delay: e.delay, behaviour: e.behaviour || 'hunt' }); }
   else if (e.op === 'roll') { out.goto = rollFor(s, e.chance) ? e.yes : e.no; }
   else if (e.op === 'fstanding') { const t = change(rules, s, e.fid, e.n); out.notes.push(`${rules.content.factions[e.fid].Name}: ${e.n > 0 ? '+' : ''}${e.n} standing.`); if (t) out.notes.push(`The ${rules.content.factions[e.fid].Name} are now ${t.to} toward the Forge.`); }
 }
+// A blueprint brings its hull's memory back (for good), or failing that the hull for this life.
 export function learnBlueprint(rules, s, id) {
   const it = rules.content.items[id];
   if (!it || it.Kind !== 'blueprint') return false;
   s.blueprints ||= [];
+  const m = memoryOfBlueprint(rules, id);
+  if (m) markMemory(s, m.id);
   if (s.blueprints.includes(it.Unlocks)) return false;
   s.blueprints.push(it.Unlocks);
   return true;

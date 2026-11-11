@@ -28,13 +28,13 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
   const s = start || V.newVoyage(rules, { seed, length });
   const g = V.galaxyOf(rules, s);
   const order = ['coils', 'lens', 'spindle', 'heartstone'];
-  const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
+  const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, Anchorage: { salvage: 1200, ice: 400 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
   let visits = 0, stitches = 0, goal = null;
   const visit = () => {
     const p = g.points[s.at], times = s.visited[p.id] | 0, rich = Math.max(+VY.RevisitFloor, 100 - times * +VY.RevisitPct);
     const stores = {};
     for (const [k, n] of Object.entries(s.stores)) stores[k] = { start: n, end: n + Math.trunc(((YIELD[p.type][k] || 0) * rich) / 100), changes: {} };
-    const found = p.relic && !s.items[p.relic] ? [p.relic] : [];
+    const found = p.relic && !V.anchorDone(rules, s, p.relic) ? [p.relic] : [];
     V.returnFromMap(rules, s, { stores, forge: { hp: s.forge.hp }, ships: { aboard: s.fleet, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0 });
     visits++;
   };
@@ -63,7 +63,7 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     // a damaged drive stitches shorter: mend it (and anything badly hurt) while there is water
     const sick = s.systems.drive < 100 ? 'drive' : V.SYSTEMS.find((k) => s.systems[k] < 70);
     if (sick && V.daysLeft(rules, s).ice > 8 && V.repairPlan(rules, s, sick).ok) { V.repair(rules, s, sick); settle(); continue; }
-    const next = order.find((id) => s.items[id] !== 'installed');
+    const next = order.find((id) => !V.remembers(s, id));
     const left = V.daysLeft(rules, s), here = g.points[s.at];
     // supplies first, checked at every stop
     const lowGlim = s.stores.glim < (g.points[s.at].ri >= 2 ? 900 : 600) || (s.stores.food < 900 && s.stores.spores < 100);
@@ -75,11 +75,6 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
       // at a supply place: stay (visit again) until the stores are well up
       if (type(urgent)(here)) { visit(); if (urgent !== 'IceTail' || V.daysLeft(rules, s).ice >= Math.max(20, trip) || !type(urgent)(here)) goal = null; continue; }
       if (!goal || goal.kind !== urgent) { const n = nearest(type(urgent)); if (n) goal = { ...n, kind: urgent }; }
-    }
-    if (!urgent && next && s.items[next] === 'found') {
-      if (V.install(rules, s, next).ok) { goal = null; continue; }
-      if (here.type === 'Wreck' || here.type === 'ScrapShoal') { visit(); continue; }
-      if (!goal) { const n = nearest((p) => p.type === 'Wreck' || p.type === 'ScrapShoal'); if (n) goal = { ...n, kind: 'salvage' }; }
     }
     if (!goal) {
       const n = next ? nearest((p) => p.id === g.components[next], true) : nearest((p) => p.edge, true);

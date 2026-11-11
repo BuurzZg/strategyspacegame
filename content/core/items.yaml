@@ -1,10 +1,11 @@
 # Items: the Skein Drive's four components, blueprints for hulls you cannot build yet, and
-# engineering projects (Forge upgrades).
+# engineering projects (Forge upgrades). The drive's components are remembered, not fitted
+# (memories.yaml): once a memory brings one back, the drive has it in every life.
 #   Region      where the generator hides it: in a derelict, deep in that region
 #   Range       the drive's stitch range becomes this percent of what it was
 #   Veil        lets the drive stitch through the Veil's nebula wall
 #   FinalJump   the long jump home, from the Shore's edge
-#   Install     what fitting it costs: Ore, Salvage, Days, and Engineers needed for the work
+#   Install     (projects) what building it costs: Ore, Salvage, Days, and Engineers needed
 
 coils:
 	Name: Threadwound Coils
@@ -58,7 +59,7 @@ heartstone:
 # (half its salvage), bought from factions, or given in events. Start lists the hulls you can
 # build from the beginning.
 Blueprints:
-	Start: dart, picket, halberd, gleaner, shearer, skimmer, smelter, wisp
+	Start: dart, picket, halberd, gleaner, shearer, skimmer, smelter
 bp-talon:
 	Name: Talon blueprint
 	Kind: blueprint

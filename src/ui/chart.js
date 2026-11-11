@@ -21,8 +21,9 @@ const DRAG = 5;
 const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores']];
 
 export class ChartScreen {
-  constructor({ canvas, camera, rules, voyage, audio, hud, comms, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
-    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
+  constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
+    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, loom, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
+    this.onLoom = () => this.openLoom();
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
     const B = 140 / (1 / 256);
@@ -52,7 +53,7 @@ export class ChartScreen {
   pumpEvents() {
     const s = this.s, rules = this.rules;
     if (!this.comms || this.comms.isOpen) return;
-    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); else if (!s.over) this.hint('chart'); return; }
+    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); else if (!s.over) { this.hint('chart'); if (Object.keys((s.campaign && s.campaign.memories) || {}).length) this.hint('memory'); } return; }
     const ev = rules.content.events[s.queue[0]];
     if (!ev) { s.queue.shift(); this.pumpEvents(); return; }
     this.comms.open({
@@ -70,6 +71,7 @@ export class ChartScreen {
     this.chart.dispose();
     document.body.classList.remove('at-chart');
     $('chart').hidden = true; $('chart-end').hidden = true;
+    if (this.loom) this.loom.close();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
@@ -104,8 +106,10 @@ export class ChartScreen {
     this.on(window, 'keydown', (e) => {
       if (e.target.closest && e.target.closest('input, textarea')) return;
       if (!$('chart-end').hidden) return;
+      if (this.loom && this.loom.isOpen) { if (this.loom.key(e.key)) e.preventDefault(); return; }
       if (this.comms && this.comms.isOpen) { if (this.comms.key(e.key)) e.preventDefault(); return; }
       const k = e.key.toLowerCase();
+      if (k === 'l') { this.openLoom(); return; }
       if (k === 'c' && this.g.points[this.s.at].owner) { this.hail(this.g.points[this.s.at].owner); return; }
       this.keys.add(k);
       if (k === 'f' || e.key === 'Home') { this.select(this.s.at); this.orbit.focusOn(chartPos(this.g.points[this.s.at])); }
@@ -123,7 +127,11 @@ export class ChartScreen {
     $('chart-save').hidden = true; // one campaign save (named saves went with Milestone 14)
     $('chart-quit').textContent = 'Save and quit';
     this.on($('chart-helpbtn'), 'click', () => $('chart-help').classList.toggle('open'));
+    this.on($('chart-loombtn'), 'click', () => this.openLoom());
   }
+
+  // The memory tree, over the chart.
+  openLoom() { if (this.loom && !(this.comms && this.comms.isOpen)) this.loom.open(this.s, { onChange: () => { this.onChange(this.s); this.refresh(); } }); }
 
   // The place under the mouse (screen distance, nearest first), or -1.
   pick(x, y) {
@@ -186,6 +194,7 @@ export class ChartScreen {
     if (b.dataset.act === 'repair') this.act(V.repair, b.dataset.k);
     else if (b.dataset.act === 'install') this.act(V.install, b.dataset.k);
     else if (b.dataset.act === 'home') this.act(V.jumpHome);
+    else if (b.dataset.act === 'loom' && this.onLoom) this.onLoom();
     else if (b.dataset.act === 'letgo' && window.confirm('Let this life go? You will wake again at the start, and the chart keeps what you found. Everything else is lost.')) this.act(V.letGo);
   }
 
@@ -195,7 +204,11 @@ export class ChartScreen {
   refreshChart() {
     const s = this.s, d = V.drive(this.rules, s), t = V.target(this.rules, s);
     const open = this.g.lanes.map((l) => laneOpen(l, d));
-    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, before: new Set((s.campaign && s.campaign.chart.visited) || []), range: d.range, sensor: V.sensorRange(this.rules, s), veil: d.veil, signal: t ? t.at : -1, selected: this.selected, open });
+    const radar = V.remembers(s, 'radar'), clues = (s.campaign && s.campaign.chart.clues) || [];
+    // the gold ring marks a place the sensors have pinpointed (an exact clue); a circle, one they haven't
+    const exact = clues.find((c) => c.exact && !V.anchorDone(this.rules, s, c.id));
+    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, before: new Set((s.campaign && s.campaign.chart.visited) || []), range: d.range, sensor: radar ? V.sensorRange(this.rules, s) : 0, veil: d.veil, signal: exact ? exact.at : -1, selected: this.selected, open, dark: !radar });
+    this.chart.setClues(clues.filter((c) => !c.exact && !V.anchorDone(this.rules, s, c.id)));
     const p = this.selected >= 0 && this.selected !== s.at ? V.plan(this.rules, s, this.selected) : null;
     this.chart.setRoute(p && p.route ? [s.at, ...p.route.hops] : []);
   }
@@ -220,8 +233,10 @@ export class ChartScreen {
     const Fo = known && p.owner ? this.rules.content.factions[p.owner] : null;
     const owned = Fo ? ` · <span style="color:${hex(factionColor(this.rules, p.owner))}">${esc(Fo.Name)}${p.seat ? '' : ' territory'}</span> <span class="t-${tierName(this.rules, standingOf(this.rules, s, p.owner))}">(${tierName(this.rules, standingOf(this.rules, s, p.owner))})</span>` : '';
     $('pc-class').innerHTML = `<i style="background:${hex(known ? TYPE_COLORS[p.type] : 0x56637a)}"></i>${esc(R.Name)}${known ? ` · ${esc(T.Name)}` : ''}${p.edge && known ? ' · the Shore\'s edge' : ''}${owned}`;
-    const t = V.target(this.rules, s);
-    const relic = t && t.at === id ? `The ${this.rules.content.items[t.id].Name} is aboard: cut into the hulk with Shearers to find it. ` : '';
+    // something waits in this place's hulk, once the sensors have pinpointed it (or you are here)
+    const anchor = p.relic && !V.anchorDone(this.rules, s, p.relic) ? p.relic : '';
+    const pin = anchor && ((s.campaign && s.campaign.chart.clues) || []).some((c) => c.id === anchor && c.exact);
+    const relic = !pin ? '' : (this.rules.content.anchors || {})[anchor] ? 'A signal comes from deep in the wreck. Cut into the hulk with Shearers to reach it. ' : `The ${this.rules.content.items[anchor].Name} is aboard: cut into the hulk with Shearers to find it. `;
     const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
     $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + claim;
     const stats = [], btns = [];
@@ -261,13 +276,13 @@ export class ChartScreen {
     let h = '';
     if (this.tab === 'forge') {
       const d = V.drive(rules, s);
-      h += `<h3>Skein Drive</h3><p class="fp-note">Stitches up to <b>${d.range}</b> spans${d.veil ? '; through the Veil' : '; not through the Veil'}. Condition ${s.systems.drive}%.</p><ul class="items">`;
+      const nmem = Object.keys((s.campaign && s.campaign.memories) || {}).length;
+      h += `<h3>Memories</h3><p class="fp-note">${nmem} of ${Object.keys(C.memories).length} remembered, and ${(s.campaign && s.campaign.echoes) | 0} echo${((s.campaign && s.campaign.echoes) | 0) === 1 ? '' : 'es'} to recall more with. What you remember stays in every life.</p><button type="button" data-act="loom">Open the Loom <kbd>L</kbd></button>`;
+      h += `<h3>Skein Drive</h3><p class="fp-note">Stitches up to <b>${d.range}</b> spans${d.veil ? '; through the Veil' : '; not through the Veil'}. Condition ${s.systems.drive}%. Its parts are remembered, not fitted: once you remember one, the drive has it in every life.</p><ul class="items">`;
       for (const it of Object.values(C.items)) {
         if (it.Kind !== 'drive') continue;
-        const st = s.items[it.id], pl = st === 'found' ? V.installPlan(rules, s, it.id) : null, I = it.Install;
-        h += `<li class="${st || 'missing'}"><div><b>${esc(it.Name)}</b><span>${st === 'installed' ? 'Fitted' : st === 'found' ? 'Aboard, not fitted' : 'Not found'}</span></div><p>${esc(it.Description)}</p>`;
-        if (st === 'found') h += `<button type="button" data-act="install" data-k="${it.id}" ${pl.ok ? '' : 'disabled'} title="${esc(pl.ok ? '' : pl.why)}">Fit it: ${I.Ore} ore, ${I.Salvage} salvage, ${pl.days || I.Days} days, ${I.Engineers} engineers</button>${pl.ok ? '' : `<p class="why">${esc(pl.why)}</p>`}`;
-        h += '</li>';
+        const known = V.remembers(s, it.id);
+        h += `<li class="${known ? 'installed' : 'missing'}"><div><b>${esc(it.Name)}</b><span>${known ? 'Remembered' : 'Not yet'}</span></div><p>${esc(known ? it.Description : (C.memories[it.id] && C.memories[it.id].Hint) || '')}</p></li>`;
       }
       h += '</ul>';
       if (d.finalJump) { const hj = V.canJumpHome(rules, s); h += `<button type="button" class="big" data-act="home" ${hj.ok ? '' : 'disabled'}>Make the final jump</button>${hj.ok ? '' : `<p class="why">${esc(hj.why)}</p>`}`; }
@@ -359,11 +374,11 @@ export class ChartScreen {
   // The end of a life (the wake screen), or of the campaign (home).
   showEnd() {
     const s = this.s, won = s.won, life = (s.campaign && s.campaign.life) || 1;
-    const fitted = Object.values(s.items).filter((v) => v === 'installed').length;
     const lost = (s.crew.fallen || []).map((f) => `${titleOf(this.rules, f)} ${f.name}`);
     $('ce-title').textContent = won ? 'Home' : `Life ${life} ends`;
     $('ce-text').textContent = won ? s.over.text : `${s.over.text} Then white light, and the bridge, and the same alarms. You wake again, at the moment you first woke. The chart still holds what you found.`;
-    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Named crew lost', lost.length], won ? ['Lives', life] : ['Drive parts fitted', `${fitted} of 4`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    const mems = Object.keys((s.campaign && s.campaign.memories) || {}).length;
+    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Named crew lost', lost.length], won ? ['Lives', life] : ['Memories', `${mems} of ${Object.keys(this.rules.content.memories).length}`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     $('ce-lost').textContent = lost.length ? `Lost in this life: ${lost.join(', ')}.` : '';
     $('ce-new').textContent = won ? 'New campaign' : 'Wake';
     $('chart-end').classList.toggle('dead', !won);
@@ -419,12 +434,17 @@ export class ChartScreen {
       ctx.fillStyle = strong ? '#dfe8f2' : k ? 'rgba(200,214,230,0.62)' : 'rgba(130,146,170,0.5)';
       ctx.fillText(k ? p.name : '?', q.x, q.y - (strong ? 13 : 9));
     };
-    const r2 = d.range * d.range, shown = new Set([s.at, this.selected, this.hover, t ? t.at : -1]);
-    if (this.orbit.dist < 200) for (const p of this.g.points) if (!shown.has(p.id) && (p.x - here.x) ** 2 + (p.y - here.y) ** 2 <= r2 * 1.1) label(p.id, false);
+    const clues = ((s.campaign && s.campaign.chart.clues) || []).filter((c) => !V.anchorDone(this.rules, s, c.id));
+    const r2 = d.range * d.range, shown = new Set([s.at, this.selected, this.hover, ...clues.filter((c) => c.exact).map((c) => c.at)]);
+    if (this.orbit.dist < 200) for (const p of this.g.points) if (!shown.has(p.id) && (known.has(p.id) || V.remembers(s, 'radar')) && (p.x - here.x) ** 2 + (p.y - here.y) ** 2 <= r2 * 1.1) label(p.id, false);
     for (const id of shown) if (id >= 0) label(id, true);
-    if (t && t.at >= 0) {
-      const q = proj(this.g.points[t.at]);
-      if (q) { ctx.font = '600 10px "IBM Plex Mono", monospace'; ctx.fillStyle = '#ffd778'; ctx.fillText(this.rules.content.items[t.id].Name.toUpperCase(), q.x, q.y + 30); }
+    // what each clue is about: under the pinpointed place, or at the circle's edge
+    const what = (c) => ((this.rules.content.anchors || {})[c.id]?.Name || this.rules.content.items[c.id]?.Name || c.id).toUpperCase();
+    ctx.font = '600 10px "IBM Plex Mono", monospace'; ctx.fillStyle = '#ffd778';
+    for (const c of clues) {
+      const q = c.exact ? proj(this.g.points[c.at]) : proj({ x: c.x, y: c.y + c.r, z: 0 });
+      if (q) ctx.fillText(c.exact ? what(c) : `${what(c)}: SOMEWHERE IN HERE`, q.x, q.y + (c.exact ? 30 : 14));
     }
+    void t;
   }
 }

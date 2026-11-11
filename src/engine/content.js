@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -58,6 +58,10 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   const crew = new Map(mergeFiles(data.Crew));
   const crewPart = (k) => (crew.has(k) ? Object.fromEntries(crew.get(k).nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {});
   rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
+  const mem = [...mergeFiles(data.Memories)];
+  rules.content.memories = Object.fromEntries(mem.filter(([k]) => k !== 'Anchors').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
+  const anc = mem.find(([k]) => k === 'Anchors');
+  rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -91,7 +95,7 @@ export function lintContent(rules) {
   for (const e of Object.values(rules.content.events || {})) {
     errs.push(...lintDialog(rules, e));
     if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
-    if (e.Item && !rules.content.items[e.Item]) errs.push(`events: ${e.id}.Item: unknown item "${e.Item}"`);
+    if (e.Item && !rules.content.items[e.Item] && !(rules.content.memories || {})[e.Item]) errs.push(`events: ${e.id}.Item: unknown item or memory "${e.Item}"`);
   }
   for (const [id, f] of Object.entries(factions)) {
     if (f.Dialog && !(rules.content.dialogs || {})[f.Dialog]) errs.push(`factions: ${id}.Dialog: no dialog "${f.Dialog}"`);
@@ -119,6 +123,29 @@ export function lintContent(rules) {
     for (const c of list(tr.When)) if (parseCond(c).op === 'bad') errs.push(`crew: Traits.${id}.When: unknown condition "${c}"`);
   }
   if (Object.keys(crew.posts).length && !(rules.content.names?.People?.Given && rules.content.names?.People?.Family)) errs.push('names: People needs Given and Family names for the crew');
+  // memories: what they need and give point at real things; anchors at real regions and places
+  const M = rules.content.memories || {}, A = rules.content.anchors || {}, items = rules.content.items || {};
+  const BRANCHES = ['origins', 'skein', 'forge', 'fleet', 'decks'];
+  for (const [id, m] of Object.entries(M)) {
+    if (!m.Name) errs.push(`memories: ${id}: no Name`);
+    if (!['knowledge', 'ability'].includes(m.Kind)) errs.push(`memories: ${id}.Kind: knowledge or ability`);
+    if (!BRANCHES.includes(m.Branch)) errs.push(`memories: ${id}.Branch: one of ${BRANCHES.join(', ')}`);
+    for (const n of list(m.Needs)) if (!M[n]) errs.push(`memories: ${id}.Needs: unknown memory "${n}"`);
+    if (m.Found && !A[m.Found] && !(items[m.Found] && items[m.Found].Region)) errs.push(`memories: ${id}.Found: unknown anchor "${m.Found}"`);
+    if (m.Blueprint && items[m.Blueprint]?.Kind !== 'blueprint') errs.push(`memories: ${id}.Blueprint: unknown blueprint "${m.Blueprint}"`);
+    if (m.Ready !== 'false' && !m.Found && !m.Blueprint && m.Cost === undefined) errs.push(`memories: ${id}: needs Found, Blueprint or Cost`);
+    for (const g of list(m.Gives)) {
+      const [op, arg] = g.split(/\s+/);
+      if (op === 'drive' && items[arg]?.Kind !== 'drive') errs.push(`memories: ${id}.Gives: unknown drive part "${arg}"`);
+      else if (op === 'hull' && !rules.actors.has(arg)) errs.push(`memories: ${id}.Gives: unknown ship "${arg}"`);
+      else if (op === 'echoes' && !(+arg > 0)) errs.push(`memories: ${id}.Gives: echoes needs a number`);
+      else if (!['radar', 'drive', 'hull', 'echoes'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
+    }
+  }
+  for (const [id, a] of Object.entries(A)) {
+    if (!(rules.content.regions || {})[a.Region]) errs.push(`memories: Anchors.${id}.Region: unknown region "${a.Region}"`);
+    if (!poiTypes[a.Type]) errs.push(`memories: Anchors.${id}.Type: unknown place type "${a.Type}"`);
+  }
   for (const a of rules.actors.values()) {
     const c = a.traitInfo('Collector');
     if (c) for (const k of list(c.Kinds)) if (!resources[k]) errs.push(`${a.name}: Collector.Kinds: unknown resource "${k}"`);

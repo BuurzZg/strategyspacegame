@@ -20,7 +20,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 // 1. A new campaign
 {
   const s = V.newVoyage(rules, { seed: 7 });
-  check(s.version === V.SAVE_VERSION && V.SAVE_VERSION === 5 && s.saves === 'campaign' && s.campaign.life === 1 && s.campaign.lives.length === 0, 'a new campaign starts on life 1, with one campaign save (version 5)');
+  check(s.version === V.SAVE_VERSION && V.SAVE_VERSION >= 5 && s.saves === 'campaign' && s.campaign.life === 1 && s.campaign.lives.length === 0, 'a new campaign starts on life 1, with one campaign save');
   check(s.seen.includes('Prologue') && !s.seen.includes('Waking'), 'the first life opens with the prologue');
 }
 
@@ -85,10 +85,10 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
   const old = clone(s);
   delete old.campaign; old.version = 4; old.saves = 'free';
   const m = V.loadVoyage(rules, JSON.stringify(old));
-  check(m.version === 5 && m.campaign.life === 1 && m.saves === 'campaign' && m.campaign.chart.known.length === s.known.length, 'a voyage saved before campaigns (permanent death or free saves) loads as the first life of a campaign');
+  check(m.version === V.SAVE_VERSION && m.campaign.life === 1 && m.saves === 'campaign' && m.campaign.chart.known.length === s.known.length, 'a voyage saved before campaigns (permanent death or free saves) loads as the first life of a campaign');
   const v3 = clone(old); v3.version = 3; v3.crew = { roles: { ...s.crew.roles }, assigned: { ...s.crew.assigned } }; for (const e of v3.fleet) delete e.lead;
   const m3 = V.loadVoyage(rules, JSON.stringify(v3));
-  check(m3.version === 5 && m3.crew.people.length === 11 && m3.campaign.life === 1, 'so does a save from before named crew');
+  check(m3.version === V.SAVE_VERSION && m3.crew.people.length === 11 && m3.campaign.life === 1, 'so does a save from before named crew');
   const after = V.newLife(rules, Object.assign(m, { over: { reason: 'air', day: 4, text: '' } }));
   check(after.campaign.life === 2, 'and its next life is life 2');
 }

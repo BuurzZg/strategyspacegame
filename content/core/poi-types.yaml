@@ -359,3 +359,30 @@ HollowhornGrounds:
 		Ships: hollowhorn
 		Count: 1
 		Behaviour: lurk
+
+# Our own station, destroyed (memories.yaml anchors it in the Drift, a few stitches from waking).
+Anchorage:
+	Name: The Anchorage
+	Description: A station torn open and gone cold. The mark painted on its plates is the same as the one on the Forge's hull.
+	Size: 160, 160, 56
+	Sky: 2e2a36
+	Hulk:
+		Of: hulltown
+		Salvage: 3200-4200
+		Size: 3000
+	Wrecks:
+		Count: 8-12
+		Of: halberd, picket, dart
+		Salvage: 150-350
+		Clusters: 2
+	Deposit@ice:
+		Kind: ice
+		Fields: 1
+		Rocks: 4-6
+		Spread: 4-5
+		Amount: 300-600
+	Nebula:
+		Count: 1
+		Size: 28-36
+		Color: 3a3446
+	Names: The Anchorage

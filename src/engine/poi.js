@@ -21,8 +21,9 @@ const FIELD_NAMES = ['Tessel Shoal', 'Marrow Bank', 'Halvard Reach', 'Ostrel Dee
 
 // Options from the galaxy: danger (1-4: more and bigger encounters), richness (percent of the
 // usual amounts: places yield less each time they are visited again), name and ship (what the
-// star chart calls it), relic (a drive component hidden in the hulk).
-export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness = 100, name = '', ship = '', relic = '' }) {
+// star chart calls it), relic (what is hidden in the hulk: a drive part, or a story anchor's
+// memories) and relicName (what the cutters say they found).
+export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness = 100, name = '', ship = '', relic = '', relicName = '' }) {
   const T = rules.content.poiTypes[type];
   if (!T) throw new Error(`Unknown point-of-interest type "${type}"`);
   const rng = new Random(hashMix(seed | 0, visit | 0) || 1);
@@ -91,7 +92,7 @@ export function generatePoi(rules, { seed, type, visit = 0, danger = 1, richness
       const at = place(Math.trunc(size / CELL) + 6);
       layout.hulk = { at: toWorld(at), of: v.Of, salvage: rich(roll(range(v.Salvage, [2000, 3000]))), yaw: rng.int(1024), pitch: rng.int(121) - 60, radius: size, name: named };
       // a drive component sealed somewhere in it: cutters find it once they are this far in
-      if (relic) { layout.hulk.salvage = Math.max(layout.hulk.salvage, 1500); layout.hulk.relic = relic; layout.hulk.relicAt = Math.min(320, Math.trunc(layout.hulk.salvage / 4)); }
+      if (relic) { layout.hulk.salvage = Math.max(layout.hulk.salvage, 1500); layout.hulk.relic = relic; layout.hulk.relicName = relicName; layout.hulk.relicAt = Math.min(320, Math.trunc(layout.hulk.salvage / 4)); }
     } else if (kind === 'Clouds') {
       const count = roll(range(v.Count));
       for (let i = 0; i < count; i++) {

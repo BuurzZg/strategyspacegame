@@ -101,7 +101,7 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   const mid = g.points.find((p) => p.region === 'Middens');
   const p1 = V.plan(rules, s, mid.id);
   check(!p1.ok && /reach/.test(p1.why), `the Middens are out of reach without the Coils ("${p1.why}")`);
-  s.items.coils = 'installed';
+  V.remember(rules, s, 'coils', { quiet: true });
   const p2 = V.plan(rules, s, mid.id);
   check(p2.ok || /Glim/.test(p2.why), `with the Coils fitted, there is a route (${p2.route ? `${p2.route.hops.length} stitches, ${p2.route.glim} Glim, ${p2.route.days} days` : p2.why})`);
   const hush = g.points.find((p) => p.region === 'Hush');
@@ -121,19 +121,18 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   check(!V.plan(rules, t, nbTo).ok && dp.ok && V.drift(rules, t, nbTo).ok && t.at === nbTo && t.day === dd + dp.days && dp.days >= 2, `with no Glim the Forge can still drift one lane at sub-light (${dp.days} days for ${nb.len} spans)`);
 }
 
-// 5. Repairs, fitting a component, and the final jump
+// 5. Repairs, remembering a drive part, and the final jump
 {
   const s = V.newVoyage(rules, { seed: 5 });
   s.systems.life = 60;
   const ore0 = s.stores.ore, r = V.repair(rules, s, 'life');
   check(r.ok && s.systems.life === 60 + r.points && s.stores.ore === ore0 - r.points * +VY.RepairOre && s.day === 2, `a day's repairs: life support 60% → ${s.systems.life}% for ${r.points * +VY.RepairOre} ore and ${r.points * +VY.RepairSalvage} salvage`);
-  s.items.coils = 'found'; s.stores.salvage = 1000;
   const d0 = V.drive(rules, s).range, day0 = s.day;
-  const ok = V.install(rules, s, 'coils').ok;
-  check(ok && s.items.coils === 'installed' && V.drive(rules, s).range === 150 && d0 === 100 && s.day === day0 + +C.items.coils.Install.Days, `fitting the Threadwound Coils takes ${C.items.coils.Install.Days} days and stretches a stitch from ${d0} to 150 spans`);
+  const ok = V.remember(rules, s, 'coils');
+  check(ok && V.remembers(s, 'coils') && V.drive(rules, s).range === 150 && d0 === 100 && s.day === day0 && !V.installPlan(rules, s, 'coils').ok, `remembering the Threadwound Coils stretches a stitch from ${d0} to 150 spans at once: nothing to fit`);
   const g = V.galaxyOf(rules, s);
   check(!V.canJumpHome(rules, s).ok, 'no final jump without the Heartstone');
-  for (const id of ['lens', 'spindle', 'heartstone']) s.items[id] = 'installed';
+  for (const id of ['lens', 'spindle', 'heartstone']) V.remember(rules, s, id, { quiet: true });
   s.at = g.points.find((p) => p.edge).id;
   check(V.jumpHome(rules, s).ok && s.won && s.over.reason === 'home', 'with the Heartstone, from the Shore\'s edge, the Forge makes the final jump home');
 }
@@ -178,7 +177,7 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   const daysThere = Math.trunc(report.ticks / +VY.DayTicks);
   check(report.crew.lost.hands === 7 && report.crew.saved.hands === 7 && s.crew.roles.hands === hands0 - 7 - (report.crew.lost.hands - 7), `a Halberd destroyed: 7 of its 14 hands get away in pods, 7 are lost`);
   check(report.crew.lost.pilots >= 2 && s.crew.roles.pilots === pilots0 - report.crew.lost.pilots, `a Dart left behind takes its ${report.crew.lost.pilots} pilots with it`);
-  check(s.items.coils === 'found' && s.day === day0 + daysThere, `the voyage gets the Coils, and the ${daysThere} days spent there pass (${report.ticks} ticks)`);
+  check(V.remembers(s, 'coils') && s.day === day0 + daysThere, `the voyage remembers the Coils, and the ${daysThere} days spent there pass (${report.ticks} ticks)`);
   const sys1 = Object.values(s.systems).reduce((a, b) => a + b, 0);
   check(sys1 === sys0 - 20 * +VY.SystemWear, `a fifth of the hull lost wears ${20 * +VY.SystemWear} points off the Forge's systems`);
   check(count(s.crew) === crew0 - report.crew.lost.hands - report.crew.lost.pilots - (s.log.some((l) => /died|suffocated|left/.test(l.text) && l.day > day0) ? count(s.crew) : 0) || count(s.crew) === crew0 - Object.values(report.crew.lost).reduce((a, b) => a + b, 0), 'the crew count adds up');

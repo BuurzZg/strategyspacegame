@@ -36,3 +36,7 @@ Faction:
 	When: faction
 	Title: Somebody's claim
 	Text: This place belongs to a faction. Hail them (C) to talk, trade, hire, or make a treaty. Mining here without their leave costs standing, if they see it.
+Memory:
+	When: memory
+	Title: The Loom
+	Text: Something came back. What you remember stays in every life, even after you die and wake again. Open the Loom (L) to see what you remember, and to recall more with echoes.

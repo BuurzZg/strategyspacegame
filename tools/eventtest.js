@@ -76,7 +76,7 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
   check(!s.queue.length && s.seen.includes('Prologue'), 'answered, it is gone, and it never comes back');
   trigger(rules, s, g, 'start');
   check(!s.queue.length, 'story events happen once');
-  // the Coils' storyline: arriving at their derelict, finding them, fitting them
+  // the Coils' storyline: arriving at their derelict, then remembering them as the cutters find them
   s.at = g.components.coils;
   trigger(rules, s, g, 'arrive');
   const arrive = [...s.queue];
@@ -84,10 +84,7 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
   V.returnFromMap(rules, s, { stores: {}, forge: { hp: s.forge.hp }, ships: { aboard: s.fleet, destroyed: {}, leftBehind: {}, built: {} }, ticks: 100, found: ['coils'], crew: { lost: {} } });
   const found = [...s.queue];
   resolveEvents(rules, s);
-  s.stores.salvage = 1000;
-  V.install(rules, s, 'coils');
-  const fitted = [...s.queue];
-  check(arrive.includes('CoilsHere') && found.includes('CoilsFound') && fitted.includes('CoilsFitted'), `the Coils' storyline: ${arrive.join(', ')} → ${found.join(', ')} → ${fitted.join(', ')}`);
+  check(arrive.includes('CoilsHere') && found.includes('CoilsFound') && V.remembers(s, 'coils') && V.drive(rules, s).range === 150, `the Coils' storyline: ${arrive.join(', ')} → ${found.join(', ')}, and the drive reaches 150 spans at once`);
   // chance events: deterministic, and at most one per trigger
   const runs = () => { const t = V.newVoyage(rules, { seed: 7 }), gg = V.galaxyOf(rules, t); t.queue = []; const out = []; for (let d = 0; d < 60; d++) { t.day = d + 2; t.at = (d * 37) % gg.points.length; out.push(trigger(rules, t, gg, 'travel').join('+') || '-'); } return out; };
   const a = runs(), b = runs();
@@ -199,13 +196,13 @@ async function mapWith(type, extra) {
   C.applyOnChart(rules, s, g, 'choir', C.nodeView(ctx(), 'skein').choices[0].effects);
   const lens = C.nodeView(ctx(), 'hello').choices.find((c) => c.id === 'lens');
   C.applyOnChart(rules, s, g, 'choir', C.nodeView(ctx(), 'lens').choices.find((c) => c.id === 'buy').effects);
-  check(!before && lens && s.items.lens === 'found' && s.stores.glim === 1100, 'the Choir, once they have told you about the Skein and are Friendly, will part with a Stillwater Lens for 900 Glim');
+  check(!before && lens && V.remembers(s, 'lens') && s.stores.glim === 1100, 'the Choir, once they have told you about the Skein and are Friendly, will part with a Stillwater Lens for 900 Glim: you remember it');
   const t = V.newVoyage(rules, { seed: 13 });
   t.at = g.points.find((p) => p.seat && p.owner === 'gaunt').id;
-  meet(rules, t, 'gaunt'); t.standing.gaunt = 0; t.items.coils = 'installed'; t.items.lens = 'installed'; t.stores.salvage = 2000;
+  meet(rules, t, 'gaunt'); t.standing.gaunt = 0; for (const id of ['coils', 'lens']) V.remember(rules, t, id, { quiet: true }); t.stores.salvage = 2000;
   const ch = C.nodeView(C.chartContext(rules, t, g, 'gaunt'), 'hello').choices.find((c) => c.id === 'spindle');
   C.applyOnChart(rules, t, g, 'gaunt', C.nodeView(C.chartContext(rules, t, g, 'gaunt'), 'spindle').choices.find((c) => c.id === 'buy').effects);
-  check(ch && t.items.spindle === 'found', 'the Ashen Gaunt, at Neutral, sell an Anchor Spindle at their den for 1500 salvage');
+  check(ch && V.remembers(t, 'spindle'), 'the Ashen Gaunt, at Neutral, sell an Anchor Spindle at their den for 1500 salvage: you remember it');
 }
 
 // 6. A scripted voyage, answering every event as it comes, reaches the ending

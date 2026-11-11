@@ -46,7 +46,7 @@ defineTrait('PointLayout', class extends Trait {
     const shape = (type) => { const h = w.rules.actor(type).traitInfo('Health'); return { radius: h.Radius, halfLength: h.HalfLength, model: w.rules.actor(type).traitInfo('WithModel')?.Model || type }; };
     const at = (p) => ({ x: p[0], y: p[1], z: p[2] });
     for (const k of L.wrecks) w.createActor('wreck', w.neutral, { ...at(k.at), yaw: k.yaw, pitch: k.pitch, of: k.of, salvage: k.salvage, infested: !!k.infested, ...shape(k.of) });
-    if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, relic: L.hulk.relic || '', relicAt: L.hulk.relicAt | 0, ...shape(L.hulk.of) });
+    if (L.hulk) w.createActor('wreck', w.neutral, { ...at(L.hulk.at), yaw: L.hulk.yaw, pitch: L.hulk.pitch, of: L.hulk.of, salvage: L.hulk.salvage, name: L.hulk.name, relic: L.hulk.relic || '', relicName: L.hulk.relicName || '', relicAt: L.hulk.relicAt | 0, ...shape(L.hulk.of) });
     if (L.station) {
       const owner = w.players.find((p) => p.faction === L.station.owner) || w.neutral;
       this.station = w.createActor(L.station.of, owner, { ...at(L.station.at), yaw: L.station.yaw }).id;

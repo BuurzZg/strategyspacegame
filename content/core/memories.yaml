@@ -1,0 +1,317 @@
+# Memories: the progress of a campaign (PLAN.md §4). Thirty-one of them, in five branches, shown
+# on the Loom. Once remembered, a memory stays for the whole campaign, in every life. The crew
+# wake blank each time; the Forge's drive records keep what Jacob has recovered.
+#
+#   Name, Text   what it is called, and what the Loom says once it is known
+#   Hint         what the Loom says about it before it is known (it shows as a question mark)
+#   Kind         knowledge (story, lore, places) or ability (systems, hulls, rooms, options)
+#   Branch       origins, skein, forge, fleet or decks
+#   Found        an anchor (below, or a drive part's place): it is recovered by cutting into the
+#                hulk there. Story and drive memories are found this way and cost nothing
+#   Cost, Needs  otherwise it is recalled on the Loom with this many echoes, once the memories
+#                it needs are known
+#   Blueprint    a blueprint item that also brings it back (a wreck of that hull, a trader)
+#   Gives        what it does: radar (the chart's sensors), drive <part> (a Skein Drive part,
+#                items.yaml), hull <ship> (the foundry can build it), echoes <n>
+#   Echoes       echoes it gives when it comes back
+#   Ready        false: its system comes in a later milestone; until then it stays a question mark
+#
+# Anchors: where story memories wait. The generator places each one in its region, a number of
+# stitches (Hops) from the wake-up point, and turns that place into the given Type. Clue is the
+# radius, in spans, of the circle a clue draws round it on the chart.
+
+Anchors:
+	anchorage:
+		Name: the Anchorage
+		Region: Drift
+		Hops: 3-5
+		Type: Anchorage
+		Clue: 70
+		Relic: the station's sealed core
+
+# ---------------------------------------------------------------- origins
+radar:
+	Name: The radar
+	Kind: ability
+	Branch: origins
+	Order: 1
+	Found: anchorage
+	Gives: radar
+	Text: The sensor array's long watch. The chart lights up as far as the sensors reach, and deep scans work.
+	Hint: The chart is dark. Somewhere there is a way to light it.
+
+emblem:
+	Name: The emblem
+	Kind: knowledge
+	Branch: origins
+	Order: 2
+	Found: anchorage
+	Echoes: 1
+	Text: A hammer inside a cog, on the station, on the Forge's own hull plates, on every uniform aboard. It belonged to a company. It still belongs to us. The station's last dated log is a hundred years of dust deep.
+	Hint: A mark on the hull that nobody aboard can explain.
+
+help:
+	Name: "We are here to help"
+	Kind: knowledge
+	Branch: origins
+	Order: 3
+	Ready: false
+	Hint: A voice in an old recording, somewhere near the station.
+
+owner:
+	Name: The old man's ship
+	Kind: knowledge
+	Branch: origins
+	Order: 4
+	Ready: false
+	Hint: Whose ship is this?
+
+fray:
+	Name: The Fray
+	Kind: knowledge
+	Branch: origins
+	Order: 5
+	Ready: false
+	Hint: Why did we come here at all?
+
+oath:
+	Name: The oath
+	Kind: knowledge
+	Branch: origins
+	Order: 6
+	Ready: false
+	Hint: Someone swore to stop us.
+
+afraid:
+	Name: "Afraid is cooperative"
+	Kind: knowledge
+	Branch: origins
+	Order: 7
+	Ready: false
+	Hint: The traders smiled at us. Why?
+
+lists:
+	Name: The lists
+	Kind: knowledge
+	Branch: origins
+	Order: 8
+	Ready: false
+	Hint: Names, in a hand you almost know.
+
+otherhalf:
+	Name: The other half
+	Kind: knowledge
+	Branch: origins
+	Order: 9
+	Ready: false
+	Hint: Something you have carried for a very long time.
+
+waking:
+	Name: The waking
+	Kind: knowledge
+	Branch: origins
+	Order: 10
+	Ready: false
+	Hint: What woke?
+
+horologe:
+	Name: The Meridian Horologe
+	Kind: knowledge
+	Branch: origins
+	Order: 11
+	Ready: false
+	Hint: What day is it?
+
+offering:
+	Name: The offering
+	Kind: knowledge
+	Branch: origins
+	Order: 12
+	Ready: false
+	Hint: What was the price?
+
+enough:
+	Name: Enough
+	Kind: knowledge
+	Branch: origins
+	Order: 13
+	Ready: false
+	Hint: Who said no?
+
+truth:
+	Name: The whole truth
+	Kind: knowledge
+	Branch: origins
+	Order: 14
+	Ready: false
+	Hint: Deck 9 is sealed.
+
+# ---------------------------------------------------------------- the Skein
+coils:
+	Name: Threadwound Coils
+	Kind: ability
+	Branch: skein
+	Order: 1
+	Found: coils
+	Echoes: 1
+	Gives: drive coils
+	Text: Spools of thread-metal that hold a stitch open longer. The engineers' hands knew how to wind them before their heads did. The drive reaches the Middens.
+	Hint: The drive stitches short. It used to reach further.
+
+lens:
+	Name: Stillwater Lens
+	Kind: ability
+	Branch: skein
+	Order: 2
+	Found: lens
+	Needs: coils
+	Echoes: 1
+	Gives: drive lens
+	Text: A lens of something that is not quite glass. Through it, the Veil looks like an open door, and the drive can stitch through it into the Hush.
+	Hint: There is a wall of light the drive cannot thread.
+
+spindle:
+	Name: Anchor Spindle
+	Kind: ability
+	Branch: skein
+	Order: 3
+	Found: spindle
+	Needs: lens
+	Echoes: 1
+	Gives: drive spindle
+	Text: The heavy core that keeps a long stitch from fraying. The drive makes long stitches now, out to the Shore.
+	Hint: Some gaps are too long to stitch.
+
+heartstone:
+	Name: Heartstone
+	Kind: ability
+	Branch: skein
+	Order: 4
+	Found: heartstone
+	Needs: spindle
+	Echoes: 1
+	Gives: drive heartstone
+	Text: A warm stone the size of a house, the drive's heart. From the Shore's edge, the Forge can make the final jump.
+	Hint: The way out, if there is one.
+
+# ---------------------------------------------------------------- the Forge's systems
+shields:
+	Name: Shields
+	Kind: ability
+	Branch: forge
+	Order: 1
+	Ready: false
+	Hint: The rocks are thick in some lanes.
+
+baffles:
+	Name: Heat baffles
+	Kind: ability
+	Branch: forge
+	Order: 2
+	Ready: false
+	Hint: Close to the dead star, the hull would cook.
+
+rods:
+	Name: Lightning rods
+	Kind: ability
+	Branch: forge
+	Order: 3
+	Ready: false
+	Hint: Every needle spins in the storms.
+
+lead:
+	Name: Lead-lined decks
+	Kind: ability
+	Branch: forge
+	Order: 4
+	Ready: false
+	Hint: A light that makes people sick.
+
+silent:
+	Name: Silent running
+	Kind: ability
+	Branch: forge
+	Order: 5
+	Needs: rods
+	Ready: false
+	Hint: Something out there is listening.
+
+# ---------------------------------------------------------------- the fleet
+hull-wisp:
+	Name: Wisp
+	Kind: ability
+	Branch: fleet
+	Order: 1
+	Needs: radar
+	Cost: 1
+	Gives: hull wisp
+	Text: The little scout with the big eyes. The foundry can build Wisps.
+	Hint: A scout that sees further than the rest. The radar would help you remember it.
+
+hull-talon:
+	Name: Talon
+	Kind: ability
+	Branch: fleet
+	Order: 2
+	Blueprint: bp-talon
+	Gives: hull talon
+	Text: The delta-winged bomber that cracks frigates. The foundry can build Talons.
+	Hint: Cut up a wreck of one, or buy its plans.
+
+hull-sabre:
+	Name: Sabre
+	Kind: ability
+	Branch: fleet
+	Order: 3
+	Blueprint: bp-sabre
+	Gives: hull sabre
+	Text: A destroyer with torpedoes and two pulse batteries. The foundry can build Sabres.
+	Hint: Cut up a wreck of one, or buy its plans.
+
+hull-spindle:
+	Name: Spindle
+	Kind: ability
+	Branch: fleet
+	Order: 4
+	Blueprint: bp-spindle
+	Gives: hull spindle
+	Text: The lance frigate that hurts capital hulls from far away. The foundry can build Spindles.
+	Hint: Cut up a wreck of one, or buy its plans.
+
+hull-monolith:
+	Name: Monolith
+	Kind: ability
+	Branch: fleet
+	Order: 5
+	Ready: false
+	Hint: Something very large, deep in the Shore.
+
+# ---------------------------------------------------------------- the decks
+messhall:
+	Name: Mess hall
+	Kind: ability
+	Branch: decks
+	Order: 1
+	Cost: 1
+	Ready: false
+	Hint: A place for the crew to eat together.
+
+infirmary:
+	Name: Infirmary
+	Kind: ability
+	Branch: decks
+	Order: 2
+	Needs: messhall
+	Cost: 2
+	Ready: false
+	Hint: Someone used to keep people alive here.
+
+chartroom:
+	Name: Chart room
+	Kind: ability
+	Branch: decks
+	Order: 3
+	Needs: radar
+	Cost: 1
+	Ready: false
+	Hint: A room full of maps nobody can read yet.

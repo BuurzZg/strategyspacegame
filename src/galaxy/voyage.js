@@ -1,5 +1,5 @@
 import { Random } from '../engine/random.js';
-import { hashMix } from '../engine/math.js';
+import { hashMix, sin as SIN, cos as COS } from '../engine/math.js';
 import { mapKinds, weights } from '../engine/content.js';
 import { CELL } from '../engine/math.js';
 import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
@@ -7,7 +7,7 @@ import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, apply
 import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
-import { lifeOf, lifeMix } from './life.js';
+import { lifeOf, lifeMix, remembers, markMemory, memoryOfBlueprint, givesOf, buildable } from './life.js';
 import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
 
 // The voyage: one life of a campaign on the galaxy map. Plain data (it saves as JSON) plus pure,
@@ -38,8 +38,10 @@ export function galaxyOf(rules, s) {
 // A campaign's record of what outlasts a death (PLAN.md §2): the life number, what the chart
 // knows, how each life ended, everyone named who was lost, and standing with factions that
 // remember Jacob across lives (Remembers: true in factions.yaml).
+// Memories and echoes (PLAN.md §4) last for the whole campaign too, and so do clue circles and
+// the echoes waiting where earlier lives ended.
 export function newCampaign() {
-  return { life: 1, chart: { known: [], visited: [] }, lives: [], memorial: [], standing: {}, met: {}, hints: [] };
+  return { life: 1, chart: { known: [], visited: [], clues: [] }, lives: [], memorial: [], standing: {}, met: {}, hints: [], memories: {}, echoes: 0, echoAt: [] };
 }
 
 // A new campaign's first life, or (with `campaign`) a later life in the same galaxy.
@@ -62,9 +64,10 @@ export function newVoyage(rules, { seed = 1, length = 'full', guided = false, ca
     items: {}, airless: 0, dry: false, over: null, visits: 0,
     standing: {}, met: {}, treaties: [], flags: [], stock: {},
     queue: [], seen: [], ahead: [], rolls: 0,
-    blueprints: [...(rules.content.blueprintStart || [])],
+    blueprints: [],
     log: [],
   };
+  s.blueprints = buildable(rules, s); // the start list, and every hull remembered
   s.crew.life = s.campaign.life; // the same people wake each life; the dice fall differently
   assignFleet(s.crew, rules, s.fleet, { day: 1, fresh: true });
   for (const e of s.fleet) e.hp = shipMaxHp(rules, e, s); // a lead's touch on the hull
@@ -73,28 +76,102 @@ export function newVoyage(rules, { seed = 1, length = 'full', guided = false, ca
   for (const [fid, n] of Object.entries(s.campaign.standing)) if (rules.content.factions[fid]) { s.standing[fid] = n; if (s.campaign.met[fid]) s.met[fid] = true; }
   reveal(rules, s);
   if (s.campaign.life > 1) note(s, `Life ${s.campaign.life}. You wake on the bridge of the Forge at ${g.points[g.start].name}, in the Drift, and you know this moment. The chart still holds what you found before.`, 'story');
-  else note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
-  signalNote(rules, s);
+  else note(s, `You wake on the bridge of a ship, at a place the chart calls ${g.points[g.start].name}. Nobody aboard knows where that is, or how they got here.`, 'story');
   trigger(rules, s, g, 'start');
+  clues(rules, s);
   return s;
 }
 
-// The drive component the engineers can get a fix on now: the first one not yet fitted.
+// The drive part the engineers can get a fix on now: the first one not yet remembered.
 // { id, at } (at: place id), or null when the drive is whole.
 export function target(rules, s) {
   const g = galaxyOf(rules, s);
   for (const it of Object.values(rules.content.items)) {
-    if (it.Kind !== 'drive' || s.items[it.id] === 'installed') continue;
-    return { id: it.id, at: s.items[it.id] === 'found' ? -1 : g.components[it.id] ?? -1 };
+    if (it.Kind !== 'drive' || remembers(s, it.id)) continue;
+    return { id: it.id, at: g.components[it.id] ?? -1 };
   }
   return null;
 }
-function signalNote(rules, s) {
-  const t = target(rules, s), g = galaxyOf(rules, s);
-  if (!t || t.at < 0) return;
-  const p = g.points[t.at];
-  if (!s.known.includes(p.id)) { s.known.push(p.id); s.known.sort((a, b) => a - b); }
-  note(s, `The engineers have a fix on the ${rules.content.items[t.id].Name}: it is aboard the ${p.name}, in ${rules.content.regions[p.region].Name}.`, 'story');
+
+// ---------------------------------------------------------------- clues (PLAN.md §2)
+// A clue draws a circle on the chart round where an anchor (a story place, or a drive part's
+// derelict) is: never centred on it, but always containing it. Another clue to the same place
+// shrinks the circle. Close enough, the sensors pinpoint it, and from then on it is exact.
+const clueList = (s) => (s.campaign.chart.clues ||= []);
+export function addClue(rules, s, anchor) {
+  const g = galaxyOf(rules, s), at = g.components[anchor];
+  if (at === undefined) return null;
+  const list = clueList(s), old = list.find((c) => c.id === anchor);
+  if (old && old.exact) return old;
+  const p = g.points[at], A = (rules.content.anchors || {})[anchor];
+  const r0 = old ? Math.max(20, Math.trunc((old.r * 55) / 100)) : +((A && A.Clue) || rules.content.voyage.ClueSpan || 90);
+  const rng = new Random(hashMix(hashMix(s.seed | 0, at + 101), (old ? old.n : 0) + 7) || 1);
+  const d = Math.trunc((r0 * (20 + rng.int(41))) / 100), ang = rng.int(1024);
+  const c = { id: anchor, at, x: p.x + Math.trunc((COS(ang) * d) / 1024), y: p.y + Math.trunc((SIN(ang) * d) / 1024), r: r0, n: old ? old.n + 1 : 1, exact: false };
+  if (old) Object.assign(old, c); else list.push(c);
+  return c;
+}
+// Is a place inside a clue's circle?
+export const inClue = (g, c, id) => { const p = g.points[id], dx = p.x - c.x, dy = p.y - c.y; return dx * dx + dy * dy <= c.r * c.r; };
+// After moving or remembering: a new clue for the drive part the engineers can fix on (once
+// the radar works), and clues pinpointed when the Forge comes close.
+function clues(rules, s) {
+  const g = galaxyOf(rules, s), t = target(rules, s);
+  if (t && t.at >= 0 && remembers(s, 'radar') && !clueList(s).some((c) => c.id === t.id)) {
+    addClue(rules, s, t.id);
+    note(s, `The engineers have a fix on the ${rules.content.items[t.id].Name}: somewhere in ${rules.content.regions[g.points[t.at].region].Name}, inside the circle on the chart.`, 'story');
+  }
+  const here = g.points[s.at], near = Math.max(30, sensorRange(rules, s) >> 1);
+  for (const c of clueList(s)) {
+    if (c.exact) continue;
+    const p = g.points[c.at], dx = p.x - here.x, dy = p.y - here.y;
+    if (s.at === c.at || (remembers(s, 'radar') && dx * dx + dy * dy <= near * near)) {
+      c.exact = true;
+      if (!s.known.includes(c.at)) { s.known.push(c.at); s.known.sort((a, b) => a - b); }
+      note(s, `The watch officer pinpoints it: the ${p.name}.`, 'story');
+    }
+  }
+}
+
+// ---------------------------------------------------------------- memories (PLAN.md §4)
+// Remember something: it stays for the whole campaign. What it gives takes effect at once.
+export function remember(rules, s, id, { quiet = false } = {}) {
+  const M = rules.content.memories[id];
+  if (!M || !markMemory(s, id)) return false;
+  for (const [op, arg] of givesOf(M)) {
+    if (op === 'radar') reveal(rules, s);
+    else if (op === 'hull' && !s.blueprints.includes(arg)) s.blueprints.push(arg);
+    else if (op === 'echoes') s.campaign.echoes = (s.campaign.echoes | 0) + (+arg | 0);
+  }
+  if (M.Echoes) s.campaign.echoes = (s.campaign.echoes | 0) + (+M.Echoes | 0);
+  if (!quiet) note(s, `Remembered: ${M.Name}.${M.Echoes ? ` (+${M.Echoes} echo${+M.Echoes > 1 ? 'es' : ''})` : ''}`, 'memory');
+  return true;
+}
+// Everything waiting at an anchor comes back (cutting into its hulk).
+export function recover(rules, s, anchor) {
+  const got = [];
+  for (const m of Object.values(rules.content.memories)) if (m.Found === anchor && m.Ready !== 'false' && remember(rules, s, m.id)) got.push(m.id);
+  if (got.length) { trigger(rules, s, galaxyOf(rules, s), 'found', { item: got.find((x) => rules.content.memories[x].Kind === 'knowledge') || got[0] }); clues(rules, s); }
+  return got;
+}
+// Recalling a memory on the Loom with echoes: { ok, why, cost }.
+export function recallPlan(rules, s, id) {
+  const M = rules.content.memories[id];
+  if (!M) return no('No such memory.');
+  if (remembers(s, id)) return no('Already remembered.');
+  if (M.Ready === 'false') return no('Not yet.');
+  if (M.Cost === undefined) return no(M.Found ? 'It waits somewhere out there.' : M.Blueprint ? 'Cut up a wreck of one, or buy its plans.' : 'It cannot be recalled.');
+  const need = String(M.Needs || '').split(',').map((x) => x.trim()).filter(Boolean).filter((n) => !remembers(s, n));
+  if (need.length) return no(`First remember: ${need.map((n) => rules.content.memories[n].Name).join(', ')}.`);
+  if ((s.campaign.echoes | 0) < +M.Cost) return no(`It takes ${M.Cost} echo${+M.Cost > 1 ? 'es' : ''}; you have ${s.campaign.echoes | 0}.`);
+  return { ok: true, cost: +M.Cost };
+}
+export function recall(rules, s, id) {
+  const p = recallPlan(rules, s, id);
+  if (!p.ok) return p;
+  s.campaign.echoes -= p.cost;
+  remember(rules, s, id);
+  return { ok: true };
 }
 
 export function note(s, text, kind = 'info') { s.log.push({ day: s.day, text, kind }); if (s.log.length > 400) s.log.splice(0, s.log.length - 400); }
@@ -146,7 +223,7 @@ export function workPct(rules, s) { const V = rules.content.voyage; return s.mor
 
 // The drive as it is now: components fitted, and its condition (half range at worst; none at 0).
 export function drive(rules, s) {
-  const installed = Object.keys(s.items).filter((k) => s.items[k] === 'installed');
+  const installed = Object.values(rules.content.items).filter((it) => it.Kind === 'drive' && remembers(s, it.id)).map((it) => it.id);
   const d = driveOf(rules, installed);
   const c = s.systems.drive | 0;
   return { ...d, range: c <= 0 ? 0 : Math.trunc((d.range * (50 + (c >> 1))) / 100) };
@@ -154,9 +231,13 @@ export function drive(rules, s) {
 export const sensorRange = (rules, s) => Math.trunc((Math.trunc((num(rules.content.voyage, 'SensorRange') * projectBonus(rules, s, 'SensorPct')) / 100) * (40 + Math.trunc((output(s, 'sensors') * 60) / 100))) / 100);
 
 // Places within sensor range of the Forge become known (their type shows on the chart).
+// Until the radar is remembered the chart is dark: only the places one lane away are known.
 export function reveal(rules, s) {
-  const g = galaxyOf(rules, s), here = g.points[s.at], r = sensorRange(rules, s), known = new Set(s.known);
-  for (const p of g.points) if ((p.x - here.x) * (p.x - here.x) + (p.y - here.y) * (p.y - here.y) <= r * r) known.add(p.id);
+  const g = galaxyOf(rules, s), here = g.points[s.at], known = new Set(s.known);
+  if (remembers(s, 'radar') || !rules.content.memories.radar) {
+    const r = sensorRange(rules, s);
+    for (const p of g.points) if ((p.x - here.x) * (p.x - here.x) + (p.y - here.y) * (p.y - here.y) <= r * r) known.add(p.id);
+  } else for (const li of g.adj[s.at]) { const l = g.lanes[li]; known.add(l.a === s.at ? l.b : l.a); }
   known.add(s.at);
   s.known = [...known].sort((a, b) => a - b);
 }
@@ -291,6 +372,8 @@ export function newLife(rules, prev) {
   const c = JSON.parse(JSON.stringify(prev.campaign || newCampaign()));
   const union = (a, b) => [...new Set([...a, ...b])].sort((x, y) => x - y);
   c.lives.push({ life: c.life, days: prev.day, reason: prev.over ? prev.over.reason : 'letgo', text: prev.over ? prev.over.text : '', visits: prev.visits | 0, lost: (prev.crew.fallen || []).length });
+  // where this life ended, an echo waits for a later one (the three most recent)
+  c.echoAt = [...(c.echoAt || []), { place: prev.at, life: c.life, n: 1 + Math.min(2, Math.trunc(prev.day / 40)) }].slice(-3);
   c.chart.known = union(c.chart.known, prev.known);
   c.chart.visited = union(c.chart.visited, Object.keys(prev.visited).map(Number));
   for (const f of prev.crew.fallen || []) c.memorial.push({ ...f, life: c.life });
@@ -303,6 +386,7 @@ export function newLife(rules, prev) {
   return newVoyage(rules, { seed: prev.seed, length: prev.length, guided: prev.guided, campaign: c });
 }
 // Visited in an earlier life (the chart marks these)
+export { remembers };
 export const visitedBefore = (s, id) => !!s.campaign && s.campaign.chart.visited.includes(id);
 
 // ---------------------------------------------------------------- actions on the chart
@@ -373,8 +457,17 @@ export function drift(rules, s, to) {
 function arrived(rules, s, stitched) {
   const g = galaxyOf(rules, s);
   s.ahead = (s.ahead || []).filter((a) => a.at === s.at);
+  // where an earlier life ended, its echo waits
+  const c = s.campaign, waiting = (c.echoAt || []).filter((e) => e.place === s.at);
+  if (waiting.length) {
+    const n = waiting.reduce((t, e) => t + (e.n | 0), 0);
+    c.echoes = (c.echoes | 0) + n;
+    c.echoAt = c.echoAt.filter((e) => e.place !== s.at);
+    note(s, `Something here feels like a memory of a memory. You died here, in life ${waiting.map((e) => e.life).join(' and ')}. +${n} echo${n > 1 ? 'es' : ''}.`, 'memory');
+  }
   if (stitched) trigger(rules, s, g, 'travel');
   trigger(rules, s, g, 'arrive');
+  clues(rules, s);
 }
 
 // An event's choice, on the star chart: its effects on the voyage (time passing, drive parts
@@ -383,19 +476,22 @@ export function eventChoice(rules, s, effects) {
   const g = galaxyOf(rules, s), ev = rules.content.events[(s.queue || [])[0]];
   const r = applyOnChart(rules, s, g, null, effects, { how: ev ? `lost: ${ev.Title}` : 'lost' });
   if (r.days) passDays(rules, s, r.days);
-  if (r.found) trigger(rules, s, g, 'found', { item: r.found });
+  if (r.clue) addClue(rules, s, r.clue);
+  if (r.found) { s.blueprints = buildable(rules, s); if (remembers(s, 'radar')) reveal(rules, s); trigger(rules, s, g, 'found', { item: r.found }); }
+  clues(rules, s);
   return r;
 }
 export { eventContext };
 
 // A blueprint: a hull you can now build.
+// A blueprint found or bought: the hull's memory comes back, for good.
 export function learn(rules, s, id) {
   const it = rules.content.items[id];
   if (!it || it.Kind !== 'blueprint') return false;
-  s.blueprints ||= [];
-  if (s.blueprints.includes(it.Unlocks)) return false;
-  s.blueprints.push(it.Unlocks);
-  note(s, `Learned: the ${it.Name}. The foundry can build ${rules.actor(it.Unlocks).traitInfo('Tooltip').Name}s now.`, 'good');
+  const m = memoryOfBlueprint(rules, id);
+  if (m) { if (!remember(rules, s, m.id, { quiet: true })) return false; }
+  else { s.blueprints ||= []; if (s.blueprints.includes(it.Unlocks)) return false; s.blueprints.push(it.Unlocks); }
+  note(s, `Remembered: the ${rules.actor(it.Unlocks).traitInfo('Tooltip').Name}. The foundry can build them now, in every life.`, 'memory');
   return true;
 }
 
@@ -404,6 +500,7 @@ export function scanPlan(rules, s) {
   const glim = num(rules.content.voyage, 'ScanGlim');
   if (s.stores.glim < glim) return no(`Scanning takes ${glim} Glim.`);
   if (s.systems.sensors <= 0) return no('The sensors are wrecked.');
+  if (!remembers(s, 'radar')) return no('The sensors are dark. Nobody remembers how to work the long watch.');
   return { ok: true, glim, range: sensorRange(rules, s) * 2 };
 }
 export function scan(rules, s) {
@@ -467,7 +564,7 @@ export function installPlan(rules, s, id) {
   const it = rules.content.items[id], I = it && it.Install;
   if (!it || !I) return no('That cannot be fitted.');
   if (s.items[id] === 'installed') return no(it.Kind === 'project' ? 'Already built.' : 'Already fitted.');
-  if (it.Kind !== 'project' && s.items[id] !== 'found') return no('Not found yet.');
+  if (it.Kind !== 'project') return no('Drive parts are remembered, not fitted.');
   if (it.Requires && s.items[it.Requires] !== 'installed') return no(`Build the ${rules.content.items[it.Requires]?.Name || it.Requires} first.`);
   // drive parts cost less on a short voyage
   const pct = it.Kind === 'drive' && s.length === 'short' ? num(rules.content.voyage, 'ShortInstallPct') || 100 : 100;
@@ -490,10 +587,6 @@ export function install(rules, s, id) {
     note(s, `${rules.content.items[id].Name} built after ${p.days} days' work.`, 'good');
     return { ok: true };
   }
-  note(s, `${rules.content.items[id].Name} fitted to the Skein Drive after ${p.days} days' work.`, 'story');
-  signalNote(rules, s);
-  trigger(rules, s, galaxyOf(rules, s), 'install', { item: id });
-  if (!target(rules, s)) note(s, 'The drive is whole. From the Shore\'s edge, the Forge can make the long jump home.', 'story');
   return { ok: true };
 }
 
@@ -537,6 +630,12 @@ export function crewView(rules, s) {
 }
 
 // ---------------------------------------------------------------- the maps
+// An anchor (a story place, or a drive part's derelict) is done when every memory waiting
+// there is remembered; until then its hulk still holds something.
+const waitingAt = (rules, anchor) => Object.values(rules.content.memories).filter((m) => m.Found === anchor && m.Ready !== 'false');
+export const anchorDone = (rules, s, anchor) => { const w = waitingAt(rules, anchor); return w.length ? w.every((m) => remembers(s, m.id)) : !!(s.items && s.items[anchor]); };
+const relicName = (rules, anchor) => { const A = (rules.content.anchors || {})[anchor]; return A ? A.Relic || A.Name : anchor && rules.content.items[anchor] ? `the ${rules.content.items[anchor].Name}` : ''; };
+
 // World settings for going in to the place the Forge is at.
 export function visitSettings(rules, s) {
   const V = rules.content.voyage, g = galaxyOf(rules, s), p = g.points[s.at], R = rules.content.regions[p.region];
@@ -545,7 +644,7 @@ export function visitSettings(rules, s) {
     seed: lifeMix(s, poiSeed(s.seed, p.id, times)), type: p.type, visit: times,
     danger: +R.Danger || 1, name: p.name, ship: p.ship,
     richness: Math.max(num(V, 'RevisitFloor'), 100 - times * num(V, 'RevisitPct')),
-    relic: p.relic && !s.items[p.relic] ? p.relic : '',
+    relic: p.relic && !anchorDone(rules, s, p.relic) ? p.relic : '', relicName: relicName(rules, p.relic),
   });
   const stores = {};
   for (const k of mapKinds(rules)) stores[k] = s.stores[k] | 0;
@@ -716,7 +815,8 @@ export function returnFromMap(rules, s, report) {
   for (const what of st.reveals || []) note(s, revealPlaces(rules, s, galaxyOf(rules, s), what), 'info');
   // what was found
   for (const id of report.found || []) if (rules.content.items[id]?.Kind === 'blueprint') learn(rules, s, id);
-  for (const id of (report.found || []).filter((x) => rules.content.items[x]?.Kind !== 'blueprint')) if (!s.items[id]) { s.items[id] = 'found'; note(s, `Found: the ${rules.content.items[id].Name}. It can be fitted to the drive from the Forge screen.`, 'story'); trigger(rules, s, galaxyOf(rules, s), 'found', { item: id }); }
+  // what was sealed in a hulk: the memories waiting at that anchor come back
+  for (const id of (report.found || []).filter((x) => rules.content.items[x]?.Kind !== 'blueprint')) recover(rules, s, id);
   // whatever was waiting here has been met
   s.ahead = (s.ahead || []).filter((a) => a.at !== p.id);
   // morale: losses hurt, a win helps
@@ -740,7 +840,7 @@ export function returnFromMap(rules, s, report) {
 const shipName = (rules, type) => (rules.actors.has(type) ? rules.actor(type).traitInfo('Tooltip').Name : type);
 
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
@@ -759,6 +859,20 @@ export function loadVoyage(rules, text) {
     s.campaign = { ...newCampaign(), chart: { known: [...(s.known || [])], visited: [] }, hints: [...(s.hints || [])] };
     s.saves = 'campaign';
     s.version = 5;
+  }
+  // from Milestone 14: memories. Saves from before already had working sensors and their drive
+  // parts, so they keep them: the radar, the emblem, every drive part found or fitted, and every
+  // hull they could build.
+  if (s && s.kind === 'voyage' && s.version === 5) {
+    const c = s.campaign;
+    Object.assign(c, { memories: c.memories || {}, echoes: c.echoes | 0, echoAt: c.echoAt || [] });
+    c.chart.clues ||= [];
+    const mark = (id) => { if (rules.content.memories[id] && !c.memories[id]) c.memories[id] = { life: c.life, day: s.day | 0 }; };
+    mark('radar'); mark('emblem');
+    for (const it of Object.values(rules.content.items)) if (it.Kind === 'drive' && s.items && s.items[it.id]) { mark(it.id); delete s.items[it.id]; }
+    for (const m of Object.values(rules.content.memories)) for (const [op, arg] of givesOf(m)) if (op === 'hull' && (s.blueprints || []).includes(arg)) mark(m.id);
+    s.blueprints = buildable(rules, s);
+    s.version = 6;
   }
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   // from Milestone 10: everything could be built then, so keep it that way

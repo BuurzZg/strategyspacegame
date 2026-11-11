@@ -4,33 +4,62 @@
 #            set Item), home (the final jump)
 #   Chance   percent (default 100); a trigger fires all its story events and at most one chance one
 #   If       conditions, as in dialogs, plus: region X, type X, not type X, day >= n,
-#            item X missing|found|installed, here relic X, crew >= n, life >= n, life <= n
+#            item X missing|found|installed (a drive part: found and installed both mean
+#            remembered), here relic X, crew >= n, life >= n, life <= n, remembers X, not remembers X
 #   Once     false: may happen again (story events happen once)
 #   Title    the panel's heading
 # Effects, as in dialogs, plus: give <store> n, crew <role> n, lose crew|<role> n,
 #   damage hull|<system> n (percent), morale n, item <id> found, days n,
 #   ambush <faction> <ship+ship+...> [delay s] (they are waiting on the next map here),
-#   monster <type> [delay s], faction <id> n (standing), roll <percent> <node if yes> <node if no>
+#   monster <type> [delay s], faction <id> n (standing), roll <percent> <node if yes> <node if no>,
+#   clue <anchor> (a circle on the chart round it), echoes n (to recall memories with)
 
 Prologue:
 	When: start
 	If: life <= 1
-	Title: The tear
-	Start: tear
-	Node@tear:
-		Say: The Forge was a day out from Meridian when the Skein Drive caught on something it had no name for. The thread pulled tight, then it pulled through. Every light on the bridge went white.
+	Title: Waking
+	Start: wake
+	Node@wake:
+		Say: White. Then a bridge, all brass and ticking, and alarms going off somewhere behind your eyes. Your hands are already on the helm. They know it. You don't.
 		Choice@on:
-			Text: And then?
-			Goto: wrack
-	Node@wrack:
-		Say: When the lights came back there were no stars they knew. Only scrap: moons broken into shoals, wrecks the size of towns, nebulae that glow like something burning far away. The old charts have a name for a place like this. The Wrack.
+			Text: Where are we?
+			Goto: who
+	Node@who:
+		Say: Nobody knows. A dozen people at a dozen stations look up at you, and then down at the names stitched on their own uniforms. One engineer reads theirs out loud, slowly, like a word in a foreign language. The ship hums. The chart is dark.
 		Choice@on:
-			Text: What is left of the drive?
-			Goto: drive
-	Node@drive:
-		Say: The chief engineer is blunt about it. The Skein still stitches, but short, and it burns Glim like paper. The Threadwound Coils snapped in the tear. Find new ones, and the drive reaches further. Find the rest of what it needs, and somewhere at the Wrack's edge it might make one long stitch home. Meanwhile there are a hundred and fifty people aboard, and they need water, food and air every day.
-		Choice@go:
-			Text: Then we start looking.
+			Text: Then we start with the chart.
+			Goto: signal
+	Node@signal:
+		Say: One thing on it, very faint: a signal, a few stitches out, repeating. The watch officer turns it up. There is a picture in it, of a hammer inside a cog. The same mark is on the plate above the helm, and on your sleeve.
+		Choice@on:
+			Text: Find it.
+			Do: clue anchorage, close
+
+AnchorageHere:
+	When: arrive
+	If: here relic anchorage, not remembers emblem
+	Title: The station
+	Start: here
+	Node@here:
+		Say: A station, torn open and gone cold. The hammer and cog are painted on every plate that is still attached. The signal is coming from its core, sealed somewhere deep in the wreck.
+		Choice@ok:
+			Text: Get the Shearers ready. Cut into the core.
+			Do: close
+
+EmblemFound:
+	When: found
+	Item: emblem
+	Title: The emblem
+	Start: core
+	Node@core:
+		Say: The core opens on dust a finger deep, and on people still at their stations: skeletons in the same uniforms as yours. The surgeon kneels by one of them for a long time. "These aren't days old, Captain. Not years, either." The station's last log is dated. Nobody knows what today's date is.
+		Choice@on:
+			Text: What else is in there?
+			Goto: radar
+	Node@radar:
+		Say: The station's long watch, intact: a sensor array the same make as the Forge's own. The watch officer looks at it, then down at the console, and their hands start to move before they do. The chart lights up. For the first time since you woke, you can see where you are.
+		Choice@ok:
+			Text: Then let's see it.
 			Do: close
 
 CoilsHere:
@@ -50,18 +79,7 @@ CoilsFound:
 	Title: The Coils
 	Start: found
 	Node@found:
-		Say: The vault opens on spools of thread-metal, still warm. The chief engineer touches one and laughs for the first time since the tear. Fit them from the Forge panel, and the drive will reach the Middens.
-		Choice@ok:
-			Text: Fit them as soon as we can.
-			Do: close
-
-CoilsFitted:
-	When: install
-	Item: coils
-	Title: Longer stitches
-	Start: fitted
-	Node@fitted:
-		Say: The Skein spools up with a new sound: deeper, steadier. The gap between the Drift and the Middens, which looked like a wall yesterday, is a stitch now. Somewhere beyond the Middens, the engineers think, is a lens that will let the drive see through the Veil.
+		Say: The vault opens on spools of thread-metal, still warm. The chief engineer picks one up and starts winding it before knowing why, then laughs for the first time since you woke. The Skein spools up deeper and steadier: the gap to the Middens is a stitch now.
 		Choice@ok:
 			Text: On to the Middens.
 			Do: close
@@ -83,20 +101,9 @@ LensFound:
 	Title: The Lens
 	Start: found
 	Node@found:
-		Say: It is not glass. It is not anything the engineers can name. Through it, the Veil on the star chart looks like what it is: a door.
+		Say: It is not glass. It is not anything the engineers can name, but they set it into the drive as if they had done it a hundred times. Through it, the Veil on the star chart looks like what it is: a door. Behind it lies the Hush.
 		Choice@ok:
-			Text: Fit it.
-			Do: close
-
-LensFitted:
-	When: install
-	Item: lens
-	Title: Through the Veil
-	Start: fitted
-	Node@fitted:
-		Say: The drive can stitch through the Veil now. Behind it lies the Hush, where the nebulae swallow radio and the stars look further away than they are. The Anchor Spindle is in there somewhere; the Ashen Gaunt are said to know where.
-		Choice@ok:
-			Text: Into the Hush.
+			Text: Onward.
 			Do: close
 
 SpindleHere:
@@ -116,20 +123,9 @@ SpindleFound:
 	Title: The Spindle
 	Start: found
 	Node@found:
-		Say: Forty crew to move it, and it still does not want to move. Whoever made this meant to go a long way.
+		Say: Forty crew to move it, and it still does not want to move. It slides into the drive's spine with a sound everyone aboard seems to recognise. The Skein's longest stitch reaches the Shore now.
 		Choice@ok:
-			Text: Fit it.
-			Do: close
-
-SpindleFitted:
-	When: install
-	Item: spindle
-	Title: Long stitches
-	Start: fitted
-	Node@fitted:
-		Say: The Skein's longest stitch is longer than the gap to the Shore now. Out there, at the Wrack's edge, the old notes say there is a Heartstone. And past the Shore, if the notes are right, home.
-		Choice@ok:
-			Text: To the Shore.
+			Text: Onward.
 			Do: close
 
 HeartstoneHere:
@@ -149,18 +145,7 @@ HeartstoneFound:
 	Title: The heart of the drive
 	Start: found
 	Node@found:
-		Say: A warm stone the size of a house. The old engineers' notes call it the drive's heart, and they are very sure about it. So, now, is everyone aboard.
-		Choice@ok:
-			Text: Fit it, and find the edge.
-			Do: close
-
-HeartstoneFitted:
-	When: install
-	Item: heartstone
-	Title: Whole
-	Start: fitted
-	Node@fitted:
-		Say: The drive is whole. Every light on the bridge goes white, and this time it is only the drive, saying it is ready. From the Shore's edge, one stitch home.
+		Say: A warm stone the size of a house. The old engineers' notes call it the drive's heart, and they are very sure about it. So, now, is everyone aboard. The drive is whole: from the Shore's edge, the Forge can make the final jump.
 		Choice@ok:
 			Text: Find the edge.
 			Do: close

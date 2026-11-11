@@ -17,6 +17,7 @@
 #   Events      story and galaxy events
 #   Hints       hint cards for a guided first voyage
 #   Crew        named crew: officers' posts, traits, ship leads
+#   Memories    the Loom: memories, and the anchors where story memories wait
 
 Pack:
 	Id: core
@@ -37,3 +38,4 @@ Pack:
 	Events: events/story.yaml, events/galaxy.yaml, events/crew.yaml
 	Hints: hints.yaml
 	Crew: crew.yaml
+	Memories: memories.yaml

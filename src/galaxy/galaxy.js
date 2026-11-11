@@ -228,6 +228,18 @@ export function generateGalaxy(rules, seed, { short = false } = {}) {
     frontier = next;
   }
   for (const p of points) p.name = nameFor(p);
+  // 8. Story anchors (memories.yaml): each in its region, a set number of stitches from the
+  // wake-up point, turned into its own kind of place. Its own dice, so nothing else moves.
+  const arng = new Random(hashMix(seed | 0, 0xa11c) || 1);
+  for (const A of Object.values(C.anchors || {})) {
+    const [lo, hi] = String(A.Hops || '3-5').split('-').map(Number), hops = hopsFrom(points.length, lanes, start);
+    let cand = points.filter((p) => p.region === A.Region && p.id !== start && !p.relic && !p.seat && hops[p.id] >= lo && hops[p.id] <= (hi || lo));
+    if (!cand.length) cand = points.filter((p) => p.region === A.Region && p.id !== start && !p.relic && !p.seat);
+    if (!cand.length) continue;
+    const p = cand[arng.int(cand.length)];
+    p.type = A.Type; p.relic = A.id; p.name = A.Name ? A.Name[0].toUpperCase() + A.Name.slice(1) : p.name;
+    components[A.id] = p.id;
+  }
 
   return { seed: seed | 0, short, points, lanes, adj, start, components, veil, regions: regions.map((R) => R.id), rings: Object.fromEntries(regions.map((R) => [R.id, nums(R.Ring)])) };
 }

@@ -13,6 +13,7 @@ import { newRun, visitSettings, applyReport } from './galaxy/run.js';
 import * as V from './galaxy/voyage.js';
 import { ChartScreen } from './ui/chart.js';
 import { CommsPanel } from './ui/comms.js';
+import { LoomScreen } from './ui/loom.js';
 import { replayInto } from './engine/replay.js';
 
 const $ = (id) => document.getElementById(id);
@@ -27,6 +28,7 @@ const camera = new THREE.PerspectiveCamera(50, 1, 0.3, 20000);
 const audio = new Audio();
 const hud = new Hud();
 hud.audio = audio; // hint cards and toasts can play before any map has been visited
+let loom = null; // the memory tree, made once the content is loaded
 let rules = null, run = null, session = null, input = null, acc = 0;
 // the voyage (galaxy map) and its star chart screen, when one is open
 let voyage = null, chart = null;
@@ -222,8 +224,9 @@ function startChart() {
   session = null;
   closeChart();
   hud.showLauncher(false);
+  loom ||= new LoomScreen(rules, audio);
   chart = new ChartScreen({
-    canvas, camera, rules, voyage, audio, hud, comms: hud.comms, hint,
+    canvas, camera, rules, voyage, audio, hud, comms: hud.comms, loom, hint,
     onGoIn: () => goIn(),
     onChange: () => (voyage.won ? deleteSave() : writeSave()),
     onQuit: () => { writeSave(); showLauncher(); },

@@ -163,3 +163,20 @@ OldArchive:
 		Choice@ok:
 			Text: Good.
 			Do: item bp-spindle found, close
+
+# A memory of a memory: echoes, to recall things with on the Loom.
+OldVoice:
+	When: travel
+	Chance: 6
+	Once: false
+	If: day >= 4
+	Title: A voice on an old band
+	Start: voice
+	Node@voice:
+		Say: Halfway through the stitch the comms pick up a voice on a band nobody uses. It is reading out coordinates, calmly, over and over. The signals officer goes pale. It is your voice.
+		Choice@listen:
+			Text: Listen to the end.
+			Do: echoes 1, morale -2, close
+		Choice@off:
+			Text: Turn it off.
+			Do: close

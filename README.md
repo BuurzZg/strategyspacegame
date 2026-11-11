@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 14, campaigns and lives.** The game is being rebuilt around a new design (see [PLAN.md](PLAN.md), version 3): one galaxy per campaign, played over many lives. Start a **new campaign** from the title screen. When the Forge is destroyed, the crew are gone or the air runs out, the life ends, and you **wake** again at the moment you first woke, in the same galaxy. The chart remembers every place you found and marks the ones you visited before. The memorial keeps everyone you lost, and the Choir remember you. Everything else (stores, fleet, hull, systems, standing) starts over. The galaxy's layout never changes, but what is on each map, which events happen and how the dice fall differ from life to life. A **Let go** button gives up a life that is going nowhere. The campaign saves as you play. Saves from earlier versions load as a campaign's first life. Memories, closed routes and the story come next. See [Starting a campaign, lives and saving](#starting-a-campaign-lives-and-saving).
+**Status: Milestone 15, the Loom: memories.** You wake on a bridge you don't remember, and the chart is dark: you can see only the places one lane away. A faint signal draws a circle on the chart, "somewhere in here". Inside it is the Anchorage, a destroyed station wearing the same emblem as your ship. Cut into its core and two memories come back: the emblem, and the radar, which lights the chart. What Jacob remembers stays in every life. **The Loom** (press `L`) is the memory tree, drawn in the new brass style: 31 memories in five branches, with the ones you haven't found shown as question marks. The Skein Drive's four parts are memories now. They are found in derelicts, inside circles that sharpen as you get close, and there is nothing to fit. Hulls you have blueprints for are memories too. **Echoes**, from memories, old voices, and the place where an earlier life ended, recall memories such as the Wisp. See [Memories and the Loom](#memories-and-the-loom).
+
+**Milestone 14, campaigns and lives:** The game is being rebuilt around a new design (see [PLAN.md](PLAN.md), version 3): one galaxy per campaign, played over many lives. Start a **new campaign** from the title screen. When the Forge is destroyed, the crew are gone or the air runs out, the life ends, and you **wake** again at the moment you first woke, in the same galaxy. The chart remembers every place you found and marks the ones you visited before. The memorial keeps everyone you lost, and the Choir remember you. Everything else (stores, fleet, hull, systems, standing) starts over. The galaxy's layout never changes, but what is on each map, which events happen and how the dice fall differ from life to life. A **Let go** button gives up a life that is going nowhere. The campaign saves as you play. Saves from earlier versions load as a campaign's first life. Memories, closed routes and the story come next. See [Starting a campaign, lives and saving](#starting-a-campaign-lives-and-saving).
 
 **Milestone 13, named crew:** The people who run the Forge have names now. Eight officers head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
 
@@ -138,6 +140,23 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Rally point:** new ships fly to it and spread into a grid around it. With no rally point they wait beside the bay they left. The lilac beacon and its dashed line show while the Forge is selected or the panel is open.
 - **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
 - **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
+
+### Memories and the Loom
+
+- **The first life:**
+  - **The opening:** a short, confusing awakening.
+  - **A dark chart:** only the places one lane from the Forge are known, and there are no deep scans.
+  - **The signal:** it draws a circle round the Anchorage, a few stitches from where you wake.
+  - **The Anchorage:** cut into its hulk with Shearers on its map. The station's core gives back the **emblem** and the **radar**, and the radar lights the chart in this and every later life.
+- **Clue circles:** a clue draws a dashed gold circle on the chart, never centred on what it's about but always containing it. Another clue to the same place shrinks it. Get close enough and the watch officer pinpoints it, and the place gets a gold ring. Circles stay on the chart in later lives.
+- **The drive:** the Threadwound Coils, Stillwater Lens, Anchor Spindle and Heartstone are memories. Once the radar works, the engineers get a fix on the next one, as a circle. Cut it out of its derelict and the drive has it at once, in every life. There is nothing to fit, and no ore, salvage or days to spend.
+- **Hulls:** a blueprint (cut from a wreck, bought, or given) brings that hull's memory back for good. The Wisp is recalled with an echo once the radar is known.
+- **Echoes:** fragments of memory. You get them from story memories and drive parts, from an old voice on a forgotten band, and from the place where an earlier life ended, which holds an echo until you go back. Spend them on the Loom.
+- **The Loom** (`L`, or the button in the top bar):
+  - **The layout:** five rows of cogs (Origins, the Skein, the Forge, the fleet, the decks), with threads to what each one needs.
+  - **What the cogs show:** a lit brass cog is remembered; a pulsing ring means you can recall it now; a question mark means not yet.
+  - **Details:** click a cog to see what it is, where it waits or what it costs, and when you remembered it.
+  - **Not yet:** the story memories, the systems that open closed routes, and the rooms come in later milestones, and show as question marks until then.
 
 ### Starting a campaign, lives and saving
 
@@ -553,6 +572,17 @@ Runs the headless tests:
   - events fill in names, `kill` and `mark` work, the memorial waits for three dead, and an unknown `{placeholder}` is a content error;
   - a save from before named crew loads with named crew, replays a visit in progress without the new traits, and saves again identically;
   - head counts and names agree at every step, and at the end of whole scripted voyages.
+- **Memories and the Loom** (`tools/memorytest.js`): checks that:
+  - there are 31 memories in five branches, and every one in this build can be had;
+  - a new campaign remembers nothing;
+  - the first life opens dark, with only the places one lane away known and no deep scans. The signal's circle contains the Anchorage without being centred on it. The Anchorage is in the Drift, 3 to 5 stitches from waking;
+  - cutting its core brings back the emblem and the radar, with an echo and their story. The chart lights up, and the next drive part comes as a circle, not a place;
+  - 300 clue circles on 30 seeds, full and short, each contain their place; a second clue shrinks a circle and it still contains the place; coming close pinpoints it;
+  - life 2 remembers it all, wakes with a lit chart and a stronger drive, and never needs the Anchorage again;
+  - the Wisp needs the radar and an echo; things from later milestones and things that must be found can't be recalled; the echo where a life ended waits until you go back for it;
+  - a Talon blueprint in life 1 lets life 2 build Talons;
+  - the new event words parse, and a bad clue is a content error;
+  - a save from before memories keeps its sensors, drive parts and hulls as memories, and saves again identically.
 - **Campaigns and lives** (`tools/campaigntest.js`): checks that:
   - a new campaign starts on life 1 with one save; the first life opens with the prologue, later ones with waking;
   - after letting go, the next life is life 2, in the same galaxy, on day 1, at the wake-up point, with stores, systems, hull, fleet and drive parts as they were at waking;
@@ -634,6 +664,7 @@ content/core/voyage.yaml        every number behind the voyage (needs, life supp
                                 stitch costs, repairs, morale) and the Forge's systems
 content/core/names.yaml         name generators (derelicts, and people)
 content/core/crew.yaml          named crew: officers' posts, traits, ship leads (the format is at the top)
+content/core/memories.yaml      the Loom: 31 memories, and the anchors where story memories wait
 content/core/races.yaml         races, and where their factions start
 content/core/factions.yaml      factions: seats, territory, patrols, enemies, leave; and every
                                 reputation number (tiers, penalties, ranges)
