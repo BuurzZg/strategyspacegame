@@ -1,10 +1,10 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Proposed, and waiting for your decisions in §17.** No game code changes until they are answered. Milestones 1–13 are built (§12). Approved names are in §15, earlier decisions in §16. Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** your answers to the 24 questions and your story skeleton are in (§16 and §3). Four smaller decisions are still open (§17). Milestone 14 is under way. Milestones 1–13 are built (§12), names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
-You wake aboard the **Forge**, a great foundry-ship adrift in the middle of a galaxy of scrap. You don't know where you are, who you are, or why you are here. You keep the crew alive, build the Forge up, and fly its fleet in real-time battles. Piece by piece, you remember what happened. When you die, the Skein Drive drags you back to the moment you woke, in the same galaxy, and everything you remembered comes with you.
+You wake aboard the **Forge**, a great foundry-ship adrift in the middle of a galaxy of scrap. You don't know where you are, who you are, or why you are here. You keep the crew alive, build the Forge up, and fly its fleet in real-time battles. Piece by piece, you remember what happened, and it isn't good. When you die, something drags you back to the moment you woke, in the same galaxy, and everything you remembered comes with you. To get out, you have to face it.
 
 The game keeps its two layers:
 
@@ -40,7 +40,7 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
 - **After each map, you muster the fleet.** The hangar holds 10 ships to start. You keep the best and scrap or leave the rest. Ships that come home from a map gain a level. Ships that die are gone, with their pilot.
 - **Each region has its own trader.** You trade with them straight from the chart, with no map to play.
 - **Steampunk space.** Brass, copper, rivets, steam, and Glim burning in boilers. A style guide comes first, for your approval.
-- **The goal is to escape the galaxy.** Proposed: a skilled player can escape in their first life, but the true ending needs every memory.
+- **The goal is to escape the galaxy.** The force that traps it, the Mainspring, waits at the Shore, and defeating it breaks the loop. A skilled player can do that in their first life, but the true ending needs every memory (§3).
 
 ## 2. The campaign and its lives
 
@@ -54,25 +54,25 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
   - three days pass without air.
 
   A wake screen follows. It shows how long this life lasted, what you found and who was lost, and then you wake again.
-- **Giving up a life (decision 9):** "Let the Skein take us." A button on the chart ends the life on purpose, for when a life is going nowhere. It counts as a death.
+- **Giving up a life (decision 9):** a **Let go** button on the chart ends the life on purpose, for when a life is going nowhere. It counts as a death.
 
-### What carries over and what resets (proposed, decision 5)
+### What carries over and what resets (decided)
 
 | Thing | Across lives | Notes |
 | --- | --- | --- |
 | Memories, knowledge and abilities | **Kept** | The heart of the progress |
 | Routes opened by memories | **Kept** | A remembered system just works from the start of every life |
 | The star chart: places discovered, places visited before, traders found, clue circles, exact spots revealed | **Kept** | Places visited in an earlier life get a faded mark |
-| Echoes not yet spent | **Kept** | Only if echoes are chosen (decision 11) |
+| Echoes not yet spent | **Kept** | Echoes were chosen (decision 11) |
 | Galaxy layout, story locations, traders' locations | **Fixed by the seed** | |
 | Stores, Forge hull and systems, rooms built, fleet, ship levels, currency | **Reset** | Back to the wake-up state, plus anything memories add to it (for example a remembered cache of stores) |
 | The crew | **Reset** | The same officers and pilots wake again, alive (decision 6) |
-| Faction standing | **Reset** | They have never met you. Proposed exception: the Choir, who can perceive the loop (decision 7) |
+| Faction standing | **Reset** | They have never met you. The exception is the Choir, who sense the loop (decision 7) |
 | The day clock | **Reset** | Day 1 |
-| What is on each map | **Varies each life** | Your proposal (decision 1) |
+| What is on each map | **Varies each life** | Decision 1 |
 | The memorial | **Kept** | The ship's log keeps the name of everyone lost, in every life |
 
-### Map contents vary each life (your proposal, decision 1)
+### Map contents vary each life (decided)
 
 - **Fixed for the campaign:**
   - the galaxy's layout: places, their types and names, lanes and hazards;
@@ -97,18 +97,17 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
 - A knowledge memory can reveal the exact spot, permanently.
 - Circles and exact spots stay on the chart in every later life.
 
-### Saves (decision 8)
+### Saves (decided)
 
-Proposed:
 - One campaign save that updates as you play.
 - Save and quit any time, on the chart or mid-map. Mid-map saves replay exactly, as today.
 - No reloading an older save: death is part of the loop.
 
-Today's choice between permanent death and free saves would go away. The alternative is to keep free saves as an option at campaign start.
+Today's choice between permanent death and free saves goes away. Old saves of either kind load as campaigns.
 
-### Length targets (decision 10)
+### Length targets (decided)
 
-Proposed targets, all measured by the test bot:
+Targets, all measured by the test bot:
 
 | Run | Target |
 | --- | --- |
@@ -118,68 +117,142 @@ Proposed targets, all measured by the test bot:
 
 ## 3. Story: waking with nothing
 
+*The skeleton is yours (approved as a draft). The parts marked "proposal" fill gaps you left open, and the end of this section suggests improvements. Tone: the story memories are dark and heavy, guilt slowly found out. Everything else stays lonely, beautiful and a bit strange, with dry humour.*
+
 ### The opening
 
-- You wake on the Forge's bridge. Alarms are sounding, the Skein Drive is still tearing loose behind you, and the chart is dark.
-- The crew wake too, with the same blank. Everyone knows their trade but nobody knows their past. The officers still have their names, and still know how to do their jobs.
-- The ship and the people (the Forge, the Meridian Hollow) keep their names in the data, but the player only learns them through memories.
+- An old man wakes on the Forge's bridge. Alarms are sounding, the chart is dark, and he doesn't know his own name. That man is the player: Dr. Jacob Smith, though nobody aboard knows it yet.
+- The crew wake too, just as blank. They know their trades, and they read their names off their uniforms. That is the first dry joke, and the last easy one.
+- Every name in the backstory (the Company, Erik, Jacob, Ninefold, the Mainspring) is learned only through memories.
 
-### The first memory: the Anchorage
+### What happened before the game
 
-1. **The signal.** In the first life, the sensors catch one faint signal with an emblem in it, and a clue circle appears in the Drift.
-2. **The station.** Inside the circle is a destroyed space station. It has the same emblem as the Forge's hull and the crew's uniforms. Proposed name: **the Anchorage**, the station where the Forge used to dock.
-3. **The memories.** Cutting the station's hulk open on its map (a Shearer job, as with drive parts today) recovers the first memories:
-   - **Our emblem** (knowledge): who these marks belong to.
-   - **The radar** (ability): the chart lights up as far as the sensors reach, and deep scans work. Before this, you only see the places right next to you.
-   - **Where we are** (knowledge): the rough shape of the galaxy, with the outlines of its four regions.
-4. **Every later life:** you start with the radar working and the Anchorage marked. You don't need to go back.
+1. **The Smith Foundry Company** (proposed name; "the Company" in speech) is a powerful family corporation of a great empire, **the Meridian Hollow** (the approved name for "our people", now the empire). It comes to the Wrack on a mission to study **Ninefold**, the only planet in a galaxy with no planets.
+2. **The mission was good.** It was meant to cure the Fray (see below). Not everyone believed that.
+3. The Company builds **the Anchorage**, a station in the Drift, within sight of Ninefold and the dead star Orrin.
+4. **Dr. Erik Smith**, head of the family and the Company's chief, leads the mission. He lets his grandfather, **Dr. Jacob Smith**, run a private "retirement project" aboard his own mothership, **the Forge**, under the Company's protection.
+5. **The galaxy's peoples react in different ways:**
+   - Some traders and pirates help, but only because they fear the Company.
+   - Some factions try to sabotage the mission.
+   - The people of Ninefold believe the Company has come to destroy everything. They are wrong, but they believe it completely.
+6. **Jacob is too curious.** His project accidentally opens a gate at the Wrack's edge, and something comes through: **the Mainspring** (proposal, below). For now it was an accident; the twists below leave room to change that later.
+7. The Mainspring **winds the galaxy shut.** No stitch leaves the Wrack, and the Company is trapped.
+8. To calm it, the Company **kidnaps people from the scavenger clans** and gives them to it.
+9. **The captives are sacrificed.** It isn't enough. Everything collapses: the Anchorage breaks, and the Company scatters.
+10. **Jacob and his crew wake on the Forge with no memory.** The Mainspring keeps Jacob alive. Every time he dies, it winds him back to the moment of waking, and the Forge and its crew come back with him.
 
-### Why we wake again (your proposal, decision 2)
+**Why memories survive (proposal):** the Mainspring resets Jacob and his crew, but it cannot reach the Forge's drive records. Everything recovered is written into the drive's records, which is the Loom. That is why remembered things stay, and why found traders stay "in the ship's systems".
 
-The **Skein Drive loops time**. It is the drive that failed and threw the Forge here. When the Forge dies, the drive pulls it back along its own thread to the moment of the tear.
+### Ninefold (proposal: what makes it special)
 
-Memories survive because they are not stored in anyone's head. They are woven into the Skein itself, which is where the name **the Loom** for the memory tree comes from. The crew wake blank each time. The drive, and you, remember. This also explains why traders' locations "stay in the ship's systems" after death.
+- Ninefold is the dead star Orrin's one surviving world. Folded space in the Wrack is knotted there: nine folds of the Skein meet in a single knot under its crust. That knot is why the Wrack has no other planets, and why its stitches behave strangely.
+- **Nothing frays on Ninefold.** The empire is dying of **the Fray**, a wasting sickness of people who travel through folded space: their bodies and then their memories slowly come apart. Ninefold's people, **the Knotfolk**, never fray.
+- **The Company came to learn why: a cure.** The Knotfolk were told that the Company meant to unpick the knot, which would unravel their world. They believed it.
+- The Fray also gives the amnesia an echo: forgetting is what fraying feels like from the inside.
 
-### Two endings (your proposal, decision 3)
+### The force: the Mainspring (proposal)
 
-- **Escape.** Reach the edge with the Heartstone and jump out. A skilled player can do this in their first life if they find what the route needs: Coils, Lens, Spindle, Heartstone, and the systems that open the routes between them. You get out, but you don't know what you left behind.
-- **The true ending.** It needs every memory, including the last story memory, "The whole truth", which only opens when all the others are known. It changes what the final jump means, and depends on the story direction you choose.
+- **What it is:** a vast coiled tension from beyond the gate, a thing made of wound-up time. It looks like a dark coil of brass the size of a moon, slowly turning and ticking, with space creasing around it.
+- **What it does:**
+  - It winds things shut: lanes, a galaxy.
+  - It feeds on the time of the living. That is what the captives gave it: their years.
+  - It keeps Jacob wound, rewinding him each time he dies. Why it keeps him is left open for the twists.
+- **Its servants:** **the Hands**, clockwork hunters that tick (see the chase clock below).
+- **Where it is:** at the Shore, by the gate, where it waits in Act 4.
+- **The confrontation:** a boss map in the existing engine, like the Hollowhorn but far larger. Defeating it breaks the loop and lets the Forge out of the galaxy.
+- **Name alternatives:** the Governor, the Escapement.
 
-### Four directions for the story (decision 4: choose one, or mix)
+### The false picture
 
-**A. The Unravelling: something we caused.**
-- **What happened:** the Meridian Hollow built the Skein Drive by pulling threads out of folded space. Here, at the Wrack, they pulled one thread too many. The galaxy is coming apart at the seams, slowly, and the scrap everywhere is what's left of the places that went first. Our station was the experiment's anchor.
-- **Why we forgot:** the tear that threw us here took the memories with it.
-- **Why the loop:** the drive is still tied to the thread it pulled. It keeps snapping back.
-- **The true ending:** escape, and the Wrack finishes unravelling behind you. Or, knowing everything, put the thread back: mend the tear and stay, or go home as the ones who fixed it.
-- **Gameplay hook:** "frayed" places, where the map itself flickers. Late memories let you stitch the fraying shut.
-- **Fits:** the Choir (who know what the Skein is) and the Cinder Pact (another Forge that tried and failed).
+The player should spend the early game believing the Company was evil. Then the truth comes in layers:
 
-**B. The Tithe-Taker: something hunts us.**
-- **What happened:** something lives in the dead star Orrin, and it eats ships that fold space. The Wrack is its larder. Our station fought it and lost.
-- **Why we forgot:** we made ourselves forget on purpose. It finds you by what you know, and a blank mind is harder to see.
-- **Why the loop:** a trap of our own design, keeping us alive until we could win.
-- **The true ending:** remember enough to kill it or bind it, and free the galaxy behind you.
-- **Gameplay hook:** a **hunter** that moves on the chart each life. It gets closer the more you remember, making each life a race. Late memories hide you (silent running) or let you fight back.
-- **Fits:** the Gaunt (who serve it, or hide from it), the Scrapwyrms (its spawn) and the Hollowhorn (an old enemy of it).
+1. **They hate us.** Were we the villains? (Act 1)
+2. **The mission was good.** They misunderstood it, or were lied to. (early Act 2)
+3. **But we did terrible things.** We ruled by fear, then took people. (late Act 2)
+4. **This is why:** the Mainspring trapped us, and we fed it people. (Act 3)
+5. **And the cause was Jacob,** his curiosity. (Act 4: the final memory)
 
-**C. The Jar: the galaxy is a trap.**
-- **What happened:** the Wrack is a built thing, a galaxy-sized snare made long ago to catch ships that fold space. Every faction here descends from an earlier catch. The Cinder Pact are a Forge that was caught two hundred years ago. Our station was built to study the snare from inside, and it failed.
-- **Why we forgot:** the Jar takes memories, so that its catches stay.
-- **Why the loop:** the Jar resets us. It is testing us, like the others.
-- **The true ending:** find the seam the builders left, and choose whether to open the Jar for everyone or slip out alone.
-- **Gameplay hook:** watcher-machines on maps that "measure" you. Lore about the earlier catches is scattered through every faction.
-- **Fits:** all five factions, as earlier catches. A strong reason for the Choir to be strange.
+Nobody is purely good or purely evil. The order differs a little from your list: Jacob's project comes last instead of third. See "Suggested improvements".
 
-**D. The Verdigris: a spreading blight.**
-- **What happened:** a green corrosion, a living rust, is eating metal and minds. It started at our station. The Wrack's scrap is what it leaves behind, and it spreads outward from the core.
-- **Why we forgot:** forgetting is its first symptom.
-- **Why the loop:** the drive's quarantine. It keeps pulling us back to before we were infected.
-- **The true ending:** carry the cure, not the blight, out of the galaxy. Or burn it out at its source.
-- **Gameplay hook:** a **spreading front** on the chart. Each day of a life, infected places spread, change, and turn hostile, which gives every life a natural clock. Late memories slow the spread or cure places. It fits the steampunk look: copper turning green.
-- **Fits:** rust mites (its carriers), the Synod (who quarantine), the Rivet Moot (who are losing their towns to it).
+### The story by region
 
-All four keep everything already built. They change which story memories exist (the Origins branch, §4), what the story events say, and the true ending. B and D add a clock to each life, beyond the stores running down. A and C don't.
+| Act | Region | Question | What the player learns |
+| --- | --- | --- | --- |
+| I | The Drift | "Who are we?" | The destroyed Anchorage and the emblem; the radar; the Company and Erik's name; that we are Jacob. The Knotfolk attack on sight, with no explanation |
+| II | The Middens | "What did we do?" | The Fray and the mission; the Synod's oath; fear as policy; the kidnappings. The Cinder Pact are what's left of the Company, and they blame Jacob |
+| III | The Hush | "Why?" | The gate and the Mainspring; the offering; the fall. The Choir sense that Jacob keeps coming back |
+| IV | The Shore | "The truth" | The final memory. The Mainspring waits; defeating it breaks the loop and lets us escape |
+
+### The story memories (draft, 11 of the 31)
+
+Each one is darker than the last. Each is found at a story location placed by the seed within its act's region (§2), and costs no echoes.
+
+| # | Act | Memory | Where it is found | What it reveals |
+| --- | --- | --- | --- | --- |
+| 1 | I | **The emblem** | The Anchorage's hulk, with the radar | A hammer inside a cog: the mark of the Smith Foundry Company. It is on the station, on the Forge, and on the crew's uniforms. We were the Company |
+| 2 | I | **"We are here to help"** | The Steward, Erik's yacht, wrecked nearby in the Drift | A recording of Dr. Erik Smith opening the Anchorage: "We are here to help." After the first Knotfolk attack, the line sounds hollow |
+| 3 | I | **The old man's ship** | The Forge's own registry, readable after the first fight with the Knotfolk | The Forge is not Company property: it is the private ship of Dr. Jacob Smith, Erik's grandfather. You are Jacob. Deck 9 is sealed, and nobody aboard knows why |
+| 4 | II | **The Fray** | A Company research hulk in the Middens | Why the Company came: the Fray is killing the empire, and it killed Erik's mother. Ninefold does not fray. The mission was a cure |
+| 5 | II | **The oath** | The Tallow Bell's archive (the Lantern Synod) | The Synod are sworn to guard Ninefold's knot. They believed the Company meant to unpick it, told the Knotfolk so, and sabotaged the mission. Erik refused to explain himself to any of them |
+| 6 | II | **"Afraid is cooperative"** | A Rivet Moot ledger, or the Ashen Gaunt's den | The traders and pirates who helped were paid in fear. The Company's security chief: "Let them be afraid. Afraid is cooperative." |
+| 7 | II | **The lists** | A prison-barge wreck in the Ragged Clans' fields | Names: men, women and children of the Ragged Clans, taken in Company ships, some of them sold by the Rivet Moot. Cages on the Anchorage's lower ring. Nothing says why |
+| 8 | III | **The gate** | A Company listening post behind the Veil | Something came through a gate at the Shore: the Mainspring. It wound the galaxy shut. The record of who opened the gate is burned out |
+| 9 | III | **The offering** | The tithe barge, where the captives were given | The Company fed the captives to the Mainspring to make it loosen its grip, on Erik's order, with Jacob standing beside him. It took their years, and it wanted more |
+| 10 | III | **The fall** | The Choir, who sense that Jacob keeps coming back | The Anchorage broke and the Company scattered. The Cinder Pact are what is left, and they blame Jacob. The Mainspring keeps Jacob alive and winds him back to waking every time he dies |
+| 11 | IV | **The whole truth** | Deck 9, which opens at the Shore once every other memory is known | Jacob's retirement project: a gate-engine, built to look through Ninefold's knot to the other side. He opened it out of curiosity, and everything followed from that. Then the confrontation |
+
+### Who plays which part
+
+| Story role | Who | Existing or new | What changes |
+| --- | --- | --- | --- |
+| The empire | The Meridian Hollow | Existing name | Was "our people"; now the empire, seen only in memories |
+| The Company | The Smith Foundry Company: Erik, Jacob, the Anchorage, the Forge | New names | — |
+| Traders who helped out of fear | **Rivet Moot** (Hullborn) | Existing | Still Friendly. Act II reveals they sold the Clans' names to the Company |
+| Pirates who helped out of fear | **Ashen Gaunt** (Gaunt) | Existing | Default Hostile → Wary: they remember fearing the emblem, and now they smell weakness |
+| Saboteurs | **Lantern Synod** (Tallowfolk) | Existing | Their strict code becomes an oath to guard the knot. They still trade, coldly |
+| Ninefold's people | **The Knotfolk**, flying as the **Wardens of Ninefold** | **New** race and faction | Hostile on sight of the emblem: Act I's unexplained attacks. Their world is near the start |
+| The kidnapped tribes | **The Ragged Clans** (Hullborn) | **New** faction of an existing race | Tribal scavengers in the Middens' wreck fields; Hostile, with atonement possible |
+| Erik's people | **Cinder Pact** (Humans) | Existing | No longer "another Forge": they are the scattered Company, and they blame Jacob. What they say changes with what you remember |
+| Those who sense the loop | **The Choir** (Choirmoths) | Existing | They remember Jacob across lives (decision 7), and they tell memory 10 |
+| The force | **The Mainspring** and its **Hands** | **New** | It waits at the Shore. Its Hands may hunt you (decision 25) |
+| Monsters | Scrapwyrms, rust mites, Gnashers, the Hollowhorn | Existing | Unchanged. A lore hook: the Hollowhorn is older than the Mainspring, and hates it |
+
+### Endings
+
+- **Escape:** defeat the Mainspring at the Shore and jump out with the Heartstone, without every memory. You get out, but you never learn the whole truth. A skilled player can do this in their first life (decision 3).
+- **The true ending:** every memory, then the confrontation knowing the whole truth. What Jacob says and chooses at the end draws on what he now knows.
+
+### Deeper twists for later (not locked)
+
+1. **The bargain.** It wasn't curiosity. Jacob was dying of the Fray, and the Mainspring offered him time. It is paying him still: every life is another instalment. Breaking the loop means Jacob finally dies.
+2. **The jailers were right.** Ninefold's knot was the Mainspring's prison, and the Knotfolk were its keepers. Jacob's "gate" was the knot itself. The cure the Company came for was the lock on the cage.
+3. **Not the first time.** Jacob has broken the loop before, and chose to come back, or forgot that he did. The Choir are what remains of an earlier crew that looped too long. Or: Erik is inside the Mainspring.
+
+### Suggested improvements to the skeleton
+
+- **Make each memory darker than the last by keeping Jacob's guilt for the end.** Your layering puts Jacob's project third and the kidnappings and sacrifices fourth. The table above reveals the kidnappings (II) and the sacrifices (III) first, and Jacob's project last. This matches your acts, where the final memory comes at the Shore. Hint at it from Act I with sealed Deck 9, which no one aboard can open.
+- **Make the guilt playable.** Atonement acts change who stands with you at the end, and what standing allows:
+  - free the captives' survivors, if any;
+  - return the Anchorage's records to the Knotfolk;
+  - make peace with the Ragged Clans.
+- **Keep Erik human.** His recordings run through several memories: tired, decent, and then giving the order. His fate stays open, as a hook for the twists.
+- **Let the world react to what you know.** The Cinder Pact, the Synod and the Choir say different things as memories are found ("You've got a nerve, old man").
+
+### The chase clock: the Hands (proposal, decision 25)
+
+Borrowing from your option B, the Mainspring hunts you within each life:
+
+- **Who:** packs of **Hands**, clockwork hulls that tick.
+- **When:** not in Act I, when it hasn't noticed you yet. From the first Act II memory, a pack sets out from the Shore early in each life.
+- **How they move:** along lanes toward where the Forge was last heard, about one lane every 2 days. They move faster the more you remember, because the more Jacob knows, the louder he is to it.
+- **What you see:** they appear on the chart only within radar range, with a ticking sound when they are near. A dial in the top bar shows how many days away the nearest pack is.
+- **Caught:** when a pack reaches the Forge's place, they come for it on the next map, after a short delay. Destroy them and that pack is gone for the rest of the life. Or spool the Skein and run.
+- **Counters:** silent running makes them lose the trail for some days; some hazard lanes stop them; the Choir can hide you for a while.
+- **Alternatives:**
+  - **b.** A winding clock: after a set day, the Mainspring starts closing lanes, one by one.
+  - **c.** No chase: the Mainspring only waits at the Shore.
+
+Recommended: **a**, with every number in YAML so it can be tuned or switched off.
 
 ## 4. The memory tree: the Loom
 
@@ -192,12 +265,12 @@ All four keep everything already built. They change which story memories exist (
   - **rooms** you can build on the Forge;
   - **new options**, such as a blind stitch or silent running.
 
-### How memories are earned (decision 11)
+### How memories are earned (decided: found, plus echoes)
 
 **Option 1: found only.**
 Every memory sits at a place or in an event. You see the tree's shape, but nothing to spend.
 
-**Option 2: found, plus echoes (recommended).**
+**Option 2: found, plus echoes (chosen).**
 - **Echoes** are fragments of memory. You gather them at:
   - clue sites;
   - old wrecks;
@@ -220,37 +293,33 @@ Option 2 gives every life something to gather, makes a death worth something, an
 - **Unknown** memories show a stamped question mark. Their threads show what leads to them, and sometimes a hint, such as "Something about the heat near Orrin".
 - With echoes, a memory you can afford is picked out, and you spend echoes on it right there.
 
-### Draft tree (31 memories, decision 12)
+### Draft tree (31 memories in five branches)
+
+The structure is approved. The story memories are rebuilt on your skeleton, so Origins is now the radar plus the 11 story memories from §3. To keep the total at 31, three of the earlier drafts go: Blind stitch, the emergency cache, and the Workshop (which becomes a trader's plan).
 
 | # | Memory | Kind | Branch | Needs | What it gives |
 | --- | --- | --- | --- | --- | --- |
-| 1 | Our emblem | Knowledge | Origins | Found at the Anchorage | The Anchorage marked forever; the first step of the story |
-| 2 | The radar | Ability | Origins | Found at the Anchorage | The chart lights up within sensor range; deep scans |
-| 3 | Where we are | Knowledge | Origins | 1 | The outlines of the four regions; the Drift's lanes |
-| 4–8 | Five story memories | Knowledge | Origins | Story locations, in order | Written once the story direction is chosen |
-| 9 | The whole truth | Knowledge | Origins | Every other memory | The true ending |
-| 10 | Threadwound Coils | Ability | The Skein | A story location in the Drift | Stitches 1.5× longer: the Middens |
-| 11 | Stillwater Lens | Ability | The Skein | The Choir, or a location in the Middens | Stitches through the Veil: the Hush |
-| 12 | Anchor Spindle | Ability | The Skein | The Ashen Gaunt, or a location in the Hush | Long stitches; holds against the Undertow: the Shore |
-| 13 | Heartstone | Ability | The Skein | A location in the Shore | The final jump |
-| 14 | Blind stitch | Ability (option) | The Skein | 10 | Stitch to a place you can't see, at a risk |
-| 15 | Boiler overdrive | Ability (option) | The Skein | 10 | Once a day, burn double Glim to stitch one lane past the drive's reach |
-| 16 | Shields | Ability | The Forge | Turned away from a shoal | The asteroid shoals open |
-| 17 | Heat baffles | Ability | The Forge | Turned away from an ember lane | The ember lanes near Orrin open |
-| 18 | Lightning rods | Ability | The Forge | Turned away from a static field | The static fields open |
-| 19 | Lead-lined decks | Ability | The Forge | Turned away from the Glare | The radiation belts open |
-| 20 | Silent running | Ability (option) | The Forge | 18 | Fewer ambushes on the chart; on maps the Forge starts unseen |
-| 21 | The emergency cache | Knowledge | The Forge | An event | Where the Forge's emergency stores were hidden: each life starts with more water, food and Glim |
-| 22 | Wisp | Ability | The fleet | Seeing one | The scout hull |
-| 23 | Talon | Ability | The fleet | A Talon wreck | The bomber hull |
-| 24 | Sabre | Ability | The fleet | A Sabre wreck, or the Shore's trader | The frigate hull |
-| 25 | Spindle | Ability | The fleet | A Spindle wreck | The heavy frigate hull |
-| 26 | Monolith (new hull) | Ability | The fleet | Deep in the Shore | A capital ship |
-| 27 | Mess hall | Ability | The decks | — | A room: mood rises faster |
-| 28 | Infirmary | Ability | The decks | 27 | A room: fewer deaths from hunger and bad air; a pilot sometimes gets out of a lost ship |
-| 29 | Chart room | Ability | The decks | 2 | A room: clue circles shrink, deep scans are cheaper |
-| 30 | Second hangar deck | Ability | The decks | — | A room: +5 hangar berths |
-| 31 | Workshop | Ability | The decks | — | A room: scrapping returns more; repairs cost less |
+| 1 | The radar | Ability | Origins | Found at the Anchorage, with story memory 1 | The chart lights up within sensor range; deep scans |
+| 2–12 | The story memories: the emblem, "We are here to help", the old man's ship, the Fray, the oath, "Afraid is cooperative", the lists, the gate, the offering, the fall, the whole truth | Knowledge | Origins | Their story locations, act by act (§3); the whole truth needs every other memory | The story. Some also reveal places: Ninefold, the Shore's gate, the Ragged Clans' fields |
+| 13 | Threadwound Coils | Ability | The Skein | A story location in the Drift | Stitches 1.5× longer: the Middens |
+| 14 | Stillwater Lens | Ability | The Skein | The Choir, or a location in the Middens | Stitches through the Veil: the Hush |
+| 15 | Anchor Spindle | Ability | The Skein | The Ashen Gaunt, or a location in the Hush | Long stitches; holds against the Undertow: the Shore |
+| 16 | Heartstone | Ability | The Skein | A location in the Shore | The final jump, once the Mainspring is down |
+| 17 | Boiler overdrive | Ability (option) | The Skein | 13 | Once a day, burn double Glim to stitch one lane past the drive's reach |
+| 18 | Shields | Ability | The Forge | Turned away from a shoal | The asteroid shoals open |
+| 19 | Heat baffles | Ability | The Forge | Turned away from an ember lane | The ember lanes near Orrin open |
+| 20 | Lightning rods | Ability | The Forge | Turned away from a static field | The static fields open |
+| 21 | Lead-lined decks | Ability | The Forge | Turned away from the Glare | The radiation belts open |
+| 22 | Silent running | Ability (option) | The Forge | 20 | Fewer ambushes on the chart; on maps the Forge starts unseen; the Hands lose the trail (if chosen) |
+| 23 | Wisp | Ability | The fleet | Seeing one | The scout hull |
+| 24 | Talon | Ability | The fleet | A Talon wreck | The bomber hull |
+| 25 | Sabre | Ability | The fleet | A Sabre wreck, or the Shore's trader | The frigate hull |
+| 26 | Spindle | Ability | The fleet | A Spindle wreck | The heavy frigate hull |
+| 27 | Monolith (new hull) | Ability | The fleet | Deep in the Shore | A capital ship |
+| 28 | Mess hall | Ability | The decks | — | A room: mood rises faster |
+| 29 | Infirmary | Ability | The decks | 28 | A room: fewer deaths from hunger and bad air; a pilot sometimes gets out of a lost ship |
+| 30 | Chart room | Ability | The decks | 1 | A room: clue circles shrink, deep scans are cheaper |
+| 31 | Second hangar deck | Ability | The decks | — | A room: +5 hangar berths |
 
 Most of this already exists in some form:
 - the four drive parts and their effects;
@@ -300,9 +369,9 @@ Most of this already exists in some form:
 
   The test bot checks all of this on many seeds.
 
-### The drive parts (decision 13)
+### The drive parts (decided)
 
-Proposed: the four drive parts **become memories** with the same names and effects:
+The four drive parts **become memories** with the same names and effects:
 - the Coils widen the range;
 - the Lens opens the Veil;
 - the Spindle allows long stitches;
@@ -342,9 +411,9 @@ They are recovered at their story locations, as today, but there is nothing to f
 - Glim fuels stitches, as today, and the boilers (see below).
 - Spores feed the hydroponics, as today.
 
-### Currency (decision 16)
+### Currency: cogmarks (decided)
 
-- **Proposed names:** **cogmarks**, which are stamped brass cogs (recommended); **tallies**, which are punched brass cards; or **brassbits**.
+- **Cogmarks:** stamped brass cogs.
 - **How it fits the barter system:** trade today is barter, and every good already has a value. Cogmarks make that value something you can carry:
   - Sell goods for cogmarks, up to what's in the trader's purse.
   - Buy with cogmarks.
@@ -360,7 +429,7 @@ They are recovered at their story locations, as today, but there is nothing to f
 
 The crew's **mood** is a mark everyone can see. It is built on today's morale, the 0–100 number that rises with rest and full stores and falls with shortages and losses.
 
-| Mark | When | Effect (proposed numbers, decision 17) |
+| Mark | When | Effect (decided; to be tuned in play) |
 | --- | --- | --- |
 | **Content** (green) | Fed and cared for: morale 60 or more, nothing running short | Repairs and building go 10% faster |
 | **Uneasy** (amber) | Hungry: a store running low, or morale 30–59 | Building, ships and the Glim for each stitch cost 10% more |
@@ -370,11 +439,11 @@ The crew's **mood** is a mark everyone can see. It is built on today's morale, t
 - **The officers' traits still count:** Beloved and Grim officers already push morale up or down (Milestone 13).
 - **Stopping the spiral:** a red mood makes things cost more, which can make the mood worse. Resting, a mess hall and full stores pull it back. The numbers are tuned so it can always be climbed out of.
 
-### Keeping the Forge running (decision 18)
+### Keeping the Forge running (decided: the boilers burn Glim)
 
 A light version of Frostpunk's coal. Three options:
 
-**a. The boilers burn Glim (recommended).**
+**a. The boilers burn Glim (chosen).**
 - The Forge already burns 3 Glim a day for its reactor. That becomes the boilers, with a visible pressure gauge, and the draw rises to about 10–15 a day.
 - If Glim runs out, the boilers go cold:
   - every system works at half;
@@ -533,7 +602,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 - The campaign loop comes first, because everything else depends on what survives a death.
 - Memories come next, then the routes they open.
 - The base, the muster and the traders are independent of each other.
-- The story needs your choice of direction, and benefits from every system being in place.
+- The story builds on your skeleton, and benefits from every system being in place.
 - The reskin waits for your approval of the style guide. Once you approve it, new screens are built in the new style straight away.
 
 | # | Milestone | Playable result | Checks |
@@ -544,7 +613,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | **17** | **The Forge as a base** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers (if chosen) | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life |
 | **18** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
 | **19** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
-| **20** | **The story** | The chosen direction: story memories, story locations and events, the escape ending and the true ending | The bot reaches the true ending on every seed tried; every story memory can be reached; the endings play |
+| **20** | **The story** | Your skeleton (§3): the 11 story memories and their locations, act by act; the Knotfolk and the Ragged Clans; the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the endings play |
 | **21** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
 | **22** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
 
@@ -600,7 +669,7 @@ New for the loop:
 | A bad mood spirals | Effects capped in YAML; rest, the mess hall and full stores always pull it back; tested |
 | The reskin is a large amount of art | Style guide first; procedural models and SVG/CSS instruments, no asset pipeline; restyle only after approval |
 | Old saves | Version 5 migration: an old voyage becomes a campaign on life 1, with its drive parts turned into memories |
-| Scope | Each milestone is playable on its own; the story waits for your choice of direction without blocking the systems |
+| Scope | Each milestone is playable on its own; the story's open decisions (§17) don't block the systems |
 
 ## 15. Names
 
@@ -614,16 +683,16 @@ Approved earlier:
 | The galaxy | **The Wrack** |
 | Start region | **The Drift**, round the dead star Orrin |
 | Escape edge | **The Shore** |
-| Your people | **Meridian Hollow** (now learned through memories) |
+| Your people | **Meridian Hollow** (now the name of the empire, learned through memories) |
 | Drive components | Threadwound Coils, Stillwater Lens, Anchor Spindle, Heartstone (now memories) |
 | Races | Hullborn, Tallowfolk, Gaunt, Choirmoths |
 | Factions | Rivet Moot, Lantern Synod, Ashen Gaunt, Cinder Pact, the Choir |
 | Monsters | Scrapwyrm, rust mites, Gnasher packs, the Hollowhorn |
 | Hulls | Shearer (salvage cutter), Skimmer (gas collector), and the combat roster |
 
-Proposed now (decision 24):
+Approved with your answers (decision 24):
 
-| Thing | Proposed name | Alternatives |
+| Thing | Name | Alternatives considered |
 | --- | --- | --- |
 | The memory tree | **The Loom** | The Spool, the Engram |
 | Our old station | **The Anchorage** | Meridian Spire, the Cradle |
@@ -633,79 +702,81 @@ Proposed now (decision 24):
 | Traders | The Lamp & Ledger (Wicket Arn), the Tallow Bell (Deacon Ilmar Sloe), the Murmur, the Last Stop (Ossory Vell) | — |
 | Places where crew join | **Wayhouses** | Drifter camps |
 
+Proposed now, for the story (decision 26):
+
+| Thing | Proposed name | Alternatives |
+| --- | --- | --- |
+| The family corporation | **The Smith Foundry Company** ("the Company") | Smith & Sons Ironworks, the Smith Combine |
+| The empire | **The Meridian Hollow** (the approved name, now the empire) | — |
+| The only planet | **Ninefold** | The Knot, Orrin's Child |
+| Its people | **The Knotfolk**; their fleet, **the Wardens of Ninefold** | The Tethered |
+| The empire's sickness | **The Fray** | The Unthreading |
+| The force | **The Mainspring** | The Governor, the Escapement |
+| Its hunters | **The Hands** | Pendulums, Tickers |
+| The kidnapped tribes | **The Ragged Clans** (Hullborn) | The Wreckclans |
+| Erik's yacht | **The Steward** | — |
+| The sealed deck | **Deck 9** | — |
+
 ## 16. Decisions already made
+
+From the earlier plans:
 
 | # | Question | Decision | Under the new design |
 | --- | --- | --- | --- |
 | 1 | Galaxy map time | **Paused**; it moves only when you act | Unchanged |
-| 2 | Death and saves | **Permanent death by default**, with save and quit; a free-save mode offered at the start | **Replaced:** death starts a new life (decision 8) |
-| 3 | Run length | **4–6 hours**, plus a **short voyage** of about 90 minutes | **Replaced:** campaign targets (decision 10) |
+| 2 | Death and saves | **Permanent death by default**, with save and quit; a free-save mode offered at the start | **Replaced:** death starts a new life; one campaign save (v3 decision 8) |
+| 3 | Run length | **4–6 hours**, plus a **short voyage** of about 90 minutes | **Replaced:** campaign targets (v3 decision 10) |
 | 4 | Same galaxy or random | **A new seeded galaxy each run**; story locations placed by rules | **Now:** one galaxy per campaign; story locations placed within areas |
-| 5 | Story | **Hand-written story moments plus random events** | Unchanged; the direction is decision 4 |
+| 5 | Story | **Hand-written story moments plus random events** | Unchanged; now built on your skeleton (§3) |
 | 6 | Leaving a map | **Always possible**, but some enemies can interrupt the spool-up | Unchanged |
-| 7 | Crew depth | **Officers and pilots are named**, everyone else is a head count; **named crew die for good** | "For good" becomes "for the rest of that life" if the crew wake again (decision 6) |
+| 7 | Crew depth | **Officers and pilots are named**, everyone else is a head count; **named crew die for good** | Now "for the rest of that life": the same crew wake again (v3 decision 6) |
 | 8 | Fleet between maps | **Ships travel with you**, limited by hangar space; losses are permanent | Unchanged; hangar berths by count, and the muster |
 | 9 | Scale of fights | **Up to about 40 ships a side** | Unchanged |
 | 10 | Sandbox | **Keep the Proving Grounds** for testing | Unchanged |
-| 11 | Tone | **Lonely, beautiful and a bit strange, with dry humour** | Unchanged, now in brass and steam |
-| 12 | Names | **Keep all the proposals** in §15 | New ones proposed (decision 24) |
+| 11 | Tone | **Lonely, beautiful and a bit strange, with dry humour** | Unchanged, with dark story memories (§3) |
+| 12 | Names | **Keep all the proposals** in §15 | Unchanged |
 | 13 | Galaxy map view | **3D with the orbit camera, kept readable** | Unchanged, styled as a parchment chart |
 | 14 | Difficulty setting | **None**: the pressure is survival and hostiles | Unchanged |
 
-## 17. Decisions needed now
+The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 and 24":
 
-Each has a recommendation, so "all recommended, except…" is a fine answer.
+| # | Question | Decision |
+| --- | --- | --- |
+| 1 | Map contents per life | **Vary each life**; the layout, story locations and traders stay fixed |
+| 2 | Why we wake again | **No Skein time loop.** The force (the Mainspring) keeps Jacob alive and returns him after each death; defeating it breaks the loop. Memories are kept in the Forge's drive records |
+| 3 | Endings | **A skilled player can escape in their first life; the true ending needs every memory** |
+| 4 | Story direction | **Your story skeleton** (§3). The force waits at the Shore and must be defeated to escape. It may hunt you within a life (decision 25) |
+| 5 | What carries over | **As proposed** (§2) |
+| 6 | Crew across lives | **The same people wake again**, alive, remembering nothing |
+| 7 | Faction standing | **Resets each life**, except the Choir's |
+| 8 | Saves | **One campaign save**, save and quit any time, no reloading older saves; free saves go |
+| 9 | Giving up a life | **Yes**: the Let go button |
+| 10 | Length targets | **First-life escape 2–3 h; true ending 8–12 h over about 5–8 lives; short campaign 3–4 h** |
+| 11 | How memories are earned | **Found, plus echoes**, including the echo waiting where you died |
+| 12 | The tree | **31 memories in five branches**, with the story memories rebuilt on the skeleton (§4) |
+| 13 | Drive parts | **Become memories**; nothing to fit |
+| 14 | Hazards | **As proposed** (§5) |
+| 15 | Rooms | **Reset each life**; the memory of how to build them stays |
+| 16 | Currency | **Cogmarks**, per life, alongside barter |
+| 17 | Mood | **Content +10% work; Uneasy +10% costs; Angry +30% costs; desertion under 15** |
+| 18 | Keeping the Forge running | **The boilers burn Glim** |
+| 19 | Hangar | **10 berths by count**; scrap returns half the ore and saves the crew; leaving adrift loses both |
+| 20 | Levels | **Only ships that launched and came home**; 5 levels at +5%; perks at 3 and 5; kills no longer count |
+| 21 | Traders | **Four regional traders**, tied to factions, trading from the chart |
+| 22 | Faction stations | **Stay as maps** you can enter |
+| 23 | Art | **Style guide first** (with Milestone 14), then new screens in the new style, then the full reskin |
+| 24 | New names | **All approved** for now (§15) |
 
-**Your proposals**
+## 17. Decisions still open
 
-1. **Map contents vary each life**, while the layout, story locations and traders stay fixed. *Recommended: yes.*
-2. **The Skein Drive loops time**, and memories are woven into the Skein. *Recommended: yes.*
-3. **A skilled player can escape in their first life; the true ending needs every memory.** *Recommended: yes.*
+These don't block Milestone 14, but the later milestones need them.
 
-**The story**
+25. **The chase clock** (§3): the Hands hunt you within each life (a, recommended); a winding clock that closes lanes (b); or no chase (c).
+26. **The story names** in §15: the Smith Foundry Company, Ninefold, the Knotfolk and the Wardens of Ninefold, the Fray, the Mainspring, the Hands, the Ragged Clans, the Steward, Deck 9. *Recommended: approve, or rename any.*
+27. **The reveal order:** keep Jacob's guilt for the final memory, with Deck 9 hinting at it from Act I (recommended), or reveal his project in Act III, before the sacrifices.
+28. **The cast:** two new factions (the Knotfolk and the Ragged Clans), and the new story roles of the five existing ones, including the Ashen Gaunt moving from Hostile to Wary (§3). *Recommended: yes.*
 
-4. **Which direction:** A, the Unravelling (something we caused); B, the Tithe-Taker (something hunts us); C, the Jar (the galaxy is a trap); or D, the Verdigris (a spreading blight). Or a mix. B and D also add a clock to each life. *No recommendation: your call.*
-
-**The loop**
-
-5. **What carries over between lives:** the table in §2. Memories, routes, chart knowledge and the memorial carry over; everything physical resets. *Recommended: as proposed.*
-6. **The crew across lives:** the same officers and pilots wake again each life, alive, not remembering, *or* a new crew each life. *Recommended: the same people.* Their deaths are then permanent for the rest of that life, and the memorial keeps every name across lives.
-7. **Faction standing resets each life**, except the Choir, who perceive the loop. *Recommended: yes.*
-8. **Saves:** one campaign save, save and quit any time, no reloading older saves; the free-save mode goes. *Recommended: yes.* The alternative is to keep free saves as an option.
-9. **Giving up a life:** "Let the Skein take us" on the chart. *Recommended: yes.*
-10. **Length targets:** a skilled first-life escape in 2–3 h, the true ending in 8–12 h over about 5–8 lives, and a short campaign of 3–4 h. *Recommended: yes, including keeping the short campaign.*
-
-**Memories**
-
-11. **How memories are earned:** found only (option 1), or found plus **echoes** spent on the Loom (option 2), including the echo waiting where you died. *Recommended: option 2.*
-12. **The draft tree** in §4 (31 memories in five branches), as a starting point to tune. *Recommended: yes.*
-
-**Routes**
-
-13. **The drive parts become memories** (nothing to fit; the range ring, the Veil and the final jump stay). *Recommended: yes.*
-14. **The hazard set:** shoals (shields), ember lanes (heat baffles), static fields (lightning rods), the Glare (lead-lined decks), the Veil (the Lens), long gaps and the Undertow (the Coils and the Spindle). *Recommended: yes.*
-
-**The Forge**
-
-15. **Rooms reset each life**, while the memory of how to build them stays. *Recommended: yes.*
-16. **Currency name:** cogmarks, tallies or brassbits. Per life; barter stays alongside. *Recommended: cogmarks.*
-17. **Mood marks and costs:** Content +10% work speed; Uneasy +10% costs; Angry +30% costs; desertion under 15. *Recommended: yes, to tune in play.*
-18. **Keeping the Forge running:** a, the boilers burn Glim; b, a new fuel; c, nothing new. *Recommended: a.*
-
-**The fleet**
-
-19. **Hangar:** 10 berths by ship count. Scrapping returns half the ore and saves the crew; leaving a ship adrift loses ship and crew. *Recommended: yes.*
-20. **Levels:** only ships that launched and came home gain a level; 5 levels at +5% each; a perk choice at levels 3 and 5; kills no longer count. *Recommended: yes.*
-
-**Traders**
-
-21. **Four regional traders** as in §8, each tied to a faction, trading from the chart. *Recommended: yes.* A wandering trader could come later as an add-on.
-22. **Faction stations stay as maps** you can enter (fights and missions), separate from traders. *Recommended: yes.*
-
-**Art and names**
-
-23. **Style guide first** (with Milestone 14), then new screens in the new style, then the full reskin (Milestone 21), with procedural steampunk ship models. *Recommended: yes.*
-24. **The new names** in §15: the Loom, the Anchorage, echoes, cogmarks, the hazards and the traders. *Recommended: approve, or rename any.*
+The deeper twist (§3) stays open on purpose; nothing is locked in.
 
 ---
 
