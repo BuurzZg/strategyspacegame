@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 15, the Loom: memories.** You wake on a bridge you don't remember, and the chart is dark: you can see only the places one lane away. A faint signal draws a circle on the chart, "somewhere in here". Inside it is the Anchorage, a destroyed station wearing the same emblem as your ship. Cut into its core and two memories come back: the emblem, and the radar, which lights the chart. What Jacob remembers stays in every life. **The Loom** (press `L`) is the memory tree, drawn in the new brass style: 31 memories in five branches, with the ones you haven't found shown as question marks. The Skein Drive's four parts are memories now. They are found in derelicts, inside circles that sharpen as you get close, and there is nothing to fit. Hulls you have blueprints for are memories too. **Echoes**, from memories, old voices, and the place where an earlier life ended, recall memories such as the Wisp. See [Memories and the Loom](#memories-and-the-loom).
+**Status: Milestone 16, routes closed until remembered.** Every galaxy now has **hazard pockets**: a few places off to the side of a region, cut off on every side by **asteroid shoals**, **ember lanes** near the dead star, **static fields** or **the Glare**. Their lanes are drawn in the hazard's colour, and nothing gets the Forge through until Jacob remembers what does: Shields, Heat baffles, Lightning rods or Lead-lined decks. Try for a place behind one and the officer at that post tells you why, by name (*Chief engineer Lune Tennant: "Shields are dead, Captain. Take her into that field and the rocks will open us like a tin."*), or whoever is acting in the post. From then on that memory can be recalled on the Loom for two echoes, and the hazard stays open in every life. Places inside are half again as rich, and each pocket hides a wreck with a strongbox worth two echoes, once in a campaign. The navigator now reports the Veil and the drive's reach the same way. Pockets never block the way home: a single life can always escape. See [Hazards: closed routes](#hazards-closed-routes).
+
+**Milestone 15, the Loom: memories:** You wake on a bridge you don't remember, and the chart is dark: you can see only the places one lane away. A faint signal draws a circle on the chart, "somewhere in here". Inside it is the Anchorage, a destroyed station wearing the same emblem as your ship. Cut into its core and two memories come back: the emblem, and the radar, which lights the chart. What Jacob remembers stays in every life. **The Loom** (press `L`) is the memory tree, drawn in the new brass style: 31 memories in five branches, with the ones you haven't found shown as question marks. The Skein Drive's four parts are memories now. They are found in derelicts, inside circles that sharpen as you get close, and there is nothing to fit. Hulls you have blueprints for are memories too. **Echoes**, from memories, old voices, and the place where an earlier life ended, recall memories such as the Wisp. See [Memories and the Loom](#memories-and-the-loom).
 
 **Milestone 14, campaigns and lives:** The game is being rebuilt around a new design (see [PLAN.md](PLAN.md), version 3): one galaxy per campaign, played over many lives. Start a **new campaign** from the title screen. When the Forge is destroyed, the crew are gone or the air runs out, the life ends, and you **wake** again at the moment you first woke, in the same galaxy. The chart remembers every place you found and marks the ones you visited before. The memorial keeps everyone you lost, and the Choir remember you. Everything else (stores, fleet, hull, systems, standing) starts over. The galaxy's layout never changes, but what is on each map, which events happen and how the dice fall differ from life to life. A **Let go** button gives up a life that is going nowhere. The campaign saves as you play. Saves from earlier versions load as a campaign's first life. Memories, closed routes and the story come next. See [Starting a campaign, lives and saving](#starting-a-campaign-lives-and-saving).
 
@@ -156,7 +158,23 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
   - **The layout:** five rows of cogs (Origins, the Skein, the Forge, the fleet, the decks), with threads to what each one needs.
   - **What the cogs show:** a lit brass cog is remembered; a pulsing ring means you can recall it now; a question mark means not yet.
   - **Details:** click a cog to see what it is, where it waits or what it costs, and when you remembered it.
-  - **Not yet:** the story memories, the systems that open closed routes, and the rooms come in later milestones, and show as question marks until then.
+  - **The Forge row:** Shields, Heat baffles, Lightning rods and Lead-lined decks open the hazards (see below). Each shows as a dark cog until a hazard turns the Forge away, then it can be recalled for two echoes.
+  - **Not yet:** the story memories, silent running and the rooms come in later milestones, and show as question marks until then.
+
+### Hazards: closed routes
+
+| Hazard | Where | Lanes | Who reports it | Remember |
+| --- | --- | --- | --- | --- |
+| Asteroid shoals | the Drift and the Middens | amber | the chief engineer | Shields |
+| Ember lanes | the Drift's inner edge, near the dead star | orange | the chief engineer | Heat baffles |
+| Static fields | the Middens and the Hush | blue | the watch officer | Lightning rods |
+| The Glare | the Middens and the Hush | sickly yellow | the surgeon | Lead-lined decks |
+
+- **Pockets:** three to five places in one region, cut off by a hazard on every lane in from outside. A full galaxy has four to seven, a short one two to six. They never hold the wake-up point, the Anchorage, a drive part or a station, and they sit off to the side: no route to anywhere else gets more than a stitch longer because of them, so a single life can always get home.
+- **Turned away:** pick a place behind a hazard and the card says why, in the words of the officer at its post. If the post is empty, whoever is acting in it speaks, or failing that the crew. The first time, the memory that opens it can be recalled on the Loom from then on, in every life. Drifting gets no further than stitching.
+- **Opened:** recall the memory (two echoes) and the hazard's lanes turn teal like any other. It stays open in every life.
+- **Worth it:** places in a pocket yield half again as much. Each pocket keeps a wreck with a strongbox in Jacob's own hand: cut it open for two echoes, once in a campaign.
+- **The navigator** reports the Veil and stitches too long for the drive.
 
 ### Starting a campaign, lives and saving
 
@@ -236,7 +254,7 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 | Drag, `W A S D` | Pan |
 | `F` or `Home` | Back to the Forge |
 
-- **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
+- **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now; lanes into a hazard pocket are drawn in the hazard's colour until you remember what gets the Forge through. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
 - **The card** shows the route (stitches, days, Glim, distance) and what you will have on arrival. With no Glim, the Forge can **drift** one lane at sub-light, slowly. At the Forge's place, **Go in** plays the map, and **Rest a day** raises morale (twice as much in still water).
 - **The top bar** shows the day, the stores (water, food and air with the days they will last), the crew and morale.
 - **The Forge panel:**
@@ -270,7 +288,7 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 | Anchor Spindle | a derelict in the Hush | stitches of 200 spans: the Shore |
 | Heartstone | a derelict deep in the Shore | the final jump, from the Shore's edge |
 
-The engineers have a fix on one part at a time: the gold ring. Go in and cut into the derelict's hulk with Shearers until they find it. Then fit it from the Forge panel (ore, salvage, days and free engineers). Later milestones add other ways to get them: quests, trade and fights with factions.
+The engineers have a fix on one part at a time: first a circle, then the gold ring once you are close. Go in and cut into the derelict's hulk with Shearers until they find it. Its memory comes back at once, and the drive has it in every life.
 
 ### Factions and standing
 
@@ -540,8 +558,8 @@ Runs the headless tests:
   - an advancing wedge destroys an enemy in its path and re-forms;
   - two identical runs give the same sync hash.
 - **The voyage** (`tools/voyagetest.js`): checks that:
-  - the galaxy is the same for the same seed, about 300 places in four regions, every place reachable;
-  - each region opens at its own drive level, all of it, and not before; each part lies where the drive that can fetch it reaches;
+  - the galaxy is the same for the same seed, about 300 places in four regions, every place reachable once the hazards are open;
+  - each region opens at its own drive level, all of it but its hazard pockets, and not before; each part lies where the drive that can fetch it reaches without opening any hazard;
   - one day's water, food, air and Glim exactly; the starvation ladder (no food, no water then no air, low stores, no crew);
   - stitching (Glim and days), range, the Veil, a damaged or wrecked drive, drifting without Glim;
   - repairs, fitting a part, the final jump;
@@ -583,6 +601,14 @@ Runs the headless tests:
   - a Talon blueprint in life 1 lets life 2 build Talons;
   - the new event words parse, and a bad clue is a content error;
   - a save from before memories keeps its sensors, drive parts and hulls as memories, and saves again identically.
+- **Hazards** (`tools/hazardtest.js`): checks that:
+  - there are four hazards, each opened by a memory and reported by a post;
+  - every galaxy (12 full, 12 short) has pockets: places in one region, never the wake-up point, a drive part, an anchor or a station, with a cache wreck inside; every lane in from outside carries the hazard and no lane joins two pockets; no drive gets in without the memory, and with it the pocket opens at its region's drive level; the same seed carves the same pockets;
+  - the right officer reports each hazard by name; with the post vacant, whoever is acting speaks, or the crew; the navigator reports the drive's reach and the Veil;
+  - the memory can't be recalled before the hazard turns the Forge away; being turned away costs no days or Glim and is remembered; then it costs two echoes, opens the way, and stays open in the next life while the others stay closed;
+  - the cache gives two echoes once, not twice, and not again in a later life; places in a pocket yield half again as much;
+  - drifting is refused too; a voyage saved inside a pocket can get out;
+  - the test captain gets home in a single life on 50 full and 50 short seeds, going round every pocket.
 - **Campaigns and lives** (`tools/campaigntest.js`): checks that:
   - a new campaign starts on life 1 with one save; the first life opens with the prologue, later ones with waking;
   - after letting go, the next life is life 2, in the same galaxy, on day 1, at the wake-up point, with stores, systems, hull, fleet and drive parts as they were at waking;
@@ -665,6 +691,8 @@ content/core/voyage.yaml        every number behind the voyage (needs, life supp
 content/core/names.yaml         name generators (derelicts, and people)
 content/core/crew.yaml          named crew: officers' posts, traits, ship leads (the format is at the top)
 content/core/memories.yaml      the Loom: 31 memories, and the anchors where story memories wait
+content/core/hazards.yaml       hazards: what each closes, who reports it and what they say, the memory
+                                that opens it, its pockets per region and its colour on the chart
 content/core/races.yaml         races, and where their factions start
 content/core/factions.yaml      factions: seats, territory, patrols, enemies, leave; and every
                                 reputation number (tiers, penalties, ranges)

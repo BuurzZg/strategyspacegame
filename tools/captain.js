@@ -23,13 +23,16 @@ export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => 
 
 // start: an existing voyage to play on (a later life of a campaign); giveUp: let go of the life
 // on this day (to test what a death carries over)
-export function captain(rules, seed, { events = false, length = 'full', start = null, giveUp = 0 } = {}) {
+// trace(s, goal, urgent): called each turn, for debugging
+export function captain(rules, seed, { events = false, length = 'full', start = null, giveUp = 0, trace = null } = {}) {
   const VY = rules.content.voyage;
   const s = start || V.newVoyage(rules, { seed, length });
   const g = V.galaxyOf(rules, s);
   const order = ['coils', 'lens', 'spindle', 'heartstone'];
   const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, Anchorage: { salvage: 1200, ice: 400 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
-  let visits = 0, stitches = 0, goal = null;
+  // objDays: how far the objective (the next drive part, or home) was when last planned, so a
+  // supply run takes on water for the trip after it, not just for the way to the ice
+  let visits = 0, stitches = 0, goal = null, objDays = 0;
   const visit = () => {
     const p = g.points[s.at], times = s.visited[p.id] | 0, rich = Math.max(+VY.RevisitFloor, 100 - times * +VY.RevisitPct);
     const stores = {};
@@ -69,8 +72,11 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     const lowGlim = s.stores.glim < (g.points[s.at].ri >= 2 ? 900 : 600) || (s.stores.food < 900 && s.stores.spores < 100);
     // keep a supply run going once started, unless water gets desperate
     // enough water for the trip to the goal and a margin, or at least twelve days
-    const trip = goal && goal.days ? goal.days + 6 : 12;
+    const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 6;
     const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.min(30, Math.max(12, trip)) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
+    if (trace) trace(s, goal, urgent);
+    // already at the drive part's derelict: cut it open before running for supplies
+    if (next && goal && goal.kind === next && s.at === goal.id && left.ice >= 3) { visit(); goal = null; continue; }
     if (urgent) {
       // at a supply place: stay (visit again) until the stores are well up
       if (type(urgent)(here)) { visit(); if (urgent !== 'IceTail' || V.daysLeft(rules, s).ice >= Math.max(20, trip) || !type(urgent)(here)) goal = null; continue; }
@@ -78,7 +84,7 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     }
     if (!goal) {
       const n = next ? nearest((p) => p.id === g.components[next], true) : nearest((p) => p.edge, true);
-      if (n) goal = { ...n, kind: next || 'home' };
+      if (n) { goal = { ...n, kind: next || 'home' }; objDays = n.days; }
       else { const m = nearest(type('LanternMist')) || nearest(type('IceTail')); if (!m) break; goal = { ...m, kind: 'any' }; }
     }
     if (s.at === goal.id) {
@@ -87,6 +93,9 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     }
     const pl = V.plan(rules, s, goal.id);
     if (!pl.route || s.stores.glim < stitchGlim(VY, g.lanes[pl.route.lanes[0]].len)) { goal = null; if (!nearest(type('LanternMist'))) break; goal = { ...nearest(type('LanternMist')), kind: 'LanternMist' }; continue; }
+    // how far the goal is now (not when it was picked)
+    goal.days = pl.route.days;
+    if (goal.kind === (next || 'home')) objDays = goal.days;
     // one stitch at a time
     V.stitch(rules, s, pl.route.hops[0]);
     stitches++;

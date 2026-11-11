@@ -185,7 +185,7 @@ export class StarChart {
     });
   }
 
-  // view: { at, known: Set, visited: {}, before: Set (visited in an earlier life), range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool, dark (no radar yet) }
+  // view: { at, known: Set, visited: {}, before: Set (visited in an earlier life), range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool, dark (no radar yet), hazards: [ids the drive goes through] }
   update(view) {
     const g = this.g, n = g.points.length, c = new THREE.Color();
     const col = this.points.geometry.attributes.color, size = this.points.geometry.attributes.size, ring = this.points.geometry.attributes.ring, tint = this.points.geometry.attributes.tint;
@@ -201,12 +201,14 @@ export class StarChart {
       if (known && p.seat) size.setX(i, size.getX(i) * 1.35);
     }
     col.needsUpdate = true; size.needsUpdate = true; ring.needsUpdate = true; tint.needsUpdate = true;
-    // lanes: open ones bright, the rest faint; the Veil's lanes violet
-    const lc = this.lanes.geometry.attributes.color;
+    // lanes: open ones bright, the rest faint; the Veil's lanes violet; lanes into a hazard
+    // pocket in the hazard's colour (hazards.yaml) while it is closed
+    const lc = this.lanes.geometry.attributes.color, H = this.rules.content.hazards || {}, through = view.hazards || [];
     g.lanes.forEach((l, i) => {
       const near = l.a === view.at || l.b === view.at;
       const seen = !view.dark || view.known.has(l.a) || view.known.has(l.b);
       if (view.open[i]) c.setRGB(0.07, 0.25, 0.24).multiplyScalar(near ? 3 : 1);
+      else if (l.hazard && H[l.hazard] && !through.includes(l.hazard)) c.setHex(parseInt(H[l.hazard].Color, 16) || 0x884422).multiplyScalar(near ? 1 : 0.6);
       else if (l.veil && !view.veil) c.setRGB(0.2, 0.09, 0.26);
       else c.setRGB(0.05, 0.06, 0.09);
       if (!seen) c.multiplyScalar(0.15);

@@ -1,6 +1,6 @@
 // The voyage simulator, no browser needed:  npm test
-// The galaxy: deterministic, about 300 places in four regions, every place reachable, each
-// region opened by its drive component and not before, each component where the drive that
+// The galaxy: deterministic, about 300 places in four regions, every place reachable (hazard
+// pockets once their memories open them), each region opened by its drive component and not before, each component where the drive that
 // can fetch it reaches. The day clock: consumption maths exactly, the starvation ladder, game
 // over. Travel: Glim and days, range, the Veil, drifting. Maps: crew, losses, days, system
 // wear, relics, the Forge destroyed. Saving: save and load give the identical voyage. And an
@@ -23,24 +23,28 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   const a = generateGalaxy(rules, 11), b = generateGalaxy(rules, 11), c = generateGalaxy(rules, 12);
   check(JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(a.points) !== JSON.stringify(c.points), 'the same seed gives the same galaxy, and another seed a different one');
   const T = tiers(rules);
-  let sizes = [], allReach = true, gated = true, comps = true, edges = true, regions4 = true;
+  const open = (d) => ({ ...d, hazards: Object.keys(C.hazards) });
+  let sizes = [], allReach = true, gated = true, comps = true, edges = true, regions4 = true, shut = true;
   for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
     const g = generateGalaxy(rules, seed), n = g.points.length;
     sizes.push(n);
     if (new Set(g.points.map((p) => p.region)).size !== 4) regions4 = false;
-    const R = T.map((d) => reach(n, g.lanes, g.start, d));
+    // with every hazard opened, tier t reaches every place of regions 0..t and none beyond;
+    // without them, the same, except that the pockets stay shut
+    const R = T.map((d) => reach(n, g.lanes, g.start, open(d))), S = T.map((d) => reach(n, g.lanes, g.start, d));
     if (!R[3].every(Boolean)) allReach = false;
-    // tier t reaches every place of regions 0..t and none beyond
-    for (let t = 0; t < 4; t++) for (const p of g.points) if (R[t][p.id] !== (p.ri <= t)) gated = false;
+    for (let t = 0; t < 4; t++) for (const p of g.points) if (R[t][p.id] !== (p.ri <= t) || S[t][p.id] !== (p.ri <= t && !p.pocket)) gated = false;
+    if (!g.pockets.length || g.pockets.some((k) => k.places.some((i) => S[3][i]))) shut = false;
     // each component is reachable with the drive as it is before that component is fitted
     const order = ['coils', 'lens', 'spindle', 'heartstone'];
-    order.forEach((id, t) => { const at = g.components[id]; if (at === undefined || !R[t][at] || g.points[at].region !== C.items[id].Region) comps = false; });
-    if (!g.points.some((p) => p.edge && R[3][p.id])) edges = false;
+    order.forEach((id, t) => { const at = g.components[id]; if (at === undefined || !S[t][at] || g.points[at].region !== C.items[id].Region) comps = false; });
+    if (!g.points.some((p) => p.edge && S[3][p.id])) edges = false;
   }
   check(sizes.every((n) => n >= 260 && n <= 340), `about 300 places in each galaxy (${sizes.join(', ')})`);
   check(regions4, 'four regions: the Drift, the Middens, the Hush and the Shore');
-  check(allReach, 'every place can be reached with the drive fully mended');
-  check(gated, 'each region opens at its own drive level, all of it, and not before (Coils, then the Lens through the Veil, then the Spindle)');
+  check(allReach, 'every place can be reached with the drive fully mended and every hazard opened');
+  check(gated, 'each region opens at its own drive level, all of it but its hazard pockets, and not before (Coils, then the Lens through the Veil, then the Spindle)');
+  check(shut, 'every galaxy has hazard pockets, and no drive gets into them without the memories');
   check(comps, 'each drive component lies in its region, where the drive that can fetch it reaches');
   check(edges, 'the Shore\'s edge, where the final jump goes from, can be reached');
 }
@@ -92,19 +96,19 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
 {
   const s = V.newVoyage(rules, { seed: 5 });
   const g = V.galaxyOf(rules, s), d = V.drive(rules, s);
-  const li = g.adj[s.at].find((i) => g.lanes[i].len <= d.range && !g.lanes[i].veil);
+  const li = g.adj[s.at].find((i) => g.lanes[i].len <= d.range && !g.lanes[i].veil && !g.lanes[i].hazard);
   const l = g.lanes[li], to = l.a === s.at ? l.b : l.a;
   const glim0 = s.stores.glim, day0 = s.day;
   const r = V.stitch(rules, s, to);
   const days = stitchDays(VY, l.len);
   check(r.ok && s.at === to && s.day === day0 + days && s.stores.glim === glim0 - stitchGlim(VY, l.len) - days * +VY.ReactorGlim, `one stitch of ${l.len} spans: ${stitchGlim(VY, l.len)} Glim and ${days} day${days > 1 ? 's' : ''}`);
-  const mid = g.points.find((p) => p.region === 'Middens');
+  const mid = g.points.find((p) => p.region === 'Middens' && !p.pocket);
   const p1 = V.plan(rules, s, mid.id);
   check(!p1.ok && /reach/.test(p1.why), `the Middens are out of reach without the Coils ("${p1.why}")`);
   V.remember(rules, s, 'coils', { quiet: true });
   const p2 = V.plan(rules, s, mid.id);
   check(p2.ok || /Glim/.test(p2.why), `with the Coils fitted, there is a route (${p2.route ? `${p2.route.hops.length} stitches, ${p2.route.glim} Glim, ${p2.route.days} days` : p2.why})`);
-  const hush = g.points.find((p) => p.region === 'Hush');
+  const hush = g.points.find((p) => p.region === 'Hush' && !p.pocket);
   const p3 = V.plan(rules, s, hush.id);
   check(!p3.ok && /Veil/.test(p3.why), `the Hush stays shut behind the Veil without the Lens ("${p3.why}")`);
   // a damaged drive reaches less far; a wrecked one cannot stitch

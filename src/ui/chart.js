@@ -127,6 +127,8 @@ export class ChartScreen {
     $('chart-save').hidden = true; // one campaign save (named saves went with Milestone 14)
     $('chart-quit').textContent = 'Save and quit';
     this.on($('chart-helpbtn'), 'click', () => $('chart-help').classList.toggle('open'));
+    const Hz = Object.values(this.rules.content.hazards || {});
+    $('chart-hazards').innerHTML = Hz.length ? `Lanes into hazard pockets: ${Hz.map((h) => `<span style="color:#${esc(h.Color)}">${esc(h.Name)}</span>`).join(', ')}. Nothing gets through until you remember what does.` : '';
     this.on($('chart-loombtn'), 'click', () => this.openLoom());
   }
 
@@ -149,6 +151,9 @@ export class ChartScreen {
   select(id) {
     this.selected = id;
     if (id !== this.s.at) this.hint('place');
+    // picking a place a hazard keeps closed: the Forge is turned away (the memory can be recalled now)
+    const seen = ((this.s.campaign && this.s.campaign.hazards) || []).length;
+    if (id !== this.s.at && V.turnedAway(this.rules, this.s, id) && this.s.campaign.hazards.length > seen) { this.onChange(this.s); this.refreshPanel(); this.hint('hazard'); }
     this.audio.play('select');
     this.refreshCard();
     this.refreshChart();
@@ -207,7 +212,7 @@ export class ChartScreen {
     const radar = V.remembers(s, 'radar'), clues = (s.campaign && s.campaign.chart.clues) || [];
     // the gold ring marks a place the sensors have pinpointed (an exact clue); a circle, one they haven't
     const exact = clues.find((c) => c.exact && !V.anchorDone(this.rules, s, c.id));
-    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, before: new Set((s.campaign && s.campaign.chart.visited) || []), range: d.range, sensor: radar ? V.sensorRange(this.rules, s) : 0, veil: d.veil, signal: exact ? exact.at : -1, selected: this.selected, open, dark: !radar });
+    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, before: new Set((s.campaign && s.campaign.chart.visited) || []), range: d.range, sensor: radar ? V.sensorRange(this.rules, s) : 0, veil: d.veil, signal: exact ? exact.at : -1, selected: this.selected, open, dark: !radar, hazards: d.hazards });
     this.chart.setClues(clues.filter((c) => !c.exact && !V.anchorDone(this.rules, s, c.id)));
     const p = this.selected >= 0 && this.selected !== s.at ? V.plan(this.rules, s, this.selected) : null;
     this.chart.setRoute(p && p.route ? [s.at, ...p.route.hops] : []);
@@ -237,8 +242,10 @@ export class ChartScreen {
     const anchor = p.relic && !V.anchorDone(this.rules, s, p.relic) ? p.relic : '';
     const pin = anchor && ((s.campaign && s.campaign.chart.clues) || []).some((c) => c.id === anchor && c.exact);
     const relic = !pin ? '' : (this.rules.content.anchors || {})[anchor] ? 'A signal comes from deep in the wreck. Cut into the hulk with Shearers to reach it. ' : `The ${this.rules.content.items[anchor].Name} is aboard: cut into the hulk with Shearers to find it. `;
+    const Hz = known && p.pocket ? (this.rules.content.hazards || {})[p.pocket] : null;
+    const pocket = !Hz ? '' : V.drive(this.rules, s).hazards.includes(Hz.id) ? ` Through the ${Hz.Name}: it yields half again as much as anywhere else.` : ` Cut off by the ${Hz.Name} on every side.`;
     const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
-    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + claim;
+    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + claim;
     const stats = [], btns = [];
     let why = '';
     if (here) {

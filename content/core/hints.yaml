@@ -2,7 +2,8 @@
 # first time its moment comes:
 #   chart (the star chart, after the prologue), place (picking another place on the chart),
 #   map (going in), build (the production panel on a map), spool (spooling the Skein),
-#   report (a visit's report), low (a store under a week), faction (at a place a faction holds)
+#   report (a visit's report), low (a store under a week), faction (at a place a faction holds),
+#   memory (something remembered), hazard (turned away by a hazard)
 
 Chart:
 	When: chart
@@ -40,3 +41,7 @@ Memory:
 	When: memory
 	Title: The Loom
 	Text: Something came back. What you remember stays in every life, even after you die and wake again. Open the Loom (L) to see what you remember, and to recall more with echoes.
+Hazard:
+	When: hazard
+	Title: Hazards
+	Text: Some places are cut off by asteroid shoals, ember lanes, static fields or the Glare, drawn on the chart in their own colours. Nothing gets the Forge through until you remember what does. Now that you have been turned away, that memory can be recalled on the Loom (L) with echoes. Places behind a hazard are richer, and each pocket keeps a strongbox of echoes.

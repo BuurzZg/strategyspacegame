@@ -24,6 +24,7 @@ import { weights } from '../engine/content.js';
 const nums = (v) => String(v).split(',').map((s) => +s.trim());
 const LANES_PER_POINT = 4;
 const GATES = 6; // guaranteed crossings per gap between regions
+const POCKET_DETOUR = 1; // stitches a hazard pocket may add to the way to anywhere outside it
 
 // The drive's reach for a set of installed components (ids).
 export function driveOf(rules, installed = []) {
@@ -255,7 +256,8 @@ export function generateGalaxy(rules, seed, { short = false } = {}) {
 // 9. Hazard pockets (hazards.yaml): a few places in a region, cut off by a hazard on every lane
 // in from outside. Never the wake-up point, an anchor, a derelict, a station or a place next to
 // another pocket; and everything outside the pockets can still be reached at its region's tier
-// without any hazard opened. Each pocket keeps one cache (relic `cache-N`) in a wreck. Its own
+// without any hazard opened, and no more than POCKET_DETOUR stitches further from the wake-up
+// point than with no pockets at all: pockets sit off to the side, never across the way. Each pocket keeps one cache (relic `cache-N`) in a wreck. Its own
 // dice, so nothing else moves. Returns [ { id: 'cache-N', hazard, places: [ids], cache: id } ].
 function carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, short }) {
   const hrng = new Random(hashMix(seed | 0, 0x4a2d) || 1), pockets = [];
@@ -264,11 +266,12 @@ function carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, sh
   const taken = (p) => p.id === start || !!p.relic || !!p.seat || p.type === 'StillWater' || !!p.pocket;
   const nearPocket = (i) => adj[i].some((li) => !!points[other(li, i)].pocket);
   const ok = (p, region) => p.region === region && !taken(p) && !nearPocket(p.id) && hops[p.id] >= 2;
-  // everything outside the pockets (and outside `cell`) reachable at its own tier?
-  const outsideOk = (cell) => regions.every((R, ri) => {
-    const seen = reach(points.length, lanes, start, tierFor(ri));
-    return points.every((p) => p.ri !== ri || p.pocket || cell.has(p.id) || seen[p.id]);
-  });
+  // stitches from the wake-up point at each region's tier, with the hazards as they are now
+  const hopsAt = () => regions.map((R, ri) => hopsFrom(points.length, lanes, start, tierFor(ri)));
+  const base = hopsAt();
+  // everything outside the pockets (and outside `cell`) reachable at its own tier, the long way
+  // round no longer than POCKET_DETOUR stitches?
+  const outsideOk = (cell) => hopsAt().every((h, ri) => points.every((p) => p.ri !== ri || p.pocket || cell.has(p.id) || h[p.id] <= base[ri][p.id] + POCKET_DETOUR));
   const W = C.names.Wrecks || {}, first = String(W.First || 'Lost').split(',').map((s) => s.trim()), second = String(W.Second || 'Ship').split(',').map((s) => s.trim());
   const names = new Set(points.map((p) => p.name));
   for (const H of Object.values(C.hazards || {})) {
@@ -348,12 +351,13 @@ function hopsBetween(adj, lanes, a, b, max) {
   return max + 1;
 }
 
-function hopsFrom(n, lanes, from) {
+// stitches from `from` to every place (1e9: none), along any lane or only those `drive` can use
+function hopsFrom(n, lanes, from, drive = null) {
   const adj = adjacency(n, lanes), hops = new Array(n).fill(1e9), queue = [from];
   hops[from] = 0;
   while (queue.length) {
     const i = queue.shift();
-    for (const li of adj[i]) { const l = lanes[li], j = l.a === i ? l.b : l.a; if (hops[j] > hops[i] + 1) { hops[j] = hops[i] + 1; queue.push(j); } }
+    for (const li of adj[i]) { const l = lanes[li], j = l.a === i ? l.b : l.a; if (drive && !laneOpen(l, drive)) continue; if (hops[j] > hops[i] + 1) { hops[j] = hops[i] + 1; queue.push(j); } }
   }
   return hops;
 }

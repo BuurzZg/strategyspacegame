@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–15 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–16 are built (§12); names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -547,6 +547,13 @@ Most of this already exists in some form:
 - **No way in with damage.** The route is closed until the memory is known. From then on, it opens in every life.
 - Opened routes branch into **pockets**: clusters of places reached only through that hazard. Pockets hold story locations, traders, richer places and memories.
 
+**As built (Milestone 16):**
+- `hazards.yaml` holds the four hazards: the memory that opens each, the post that reports it and what that officer says, how many pockets per region, their size, and the colour of their lanes. The Veil, long gaps and the Undertow stay as the drive's own limits, reported by the navigator.
+- A pocket is three to five places in one region, carved with its own dice after everything else is placed. Every lane in from outside carries the hazard. Pockets never hold the wake-up point, an anchor, a drive part or a station, never touch another pocket, and never make the way to anywhere outside them more than one stitch longer. That keeps them off to the side, so a single life can always reach the edge (the test captain gets home on 50 full and 50 short seeds).
+- Closed hazard lanes are drawn in the hazard's colour (the hatched ink and symbols come with the reskin).
+- The first time a hazard turns the Forge away, the campaign remembers it, and its memory can be recalled on the Loom for two echoes. Once remembered, the hazard is open in every life.
+- For now pockets hold richer places (half again as much) and one wreck with a strongbox of two echoes, once per campaign. Story locations and traders move into pockets with Milestones 20 and 22.
+
 ### The generator
 
 - **Already built:** today's galaxy has four rings (the Drift, the Middens, the Hush behind the Veil, the Shore), lanes, gate places and range tiers. All of that stays.
@@ -929,7 +936,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | --- | --- | --- | --- |
 | ~~14~~ | ~~Campaigns and lives~~ (done, §12) | Start a campaign on a seed; die and wake again in the same galaxy; the chart remembers places; maps vary each life; the wake screen; a campaign save, with old saves migrated. The goal is still today's drive parts | What persists and what resets; same layout but different map contents per life; determinism; old saves load; the bot plays several lives |
 | ~~15~~ | ~~The Loom: memories~~ (done, §12) | The memory tree screen with question marks; memories in YAML; echoes; the first life's opening: the short, confusing awakening, the dark chart, the signal, the Anchorage, the radar; clue circles; drive parts become memories | Memories persist; the radar beat works on every seed; a clue circle always contains its place; content lint for memories |
-| **16** | **Routes closed until remembered** | Hazard lanes and pockets; officers report closed routes by name; anchors placed within areas; shields, heat baffles, lightning rods and lead-lined decks | No way in without the memory; reports come from the right officer (or whoever is acting); the bot completes 50 seeds, and a single-life escape is possible on each |
+| ~~16~~ | ~~Routes closed until remembered~~ (done, §12) | Hazard lanes and pockets; officers report closed routes by name; anchors placed within areas; shields, heat baffles, lightning rods and lead-lined decks | No way in without the memory; reports come from the right officer (or whoever is acting); the bot completes 50 seeds, and a single-life escape is possible on each |
 | **17** | **The Forge as a base, and survival that weakens** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers burning Glim; **strain instead of death** for every shortage; stations as data (online, dim, dark, striking); strikes instead of desertion (if chosen); All hands and its bonus | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life; **no shortage ever kills or ends a life**; strain rises and falls a level a day and its penalties are capped; the right stations go dark for each shortage; All hands starts and stops exactly when every station is green |
 | **18** | **The bridge** | The crew screen as the Forge's bridge: Jacob's chair, nine stations with their officers, moods, lamps and states; station panels with skills (known, trainable, "?"), training with cogmarks and days, and what keeps a station dark; the signals officer, a new post; muscle memory (a known memory lights its station from day 1); the All hands moment in full (light, bell, organ sting, streak); built in the approved style | Memory-given skills persist across lives and trained levels reset; a known memory starts its station at level 1; training costs less where Jacob remembers; the bridge matches the voyage state; a browser run at desktop and phone width |
 | **19** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
@@ -941,7 +948,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 
 **Later, as add-on packs:** new regions beyond the Shore, new traders, races and factions, more memories and story arcs, and co-op multiplayer (the engine stays lockstep-ready).
 
-## 12. Milestones done (1–13)
+## 12. Milestones done (1–16)
 
 | # | Milestone | Result |
 | --- | --- | --- |
@@ -960,6 +967,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | 13 | Named crew | Eight officer posts and a named pilot or captain for every armed ship, counted in their roles; 17 traits in YAML (work, damage, hull, learning, morale; conditions; growth; Lucky escapes); losses pick who dies, fairly; leads die with their ships on maps; promotions fill empty posts; crew events by name, the memorial; old saves load with named crew. Decided: officers and pilots are named, everyone else stays a head count; deaths are permanent |
 | 14 | Campaigns and lives | One galaxy per campaign, played over lives; the wake screen and Let go; the chart, the memorial, hints and the Choir's standing carry over, everything physical resets; the same crew wake each life; map contents, events and dice vary per life (the first life plays as before); one campaign save (version 5), older saves load as a first life; the test captain plays campaigns of several lives. The steampunk style guide page is delivered for approval |
 | 15 | The Loom: memories | 31 memories in YAML, in five branches, kept for the whole campaign; echoes (from memories, events and the echo where a life ended) recall abilities on the Loom; the first life's opening (a short, confusing awakening, a dark chart, the signal, the Anchorage, its core giving back the emblem and the radar); clue circles that contain their place, shrink with another clue and are pinpointed close up; drive parts and hulls become memories (nothing to fit); the Loom in the approved brass style; old saves keep their sensors, drive parts and hulls as memories |
+| 16 | Routes closed until remembered | Four hazards in YAML (asteroid shoals, ember lanes, static fields, the Glare); pockets carved off to the side of each region, sealed by the hazard on every lane in, never across the way; the officer at the hazard's post reports it by name (or whoever is acting); the navigator reports the Veil and the drive's reach; Shields, Heat baffles, Lightning rods and Lead-lined decks recalled for two echoes once a hazard has turned the Forge away, and open in every life after; richer places and a strongbox of echoes in every pocket; hazard lanes in their colours on the chart; the test captain gets home in a single life on 50 full and 50 short seeds |
 
 ## 13. How each milestone is tested
 
