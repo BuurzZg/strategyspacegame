@@ -15,6 +15,7 @@ import { ChartScreen } from './ui/chart.js';
 import { CommsPanel } from './ui/comms.js';
 import { LoomScreen } from './ui/loom.js';
 import { BridgeScreen } from './ui/bridge.js';
+import { NarrationScreen } from './ui/narration.js';
 import { replayInto } from './engine/replay.js';
 
 const $ = (id) => document.getElementById(id);
@@ -34,6 +35,7 @@ let bridge = null; // the bridge (the crew screen)
 let rules = null, run = null, session = null, input = null, acc = 0;
 // the voyage (galaxy map) and its star chart screen, when one is open
 let voyage = null, chart = null;
+let narration = null; // the ending narration, while it plays
 const SAVE_KEY = 'driftforge.voyage', SLOTS_KEY = 'driftforge.saves';
 // behind the start screen: just the sky, turning slowly
 let menu = null;
@@ -236,6 +238,10 @@ function startChart() {
     onQuit: () => { writeSave(); showLauncher(); },
     onSave: () => saveSlot(),
     // the end of a life: wake into the next one; the end of the campaign: a new one or the title
+    // the game is won: old Jacob tells the story, then the end screen
+    onNarrate: (done) => {
+      narration = new NarrationScreen({ rules, voyage, audio, renderer, onDone: () => { narration = null; done(); } });
+    },
     onEnd: (what) => {
       if (what === 'wake') { voyage = V.newLife(rules, voyage); writeSave(); startChart(); return; }
       if (voyage.won) deleteSave();
@@ -295,6 +301,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now; elapsed += dt;
+  if (narration) { narration.frame(dt, renderer); return; }
   if (chart) { chart.frame(dt, renderer); return; }
   if (!session) {
     if (!menu) { menu = { scene: new THREE.Scene() }; menu.space = new SpaceScene(menu.scene, { x0: 0, y0: 0, z0: -32 * 1024, x1: 192 * 1024, y1: 192 * 1024, z1: 32 * 1024 }, 23); }

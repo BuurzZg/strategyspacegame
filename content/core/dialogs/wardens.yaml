@@ -1,0 +1,50 @@
+# The Wardens of Ninefold (Milestone 22): the Knotfolk's guardian ships. They speak slowly, and
+# they do not forget. (The format is at the top of rivet.yaml.)
+
+wardens:
+	Start: hello
+	Node@hello:
+		Say: Cog-ship. We have watched for your mark for a hundred and forty-seven years. We have not grown tired of watching.
+		Say@Wary: Cog-ship. You may speak. We are listening, and we have not lowered anything.
+		Say@Neutral: Old man. Speak.
+		Say@Friendly: Old man. You came back to answer for it. Few do.
+		Choice@why:
+			Text: Why do you attack us?
+			Goto: why
+		Choice@ceasefire:
+			Text: Stop. We are not who you think.
+			If: where map, at war
+			Goto: ceasefire
+		Choice@bye:
+			Text: We're leaving.
+			Do: close
+	Node@why:
+		Say: You came to unpick the knot under our world. That is what we were told, and so we fought you. We were told wrong. But one of you came for the thing we kept, and took it. That part was true.
+		Say@Hostile: You know why. Look at your hull.
+		Choice@who:
+			Text: Who took it?
+			If: remembers otherhalf
+			Goto: who
+		Choice@back:
+			Text: We don't remember.
+			Goto: hello
+	Node@who:
+		Say: You did. You carry its other half still; we can hear it singing from here. Give it back, or give it to the thing it woke. Either way, old man, it was never yours.
+		Choice@sorry:
+			Text: I know. I'm sorry.
+			Do: standing 15, flag wardens-sorry, close
+		Choice@bye:
+			Text: Not yet.
+			Do: close
+	Node@ceasefire:
+		Say: Then show it. Turn your guns from us, and we will turn ours from you, today.
+		Choice@ok:
+			Text: Done.
+			If: tier >= Wary
+			Do: ceasefire, close
+		Choice@pay:
+			Text: Take this, for the case you kept.
+			Do: pay glim 300, ceasefire, standing 5, close
+		Choice@back:
+			Text: Never mind.
+			Goto: hello

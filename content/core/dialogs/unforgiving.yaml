@@ -1,0 +1,39 @@
+# The Unforgiving (Milestone 22): a Hollowkin hold in the Middens that curses the old man and
+# frightens its children with him. (Format: rivet.yaml.)
+
+unforgiving:
+	Start: hello
+	Node@hello:
+		Say: Headman Corr Abbott keeps you on the screen just long enough to spit. Behind him, children are playing a skipping game. "Old man, old man, great black ship, took the clans and fed the coil." They do not look up.
+		Say@Friendly: Abbott watches you the way you would watch a storm that had promised to behave. "Trade, then. Quickly."
+		Choice@rhyme:
+			Text: What is that rhyme?
+			Goto: rhyme
+		Choice@trade:
+			Text: We'd trade.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@pay:
+			Text: We'll pay for water, at any price.
+			If: tier <= Wary, where chart
+			Goto: pay
+		Choice@bye:
+			Text: We're leaving.
+			Do: close
+	Node@rhyme:
+		Say: The truth, old man, the way our grandmothers told it. You came, the sky burned, the clans went into the dark in cages and never came out. We tell it to the children so they know your shape if they see it. And now they have.
+		Choice@sorry:
+			Text: You may be right.
+			If: remembers offering
+			Do: standing 15, close
+		Choice@back:
+			Text: I don't remember.
+			Goto: hello
+	Node@pay:
+		Say: Three hundred Glim, and you get four hundred ice, and you go. Abbott does not wait for an answer before he starts counting.
+		Choice@yes:
+			Text: Done.
+			Do: pay glim 300, give ice 400, standing 5, close
+		Choice@no:
+			Text: No.
+			Goto: hello

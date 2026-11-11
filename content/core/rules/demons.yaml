@@ -325,8 +325,126 @@ nursery:
 	Buds:
 		Interval: 900
 		Cap: 6
-		Trickle: 3
+		Trickle: 1
 		Creep: 6000
 		Heal: 400
 	Sensors:
 		Range: 8000
+
+# ---------------------------------------------------------------- the Mainspring (Milestone 22)
+# The demon lord: a living mothership, coiled, winding, the mirror of the Forge. It waits in its
+# lair at the Shore's edge (memories.yaml: the lair anchor). traits/mainspring.js:
+#   Organs      its organs, grown round it at these offsets (world units, in its own frame):
+#               while any lives, its core takes no harm
+#   Regrows     it heals Pct of the worth of every ship that dies within Range (each worth point
+#               mends HealPer hull), and Regen a second while a heart beats
+#   Twain       the Twain answers it: every Every seconds, everything of the Wound within Range
+#               of the Forge is held still for Still seconds
+mainspring:
+	Inherits: ^Demon
+	Valued:
+		Cost: 6000
+	Tooltip:
+		Name: The Mainspring
+		Class: Living mothership
+		Role: The demon lord
+		Description: A coiled body of wet dark metal grown through with flesh, longer than the Forge, its spine a spring that winds time. While its hearts beat and its coil turns, nothing can touch its core. It regrows from the dead.
+	Health:
+		HP: 1100000
+		Radius: 3600
+		HalfLength: 5200
+	Armor:
+		Type: capital
+	Selectable:
+		Radius: 7000
+	Flight:
+		MaxSpeed: 6
+		Acceleration: 1
+		Deceleration: 1
+		TurnSpeed: 1
+		PitchSpeed: 1
+		TurnInPlace: true
+		Slip: 200
+		Bank: 4
+	WithModel:
+		Model: mainspring
+	Armament@spines1:
+		Weapon: HourSpines
+		Forward: 4000
+		Side: 2600
+	Armament@spines2:
+		Weapon: HourSpines
+		Forward: -3000
+		Side: -2600
+	Armament@unwind:
+		Weapon: Unwinding
+		Forward: 5500
+	Attacks:
+		Style: turret
+	Stance:
+		Initial: defensive
+	Gestates:
+		Pods: 1
+		Types: feeder, tick, chime, stinger, hound, gnawer
+	Drags:
+		Range: 16000
+		Pct: 80
+	Organs:
+		Parts: heart 6500 3800, heart -2500 -4000, coil -7500 0
+	Regrows:
+		Range: 20000
+		Pct: 25
+		HealPer: 20
+		Regen: 900
+	Sensors:
+		Range: 24000
+	LeavesWreck:
+		Pct: 10
+
+^Organ:
+	Valued:
+		Cost: 900
+	Armor:
+		Type: heavy
+	Sensors:
+		Range: 9000
+	Organ:
+
+heart:
+	Inherits: ^Organ
+	Tooltip:
+		Name: Heart
+		Class: Organ
+		Role: Keeps the Mainspring alive
+		Description: A fist of red muscle the size of a frigate, beating against the Mainspring's flank. While it beats, the Mainspring's core can't be touched, and it mends.
+	Health:
+		HP: 120000
+		Radius: 1400
+	Selectable:
+		Radius: 1800
+	WithModel:
+		Model: heart
+
+coil:
+	Inherits: ^Organ
+	Tooltip:
+		Name: The coil
+		Class: Organ
+		Role: Winds time
+		Description: The spring in the Mainspring's spine, turning. While it turns, the core can't be touched, and time drags around it.
+	Health:
+		HP: 160000
+		Radius: 1800
+	Armor:
+		Type: capital
+	Selectable:
+		Radius: 2300
+	WithModel:
+		Model: coil
+	Armament:
+		Weapon: ChimePulse
+		Up: 1600
+	Attacks:
+		Style: turret
+	AutoTarget:
+		ScanRange: 6000

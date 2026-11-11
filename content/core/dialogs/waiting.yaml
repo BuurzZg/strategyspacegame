@@ -1,0 +1,41 @@
+# The Waiting (Milestone 22): a Hollowkin hold in the Middens that has kept a landing beacon
+# lit for six generations, for the old man with the great ship. (Format: rivet.yaml.)
+
+waiting:
+	Start: hello
+	Node@hello:
+		Say: The beacon is lit. It has always been lit. Six generations, old man, and we never let it go out. Elder Maud Harrow kneels on the landing ring, and everyone behind her kneels too.
+		Say@Hostile: The beacon is lit. Even now. But the Waiting will not open the doors.
+		Choice@ritual:
+			Text: Why were you waiting?
+			If: not flag waiting-promise
+			Goto: ritual
+		Choice@trade:
+			Text: We'd trade.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@hire:
+			Text: Would any of you come with us?
+			If: tier >= Neutral, where chart
+			Do: hire
+		Choice@legend:
+			Text: Tell me the story.
+			Goto: legend
+		Choice@bye:
+			Text: Keep the beacon lit.
+			Do: close
+	Node@ritual:
+		Say: On the anniversary of the burning we called you back, the way the old words say. And here you are. You said you would come back and keep your promise. You said it to my great-great-great-grandmother, on the docks, with the fire behind you.
+		Choice@what:
+			Text: What promise?
+			Goto: promise
+	Node@promise:
+		Say: She did not write it down. She said you would know. Maud Harrow looks at you for a long time, and you can see her decide not to be disappointed. "You will remember," she says. "We can wait. We are good at it."
+		Choice@ok:
+			Text: I'll try.
+			Do: flag waiting-promise, standing 10, morale 3, close
+	Node@legend:
+		Say: The old man with the great ship came when the sky burned. He took the last of us to safety, and then he went back for the rest, and the sky closed behind him. One day he will come out of the dark, and the doors will open. That is how we tell it.
+		Choice@back:
+			Text: That isn't how it happened.
+			Goto: hello

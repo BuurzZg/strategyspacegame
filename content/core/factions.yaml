@@ -94,7 +94,7 @@ cinder:
 	Name: Cinder Pact
 	Race: humans
 	Standing: -20
-	Description: A league descended from another Forge that never got home. Hired ships, old charts, and an old rivalry.
+	Description: What is left of the Company: records, ships and a grudge. They keep the story of the Anchorage's fall, and of Erik Smith who held the docks, and they blame the old man.
 	Regions: Middens 1, Hush 2, Shore 2
 	Seats: Hush 1, Shore 1
 	Reach: 2
@@ -125,3 +125,51 @@ choir:
 	Info: survey, chart
 	Dialog: choir
 	Remembers: true
+
+# ---------------------------------------------------------------- the story's peoples (Milestone 22)
+wardens:
+	Name: Wardens of Ninefold
+	Race: knotfolk
+	Standing: -80
+	Description: The Knotfolk's guardian ships. They attack the hammer-and-cog on sight, and have for a hundred and forty-seven years. They were wrong about the Company. They were right about you.
+	Regions: Drift 2, Hush 3
+	Reach: 0
+	Patrol: dart, dart, talon, picket, halberd
+	Enemies: reavers
+	Leave: Allied
+	Dialog: wardens
+
+ragged:
+	Name: Ragged Clans
+	Race: gaunt
+	Standing: -70
+	Description: Gaunt scavenger tribes of the Middens fields. Their ancestors were taken. They have not forgotten who by.
+	Regions: Middens 3
+	Reach: 0
+	Patrol: dart, dart, dart, talon, picket
+	Enemies: rivet, reavers
+	Leave: Friendly
+	Sells: salvage 600, ore 400
+	Wants: food, ice
+	Dialog: ragged
+
+reavers:
+	Name: Brass Reavers
+	Race: humans
+	Standing: -70
+	Description: The Company's grandchildren, turned pirate. They strip its wrecks for brass, and to them the hammer-and-cog means loot.
+	Regions: Middens 2, Hush 1, Shore 2
+	Reach: 0
+	Patrol: dart, dart, talon, talon, picket, halberd
+	Enemies: rivet, synod, wardens, ragged
+	Leave: Allied
+	Dialog: reavers
+
+hollowkin:
+	Name: The Hollowkin
+	Race: humans
+	Standing: 10
+	Description: The havens: the Company's survivors' descendants, on moons, rocks and wrecks across the Wrack. Some paint your emblem on their hulls without knowing what it means. Some wait for the old man with the great ship. Some curse him.
+	Regions: Drift 0
+	Reach: 0
+	Dialog: waiting

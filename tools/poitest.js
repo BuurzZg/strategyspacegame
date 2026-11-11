@@ -40,7 +40,8 @@ async function visit(type, { fleet, seed = 5, place = 1, stores } = {}) {
     const [ex, ey] = a.spawns[0];
     for (const f of a.fields) if (isqrt((f.at[0] - ex) ** 2 + (f.at[1] - ey) ** 2) < 18 + f.spread) clearEntry = false;
   }
-  check(TYPES.length === 13 && CHART_ONLY.every((t) => rules.content.poiTypes[t]), `the core pack has thirteen place types with maps, the Anchorage among them (${TYPES.join(', ')}), and two dealt with from the chart`);
+  // (Milestone 22: the story's places, from the Steward to the Mainspring's lair)
+  check(TYPES.length === 22 && ['Anchorage', 'Steward', 'Reliquary', 'Horologe', 'Lair'].every((t) => TYPES.includes(t)) && CHART_ONLY.every((t) => rules.content.poiTypes[t]), `the core pack has twenty-two place types with maps, the story's places among them (${TYPES.join(', ')}), and two dealt with from the chart`);
   check(same, 'every template gives exactly the same map for the same seed');
   check(differ === TYPES.length, 'and a different map for a different seed');
   check(clearEntry, 'no asteroid field is generated on top of the Forge\'s arrival point');

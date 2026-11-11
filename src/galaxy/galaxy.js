@@ -237,18 +237,35 @@ export function generateGalaxy(rules, seed, { short = false } = {}) {
   }
   for (const p of points) p.name = nameFor(p);
   // 8. Story anchors (memories.yaml): each in its region, a set number of stitches from the
-  // wake-up point, turned into its own kind of place. Its own dice, so nothing else moves.
+  // wake-up point, turned into its own kind of place. Its own dice, so nothing else moves. The
+  // first (Early: the Anchorage) before the pockets; the rest after them, so that the pockets
+  // fall where they always did, and never in a pocket or on a place the Forge lives off.
   const arng = new Random(hashMix(seed | 0, 0xa11c) || 1);
-  for (const A of Object.values(C.anchors || {})) {
+  const placeAnchor = (A, late) => {
     const [lo, hi] = String(A.Hops || '3-5').split('-').map(Number), hops = hopsFrom(points.length, lanes, start);
-    let cand = points.filter((p) => p.region === A.Region && p.id !== start && !p.relic && !p.seat && hops[p.id] >= lo && hops[p.id] <= (hi || lo));
-    if (!cand.length) cand = points.filter((p) => p.region === A.Region && p.id !== start && !p.relic && !p.seat);
-    if (!cand.length) continue;
+    const edge = A.Edge === 'true' || A.Edge === true;
+    // (a Near anchor goes where it is near, whatever was there)
+    const spare = late && !A.Near ? new Set(String(C.voyage.AnchorSpare || '').split(',').map((x) => x.trim())) : new Set();
+    const fits = (p) => p.region === A.Region && p.id !== start && !p.relic && !p.seat && !p.pocket && (!edge || p.edge);
+    const pick = (f) => { const all = points.filter(f), some = all.filter((p) => !spare.has(p.type)); return some.length ? some : all; };
+    let cand = pick((p) => fits(p) && hops[p.id] >= lo && hops[p.id] <= (hi || lo));
+    if (!cand.length) cand = pick(fits);
+    // Near: the place cheapest to reach from another anchor or a drive part's
+    // derelict, by the route the region's drive would really take (no hazards)
+    if (A.Near && components[A.Near] !== undefined && cand.length) {
+      const ri = regions.findIndex((R) => R.id === A.Region), d = tierFor(Math.max(0, ri)), from = components[A.Near];
+      const cost = new Map(cand.map((p) => { const r = route({ points, lanes, adj, short }, { content: C }, from, p.id, d); return [p.id, r ? r.glim : 1e9]; }));
+      cand = [...cand].sort((m, n) => cost.get(m.id) - cost.get(n.id) || m.id - n.id).slice(0, 1);
+    }
+    if (!cand.length) return;
     const p = cand[arng.int(cand.length)];
     p.type = A.Type; p.relic = A.id; p.name = A.Name ? A.Name[0].toUpperCase() + A.Name.slice(1) : p.name;
     components[A.id] = p.id;
-  }
+  };
+  const anchors = Object.values(C.anchors || {}), early = (A) => A.Early === 'true' || A.Early === true;
+  for (const A of anchors) if (early(A)) placeAnchor(A, false);
   const pockets = carvePockets(C, seed, { points, lanes, adj, start, regions, tierFor, short });
+  for (const A of anchors) if (!early(A)) placeAnchor(A, true);
   // 10. Traders and wayhouses (Milestone 20): one trader in each region, and a few wayhouses,
   // in places that are nothing else (never the wake-up point, an anchor, a derelict, a station
   // or a pocket), reachable at the region's own tier. Their own dice, so nothing else moves.

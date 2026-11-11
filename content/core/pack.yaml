@@ -19,7 +19,8 @@
 #   Crew        named crew: officers' posts, traits, ship leads
 #   Memories    the Loom: memories, and the anchors where story memories wait
 #   Hazards     routes closed until remembered: asteroid shoals, ember lanes, static fields, the Glare
-#   Traders     the four regional traders, traded with from the chart
+#   Traders     the four regional traders and the Hollowkin holds, traded with from the chart
+#   Narration   the ending narration: old Jacob tells the story, scene by scene
 
 Pack:
 	Id: core
@@ -36,10 +37,11 @@ Pack:
 	Races: races.yaml
 	Factions: factions.yaml
 	Trade: trade.yaml
-	Dialogs: dialogs/rivet.yaml, dialogs/synod.yaml, dialogs/gaunt.yaml, dialogs/cinder.yaml, dialogs/choir.yaml, dialogs/ledger.yaml, dialogs/bell.yaml, dialogs/murmur.yaml, dialogs/laststop.yaml
+	Dialogs: dialogs/rivet.yaml, dialogs/synod.yaml, dialogs/gaunt.yaml, dialogs/cinder.yaml, dialogs/choir.yaml, dialogs/ledger.yaml, dialogs/bell.yaml, dialogs/murmur.yaml, dialogs/laststop.yaml, dialogs/wardens.yaml, dialogs/ragged.yaml, dialogs/reavers.yaml, dialogs/waiting.yaml, dialogs/unforgiving.yaml
 	Events: events/story.yaml, events/galaxy.yaml, events/crew.yaml
 	Hints: hints.yaml
 	Crew: crew.yaml
 	Memories: memories.yaml
 	Hazards: hazards.yaml
 	Traders: traders.yaml
+	Narration: narration.yaml

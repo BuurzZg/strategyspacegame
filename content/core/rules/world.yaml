@@ -57,6 +57,34 @@ World:
 		Glow: ff8a70
 		Dark: 3a0810
 		Description: The tech demons, the Mainspring's Hands. Grown, not built; they feed on what dies.
+	Faction@wardens:
+		InternalName: wardens
+		Name: Wardens of Ninefold
+		Color: c8d0e8
+		Glow: f4f0ff
+		Dark: 2a2e44
+		Description: The Knotfolk's guardian ships.
+	Faction@ragged:
+		InternalName: ragged
+		Name: Ragged Clans
+		Color: a88a5a
+		Glow: f0d8a8
+		Dark: 3a2c18
+		Description: Gaunt scavenger tribes of the Middens.
+	Faction@reavers:
+		InternalName: reavers
+		Name: Brass Reavers
+		Color: d8a038
+		Glow: ffe0a0
+		Dark: 40280a
+		Description: The Company's grandchildren, turned pirate.
+	Faction@hollowkin:
+		InternalName: hollowkin
+		Name: The Hollowkin
+		Color: b8c8a8
+		Glow: eef8e0
+		Dark: 2a3424
+		Description: The havens.
 	Faction@neutral:
 		InternalName: neutral
 		Name: Derelict
@@ -74,3 +102,4 @@ World:
 	Shroud:
 	Ranks:
 	WoundAI:
+	LairBattle:

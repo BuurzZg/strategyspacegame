@@ -44,9 +44,11 @@ defineTrait('Shroud', class extends Trait {
       for (const a of live) {
         if (a.owner === p || a.owner.isNeutral || p.isAlly(a.owner)) continue;
         const half = fogged.get(a.id);
+        // (seen when any of its hull is in range: a great hull is seen by its flank, not its middle)
+        const big = (a.health.info.Radius | 0) + (a.health.info.HalfLength | 0) > 1500;
         for (const [x, y, z, r0] of eyes) {
           const r = half ? r0 >> 1 : r0;
-          if (distSq3(a.x, a.y, a.z, x, y, z) <= r * r) { seen.add(a.id); break; }
+          if (big ? w.edgeDistPoint(x, y, z, a) <= r : distSq3(a.x, a.y, a.z, x, y, z) <= r * r) { seen.add(a.id); break; }
         }
       }
       p.seen = seen;

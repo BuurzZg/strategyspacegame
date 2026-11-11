@@ -39,6 +39,44 @@ export class Audio {
     s.connect(f); f.connect(g); g.connect(this.master); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   }
 
+  // a slow swell: organ pipes and strings
+  pad(type, f, dur, gain, attack = 1.2, delay = 0) {
+    const c = this.ctx, t = c.currentTime + delay;
+    const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+    o.type = type; o.frequency.setValueAtTime(f, t); lp.type = 'lowpass'; lp.frequency.value = type === 'sawtooth' ? 1400 : 4000;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + attack); g.gain.setValueAtTime(gain, t + Math.max(attack, dur - 1.5)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+  }
+
+  // The ending narration's music (Milestone 22): a slow organ and strings under ticking clocks,
+  // and each scene's own sound (fire, the Horologe's pendulum, the Twain singing, wind, the sea).
+  narration(on) {
+    clearInterval(this.nTimer); clearInterval(this.sTimer); this.nTimer = this.sTimer = null;
+    if (!on || !this.ctx || !this.enabled) return;
+    // D minor, B flat, F, C: slow, and then again
+    const chords = [[146.8, 220, 293.7, 349.2], [116.5, 174.6, 233.1, 293.7], [87.3, 174.6, 220, 261.6], [130.8, 196, 261.6, 329.6]];
+    let k = 0, beat = 0;
+    const chord = () => { const ch = chords[k++ % chords.length]; ch.forEach((f, i) => { this.pad('triangle', f, 7.5, i ? 0.018 : 0.03, 1.8); this.pad('sawtooth', f * 2, 7.5, 0.006, 2.5, 0.2); }); };
+    chord();
+    this.nTimer = setInterval(() => { beat++; if (beat % 7 === 0) chord(); this.burst(0.02, 0.025, 4200, 5, 'bandpass'); }, 1000);
+  }
+  narrationScene(sound, dark = false) {
+    clearInterval(this.sTimer); this.sTimer = null;
+    if (!this.ctx || !this.enabled) return;
+    let n = 0;
+    const each = {
+      fire: () => { this.burst(0.5, 0.05, 600, 0.8); if (n % 3 === 0) this.burst(0.15, 0.04, 1800, 2, 'bandpass'); },
+      pendulum: () => { this.burst(0.03, 0.06, n % 2 ? 2600 : 1900, 8, 'bandpass'); },
+      sing: () => { if (n % 5 === 0) this.play('twain', 0.7); },
+      wind: () => { if (n % 3 === 0) this.burst(2.4, 0.03, 500, 0.6); },
+      sea: () => { if (n % 4 === 0) this.burst(3.5, 0.035, 380, 0.5); },
+    }[sound];
+    // a scene he can't remember: only a faint scratching
+    const fn = dark ? () => { if (n % 2 === 0) this.burst(0.08, 0.02, 3000, 3, 'bandpass'); } : each;
+    if (!fn) return;
+    this.sTimer = setInterval(() => { n++; fn(); }, sound === 'pendulum' && !dark ? 1000 : 700);
+  }
+
   play(name, vol = 1) {
     if (!this.ctx || !this.enabled || vol < 0.03) return;
     const now = performance.now();
@@ -74,6 +112,8 @@ export class Audio {
       // something wet being born, and a demon's death
       case 'birth': this.burst(0.25, 0.06 * v, 380, 1.4); this.tone('sine', 160, 70, 0.3, 0.06 * v); break;
       case 'hand': [98, 147].forEach((f, i) => this.tone('sawtooth', f, f * 0.97, 1.6, 0.05 * v, i * 0.4)); this.burst(1.2, 0.08 * v, 300, 0.6); break;
+      // the Twain sings: two cold, beating tones that never quite agree
+      case 'twain': [523.25, 529.5, 784, 791].forEach((f, i) => this.tone('sine', f, f, 2.4, (i < 2 ? 0.05 : 0.025) * v, i * 0.05)); break;
       case 'deal': this.tone('triangle', 880, 1320, 0.08, 0.09 * v); this.tone('triangle', 1320, 1760, 0.1, 0.07 * v, 0.08); break;
       case 'hint': this.tone('sine', 988, 988, 0.08, 0.05 * v); this.tone('sine', 1319, 1319, 0.12, 0.05 * v, 0.09); break;
       case 'objective': [659, 880].forEach((f, i) => this.tone('triangle', f, f, 0.16, 0.1 * v, i * 0.1)); break;

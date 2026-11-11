@@ -132,8 +132,11 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   const g = V.galaxyOf(rules, s);
   check(!V.canJumpHome(rules, s).ok, 'no final jump without the Heartstone');
   for (const id of ['lens', 'spindle', 'heartstone']) V.remember(rules, s, id, { quiet: true });
-  s.at = g.points.find((p) => p.edge).id;
-  check(V.jumpHome(rules, s).ok && s.won && s.over.reason === 'home', 'with the Heartstone, from the Shore\'s edge, the Forge makes the final jump home');
+  // (Milestone 22: from the Mainspring's lair, at the Shore's edge, once it is dead)
+  s.at = V.lairAt(rules, s);
+  const living = V.canJumpHome(rules, s).ok;
+  s.flags = [...(s.flags || []), 'mainspring'];
+  check(!living && g.points[s.at].edge && V.jumpHome(rules, s).ok && s.won && s.over.reason === 'home', 'with the Heartstone, from the Mainspring\'s lair at the Shore\'s edge, once it is dead, the Forge makes the final jump home');
 }
 
 // 6. A map visit on the voyage: crew, losses, days, wear, relics

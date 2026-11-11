@@ -41,7 +41,8 @@ const buyPrice = (s, id, good) => CM.quote(rules, s, T[id].Faction, s.at, { [goo
     if (g.points.filter((p) => p.wayhouse).length !== 2 * g.regions.length) ok = false;
     if (seed === 1 && !short) rows = Object.entries(T).map(([id, tr]) => `${tr.Name} (${tr.Region})`);
   }
-  check(Object.keys(T).length === 4 && ok, `four traders, one in each region, never in a pocket or on a story place, and reachable at the region's drive level; two wayhouses a region: ${rows.join(', ')}`);
+  const regionsWith = new Set(Object.values(T).map((tr) => tr.Region));
+  check(regionsWith.size === 4 && ok, `a trader in each region (and the Hollowkin holds in the Middens), never in a pocket or on a story place, and reachable at the region's drive level; two wayhouses a region: ${rows.join(', ')}`);
   const a = generateGalaxy(rules, 7), b = generateGalaxy(rules, 7);
   check(JSON.stringify(a.traders) === JSON.stringify(b.traders), 'the same seed puts them in the same places');
 }

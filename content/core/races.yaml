@@ -23,3 +23,7 @@ choirmoths:
 	Name: Choirmoths
 	Description: Not people as you know them: swarms of luminous, moth-like beings who live in nebulae and speak in light. They know what the Skein is.
 	Standing: 0
+knotfolk:
+	Name: Knotfolk
+	Description: Ninefold's people: tall, still, and patient, with skin like old paper folded many times. They have guarded the knot under their world for longer than anyone has kept records.
+	Standing: -60

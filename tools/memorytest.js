@@ -23,7 +23,10 @@ const hops = (g, from) => { const d = g.points.map(() => -1), q = [from]; d[from
   check(Object.keys(M).length === 31 && Object.keys(by).length === 5, `31 memories in five branches: ${Object.entries(by).map(([b, l]) => `${b} ${l.length}`).join(', ')}`);
   // every memory ready now can be had: found at a placed anchor, from a blueprint, or recalled along a chain
   const s = V.newVoyage(rules, { seed: 2 }), g = V.galaxyOf(rules, s);
-  const orphans = Object.values(M).filter((m) => m.Ready !== 'false').filter((m) => !(m.Found && g.components[m.Found] !== undefined) && !(m.Blueprint && rules.content.items[m.Blueprint]) && m.Cost === undefined);
+  // (or given by a story event or a dialog: some choice does "item <it> found")
+  const given = new Set();
+  for (const d of [...Object.values(rules.content.events), ...Object.values(rules.content.dialogs)]) for (const n of d.nodes || []) for (const c of n.nodes || []) for (const x of c.nodes || []) if (x.key === 'Do') for (const e of String(x.value).split(',')) { const w = e.trim().split(/\s+/); if (w[0] === 'item' && w[2] === 'found') given.add(w[1]); }
+  const orphans = Object.values(M).filter((m) => m.Ready !== 'false').filter((m) => !(m.Found && g.components[m.Found] !== undefined) && !(m.Blueprint && rules.content.items[m.Blueprint]) && m.Cost === undefined && !(m.By === 'event' && given.has(m.id)));
   check(!orphans.length, `every memory in this build can be had${orphans.length ? `; not: ${orphans.map((m) => m.id).join(', ')}` : ''}`);
   check(!Object.keys(s.campaign.memories).length && (s.campaign.echoes | 0) === 0, 'a new campaign remembers nothing, and has no echoes');
 }

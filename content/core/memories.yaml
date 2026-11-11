@@ -17,11 +17,15 @@
 #                (its lanes open, hazards.yaml)
 #   Echoes       echoes it gives when it comes back
 #   Seen         a hazard (hazards.yaml): it can be recalled only once you have been turned away by it
+#   By           event: a story event gives it (events/story.yaml), not a place or the Loom
 #   Ready        false: its system comes in a later milestone; until then it stays a question mark
 #
 # Anchors: where story memories wait. The generator places each one in its region, a number of
 # stitches (Hops) from the wake-up point, and turns that place into the given Type. Clue is the
-# radius, in spans, of the circle a clue draws round it on the chart.
+# radius, in spans, of the circle a clue draws round it on the chart. Edge: true, only at the
+# region's outer edge. Near: one of the closest such places to another anchor or drive part.
+# Early: placed before the hazard pockets are carved (the Anchorage); the rest come after them.
+# Lair: true, the Mainspring's lair (no hulk to cut: the final battle).
 
 Anchors:
 	anchorage:
@@ -29,8 +33,74 @@ Anchors:
 		Region: Drift
 		Hops: 3-5
 		Type: Anchorage
+		Early: true
 		Clue: 70
 		Relic: the station's sealed core
+	steward:
+		Name: the Steward
+		Region: Drift
+		Hops: 4-8
+		Type: Steward
+		Clue: 80
+		Relic: the yacht's recording vault
+	research:
+		Name: the Quiet Lamp
+		Region: Middens
+		Hops: 0-99
+		Type: ResearchHulk
+		Clue: 90
+		Relic: the hulk's sealed laboratory
+	ledger:
+		Name: the Tally of Owls
+		Region: Middens
+		Hops: 0-99
+		Type: TallyHulk
+		Clue: 90
+		Relic: the Moot's old ledgers
+	barge:
+		Name: the Long Account
+		Region: Middens
+		Hops: 0-99
+		Type: PrisonBarge
+		Clue: 90
+		Relic: the barge's manifest room
+	reliquary:
+		Name: the Reliquary of Ninefold
+		Region: Hush
+		Hops: 0-99
+		Type: Reliquary
+		Clue: 100
+		Relic: an empty reliquary case
+	horologe:
+		Name: the Meridian Horologe
+		Region: Hush
+		Hops: 0-99
+		Type: Horologe
+		Clue: 100
+		Relic: the chronometer hall
+	tithe:
+		Name: the Tithe Barge
+		Region: Hush
+		Hops: 0-99
+		Type: TitheBarge
+		Clue: 100
+		Relic: the barge's offering deck
+	hall:
+		Name: the Founding Hall
+		Region: Shore
+		Hops: 0-99
+		Type: FoundingHall
+		Clue: 110
+		Relic: the Pact's book of names
+	lair:
+		Name: the Mainspring
+		Region: Shore
+		Hops: 0-99
+		Type: Lair
+		Edge: true
+		Near: heartstone
+		Lair: true
+		Clue: 120
 
 # ---------------------------------------------------------------- origins
 radar:
@@ -58,96 +128,120 @@ help:
 	Kind: knowledge
 	Branch: origins
 	Order: 3
-	Ready: false
 	Hint: A voice in an old recording, somewhere near the station.
+	Found: steward
+	Echoes: 1
+	Text: Erik Smith, head of the Company, on the day the Anchorage opened. Thin, tired, smiling at a crowd you can't see. "We are here to help." He means it. You can hear that he means it. You can also hear, under the applause, somebody shouting from the back.
 
 owner:
 	Name: The old man's ship
 	Kind: knowledge
 	Branch: origins
 	Order: 4
-	Ready: false
-	Hint: Whose ship is this?
+	Hint: Whose ship is this? Something about the people who attack on sight might shake it loose.
+	By: event
+	Echoes: 1
+	Text: The Forge's registry, behind a panel nobody remembered opening: the private ship of Dr. Jacob Smith, retired, grandfather of the Company's chief. You. The havens' "old man with the great ship" is you. One line at the bottom is struck through and sealed: Deck 9.
 
 fray:
 	Name: The Fray
 	Kind: knowledge
 	Branch: origins
 	Order: 5
-	Ready: false
 	Hint: Why did we come here at all?
+	Found: research
+	Echoes: 1
+	Text: The Fray: travel through folded space long enough and you come apart, a little at a time, until there is nothing left to come apart. It was killing the Empire. It killed Erik's mother. Ninefold does not fray. Nothing near it ever has. The mission was a cure.
 
 oath:
 	Name: The oath
 	Kind: knowledge
 	Branch: origins
 	Order: 6
-	Ready: false
-	Hint: Someone swore to stop us.
+	Hint: Someone swore to stop us. Someone old enough to remember.
+	By: event
+	Echoes: 1
+	Text: The Lantern Synod swore an oath to guard Ninefold's knot. They told the Knotfolk the Company had come to unpick it, and they broke the mission's work where they could. Erik never explained himself to them. The Deacon who told you this has aged more than a hundred years since he last saw you. You have not aged a day.
 
 afraid:
 	Name: "Afraid is cooperative"
 	Kind: knowledge
 	Branch: origins
 	Order: 7
-	Ready: false
 	Hint: The traders smiled at us. Why?
+	Found: ledger
+	Echoes: 1
+	Text: The traders and the raiders who helped the Company were paid in fear. A note in the margin of the Moot's ledger, in a Company hand: "Let them be afraid. Afraid is cooperative." The Ashen Gaunt guided Company ships to their own kin's camps, and were paid for every one.
 
 lists:
 	Name: The lists
 	Kind: knowledge
 	Branch: origins
 	Order: 8
-	Ready: false
 	Hint: Names, in a hand you almost know.
+	Found: barge
+	Echoes: 1
+	Text: Names. Clan names, thousands of them, some bought from the Rivet Moot, in a careful hand you almost know. The cages on the Anchorage's lower ring were full. Nothing in the manifest says why. That is somehow the worst of it.
 
 otherhalf:
 	Name: The other half
 	Kind: knowledge
 	Branch: origins
 	Order: 9
-	Ready: false
 	Hint: Something you have carried for a very long time.
+	Found: reliquary
+	Echoes: 1
+	Text: Half of a thing, cold and brass-dark, that you carried for most of your life. The Twain. The other half lay here, in the Knotfolk's reliquary, and the case is empty. The "retirement project" was the search. The Company's mission was your way in. The Knotfolk were wrong about the Company. They were right about you.
 
 waking:
 	Name: The waking
 	Kind: knowledge
 	Branch: origins
 	Order: 10
-	Ready: false
-	Hint: What woke?
+	Hint: What woke? The Choir felt something, once.
+	By: event
+	Echoes: 1
+	Text: You stole the other half. When the halves met, everything that keeps time flinched, the Choir say, and something underneath the Wrack woke and began to wind. The Mainspring. It wound the galaxy shut. Whether you knew it would, the Choir do not say. Perhaps they do not know. Perhaps they are being kind.
 
 horologe:
 	Name: The Meridian Horologe
 	Kind: knowledge
 	Branch: origins
 	Order: 11
-	Ready: false
 	Hint: What day is it?
+	Found: horologe
+	Echoes: 1
+	Text: The Empire's clock, ticking alone in a cathedral of brass. Official Meridian time, kept to the second for a century and a half. The station's last record and today's date, side by side: one hundred and forty-seven years, three months and fifteen days. Everyone you knew died a long time ago. The date is known now, in every life.
 
 offering:
 	Name: The offering
 	Kind: knowledge
 	Branch: origins
 	Order: 12
-	Ready: false
 	Hint: What was the price?
+	Found: tithe
+	Echoes: 1
+	Text: The Company was the demons' hostage: feed the Mainspring, or watch the Anchorage unmade. So its ships took captives from the clans and gave them to it, here, on this barge. On Erik's orders, with you beside him. Erik signed every order and kept every name. Each offering made it stronger.
 
 enough:
 	Name: Enough
 	Kind: knowledge
 	Branch: origins
 	Order: 13
-	Ready: false
 	Hint: Who said no?
+	Found: hall
+	Echoes: 1
+	Text: Erik saw it first: the offerings were feeding the thing, not calming it. He said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days. Erik held the docks while the evacuation ships got away, and then he did not get away. Every haven out there is alive because of him. The Cinder Pact keep his story, and blame the old man.
 
 truth:
 	Name: The whole truth
 	Kind: knowledge
 	Branch: origins
 	Order: 14
-	Ready: false
-	Hint: Deck 9 is sealed.
+	Hint: Deck 9 is sealed. It opens at the Shore, once everything else is remembered.
+	By: event
+	Echoes: 2
+	Text: Deck 9. Your own quarters, sealed from the inside. When everything fell, the Twain stopped time around you and the Forge, and saved you. You did not deserve it. Why it did, and what it is, nobody knows. It sings, very quietly, if you hold it too long. Then it woke you, or something did, a hundred and forty-seven years late. And something has been winding you back ever since, every time you die. The Mainspring wants it back. It is waiting at the Shore.
 
 # ---------------------------------------------------------------- the Skein
 coils:

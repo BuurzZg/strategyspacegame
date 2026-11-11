@@ -399,3 +399,236 @@ Anchorage:
 		Size: 28-36
 		Color: 3a3446
 	Names: The Anchorage
+
+# ---------------------------------------------------------------- the story's places (Milestone 22)
+# Each is a story anchor (memories.yaml): its memory waits in the hulk, for the Shearers to cut out.
+Steward:
+	Name: The Steward
+	Description: A private yacht, all brass rails and broken glass, drifting with its lights out. The Company's mark on the bow, and a better name than it deserves.
+	Size: 150, 150, 52
+	Sky: 2e3240
+	Hulk:
+		Of: sabre
+		Salvage: 1800-2600
+		Size: 1600
+	Wrecks:
+		Count: 5-8
+		Of: dart, talon, picket
+		Salvage: 120-260
+		Clusters: 1
+	Deposit@ice:
+		Kind: ice
+		Fields: 1
+		Rocks: 4-6
+		Spread: 4-5
+		Amount: 300-600
+	Encounter@wardens:
+		Side: wardens
+		Ships: dart, dart, talon, picket
+		Count: 1
+		Chance: 60
+		Behaviour: lurk
+	Nebula:
+		Count: 1
+		Size: 26-34
+		Color: 2a3448
+ResearchHulk:
+	Name: Research hulk
+	Description: A Company laboratory ship, its hull scored by something that was not weather. The labs are sealed. The lamps inside are still on.
+	Size: 160, 160, 56
+	Sky: 2a3a3a
+	Hulk:
+		Of: smelter
+		Salvage: 2600-3400
+		Size: 2200
+	Wrecks:
+		Count: 6-9
+		Of: halberd, gleaner, smelter
+		Salvage: 150-350
+		Clusters: 1-2
+	Deposit@ore:
+		Kind: ore
+		Fields: 1-2
+		Rocks: 5-7
+		Spread: 4-6
+		Amount: 500-1000
+	Encounter@reavers:
+		Side: reavers
+		Ships: dart, dart, talon, picket
+		Count: 1
+		Chance: 55
+		Behaviour: lurk
+	Nebula:
+		Count: 1
+		Size: 28-34
+		Color: 2a4a48
+TallyHulk:
+	Name: Tally-barge
+	Description: A Rivet Moot counting-house, gutted and abandoned. Ledgers to the ceiling, every page a debt. Nobody came back for them, which is not like the Moot.
+	Size: 160, 160, 56
+	Sky: 4a3a24
+	Hulk:
+		Of: hulltown
+		Salvage: 2400-3200
+		Size: 2600
+	Wrecks:
+		Count: 5-8
+		Of: halberd, picket, gleaner
+		Salvage: 150-350
+		Clusters: 1-2
+	Deposit@ore:
+		Kind: ore
+		Fields: 2
+		Rocks: 6-8
+		Spread: 4-6
+		Amount: 500-1100
+	Encounter@reavers:
+		Side: reavers
+		Ships: dart, talon, talon, picket, halberd
+		Count: 1
+		Chance: 50
+		Behaviour: lurk
+PrisonBarge:
+	Name: Prison barge
+	Description: A long hull of cages in the Ragged Clans' fields. The clans will not go near it, and they will not let anyone else.
+	Size: 176, 176, 56
+	Sky: 3a2a2a
+	Hulk:
+		Of: smelter
+		Salvage: 2400-3200
+		Size: 2400
+	Wrecks:
+		Count: 8-12
+		Of: gleaner, smelter, picket
+		Salvage: 120-300
+		Clusters: 2
+	Deposit@ice:
+		Kind: ice
+		Fields: 1
+		Rocks: 4-6
+		Spread: 4-5
+		Amount: 300-700
+	Encounter@clans:
+		Side: ragged
+		Ships: dart, dart, dart, talon, picket
+		Count: 1
+		Chance: 85
+		Behaviour: lurk
+Reliquary:
+	Name: Reliquary-ship
+	Description: A Knotfolk shrine-ship, very old, still on its watch. Its guardians have kept a case for a hundred and forty-seven years. The case is empty.
+	Size: 176, 176, 56
+	Sky: 3a3a5a
+	Hulk:
+		Of: bloom
+		Salvage: 2800-3600
+		Size: 2400
+	Clouds@glim:
+		Kind: glim
+		Count: 2-3
+		Size: 1800-2600
+		Amount: 600-1000
+	Encounter@wardens:
+		Side: wardens
+		Ships: talon, talon, picket, picket, halberd, spindle
+		Count: 1
+		Chance: 100
+		Behaviour: lurk
+	Nebula:
+		Count: 2
+		Size: 30-40
+		Color: 3a3a6a
+Horologe:
+	Name: The Meridian Horologe
+	Description: A cathedral of brass round a chronometer the size of a house. It still keeps the Empire's time. The pendulum is the only thing moving.
+	Size: 160, 160, 56
+	Sky: 4a4030
+	Hulk:
+		Of: hulltown
+		Salvage: 2600-3400
+		Size: 3000
+	Formation@arches:
+		Shape: arch
+		Count: 2-3
+		Size: 4-6
+	Deposit@ice:
+		Kind: ice
+		Fields: 1
+		Rocks: 4-6
+		Spread: 4-5
+		Amount: 300-600
+	Nebula:
+		Count: 1
+		Size: 30-36
+		Color: 5a4a2a
+TitheBarge:
+	Name: The Tithe Barge
+	Description: A barge with a hold built like a chapel and an altar that opens onto nothing. It smells of hot brass and old blood. The Wound has not let it go.
+	Size: 176, 176, 56
+	Sky: 4a1a24
+	Hulk:
+		Of: smelter
+		Salvage: 2600-3400
+		Size: 2400
+	Wrecks:
+		Count: 6-9
+		Of: gleaner, smelter, halberd
+		Salvage: 150-350
+		Clusters: 1-2
+	Encounter@wound:
+		Side: wound
+		Ships: hound, tick, tick, tick, tick, feeder
+		Count: 1
+		Chance: 100
+		Behaviour: lurk
+	Nebula:
+		Count: 1
+		Size: 30-38
+		Color: 5a1a2a
+FoundingHall:
+	Name: The Founding Hall
+	Description: The Cinder Pact's oldest hold, built round the bones of the Anchorage's last evacuation ship. They keep a book of names here, and a grudge.
+	Size: 160, 160, 56
+	Sky: 5a2a1a
+	Hulk:
+		Of: cinderhold
+		Salvage: 2600-3400
+		Size: 2800
+	Wrecks:
+		Count: 6-9
+		Of: halberd, sabre, spindle
+		Salvage: 200-400
+		Clusters: 1-2
+	Deposit@ore:
+		Kind: ore
+		Fields: 2
+		Rocks: 6-9
+		Spread: 5-6
+		Amount: 700-1300
+	Encounter@reavers:
+		Side: reavers
+		Ships: dart, dart, talon, talon, picket, halberd
+		Count: 1
+		Chance: 50
+		Behaviour: lurk
+# The Mainspring's lair, at the Shore's edge: the final battle (traits/mainspring.js).
+Lair:
+	Name: The Lair
+	Description: Where the Shore ends and the dark begins, something vast lies coiled, winding. Its light pulses red through a field of wrecks it has been feeding on for a hundred and forty-seven years.
+	Size: 224, 224, 64
+	Sky: 3a0a14
+	Wrecks:
+		Count: 14-20
+		Of: halberd, picket, sabre, spindle, smelter, gleaner
+		Salvage: 200-450
+		Clusters: 3
+	Deposit@ore:
+		Kind: ore
+		Fields: 2
+		Rocks: 6-9
+		Spread: 5-7
+		Amount: 600-1200
+	Nebula:
+		Count: 2
+		Size: 34-44
+		Color: 5a0a1a

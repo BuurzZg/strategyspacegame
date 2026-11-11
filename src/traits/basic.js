@@ -27,6 +27,8 @@ defineTrait('Health', class Health extends Trait {
   damage(attacker, amount, byPlayer) {
     const self = this.self;
     if (self.dead || amount <= 0) return;
+    // warded: while its organs live, the Mainspring's core takes no harm (mainspring.js)
+    if (self.ward && self.ward(attacker)) return;
     this.hp -= amount;
     this.lastDamaged = self.world.frame;
     self.notify('damaged', { attacker, amount, by: byPlayer });

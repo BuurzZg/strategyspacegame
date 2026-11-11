@@ -188,6 +188,46 @@ export function buildDemon(type, body, out) {
       out.length = 7;
       return true;
     }
+    case 'mainspring': {
+      // the demon lord: a vast coil of wet dark metal grown through with flesh round a spine
+      // that is itself a spring, winding; red light along its veins, and a crown of bone
+      part(cyl(4.5, 6.5, 52, 12), M.metal, 0, 0, 0, body, 0, 0, Math.PI / 2);
+      part(coil('ms', 13, 3, 5.5, 50), M.flesh, -2, 0, 0, body);
+      part(coil('ms-v', 13, 0.7, 5.5, 50), M.vein, -2, 2.6, 0, body);
+      part(coil('ms-in', 8, 1.2, 9, 46), M.metal, -1, 0, 0, body);
+      for (let i = 0; i < 14; i++) part(claw('ms-rib', 0.9, 9, -2.4), M.bone, 22 - i * 3.4, 6 + (i % 2), 0, body, (i % 2 ? 0.4 : -0.4), 0, 0);
+      part(lump('ms-head', 8, 1, 0.12), M.metal, 30, 0, 0, body).scale.set(1.5, 0.9, 1.1);
+      for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; part(claw('ms-crown', 1, 12, -4), M.bone, 36, Math.sin(a) * 6, Math.cos(a) * 6, body, a, 0, -Math.PI / 2); }
+      part(ico(3, 1), M.heart, 41, 0, 0, body);
+      part(cone(6, 18, 10), M.metal, -33, 0, 0, body, 0, 0, Math.PI / 2);
+      for (const z of [-1, 1]) out.engines.push({ pos: new THREE.Vector3(-32, 0, z * 5), size: 6 });
+      out.nose = new THREE.Vector3(42, 0, 0);
+      out.length = 90;
+      return true;
+    }
+    case 'heart': {
+      // a fist of red muscle the size of a frigate, beating
+      const beat = new THREE.Group(); body.add(beat);
+      part(lump('heart', 4, 1, 0.16), M.flesh, 0, 0, 0, beat).scale.set(1.1, 1.25, 1);
+      for (let i = 0; i < 4; i++) part(torus(3.6 - i * 0.3, 0.25, 16, Math.PI * 1.3), M.vein, 0, 0, 0, beat, i * 0.8, i * 1.4, 0.3);
+      for (let i = 0; i < 3; i++) part(cyl(0.9, 1.2, 5, 8), M.metal, Math.cos(i * 2.1) * 2, 4.5, Math.sin(i * 2.1) * 2, beat, 0.4, 0, Math.cos(i * 2.1) * 0.4);
+      part(ico(1.4, 1), M.heart, 0, 0.5, 2.6, beat);
+      out.pulse = { obj: beat, speed: 2.4, amp: 0.08 };
+      out.nose = new THREE.Vector3(4, 0, 0);
+      out.length = 10;
+      return true;
+    }
+    case 'coil': {
+      // the spring in its spine, turning
+      const turn = new THREE.Group(); body.add(turn);
+      part(coil('coil', 5, 1.1, 4, 14), M.metal, 0, 0, 0, turn);
+      part(coil('coil-v', 5, 0.3, 4, 14), M.vein, 0, 1, 0, turn);
+      part(cyl(1.6, 1.6, 16, 10), M.bone, 0, 0, 0, turn, 0, 0, Math.PI / 2);
+      out.spin.push({ obj: turn, speed: 0.6 });
+      out.nose = new THREE.Vector3(8, 0, 0);
+      out.length = 16;
+      return true;
+    }
     default:
       return false;
   }

@@ -15,6 +15,10 @@ bell:
 			Text: Are any of your engineers free to travel?
 			If: tier >= Neutral, where chart
 			Do: hire
+		Choice@know:
+			Text: You look at me as if you know me, Deacon.
+			If: not remembers oath
+			Goto: know
 		Choice@vow:
 			Text: What is the vow?
 			If: tier >= Neutral
@@ -27,3 +31,13 @@ bell:
 		Choice@bye:
 			Text: We won't.
 			Do: standing 1, close
+	Node@know:
+		Say: The Deacon is very old, even for a Tallowfolk: waxy, slow, his lantern turned down low. He looks at you for a long time. "I knew your face when mine was young. I have aged more than a hundred years since. You have not aged a day."
+		Choice@how:
+			Text: Tell me what you know.
+			Goto: oath
+	Node@oath:
+		Say: "The Synod swore to guard the knot under Ninefold. We told the Knotfolk that your Company had come to unpick it. We broke your work where we could. Your Erik never explained himself to us, not once. Perhaps he could not. We were wrong about him, Captain. I am not yet sure we were wrong about you."
+		Choice@ok:
+			Text: Neither am I.
+			Do: item oath found, standing 5, close

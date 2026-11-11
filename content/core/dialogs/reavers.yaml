@@ -1,0 +1,36 @@
+# The Brass Reavers (Milestone 22): the Company's grandchildren, turned pirate. (Format: rivet.yaml.)
+
+reavers:
+	Start: hello
+	Node@hello:
+		Say: Well, look at that. A whole Company ship, with the brass still on. Do you know what that's worth, grandad?
+		Say@Neutral: Grandad. You're bad for business, you know that? Every haven for fifty stitches is talking about you.
+		Choice@tribute:
+			Text: What does it cost to be left alone?
+			If: no treaty Tribute
+			Goto: tribute
+		Choice@who:
+			Text: Who are you?
+			Goto: who
+		Choice@threaten:
+			Text: Leave, or we'll strip your brass for once.
+			Do: threaten, close
+		Choice@bye:
+			Text: We're leaving.
+			Do: close
+	Node@who:
+		Say: Your grandchildren, near enough. The Company fell, the ships stayed, and brass doesn't care who polished it first. We don't mind the legend, either. Old man with the great ship. Nobody fights hard for a ghost.
+		Choice@back:
+			Text: Charming.
+			Goto: hello
+	Node@tribute:
+		Say: Salvage. Five hundred. Or ore, eight hundred. For the family.
+		Choice@salvage:
+			Text: Five hundred salvage.
+			Do: pay salvage 500, treaty Tribute, standing 10, close
+		Choice@ore:
+			Text: Eight hundred ore.
+			Do: pay ore 800, treaty Tribute, standing 10, close
+		Choice@back:
+			Text: No.
+			Goto: hello

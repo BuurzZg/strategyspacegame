@@ -1,0 +1,145 @@
+# The ending narration (Milestone 22; PLAN.md §3): when the game ends, the whole story plays,
+# told by old Jacob himself, as etched still scenes with his words beneath them.
+#
+#   Narration   Voice: a folder of recorded lines (<line id>.ogg), played with each line if set;
+#               empty for none. Every line has its own id, so a voice can be added with no code
+#   Scene@<n>   Title; Needs: the memories it needs (all of them), or nothing (always shown);
+#               Still: the picture (ui/narration.js); Camera: push, pull, pan or drift;
+#               Sound: a sound under it (fire, pendulum, sing, wind, sea); Line@<k>: what Jacob
+#               says (id narr.<n>.<k>); Gap@<k>: what he says when the memories are missing
+#               (narr.<n>.gap.<k>); the scene is then black, with faint scratches
+#   Ending      (scene x) one block of lines for each way it can end: Escape, Pay, Part, Keep
+#               (ids narr.x.<ending>.<k>)
+
+Narration:
+	Voice:
+
+Scene@i:
+	Title: The Empire
+	Needs: emblem
+	Still: forge
+	Camera: push
+	Sound: wind
+	Line@1: I was born in the Meridian Hollow, in the years when it still believed in itself. An empire of foundries and folded roads, held together by brass, and by people too stubborn to let it fall apart.
+	Line@2: The Smiths had a company. Then the company had us. A hammer inside a cog, on every hull and every sleeve. I wore it for eighty years before I thought to ask what it meant.
+	Line@3: It meant we built things. Mostly, we did.
+	Gap@1: There was an empire. I know there was. I can feel the shape of it, like a word on the tip of my tongue.
+	Gap@2: ...I don't remember this part.
+
+Scene@ii:
+	Title: The mission
+	Needs: help, fray
+	Still: anchorage
+	Camera: pan
+	Sound: wind
+	Line@1: The Fray was killing us. Fold far enough, often enough, and you come apart, quietly, a little at a time. It took Erik's mother. It would have taken the empire, in the end.
+	Line@2: Then someone found Ninefold, the one world in the Wrack, where nothing frays. So we came, with a station and a cure we hadn't made yet. Erik stood at a podium and said, "We are here to help."
+	Line@3: He meant it. That should count for something. I am not sure it does.
+	Gap@1: We came here for a reason. A good one, I think. I remember a podium, and applause, and someone shouting at the back.
+	Gap@2: ...the rest is gone.
+
+Scene@iii:
+	Title: Those who greeted us
+	Needs: oath, afraid
+	Still: greeted
+	Camera: drift
+	Sound: wind
+	Line@1: Not everyone was glad to see us. The Synod swore an oath to guard the knot under Ninefold, and told the Knotfolk we had come to unpick it. Erik never explained himself. He thought the work would speak for him.
+	Line@2: The traders smiled. The raiders guided our ships. We paid them in fear and called it diplomacy. "Let them be afraid," someone wrote in a margin. "Afraid is cooperative."
+	Line@3: I think it was my handwriting. I'd rather not check.
+	Gap@1: There were others here before us. Some of them helped. Some of them didn't. I can't remember which, and I suspect it matters.
+	Gap@2: ...no. It won't come.
+
+Scene@iv:
+	Title: My project
+	Needs: otherhalf
+	Still: twain
+	Camera: push
+	Sound: sing
+	Line@1: Now. My part.
+	Line@2: All my life I carried half of something. Cold, brass-dark, older than anything I have ever touched. It sings if you hold it too long. I called it the Twain, because its halves were never meant to meet.
+	Line@3: The other half was here, in the Wrack. My "retirement project" was the search. Erik's mission was my way in. The Knotfolk were wrong about the Company. They were right about me.
+	Gap@1: I had a project. A private one. Something I wanted very badly, for a very long time.
+	Gap@2: ...I don't remember what it was. I think I'd like to keep it that way.
+
+Scene@v:
+	Title: The theft
+	Needs: waking
+	Still: theft
+	Camera: pull
+	Sound: sing
+	Line@1: I took it from them. The Knotfolk had kept it in a reliquary for longer than anyone remembers, and I took it, and I brought it home to its other half.
+	Line@2: When the halves met, everything that keeps time flinched. Something under the Wrack woke up and began to wind. It wound the whole galaxy shut.
+	Line@3: People ask me whether I knew it would happen. I have had a hundred and forty-seven years to think about it, and most of them I was not awake for.
+	Gap@1: Something happened. Something woke. I was there when it did.
+	Gap@2: ...I can't see it. I can only hear it, winding.
+
+Scene@vi:
+	Title: The price
+	Needs: lists, offering
+	Still: barge
+	Camera: drift
+	Sound: wind
+	Line@1: The thing shut us in, and then it named its terms. We were not its enemies. We were its hostages. Do as we were told, or watch the Anchorage unmade with everyone in it.
+	Line@2: So we did as we were told. We took people from the scavenger clans and gave them to it. Erik signed the orders. I stood beside him and said nothing useful, which I am very good at.
+	Line@3: Every name went into his ledger. Every one of them made it stronger. We didn't know that yet. I would like to say it would have stopped me.
+	Gap@1: The thing shut us in. It named its terms, and we... no. I don't remember this.
+	Gap@2: I know I did something. I feel it like cold in my bones. But the picture won't come.
+
+Scene@vii:
+	Title: The fall
+	Needs: enough
+	Still: burning
+	Camera: pull
+	Sound: fire
+	Line@1: Erik worked it out before I did. He was always quicker than me at the things that matter. Every offering fed it. We weren't buying time; we were paying for its teeth.
+	Line@2: So my grandson said "enough", to a god, in front of everyone. It answered with fire. The Anchorage burned for three days.
+	Line@3: Erik held the docks while the last ships got away, and then he did not get away. Everyone you will meet out there, every haven, every child who curses my name, is alive because of him. I'd like him to have known that.
+	Gap@1: There was a fire. A long one. Someone stayed behind in it.
+	Gap@2: ...I should remember who. I should, of all people.
+
+Scene@viii:
+	Title: The relic
+	Needs: truth
+	Still: relic
+	Camera: push
+	Sound: sing
+	Line@1: When everything fell, the Twain stopped time around me and the Forge. It saved me. I did not deserve it, and I would like that written down somewhere.
+	Line@2: Why it did, and what it is, I still don't know. Its keeper, its creditor, its prisoner: the Mainspring wanted it back, and every time I died, something wound me back to the moment I woke.
+	Line@3: I have always assumed it was the Mainspring. The Choir asked me once whether I was sure. I wasn't. I'm still not.
+	Gap@1: Something kept me. I don't know what, or why.
+	Gap@2: ...Deck 9 is sealed. It stayed sealed.
+
+Scene@ix:
+	Title: The awakening
+	Needs: owner, horologe
+	Still: waking
+	Camera: pull
+	Sound: pendulum
+	Line@1: We woke on the bridge with our hands on the controls and our names on our sleeves, and we thought we had been out for an hour. Perhaps a day.
+	Line@2: It had been a hundred and forty-seven years, three months and fifteen days. The clock in the Hush told us so, ticking alone in its cathedral, the only thing in the Wrack that had kept faith.
+	Line@3: Everyone I knew died a long time ago. The havens tell stories about an old man with a great black ship. Some of them wait for him. Some of them frighten their children with him. They are both right.
+	Gap@1: We woke. I don't know when. Nobody aboard knew what day it was, and nobody ever found out.
+	Gap@2: ...it may have been a long time. It felt like a long time.
+
+Scene@x:
+	Title: The end
+	Still: shore
+	Camera: drift
+	Sound: sea
+	Escape:
+		Line@1: And then we left. We went through the dead thing at the edge of the Wrack and out into the dark, and there were stars on the other side, and they were the right ones.
+		Line@2: I don't know everything I did. I know enough to be sorry, and not enough to be forgiven. The Wrack keeps the rest.
+		Line@3: Perhaps that's fair. Perhaps one day I'll go back for it.
+	Pay:
+		Line@1: In the end I gave it back. Not to the Knotfolk; to the thing it woke, because that was the debt, and I was tired of making other people pay mine.
+		Line@2: The Mainspring unwound and went wherever it came from, and the Wrack opened like a door. When the shield fell, a hundred and forty-seven years arrived at once.
+		Line@3: The crew went home. I didn't. That's all right. I have been old for a very long time, and it was nice, at the end, to be on time.
+	Part:
+		Line@1: In the end I gave back what I stole. The Wardens came for it themselves, silent, a whole fleet of them, and when the halves were parted the thing that woke went back to sleep.
+		Line@2: I kept the half I came with. I arrived with it. I'm leaving with it. Some debts you pay; some you carry.
+		Line@3: The Knotfolk watched us all the way to the edge. I like to think a few of them waved. Knotfolk don't wave. I like to think it anyway.
+	Keep:
+		Line@1: In the end I kept it. Whole. We left the Wrack with the Mainspring broken behind us and the Twain in my coat, singing.
+		Line@2: It is still singing. Not a sad song. Not a kind one, either. Nobody aboard has heard it before, and I think that is the point.
+		Line@3: Whatever it is, it isn't finished with me. I find I'm not finished with it, either.

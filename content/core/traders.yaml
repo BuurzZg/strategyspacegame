@@ -50,3 +50,24 @@ laststop:
 	Wants: salvage, spores
 	Hires: pilots 6, hands 8
 	Ships: talon, halberd
+
+# The Hollowkin holds (Milestone 22): havens on small moons in the Middens, visited from the
+# chart. They trade, offer crew and tell the legend of the old man with the great ship.
+waiting:
+	Name: The Waiting
+	Keeper: Elder Maud Harrow
+	Region: Middens
+	Faction: hollowkin
+	Dialog: waiting
+	Sells: food 700, ice 900, spores 200
+	Wants: ore, glim
+	Hires: hands 12, engineers 3
+
+unforgiving:
+	Name: The Unforgiving
+	Keeper: Headman Corr Abbott
+	Region: Middens
+	Faction: hollowkin
+	Dialog: unforgiving
+	Sells: ice 600, salvage 500
+	Wants: food, glim

@@ -38,8 +38,8 @@ function attentionBadge(rules, s) {
 }
 
 export class ChartScreen {
-  constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, bridge, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
-    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, loom, bridge, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave });
+  constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, bridge, hint, onGoIn, onQuit, onChange, onEnd, onSave, onNarrate }) {
+    Object.assign(this, { canvas, camera, rules, s: voyage, audio, hud, comms, loom, bridge, hint: hint || (() => {}), onGoIn, onQuit, onChange, onEnd, onSave, onNarrate });
     this.onLoom = () => this.openLoom();
     this.g = V.galaxyOf(rules, voyage);
     this.scene = new THREE.Scene();
@@ -71,7 +71,7 @@ export class ChartScreen {
     const s = this.s, rules = this.rules;
     if (!this.comms || this.comms.isOpen) return;
     if (this.showMuster()) return; // perks to pick, or more ships than berths: first things first
-    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); else if (!s.over) { this.hint('chart'); if (Object.keys((s.campaign && s.campaign.memories) || {}).length) this.hint('memory'); } return; }
+    if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) { if (s.won && this.onNarrate && !this.narrated) { this.narrated = true; this.onNarrate(() => this.showEnd()); } else this.showEnd(); } else if (!s.over) { this.hint('chart'); if (Object.keys((s.campaign && s.campaign.memories) || {}).length) this.hint('memory'); } return; }
     const ev = rules.content.events[s.queue[0]];
     if (!ev) { s.queue.shift(); this.pumpEvents(); return; }
     this.comms.open({
@@ -263,7 +263,7 @@ export class ChartScreen {
     this.comms.open({
       fid, who: `${T.Name}${T.Keeper ? ` · ${T.Keeper}` : ''}`, start: d.Start,
       context: () => ({ ...CM.chartContext(rules, s, g, fid), station: true, dialog: d }),
-      apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
+      apply: (effects) => { const r = V.hailEffects(rules, s, fid, effects); this.onChange(s); this.refresh(); return r; },
       trade: { s, pointId: s.at, trader: id, deal: (buy, sell) => V.traderDeal(rules, s, buy, sell), onDeal: () => { this.onChange(s); this.refresh(); } },
       onClose: () => { this.refresh(); this.pumpEvents(); },
     });
@@ -275,7 +275,7 @@ export class ChartScreen {
     this.comms.open({
       fid,
       context: () => ({ ...CM.chartContext(rules, s, g, fid), ...(far ? { station: false } : {}) }),
-      apply: (effects) => { const r = CM.applyOnChart(rules, s, g, fid, effects); this.onChange(s); this.refresh(); return r; },
+      apply: (effects) => { const r = V.hailEffects(rules, s, fid, effects); this.onChange(s); this.refresh(); return r; },
       trade: far ? null : { s, pointId: s.at, onDeal: () => { this.onChange(s); this.refresh(); } },
       onClose: () => { this.refresh(); this.pumpEvents(); },
     });
@@ -312,6 +312,10 @@ export class ChartScreen {
     const s = this.s, res = this.rules.content.resources, left = V.daysLeft(this.rules, s);
     const region = this.rules.content.regions[this.g.points[s.at].region];
     $('chart-day').textContent = `Life ${(s.campaign && s.campaign.life) || 1} · Day ${s.day} · ${region.Name}`;
+    // the Meridian date: UNKNOWN until the Horologe (Milestone 22)
+    const dt = V.dateOf(this.rules, s);
+    $('chart-date').textContent = dt.known ? dt.today : dt.last ? `Last record: ${dt.last} · Today: UNKNOWN` : 'Meridian date: UNKNOWN';
+    $('chart-date').title = dt.known ? `The Meridian Horologe keeps the date. ${dt.last ? `The Anchorage's last record: ${dt.last}, ${dt.gap} ago.` : ''}` : 'Nobody aboard knows what day it is.';
     const days = { ice: left.ice, food: left.food, air: left.air };
     if (Math.min(left.ice, left.food, left.air) < 7 && !(this.comms && this.comms.isOpen)) this.hint('low');
     $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
@@ -349,6 +353,7 @@ export class ChartScreen {
       const Tr = p.trader ? this.rules.content.traders[p.trader] : null;
       if (Tr) { const hc0 = V.canHail(this.rules, s); btns.push(['trade', `Trade with ${Tr.Name} <kbd>C</kbd>`, !hc0.ok, hc0.ok ? `${Tr.Keeper ? `${Tr.Keeper}: ` : ''}their own stock, at your standing with the ${this.rules.content.factions[Tr.Faction].Name}` : hc0.why]); }
       else if (p.wayhouse) { const dp = V.driftersPlan(this.rules, s); btns.push(['drifters', dp.ok ? `Take ${dp.n} drifters aboard: a day` : 'Take the drifters aboard', !dp.ok, dp.ok ? (dp.n < dp.want ? `${dp.want} ask, and there are berths for ${dp.n}` : 'They need berths: crew quarters add more') : dp.why]); if (!dp.ok) why = dp.why; }
+      else if (id === V.lairAt(this.rules, s) && !(s.flags || []).includes('mainspring')) btns.push(['go', `Go in and face the Mainspring <kbd>Enter</kbd>`, false, 'The final battle: break its hearts and its coil, then its core. Bring frigates, destroyers and lances']);
       else if (Wd.caughtBy(this.rules, s)) btns.push(['go', `Go in and fight the Hand <kbd>Enter</kbd>`, false, 'Its Hour comes on with its pack, and grows more the longer the fight lasts. Kill it fast, or spool the Skein and run']);
       else btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');

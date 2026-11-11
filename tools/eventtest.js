@@ -45,6 +45,11 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
   const sa = JSON.parse(JSON.stringify(s0)); sa.allHands = { days: 6, best: 6 };
   const states = [];
   for (const base of [s0, sx, sl, sa]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
+  // and the story memories (Milestone 22): everything remembered but one, for each one
+  for (const id of Object.keys(rules.content.memories)) {
+    const memories = Object.fromEntries(Object.keys(rules.content.memories).filter((k) => k !== id).map((k) => [k, { life: 1, day: 1 }]));
+    for (const fl of [[], flags]) states.push({ ...s0, campaign: { ...s0.campaign, memories }, day: 30, flags: fl });
+  }
   const unreachable = [];
   let choices = 0;
   for (const e of Object.values(E)) {

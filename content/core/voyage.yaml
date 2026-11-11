@@ -107,6 +107,14 @@ Voyage:
 	Berths: 160
 	# cogmarks: Shearers find one in the wrecks for every this much salvage cut
 	SalvagePerCogmark: 20
+	# the Meridian date (Milestone 22): the Anchorage's last record (year month day); the moment
+	# every life wakes (year month day hour minute second), known once the Horologe is remembered
+	LastRecord: 4324 3 2
+	WokeOn: 4471 6 17 6 42 19
+	MonthDays: 30
+	YearMonths: 12
+	# story places (memories.yaml Anchors) never take over these kinds of place, if they can help it
+	AnchorSpare: IceTail, LanternMist, HollowhornGrounds, StillWater
 
 # Training a station (the bridge, Milestone 18): to level 2, then 3, for this life. Cogmarks and
 # Days for each level; Remembered: the percent it costs where Jacob remembers any of the
@@ -200,7 +208,7 @@ Wound:
 		Hands: 1
 		Text: A Hand has set out from the Shore. It follows wherever the Forge was last heard.
 	Marked:
-		At: 75
+		At: 80
 		Hands: 2
 		Strong: true
 		Text: Two Hands hunt the Forge, faster and stronger, and they plant Nurseries as they go.
@@ -208,8 +216,8 @@ Wound:
 	# what raises it: a memory recovered (the louder the Twain sings); a point every DaysPer
 	# days; a point a day after StayFrom days at one place; each Nursery burned and Hour killed
 	Memory: 5
-	DaysPer: 4
-	StayFrom: 4
+	DaysPer: 5
+	StayFrom: 6
 	Burned: 2
 	HourKilled: 4
 	# what lowers it: a point a day with silent running; Choir points a day at a place of the
@@ -236,6 +244,8 @@ Wound:
 	# without a fight costs Escape (hull percent, morale, system wear)
 	Harass: 3
 	Escape: hull 12, morale 8, wear 10
+	# shaken off on a map, or torn free of: it loses the trail for Rest days, and can't catch
+	Rest: 5
 	# a Hand may infest each place it leaves (Hunted and on): InfestPct, up to InfestMax places
 	InfestPct: 30
 	InfestMax: 6
@@ -259,3 +269,11 @@ Wound:
 	CleanseEchoes: 1
 	CaptivePct: 40
 	Captives: 3-8
+	# the Mainspring's lair (Milestone 22): its pack, its Nurseries, and ichor to grow more
+	LairPack: hound, hound, stinger, stinger, chime, tick, tick, tick, tick, tick, tick, feeder, feeder
+	LairNurseries: 1
+	# (its pods are slower than an Hour's: percent of each ship's growing time)
+	LairGrowPct: 160
+	LairIchor: 400
+	# on a short voyage the Mainspring and its pack are this much of themselves (percent)
+	ShortLairPct: 60

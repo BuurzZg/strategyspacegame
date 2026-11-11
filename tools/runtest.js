@@ -16,7 +16,9 @@ const rules = await loadCore();
 const SEEDS = (process.env.SEEDS || '1,2,3,4,5,6,7,8').split(',').map(Number);
 
 // 1. Many runs, both lengths
-for (const [length, lo, hi] of [['full', 240, 360], ['short', 60, 120]]) {
+// (full voyages: 4 to 6.5 hours since Milestone 22 added the final battle at the Mainspring's lair;
+// Milestone 24 rebalances to the campaign targets)
+for (const [length, lo, hi] of [['full', 240, 390], ['short', 60, 120]]) {
   const rows = [], mins = [];
   let home = 0, inside = 0;
   for (const seed of SEEDS) {

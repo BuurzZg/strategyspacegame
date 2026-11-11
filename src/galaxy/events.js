@@ -11,7 +11,8 @@ import { lifeMix } from './life.js';
 // Which ones fire is decided by the voyage's seed, the day and the place, so it is deterministic.
 
 // (hazard: the Forge turned away by a hazard for the first time; Item is the hazard)
-export const WHEN = ['start', 'arrive', 'travel', 'day', 'found', 'install', 'home', 'hazard'];
+// (back: returning from a map)
+export const WHEN = ['start', 'arrive', 'travel', 'day', 'found', 'install', 'home', 'hazard', 'back'];
 // Which events fire, and which choices roll which way, differ from life to life (lifeMix).
 const list = (v) => String(v || '').split(',').map((s) => s.trim()).filter(Boolean);
 

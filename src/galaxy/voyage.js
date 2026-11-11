@@ -551,10 +551,26 @@ export function eventChoice(rules, s, effects) {
   const g = galaxyOf(rules, s), ev = rules.content.events[(s.queue || [])[0]];
   const r = applyOnChart(rules, s, g, null, effects, { how: ev ? `lost: ${ev.Title}` : 'lost' });
   if (r.days) passDays(rules, s, r.days);
+  return afterEffects(rules, s, g, r);
+}
+// What effects found (a memory, a drive part) and pointed at (a clue) take effect.
+function afterEffects(rules, s, g, r) {
   if (r.clue) addClue(rules, s, r.clue);
-  if (r.found) { s.blueprints = buildable(rules, s); if (remembers(s, 'radar')) reveal(rules, s); trigger(rules, s, g, 'found', { item: r.found }); }
+  if (r.found) {
+    s.blueprints = buildable(rules, s);
+    if (remembers(s, 'radar')) reveal(rules, s);
+    // a memory, from an event or a dialog: the Twain sings a little louder
+    if (rules.content.memories[r.found] && s.wound) Wd.raise(rules, s, +(rules.content.wound || {}).Memory | 0, note);
+    trigger(rules, s, g, 'found', { item: r.found });
+  }
   clues(rules, s);
   return r;
+}
+// A hail's choice on the star chart (a faction, a trader, a hold): its effects, and anything it
+// found (the Deacon remembers you: a memory).
+export function hailEffects(rules, s, fid, effects) {
+  const g = galaxyOf(rules, s);
+  return afterEffects(rules, s, g, applyOnChart(rules, s, g, fid, effects));
 }
 export { eventContext };
 
@@ -849,17 +865,43 @@ export function train(rules, s, id) {
   return { ok: true, level: p.level };
 }
 
+// The Meridian date (Milestone 22). Until the Horologe is remembered, today is UNKNOWN; once the
+// emblem is, the Anchorage's last record is known. Every life wakes at the same moment (WokeOn),
+// and the clock runs with the voyage's days. { known, today, last, gap }
+export function dateOf(rules, s) {
+  const V = rules.content.voyage, nums = (v) => String(v || '').split(/\s+/).map(Number);
+  const md = num(V, 'MonthDays') || 30, ym = num(V, 'YearMonths') || 12;
+  const [ly, lm, ld] = nums(V.LastRecord), [y0, m0, d0, hh, mi, ss] = nums(V.WokeOn);
+  const last = remembers(s, 'emblem') && ly ? `Year ${ly}, Month ${lm}, Day ${ld}` : '';
+  if (!remembers(s, 'horologe') || !y0) return { known: false, today: 'UNKNOWN', last, gap: '' };
+  // seconds since waking: whole days, and the part of today spent on a map
+  const secs = (hh * 3600 + mi * 60 + ss) + Math.trunc(((s.ticks | 0) * 86400) / Math.max(1, num(V, 'DayTicks')));
+  let day = (d0 - 1) + (s.day - 1) + Math.trunc(secs / 86400), t = secs % 86400;
+  let month = (m0 - 1) + Math.trunc(day / md), year = y0 + Math.trunc(month / ym);
+  day %= md; month %= ym;
+  const p2 = (n) => String(n).padStart(2, '0');
+  // how long since the last record, in years, months and days
+  const total = ((y0 - ly) * ym + (m0 - lm)) * md + (d0 - ld), gy = Math.trunc(total / (ym * md)), gm = Math.trunc((total % (ym * md)) / md), gd = total % md;
+  return { known: true, today: `Year ${year} · Month ${month + 1} · Day ${day + 1} · ${p2(Math.trunc(t / 3600))}:${p2(Math.trunc((t % 3600) / 60))}:${p2(t % 60)}`, last, gap: `${gy} years, ${gm} months and ${gd} days` };
+}
+
+// The final jump (Milestone 22): from the Mainspring's lair, once it is dead, with the Heartstone.
 export function canJumpHome(rules, s) {
-  const g = galaxyOf(rules, s);
+  const g = galaxyOf(rules, s), lair = lairAt(rules, s);
   if (!drive(rules, s).finalJump) return no('The drive has no Heartstone.');
-  if (!g.points[s.at].edge) return no('The final jump goes from the Shore\'s edge.');
+  if (s.at !== lair) return no(lair >= 0 && s.known.includes(lair) ? `The way out is past the Mainspring, at ${g.points[lair].name}.` : 'The way out is at the Shore\'s edge, past whatever is waiting there.');
+  if (!(s.flags || []).includes('mainspring')) return no('The Mainspring is in the way. Go in, and end it.');
   if (s.systems.drive < 50) return no('The drive needs to be at least half mended for the final jump.');
   return { ok: true };
 }
+// where the Mainspring waits (-1 if this galaxy has no lair)
+export const lairAt = (rules, s) => { const g = galaxyOf(rules, s), id = Object.keys(rules.content.anchors || {}).find((a) => isLair(rules, a)); return id && g.components[id] !== undefined ? g.components[id] : -1; };
+// the true ending needs the whole truth (Deck 9), which needs every other story memory
+export const trueEnding = (s) => remembers(s, 'truth');
 export function jumpHome(rules, s) {
   const c = canJumpHome(rules, s);
   if (!c.ok || s.over) return c.ok ? no('The voyage is over.') : c;
-  s.over = { reason: 'home', day: s.day, text: 'The Skein pulls tight, and the Wrack falls away behind the Forge.' };
+  s.over = { reason: 'home', day: s.day, text: 'The Skein pulls tight, and the Wrack falls away behind the Forge.', ending: trueEnding(s) ? 'true' : 'escape' };
   s.won = true;
   note(s, s.over.text, 'end');
   trigger(rules, s, galaxyOf(rules, s), 'home');
@@ -895,6 +937,9 @@ const waitingAt = (rules, anchor) => Object.values(rules.content.memories).filte
 export const anchorDone = (rules, s, anchor) => { if (isCache(anchor)) return !!(s.campaign && s.campaign.caches && s.campaign.caches[anchor]); const w = waitingAt(rules, anchor); return w.length ? w.every((m) => remembers(s, m.id)) : !!(s.items && s.items[anchor]); };
 const relicName = (rules, anchor) => { if (isCache(anchor)) return 'a strongbox with your own mark on it'; const A = (rules.content.anchors || {})[anchor]; return A ? A.Relic || A.Name : anchor && rules.content.items[anchor] ? `the ${rules.content.items[anchor].Name}` : ''; };
 
+// The Mainspring's lair (an anchor with Lair: true): the final battle, no hulk to cut.
+export const isLair = (rules, anchor) => { const A = (rules.content.anchors || {})[anchor]; return !!A && (A.Lair === 'true' || A.Lair === true); };
+
 // World settings for going in to the place the Forge is at.
 export function visitSettings(rules, s) {
   const V = rules.content.voyage, g = galaxyOf(rules, s), p = g.points[s.at], R = rules.content.regions[p.region];
@@ -904,7 +949,7 @@ export function visitSettings(rules, s) {
     danger: +R.Danger || 1, name: p.name, ship: p.ship,
     // places in a hazard pocket are richer (PocketRichness)
     richness: Math.trunc((Math.max(num(V, 'RevisitFloor'), 100 - times * num(V, 'RevisitPct')) * (p.pocket ? num(V, 'PocketRichness') || 150 : 100)) / 100),
-    relic: p.relic && !anchorDone(rules, s, p.relic) ? p.relic : '', relicName: relicName(rules, p.relic),
+    relic: p.relic && !isLair(rules, p.relic) && !anchorDone(rules, s, p.relic) ? p.relic : '', relicName: relicName(rules, p.relic),
   });
   const stores = {};
   for (const k of mapKinds(rules)) stores[k] = s.stores[k] | 0;
@@ -944,13 +989,19 @@ export function visitSettings(rules, s) {
     L.encounters.push({ side: a.side, ships: [...a.ships], at, behaviour: a.behaviour || 'hunt', delay: (a.delay | 0) * 25 });
   }
   // the Wound: a Hand that has caught the Forge, an infested place, a roaming pack (wound.js)
-  const wound = Wd.mapWound(rules, s, g, p.id);
+  let wound = Wd.mapWound(rules, s, g, p.id);
+  // the Mainspring's lair: the demon lord, its pack and its Nurseries (wound.js)
+  // (once it is dead, for the rest of this life, the lair is only wrecks)
+  if (p.relic && isLair(rules, p.relic) && !(s.flags || []).includes('mainspring')) wound = Wd.lairWound(rules, s, g, p.id, wound);
+  // a place's own demons (the Tithe Barge's watchers) need the Wound there too
+  if (!wound && L.encounters.some((e) => e.side === 'wound')) wound = { hand: 0, infested: false, roam: false, encounters: [], haze: 100, slot: { ichor: 0, plant: 0, hand: 'lair', delay: 0, grow: 'feeder, tick' } };
   if (wound) for (const e of wound.encounters) {
-    const at = e.behaviour === 'hand' ? [Math.trunc((W * 88) / 100), Math.trunc((D * (30 + prng.int(40))) / 100), 0] : [Math.trunc((W * (60 + prng.int(25))) / 100), Math.trunc((D * (20 + prng.int(60))) / 100), 0];
+    const at = e.at ? [Math.trunc((W * e.at[0]) / 100), Math.trunc((D * e.at[1]) / 100), 0] : e.behaviour === 'hand' ? [Math.trunc((W * 88) / 100), Math.trunc((D * (30 + prng.int(40))) / 100), 0] : [Math.trunc((W * (60 + prng.int(25))) / 100), Math.trunc((D * (20 + prng.int(60))) / 100), 0];
     L.encounters.push({ side: 'wound', ships: [...e.ships], at, behaviour: e.behaviour, delay: (e.delay | 0) * 25 });
   }
   for (const e of L.encounters) if (F[e.side]) present.add(e.side);
   const factions = [...present].sort();
+  settings.poi.lair = !!(p.relic && isLair(rules, p.relic) && !(s.flags || []).includes('mainspring'));
   settings.poi.owner = p.owner || '';
   settings.poi.ownerName = p.owner && F[p.owner] ? F[p.owner].Name : '';
   settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) || activeTreaties(s, p.owner).includes('Leave') : true;
@@ -1090,12 +1141,19 @@ export function returnFromMap(rules, s, report) {
     while (wear > 0) { const k = SYSTEMS[rng.int(SYSTEMS.length)], n = Math.min(wear, 3 + rng.int(6)); s.systems[k] = Math.max(0, s.systems[k] - n); hit[k] = (hit[k] || 0) + n; wear -= n; }
     note(s, `The hull took ${hullLost}% damage. Systems hit: ${Object.entries(hit).map(([k, n]) => `${rules.content.systems[k].Name} −${n}`).join(', ')}.`, 'bad');
   }
+  // the Mainspring is dead (the lair): the way out is open, for this life
+  if (report.wound && report.wound.lair && report.wound.lair.dead && !(s.flags || []).includes('mainspring')) {
+    s.flags = [...new Set([...(s.flags || []), 'mainspring'])];
+    note(s, 'The Mainspring is dead. Past where it lay, the dark, and a star the navigators recognise. Make the final jump.', 'story');
+  }
   // the Wound: a fight is heard, even running silent; Hours killed, Nurseries burned, a Hand
   // destroyed or shaken off, a place burned clean (and captives rescued)
   Wd.woundGoIn(rules, s);
   Wd.afterMap(rules, s, g, p.id, report.wound || null, { note, gain: (n) => { s.crew.roles.hands = (s.crew.roles.hands | 0) + n; } });
   // who you met there, and what they think of what you did
   const F = rules.content.factions, st = report.standing || { changes: {}, met: [] };
+  // the first fight with the Wardens of Ninefold shakes the Forge's registry loose (events)
+  if ((st.met || []).includes('wardens')) s.flags = [...new Set([...(s.flags || []), 'wardens-met'])];
   for (const fid of st.met) if (F[fid] && meet(rules, s, fid)) note(s, `First contact with the ${F[fid].Name}. They are ${tierName(rules, s.standing[fid])} toward the Forge.`, 'story');
   for (const [fid, c] of Object.entries(st.changes)) {
     if (!F[fid] || !c.delta) continue;
@@ -1130,6 +1188,8 @@ export function returnFromMap(rules, s, report) {
   s.ticks -= days * num(V, 'DayTicks');
   passDays(rules, s, days);
   reveal(rules, s);
+  // what the fight shook loose (the registry, after the Wardens)
+  trigger(rules, s, g, 'back');
   return s;
 }
 

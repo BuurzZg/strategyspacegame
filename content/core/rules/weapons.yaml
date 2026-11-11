@@ -343,3 +343,21 @@ HourSpines:
 			medium: 60
 			heavy: 30
 			capital: 20
+
+# the Mainspring's great weapon: a slow wave that unwinds whatever it touches
+Unwinding:
+	ReloadDelay: 200
+	Range: 7000
+	Report: lance
+	Projectile: InstantHit
+		Beam: true
+		Color: ff2a5a
+		Size: 260
+	Warhead@hit: SpreadDamage
+		Damage: 14000
+		Spread: 900
+		Versus:
+			light: 20
+			medium: 70
+			heavy: 110
+			capital: 130

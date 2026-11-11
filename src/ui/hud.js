@@ -74,7 +74,8 @@ export class Hud {
     if (poi) this.toast(`Arrived: ${poi.name}`, 'info');
     // the Wound is here (Milestone 21)
     const wd = poi && poi.wound;
-    if (wd && wd.hand) { this.toast('A Hand has caught the Forge. Its Hour is coming: kill it, or spool the Skein and run.', 'bad', 10000); this.audio.play('hand'); }
+    if (poi && poi.lair) { this.toast('The Mainspring. Break its two hearts and its coil, and its core will open. It regrows from the dead: be quick.', 'bad', 12000); this.audio.play('hand'); }
+    else if (wd && wd.hand) { this.toast('A Hand has caught the Forge. Its Hour is coming: kill it, or spool the Skein and run.', 'bad', 10000); this.audio.play('hand'); }
     else if (wd && wd.infested) this.toast('Infested: Nurseries on the rocks, and a spore haze. Burn every Nursery to clean it out.', 'bad', 10000);
   }
 
@@ -500,6 +501,10 @@ export class Hud {
       else if (e.t === 'hour-flees') this.toast('The Hour is running, to regrow', 'good');
       else if (e.t === 'hour-returns') { this.toast('The Hour has regrown, and turns back', 'bad'); this.audio.play('hand', 0.6); }
       else if (e.t === 'hour-dies') this.audio.play('hand');
+      // the lair (traits/mainspring.js)
+      else if (e.t === 'twain') { this.toast(`The Twain sings: ${e.n} of them held still`, 'good'); this.audio.play('twain'); }
+      else if (e.t === 'organ-dies') { this.toast(e.left ? `An organ breaks: ${e.left} more ward the core` : 'The last organ breaks: the core is open', 'good'); this.audio.play('boom-big'); }
+      else if (e.t === 'mainspring-dies') { this.toast('The Mainspring is dead', 'good', 10000); this.audio.play('collapse'); this.audio.play('twain'); }
       else if (e.t === 'aboard' && e.owner === me) this.dirty = true;
       else if (e.t === 'killed') {
         const big = (e.radius || 0) > 600;

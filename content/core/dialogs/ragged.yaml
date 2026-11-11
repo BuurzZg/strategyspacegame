@@ -1,0 +1,38 @@
+# The Ragged Clans (Milestone 22): Gaunt scavenger tribes of the Middens fields, whose
+# ancestors were taken. Making peace is possible, and slow. (The format is in rivet.yaml.)
+
+ragged:
+	Start: hello
+	Node@hello:
+		Say: Cog. Cog-ship. Our grandmothers' grandmothers told us your shape. You came with cages.
+		Say@Wary: Cog-ship. You speak, we listen. Slowly.
+		Say@Neutral: Cog-ship. You are not what the stories said. Or not only.
+		Say@Friendly: Old cog. The clans will trade with you. Some of us.
+		Choice@trade:
+			Text: We'd trade.
+			If: tier >= Neutral, where chart
+			Do: trade
+		Choice@names:
+			Text: We found names. Clan names, in a barge.
+			If: remembers lists, not flag ragged-names
+			Goto: names
+		Choice@ceasefire:
+			Text: We don't want this fight.
+			If: where map, at war
+			Goto: ceasefire
+		Choice@bye:
+			Text: We're leaving.
+			Do: close
+	Node@names:
+		Say: Then you know. Give them to us. We will sing them, all of them, and it will take a year, and when it is done we will look at you differently. Not kindly. Differently.
+		Choice@give:
+			Text: They're yours.
+			Do: flag ragged-names, standing 30, close
+	Node@ceasefire:
+		Say: Food. Five hundred. For the ones you took. Then we go.
+		Choice@pay:
+			Text: Five hundred food.
+			Do: pay food 500, ceasefire, standing 5, close
+		Choice@back:
+			Text: No.
+			Goto: hello

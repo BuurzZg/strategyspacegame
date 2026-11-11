@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [], Hazards: [], Traders: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [], Memories: [], Hazards: [], Traders: [], Narration: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -64,6 +64,9 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   rules.content.traders = Object.fromEntries([...mergeFiles(data.Traders)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
+  // the ending narration (Milestone 22): its settings, and its scenes in order
+  const narr = [...mergeFiles(data.Narration)];
+  rules.content.narration = { settings: nodesToObject((narr.find(([k]) => k === 'Narration') || [null, { nodes: [] }])[1].nodes), scenes: narr.filter(([k]) => k.startsWith('Scene@')).map(([k, n]) => ({ id: k.slice(6), ...nodesToObject(n.nodes) })) };
   // strain, moods and All hands (Milestone 17)
   for (const k of ['Strain', 'Mood', 'AllHands', 'Training', 'Wound']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
@@ -87,7 +90,7 @@ export function lintContent(rules) {
       if (kind === 'Wrecks') for (const s of list(v.Of)) if (!rules.actors.has(s)) errs.push(`${n.loc}: ${id}.${n.key}: unknown ship "${s}"`);
       if (kind === 'Encounter') {
         for (const s of list(v.Ships)) if (!rules.actors.has(s)) errs.push(`${n.loc}: ${id}.${n.key}: unknown ship "${s}"`);
-        if (v.Side !== 'fauna' && !(rules.content.factions || {})[v.Side]) errs.push(`${n.loc}: ${id}.${n.key}: Side must be fauna or a faction`);
+        if (v.Side !== 'fauna' && v.Side !== 'wound' && !(rules.content.factions || {})[v.Side]) errs.push(`${n.loc}: ${id}.${n.key}: Side must be fauna, wound or a faction`);
       }
     }
   }
@@ -98,7 +101,7 @@ export function lintContent(rules) {
   for (const d of Object.values(rules.content.dialogs || {})) errs.push(...lintDialog(rules, d));
   for (const e of Object.values(rules.content.events || {})) {
     errs.push(...lintDialog(rules, e));
-    if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home', 'hazard', 'allhands'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
+    if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home', 'hazard', 'allhands', 'back'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
     if (e.Item && !rules.content.items[e.Item] && !(rules.content.memories || {})[e.Item] && !(rules.content.hazards || {})[e.Item]) errs.push(`events: ${e.id}.Item: unknown item, memory or hazard "${e.Item}"`);
   }
   for (const [id, f] of Object.entries(factions)) {
@@ -149,7 +152,7 @@ export function lintContent(rules) {
     for (const n of list(m.Needs)) if (!M[n]) errs.push(`memories: ${id}.Needs: unknown memory "${n}"`);
     if (m.Found && !A[m.Found] && !(items[m.Found] && items[m.Found].Region)) errs.push(`memories: ${id}.Found: unknown anchor "${m.Found}"`);
     if (m.Blueprint && items[m.Blueprint]?.Kind !== 'blueprint') errs.push(`memories: ${id}.Blueprint: unknown blueprint "${m.Blueprint}"`);
-    if (m.Ready !== 'false' && !m.Found && !m.Blueprint && m.Cost === undefined) errs.push(`memories: ${id}: needs Found, Blueprint or Cost`);
+    if (m.Ready !== 'false' && !m.Found && !m.Blueprint && m.Cost === undefined && m.By !== 'event') errs.push(`memories: ${id}: needs Found, Blueprint, Cost or By: event`);
     for (const g of list(m.Gives)) {
       const [op, arg] = g.split(/\s+/);
       if (op === 'drive' && items[arg]?.Kind !== 'drive') errs.push(`memories: ${id}.Gives: unknown drive part "${arg}"`);
@@ -165,6 +168,14 @@ export function lintContent(rules) {
     if (!M[h.Opens]) errs.push(`hazards: ${id}.Opens: unknown memory "${h.Opens}"`);
     if (!crew.posts[h.Report]) errs.push(`hazards: ${id}.Report: unknown post "${h.Report}"`);
     for (const [r] of weights(h.Pockets)) if (!(rules.content.regions || {})[r]) errs.push(`hazards: ${id}.Pockets: unknown region "${r}"`);
+  }
+  // the ending narration: scenes need real memories, and say something
+  for (const sc of (rules.content.narration || { scenes: [] }).scenes) {
+    for (const id of list(sc.Needs)) if (!M[id]) errs.push(`narration: ${sc.id}.Needs: unknown memory "${id}"`);
+    if (!sc.Title) errs.push(`narration: ${sc.id}: no Title`);
+    const has = (o, k) => Object.keys(o || {}).some((x) => x.startsWith(`${k}@`));
+    if (!has(sc, 'Line') && !['Escape', 'Pay', 'Part', 'Keep'].some((e) => has(sc[e], 'Line'))) errs.push(`narration: ${sc.id}: no lines`);
+    if (list(sc.Needs).length && !has(sc, 'Gap')) errs.push(`narration: ${sc.id}: needs memories but has no gap lines`);
   }
   // traders: a region, a faction, a dialog, and goods that exist
   const SPECIAL = ['echo', 'clue', 'chart'], value = Object.fromEntries(weights((rules.content.trade || {}).Value));

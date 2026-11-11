@@ -68,7 +68,7 @@ defineTrait('Attacks', class Attacks extends Trait {
     const out = [];
     const rs = reach(self);
     for (const a of w.unitsInSphere(self.x, self.y, self.z, r + rs + w.maxHalfLength + 1500, [])) {
-      if (!this.canTarget(a)) continue;
+      if (!this.canTarget(a) || (a.ward && a.ward())) continue; // (nothing to gain shooting at the warded)
       const d = w.edgeDist(self, a);
       if (d <= r + rs) out.push([d, a]); // each mount then checks its own range
     }
@@ -76,6 +76,8 @@ defineTrait('Attacks', class Attacks extends Trait {
     return out.map((p) => p[1]);
   }
   tick() {
+    // held still by the Twain (mainspring.js): no shots
+    if (this.self.stillUntil > this.world.frame) return;
     if (this.self.burrowed) return; // buried monsters neither scan nor shoot
     const arms = this.arms;
     if (!arms.some((a) => a.cooldown === 0)) return;
@@ -168,7 +170,7 @@ defineTrait('AutoTarget', class AutoTarget extends Trait {
     const self = this.self, w = this.world, at = self.attack, guard = this.has('guardian') ? this.forge() : null, fin = this.has('finisher');
     let best = null, bs = Infinity;
     for (const a of w.unitsInSphere(self.x, self.y, self.z, range + w.maxHalfLength + 1500, [])) {
-      if (!at.canTarget(a)) continue;
+      if (!at.canTarget(a) || (a.ward && a.ward())) continue; // (the Mainspring's core, while its organs live)
       const d = w.edgeDist(self, a);
       if (d > range) continue;
       if (guard && w.edgeDist(guard, a) > GUARD) continue;

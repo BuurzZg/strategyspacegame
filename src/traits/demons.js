@@ -14,6 +14,8 @@ const costOf = (info) => +info.traitInfo('Valued')?.Cost || 0;
 const near = (a, b, r) => distSq3(a.x, a.y, a.z, b.x, b.y, b.z) <= r * r;
 const mend = (a, n) => { if (a.health && n > 0) a.health.hp = Math.min(a.health.maxHp, a.health.hp + n); };
 export const ichorOf = (p) => (p && p.ichor) | 0;
+// the lair battle's state, for the report (mainspring.js)
+const w0 = (w) => (w.lair && w.lair.core ? w.lair.report() : null);
 
 // What a demon costs to grow, and how long it spends in the pod (ticks).
 defineTrait('Gestation', class extends Trait {}, { Ichor: 50, Time: 200 });
@@ -190,7 +192,8 @@ defineTrait('Flees', class extends Trait {
 // World trait: plays the Wound's player, once a second.
 //   economy      keep Feeders out (FeederBase, plus one a Nursery, up to FeederMax)
 //   counter      Chimes when you field fighters (one per ChimePer of them), Stingers when you
-//                field big hulls (one per big hull); otherwise the pack's mix (Mix)
+//                field big hulls (one per big hull), up to CounterMax of each; otherwise the
+//                pack's mix (Mix)
 //   waves        when the pack's worth reaches WavePct of your fleet's (and at least WaveMin),
 //                it goes for the Forge
 //   retreat      when a wave falls under RetreatPct of what it set out with, it falls back to
@@ -244,7 +247,7 @@ defineTrait('WoundAI', class extends Trait {
   // what the voyage needs to know (wound.js afterMap)
   report() {
     const h = this.hour();
-    return { hand: this.mode === 'hunt' ? 1 : 0, hours: this.hours, hourPct: h ? Math.trunc((h.health.hp * 100) / Math.max(1, h.health.maxHp)) : 0, burned: this.burned, nurseries: this.nurseries().length, planted: this.planted, killed: this.killed, waves: this.waves, retreats: this.retreats, grown: { ...this.grown }, ichor: { ...this.p.ichorLog, now: this.p.ichor } };
+    return { lair: w0(this.world), hand: this.mode === 'hunt' ? 1 : 0, hours: this.hours, hourPct: h ? Math.trunc((h.health.hp * 100) / Math.max(1, h.health.maxHp)) : 0, burned: this.burned, nurseries: this.nurseries().length, planted: this.planted, killed: this.killed, waves: this.waves, retreats: this.retreats, grown: { ...this.grown }, ichor: { ...this.p.ichorLog, now: this.p.ichor } };
   }
   hour() { const w = this.world, p = this.p; for (const t of w.traitsOfType('Gestates')) if (!t.self.dead && t.self.owner === p) return t.self; return null; }
   mine() { const p = this.p; return this.world.actors.filter((a) => a.owner === p && !a.dead && a.health); }
@@ -269,8 +272,8 @@ defineTrait('WoundAI', class extends Trait {
     const nurseries = count('nursery');
     if (count('feeder') < Math.min(this.cap.feeders, this.info.FeederBase + nurseries) && this.can('feeder')) return 'feeder';
     const per = Math.max(1, this.info.ChimePer);
-    if (foe.fighters >= per && count('chime') < Math.trunc((foe.fighters + per - 1) / per) && this.can('chime')) return 'chime';
-    if (foe.big > 0 && count('stinger') < foe.big && this.can('stinger')) return 'stinger';
+    if (foe.fighters >= per && count('chime') < Math.min(this.info.CounterMax, Math.trunc((foe.fighters + per - 1) / per)) && this.can('chime')) return 'chime';
+    if (foe.big > 0 && count('stinger') < Math.min(this.info.CounterMax, foe.big) && this.can('stinger')) return 'stinger';
     const mix = list(this.info.Mix).filter((t) => this.can(t) && g.types.includes(t));
     if (!mix.length) return '';
     return mix[this.mixAt % mix.length];
@@ -376,7 +379,7 @@ defineTrait('WoundAI', class extends Trait {
   }
   say(text) { this.log.push(`${this.world.frame}: ${text}`); if (this.log.length > 60) this.log.shift(); }
 }, {
-  FeederBase: 2, FeederMax: 4, ChimePer: 4, Mix: 'hound, tick, tick, hound, gnawer, tick', WavePct: 60, WaveMin: 900,
+  FeederBase: 2, FeederMax: 4, ChimePer: 4, CounterMax: 6, Mix: 'hound, tick, tick, hound, gnawer, tick', WavePct: 60, WaveMin: 900,
   RetreatPct: 40, JoinPct: 60, NurseryIchor: 300, Nurseries: 3, PlantEvery: 60, PlantRange: 24000, HourHold: 14000,
   DeadPct: 25, DeadRange: 12000,
 });

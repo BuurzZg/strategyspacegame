@@ -24,7 +24,10 @@ const F = rules.content.factions;
   // on the star chart, dialogs can also ask about the voyage (which drive parts you remember)
   const v0 = V.newVoyage(rules, { seed: 1 }), v1 = JSON.parse(JSON.stringify(v0));
   for (const id of ['coils', 'lens']) V.remember(rules, v1, id, { quiet: true });
-  for (let tier = 0; tier < 5; tier++) for (const station of [true, false]) for (const where of ['chart', 'map']) for (const atWar of [false, true]) for (const treaties of [[], C.TREATIES]) for (const fl of [new Set(), flags]) for (const vs of [null, v0, v1])
+  // and one that remembers the whole story (Milestone 22: the Wardens, the clans)
+  const v2 = JSON.parse(JSON.stringify(v0));
+  for (const id of Object.keys(rules.content.memories)) V.remember(rules, v2, id, { quiet: true });
+  for (let tier = 0; tier < 5; tier++) for (const station of [true, false]) for (const where of ['chart', 'map']) for (const atWar of [false, true]) for (const treaties of [[], C.TREATIES]) for (const fl of [new Set(), flags]) for (const vs of [null, v0, v1, v2])
     contexts.push({ rules, tier, station, where, atWar, treaties, flags: fl, stores: Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 99999])), place: 'Here', region: 'There', s: where === 'chart' ? vs : null, point: vs ? V.galaxyOf(rules, vs).points[vs.at] : null });
   let unreached = [];
   let total = 0;

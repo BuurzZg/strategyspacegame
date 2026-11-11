@@ -28,7 +28,8 @@ defineTrait('Flight', class Flight extends Trait {
     this.engaging = 0; // id of the ship being attacked this tick: not steered round (set by Attack)
   }
   // top speed: near an Hour, time drags (demons.js)
-  get top() { const s = this.self; return s.dragUntil > this.world.frame ? Math.trunc((this.info.MaxSpeed * s.dragPct) / 100) : this.info.MaxSpeed; }
+  // (and held quite still by the Twain: mainspring.js)
+  get top() { const s = this.self, f = this.world.frame; return s.stillUntil > f ? 0 : s.dragUntil > f ? Math.trunc((this.info.MaxSpeed * s.dragPct) / 100) : this.info.MaxSpeed; }
   savePrev() { this.pspeed = this.speed; this.moving = false; this.ghost = false; this.engaging = 0; }
 
   // Where to steer this tick on the way to (tx, ty, tz): the target, or a detour point round

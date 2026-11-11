@@ -104,8 +104,9 @@ export class WorldRenderer {
       // the Skein spooling: the foundry ring races and light gathers into the hull
       const spool = a.skein && a.skein.spooling ? a.skein.spool / a.skein.time : 0;
       for (const sp of m.spin) sp.obj.rotation.x += sp.speed * dt * (1 + spool * 14);
-      // a Chime sways as it rings
+      // a Chime sways as it rings; a heart beats
       if (m.bell) m.bell.rotation.z = Math.sin(t * 1.7 + a.id) * 0.18;
+      if (m.pulse) m.pulse.obj.scale.setScalar(1 + Math.max(0, Math.sin(t * m.pulse.speed)) ** 6 * m.pulse.amp * 3);
       if (a.skein) this.spoolFx(a, v, spool, dt);
       if (a.asteroid || a.cloud || a.rock) {
         // rocks shrink as they are mined, clouds thin as they are skimmed

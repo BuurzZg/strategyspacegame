@@ -1,7 +1,7 @@
 # Story and galaxy events. An event is a small dialog (nodes, Say, choices) with a header:
 #   When     start (a new life), arrive (at a place, after a stitch or a drift), travel (on the
-#            way, once a stitch), day (a day of rest or repairs), found / install (a drive part:
-#            set Item), home (the final jump)
+#            way, once a stitch), day (a day of rest or repairs), found / install (a drive part
+#            or a memory: set Item), home (the final jump), back (back from a map)
 #   Chance   percent (default 100); a trigger fires all its story events and at most one chance one
 #   If       conditions, as in dialogs, plus: region X, type X, not type X, day >= n,
 #            item X missing|found|installed (a drive part: found and installed both mean
@@ -60,7 +60,12 @@ EmblemFound:
 		Say: The station's long watch, intact: a sensor array the same make as the Forge's own. The watch officer looks at it, then down at the console, and their hands start to move before they do. The chart lights up. For the first time since you woke, you can see where you are.
 		Choice@ok:
 			Text: Then let's see it.
-			Do: close
+			Goto: log
+	Node@log:
+		Say: The station's last log, before the dust: "Year 4324, Month 3, Day 2." And under it, on the same frequency, very faint: a private beacon, a yacht's, still calling for its owner. The emblem is on that one too.
+		Choice@ok:
+			Text: Find the yacht.
+			Do: clue steward, close
 
 CoilsHere:
 	When: arrive
@@ -159,7 +164,12 @@ VeilFirst:
 		Say: The Veil closes behind the Forge like a curtain. The radio goes quiet, then quieter. Somebody on the bridge whispers, and then everyone does, without knowing why.
 		Choice@ok:
 			Text: Keep going.
-			Do: flag hush, close
+			Goto: tick
+	Node@tick:
+		Say: In the quiet, two things on the sensors. A ticking, very regular, from somewhere deep in the Hush: a clock, the signals officer says, and a big one. And a shrine-ship's call, in a language nobody aboard speaks, though your hands go cold when you hear it.
+		Choice@ok:
+			Text: Mark them both.
+			Do: flag hush, clue horologe, clue reliquary, close
 
 ShoreFirst:
 	When: arrive
@@ -170,10 +180,17 @@ ShoreFirst:
 		Say: The scrap thins out. Past the last wrecks there is only dark, and in the dark, very faint, a star the navigators swear they recognise.
 		Choice@ok:
 			Text: That's the way.
-			Do: flag shore, close
+			Goto: coil
+	Node@coil:
+		Say: And between the Forge and that star, at the very edge, something vast. It does not move. It winds. The sensors officer says it has a pulse. Closer in, a Cinder Pact hold calls itself the Founding Hall, and asks who you are, and then stops asking.
+		Choice@ok:
+			Text: Mark it. All of it.
+			Do: flag shore, clue lair, clue hall, close
 
+# The escape ending: out, without the whole truth (the narration has gaps)
 Ending:
 	When: home
+	If: not remembers truth
 	Title: Home
 	Start: jump
 	Node@jump:
@@ -201,3 +218,340 @@ Waking:
 		Choice@chart:
 			Text: Pull up the chart. We know more than we did.
 			Do: morale 2, close
+
+# ---------------------------------------------------------------- the story memories (Milestone 22)
+StewardHere:
+	When: arrive
+	If: here relic steward, not remembers help
+	Title: The Steward
+	Start: here
+	Node@here:
+		Say: A private yacht, all brass rails and broken glass. The beacon is coming from its recording vault. The name on the bow is the Steward, and the emblem beside it has been polished, once, by someone who cared.
+		Choice@ok:
+			Text: Cut into the vault.
+			Do: close
+
+HelpFound:
+	When: found
+	Item: help
+	Title: "We are here to help"
+	Start: play
+	Node@play:
+		Say: The recording plays on the bridge. A thin, tired man at a podium, the Anchorage behind him, new and bright. "I am Erik Smith. We are here to help." Applause. Under the applause, somebody shouting from the back of the crowd, in a language nobody aboard speaks.
+		Choice@on:
+			Text: Who is he?
+			Goto: who
+	Node@who:
+		Say: Nobody knows. You watch it again. On the third time you notice that he looks at someone off to the side before he speaks, the way you look at someone whose approval you need. The camera never shows who.
+		Choice@ok:
+			Text: Again.
+			Do: close
+
+# The first fight with the Wardens of Ninefold shakes the registry loose.
+TheRegistry:
+	When: back
+	If: flag wardens-met, not remembers owner
+	Title: The registry
+	Start: why
+	Node@why:
+		Say: "They knew the ship," the watch officer says. "Not the emblem. The ship. They said 'the old man's ship'." Somebody goes looking for the Forge's registry, behind a panel none of you remember opening.
+		Choice@on:
+			Text: Read it.
+			Goto: read
+	Node@read:
+		Say: The private ship of Dr. Jacob Smith, retired. Grandfather of the Company's chief. Your name is on the uniform you woke in, and nobody, until now, thought to read it. One line at the bottom is struck through and sealed: Deck 9.
+		Choice@ok:
+			Text: Then I am the old man.
+			Do: item owner found, close
+
+# Our mark on their hull (a strong moment, Act I).
+MarkOnTheirHull:
+	When: arrive
+	If: region Drift, remembers emblem, day >= 6
+	Chance: 30
+	Title: Our mark on their hull
+	Start: skiff
+	Node@skiff:
+		Say: A little tribal skiff limps into view, patched from three different wrecks. Painted on its side, crudely, upside down, is the hammer inside the cog. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
+		Choice@hail:
+			Text: Hail them.
+			Goto: hail
+		Choice@let:
+			Text: Let them go.
+			Do: close
+	Node@hail:
+		Say: They answer, frightened, in an accent your crew almost understand. The mark is for luck, they say. Their grandparents' grandparents put it on everything. Nobody remembers why. They ask if you would like some water. They have very little.
+		Choice@give:
+			Text: Give them some of ours.
+			Do: pay ice 150, morale 4, close
+		Choice@thanks:
+			Text: Thank them, and go.
+			Do: close
+
+MiddensFirst:
+	When: arrive
+	If: region Middens, not flag middens
+	Title: The Middens
+	Start: here
+	Node@here:
+		Say: The Middens: wreck-fields, refinery lanterns, the Moot's hammering on every band. Under the noise, an old Company research channel, still running its automatic distress call from a hulk somewhere deeper in.
+		Choice@ok:
+			Text: Mark it.
+			Do: flag middens, clue research, close
+
+ResearchHere:
+	When: arrive
+	If: here relic research, not remembers fray
+	Title: The Quiet Lamp
+	Start: here
+	Node@here:
+		Say: The research hulk's lamps are still on, a hundred years later, on a sealed laboratory deck. Something scored the hull from outside, in long parallel lines.
+		Choice@ok:
+			Text: Cut into the labs.
+			Do: close
+
+FrayFound:
+	When: found
+	Item: fray
+	Title: The Fray
+	Start: labs
+	Node@labs:
+		Say: Case files, thousands. Fold-sickness: travel through folded space long enough and you come apart, a little at a time. It was killing the Empire. One file is marked with the Company seal and a name: Helen Smith, Erik's mother. Last line: "Ninefold does not fray. Nothing near it ever has."
+		Choice@on:
+			Text: The mission was a cure.
+			Goto: who
+	Node@who:
+		Say: There is a shipping note in the same drawer: two thousand units of ore, received from the Rivet Moot, "against the usual terms". The Moot kept ledgers. There is a tally-barge listed as the delivery point.
+		Choice@ok:
+			Text: Find the ledgers.
+			Do: clue ledger, close
+
+AfraidFound:
+	When: found
+	Item: afraid
+	Title: "Afraid is cooperative"
+	Start: ledger
+	Node@ledger:
+		Say: Debts, every page. Fuel, food, hulls, all paid to the Company in advance and never repaid. In the margin of one, in a Company hand: "Let them be afraid. Afraid is cooperative." And on the last page, a different kind of entry: names, sold by the head.
+		Choice@on:
+			Text: Sold to whom?
+			Goto: where
+	Node@where:
+		Say: To a barge, in the Ragged Clans' fields. The Moot's clerk drew a little cage in the margin, and then crossed it out.
+		Choice@ok:
+			Text: Find the barge.
+			Do: clue barge, close
+
+ListsFound:
+	When: found
+	Item: lists
+	Title: The lists
+	Start: names
+	Node@names:
+		Say: Names. Clan names, thousands, in a careful, slanting hand. Your hand goes to your own pocket before you know why, and finds a pen. Nothing in the manifest says what the captives were for. The cages on the Anchorage's lower ring were full. That is all it says.
+		Choice@ok:
+			Text: Copy them. All of them.
+			Do: morale -4, close
+
+ReliquaryHere:
+	When: arrive
+	If: here relic reliquary, not remembers otherhalf
+	Title: The Reliquary of Ninefold
+	Start: here
+	Node@here:
+		Say: A Knotfolk shrine-ship, still on its watch after a century and a half. Its guardians have turned every gun they have toward the Forge. In its heart, on the sensors, a case. Empty.
+		Choice@ok:
+			Text: We have to see it.
+			Do: close
+
+OtherHalfFound:
+	When: found
+	Item: otherhalf
+	Title: The other half
+	Start: case
+	Node@case:
+		Say: The case is shaped for half of something. You know its weight before you see it, because you have carried the other half for most of your life. It is in your coat. It has been in your coat the whole time. Cold, brass-dark, older than anything in the Wrack.
+		Choice@on:
+			Text: The Twain.
+			Goto: why
+	Node@why:
+		Say: The "retirement project" was the search. The Company's mission was your way in. The Knotfolk were wrong about the Company. They were right about you. Somewhere in the Hush, very faintly, something sings back.
+		Choice@ok:
+			Text: Keep going.
+			Do: close
+
+# The Choir felt the halves meet; they come to the Forge wherever it is in the Hush.
+ChoirWaking:
+	When: arrive
+	If: region Hush, remembers otherhalf, not remembers waking
+	Title: The Choir
+	Start: light
+	Node@light:
+		Say: The Choir come to the Forge without being called: a cloud of moths, light moving through them like speech. The signals officer translates, slowly. "You. The one who keeps coming back. We felt it, when the halves met. Everything that keeps time flinched."
+		Choice@on:
+			Text: What woke?
+			Goto: woke
+	Node@woke:
+		Say: "Something under the Wrack. It began to wind, and it wound everything shut." A long pause, the light dimming and brightening. "Did you know it would? We do not know. Perhaps we are being kind." Then, almost too faint to read: "Are you sure it is the coil that keeps winding you back?"
+		Choice@ok:
+			Text: Where did it go, after?
+			Goto: where
+	Node@where:
+		Say: "It was fed. Here, in the Hush. A barge, with an altar that opens onto nothing." The swarm breaks up and drifts away into the nebula, and the bridge is very dark without it.
+		Choice@ok:
+			Text: Find the barge.
+			Do: item waking found, clue tithe, close
+
+HorologeHere:
+	When: arrive
+	If: here relic horologe, not remembers horologe
+	Title: The Meridian Horologe
+	Start: here
+	Node@here:
+		Say: A cathedral of brass round a chronometer the size of a house. Its pendulum is the only thing moving. It is still keeping time, to the second, for an Empire nobody has heard from in a long time.
+		Choice@ok:
+			Text: Get inside.
+			Do: close
+
+HorologeFound:
+	When: found
+	Item: horologe
+	Title: The date
+	Start: clock
+	Node@clock:
+		Say: The chronometer hall. Year 4471, Month 6, Day 17. The navigator puts the Anchorage's last log beside it: Year 4324, Month 3, Day 2. Nobody does the subtraction out loud. Somebody does it anyway: one hundred and forty-seven years, three months and fifteen days.
+		Choice@on:
+			Text: ...
+			Goto: after
+	Node@after:
+		Say: Everyone you knew died a long time ago. The surgeon starts crying first, and then it is most of the bridge, quietly, at their stations. The pendulum keeps going. The date is on the bridge's panel now, and it will be in every life.
+		Choice@ok:
+			Text: Back to work.
+			Do: morale -6, close
+
+TitheHere:
+	When: arrive
+	If: here relic tithe, not remembers offering
+	Title: The Tithe Barge
+	Start: here
+	Node@here:
+		Say: A barge with a hold built like a chapel. The Wound has not let it go: things move round it, red-lit. The altar at its heart opens onto nothing at all.
+		Choice@ok:
+			Text: Cut down to the offering deck.
+			Do: close
+
+OfferingFound:
+	When: found
+	Item: offering
+	Title: The offering
+	Start: deck
+	Node@deck:
+		Say: The offering deck. Restraints, an altar, and a ledger chained to it, in Erik's hand: every name, every date. The Company was the demons' hostage. Feed the Mainspring, or watch the Anchorage unmade. So you fed it.
+		Choice@on:
+			Text: I was there.
+			Goto: there
+	Node@there:
+		Say: You were there. You remember it now: standing beside your grandson while he signed, saying nothing useful. Every offering made it stronger. Nobody aboard looks at you for a while. Then the chief engineer brings you a cup of something hot, and stays.
+		Choice@ok:
+			Text: Thank you.
+			Do: morale -6, close
+
+HallHere:
+	When: arrive
+	If: here relic hall, not remembers enough
+	Title: The Founding Hall
+	Start: here
+	Node@here:
+		Say: The Cinder Pact's oldest hold, built round the bones of the last evacuation ship to leave the Anchorage. They keep a book of names here. They have heard who you are, and they are not happy about it.
+		Choice@ok:
+			Text: We need that book.
+			Do: close
+
+EnoughFound:
+	When: found
+	Item: enough
+	Title: Enough
+	Start: book
+	Node@book:
+		Say: The book of names, and at the front, the Pact's own story. Erik worked it out before anyone: every offering fed the thing. So he said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days.
+		Choice@on:
+			Text: And Erik?
+			Goto: erik
+	Node@erik:
+		Say: He held the docks while the evacuation ships got away. Then he did not get away. Every haven out there is alive because of him. The last line is in a different hand, very angry: "And the old man was nowhere." That is true, you realise. You were nowhere. You were stopped in time.
+		Choice@ok:
+			Text: I'd like him to have known.
+			Do: morale -4, close
+
+# Deck 9 opens at the Shore once everything else is remembered.
+DeckNine:
+	When: arrive
+	If: region Shore, remembers emblem, remembers help, remembers owner, remembers fray, remembers oath, remembers afraid, remembers lists, remembers otherhalf, remembers waking, remembers horologe, remembers offering, remembers enough, not remembers truth
+	Title: Deck 9
+	Start: door
+	Node@door:
+		Say: Deck 9 opens on its own, with a sigh of very old air. Your quarters. Sealed from the inside. A bed nobody slept in, a coat on a hook, and on the desk, the half of the Twain you thought was in your pocket.
+		Choice@on:
+			Text: ...
+			Goto: truth
+	Node@truth:
+		Say: When everything fell, the Twain stopped time around you and the Forge. It saved you. You did not deserve it. Why it did, and what it is, you still do not know. It sings, very quietly, if you hold it too long. You hold it too long.
+		Choice@on:
+			Text: And now?
+			Goto: now
+	Node@now:
+		Say: Its song faded, after a century and a half, and the world leaked in; or the Waiting called you back; or the thing at the edge finally pried you loose. Nobody is sure. Every time you die, something winds you back to the moment you woke. The Mainspring wants the Twain. It is waiting at the Shore, and so, now, are you.
+		Choice@ok:
+			Text: Then let's finish it.
+			Do: item truth found, close
+
+LairHere:
+	When: arrive
+	If: here relic lair, not flag mainspring
+	Title: The Mainspring
+	Start: here
+	Node@here:
+		Say: It fills the sensors: a coiled body of wet dark metal grown through with flesh, longer than the Forge, red light pulsing along its veins. Its spine is a spring, and it is winding. The Twain in your coat is singing. Behind it, the dark, and the star the navigators recognise.
+		Choice@ok:
+			Text: Go in, and end it.
+			Do: close
+
+# The true ending (Milestone 22): every memory, the Mainspring dead, and a final choice.
+# The choice sets a flag the ending narration reads (narration.yaml, scene X).
+TrueEnding:
+	When: home
+	If: remembers truth
+	Title: The end of it
+	Start: still
+	Node@still:
+		Say: The Mainspring is dead, or as dead as a thing like that can be. Its coil has stopped turning. In your coat, the Twain is singing, louder than it ever has, and everyone on the bridge can hear it. They know everything you know now. Nobody tells you what to do.
+		Choice@on:
+			Text: It was never mine.
+			Goto: choice
+	Node@choice:
+		Say: The Wardens said it plainly, a long time ago: give it back, or give it to the thing it woke. Or keep it, and go, and let the Wrack keep its questions. The Skein is spooled. The dark at the Shore's edge is waiting.
+		Choice@pay:
+			Text: Give the Twain to what is left of the Mainspring. Pay the debt.
+			Goto: pay
+		Choice@part:
+			Text: Give the stolen half back to the Knotfolk. Part the halves.
+			Goto: part
+		Choice@keep:
+			Text: Keep it whole, and go.
+			Goto: keep
+	Node@pay:
+		Say: You put the Twain into the dead coil with your own hands. Something takes it, very gently. The Mainspring unwinds and goes back to wherever it came from, and the Wrack opens like a door. The shield around you falls, and a hundred and forty-seven years arrive at once. The crew go home. You don't.
+		Choice@end:
+			Text: That's fair.
+			Do: flag ending-pay, close
+	Node@part:
+		Say: The Wardens come for it themselves, a whole fleet of them, silent. You hand back the half you stole, and the Mainspring, wherever it is, goes to sleep again, as it slept before the halves met. You keep the half you came with. You arrived with it. You leave with it.
+		Choice@end:
+			Text: Thank them.
+			Do: flag ending-part, close
+	Node@keep:
+		Say: You keep it whole, and the Forge leaves the Wrack with the Mainspring broken behind it. As you pass the Shore's edge the Twain begins to sing, very quietly, a song nobody aboard has heard before. It is not a sad song. It is not a kind one either.
+		Choice@end:
+			Text: Let it sing.
+			Do: flag ending-keep, close
+

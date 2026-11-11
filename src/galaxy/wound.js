@@ -148,7 +148,7 @@ export function woundDay(rules, s, g, { transit = false, note = null } = {}) {
 // A Hand where the Forge is (and not mid-stitch) has caught it.
 export function catchCheck(rules, s, note) {
   for (const h of woundOf(rules, s).hands) {
-    if (h.at !== s.at || h.caught) continue;
+    if (h.at !== s.at || h.caught || s.day < (h.rest | 0)) continue;
     h.caught = true;
     if (note) note(s, `A Hand has caught the Forge at this place. Its Hour is coming. Go in and fight it, or stitch away (it will cost you).`, 'bad');
   }
@@ -178,7 +178,7 @@ export function escape(rules, s, systems, note) {
   if (!e) return;
   const h = woundOf(rules, s).hands.find((x) => x.id === e.hand);
   h.caught = false;
-  h.next = s.day + 1;
+  h.next = h.rest = s.day + num(W(rules), 'Rest', 5);
   s.forge.hp = Math.max(1, s.forge.hp - Math.trunc((s.forge.hp * e.hull) / 100));
   s.morale = Math.max(0, s.morale - e.morale);
   const rng = rngFor(s, 13), k = systems[rng.int(systems.length)];
@@ -225,6 +225,20 @@ export function mapWound(rules, s, g, pid) {
   };
 }
 
+// The Mainspring's lair (Milestone 22): the demon lord at the far end of the map, its pack
+// beside it, Nurseries on the rocks, and ichor to grow more (voyage.yaml Wound: Lair*). A Hand
+// that happens to be there joins it.
+export function lairWound(rules, s, g, pid, w = null) {
+  const C = W(rules), list2 = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const pct = s.length === 'short' ? num(C, 'ShortLairPct', 100) : 100, pack = list2(C.LairPack);
+  const encounters = [{ ships: ['mainspring'], behaviour: 'lair', at: [82, 50] }, { ships: pack.slice(0, Math.max(1, Math.trunc((pack.length * pct) / 100))), behaviour: 'lair', at: [70, 38] }];
+  if (w) for (const e of w.encounters) encounters.push(e);
+  return {
+    hand: w ? w.hand : 0, infested: false, roam: false, lair: true, encounters, haze: 100,
+    slot: { lairPct: pct, ichor: Math.trunc((num(C, 'LairIchor', 1200) * pct) / 100) + (w ? w.slot.ichor : 0), plant: num(C, 'LairNurseries', 2), hand: 'lair', delay: 0, grow: 'feeder, tick, chime, stinger, hound, gnawer', growPct: num(C, 'LairGrowPct', 100), nurseries: num(C, 'LairNurseries', 2) },
+  };
+}
+
 // Back from a map with the Wound in it (report.wound, from the WoundAI): Hours killed, Nurseries
 // burned, the Hand destroyed or shaken off, the place cleansed.
 export function afterMap(rules, s, g, pid, r, { note = null, gain = null } = {}) {
@@ -244,7 +258,7 @@ export function afterMap(rules, s, g, pid, r, { note = null, gain = null } = {})
       // shaken off: it regrows (as hurt as its Hour), and loses the Forge for a while
       h.caught = false;
       h.power = Math.max(num(C, 'Power', 100) >> 1, Math.trunc((h.power * Math.max(40, r.hourPct | 0)) / 100));
-      h.next = s.day + 3;
+      h.next = h.rest = s.day + num(C, 'Rest', 5);
       if (note) note(s, 'The Forge got out from under the Hand. It is still out there, licking its wounds.', 'info');
     }
   }

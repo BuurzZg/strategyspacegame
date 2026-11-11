@@ -174,7 +174,7 @@ export class BridgeScreen {
     let h = '';
     if (this.chosen === 'chair' || !st.find((x) => x.id === this.chosen)) {
       const m = B.moodOf(rules, s), ah = s.allHands || { days: 0, best: 0 }, L = (s.campaign && s.campaign.life) || 1;
-      const date = V.remembers(s, 'horologe') ? 'known' : 'UNKNOWN';
+      const dt = V.dateOf(this.rules, s), date = dt.known ? dt.today : dt.last ? `UNKNOWN (last record: ${dt.last})` : 'UNKNOWN';
       h += `<h3>The captain's chair</h3><p class="kind">Jacob Smith · life ${L}, day ${s.day}</p><p class="date">Meridian date: <b>${date}</b></p>`;
       h += `<p>Morale ${s.morale}, ${MOOD[m.mark].toLowerCase()}.${m.causes.length ? ` ${esc(m.causes.map((c) => c.text).join(' '))}` : ' Nothing is wrong.'}</p>`;
       h += `<p class="how">${ah.days ? `All hands for ${ah.days} day${ah.days > 1 ? 's' : ''}.` : 'Not All hands now.'}${ah.best ? ` The best streak this life: ${ah.best} days.` : ''} All hands comes when every station that is open is lit and green.</p>`;
