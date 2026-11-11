@@ -5,7 +5,18 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 21, the tech demons.** The force behind everything has a face now: **the Wound**, the Mainspring's tech demons, grown rather than built from wet blue-black metal, flesh and bone, lit from inside by a pulsing crimson. They play as a real RTS opponent:
+**Status: Milestone 22, the story.** The story is in, from the waking to the Shore:
+
+- **Twelve story memories, act by act,** each at a story place on the chart, found by cutting into its hulk or given by the people who remember: the Anchorage and the Steward in the Drift; a research hulk, a Moot tally-barge, a prison barge and the Tallow Bell's Deacon in the Middens; the Knotfolk's reliquary-ship, the Choir, the Meridian Horologe and the Tithe Barge in the Hush; the Cinder Pact's Founding Hall at the Shore. **Deck 9** opens at the Shore once every other one is known. Each story memory raises the Mainspring's attention. A chain of clues and events leads from one to the next.
+- **New peoples:** the **Wardens of Ninefold** (the Knotfolk, who fire on the hammer-and-cog on sight), the **Ragged Clans**, the **Brass Reavers**, and the **Hollowkin** holds, visited from the chart: **the Waiting**, who kept a beacon lit for six generations, and **the Unforgiving**, whose children skip to a rhyme about you.
+- **The date:** the bridge and the chart say **Meridian date: UNKNOWN** until the Horologe is remembered. After the Anchorage they show its last record. From the Horologe on, the Empire's running clock: 147 years, 3 months and 15 days since the last record.
+- **The Mainspring,** the demon lord, waits in its **lair** at the Shore's edge, near the Heartstone. Its **two hearts and its coil** ward its core; it regrows from the battle's dead, gestates its pack and drags time. Every minute **the Twain** answers it, holding the Wound near the Forge still for a few seconds. Kill it, and the final jump opens. (Ships no longer waste fire on a warded target, and a great hull is seen through the fog by its flank, not its middle.)
+- **Two endings:** escape with gaps in the story, or, with every memory, **the true ending and a final choice**: pay the debt, part the halves, or keep the Twain whole (decision 38: all three, the player's choice).
+- **The ending narration:** old Jacob tells the whole story in ten engraved, sepia plates built from the game's own models, with slow camera moves, an organ, strings and ticking clocks. A scene whose memories you never found plays black, and he falters. Every line has its own id, so a recorded voice can be added later with no code.
+
+See [The story](#the-story).
+
+**Milestone 21, the tech demons:** The force behind everything has a face now: **the Wound**, the Mainspring's tech demons, grown rather than built from wet blue-black metal, flesh and bone, lit from inside by a pulsing crimson. They play as a real RTS opponent:
 
 - **Their ships** mirror ours: **Ticks** (swarm fighters), **Stingers** (a bone lance against big hulls), **Chimes** (they ring, and fighters come apart), **Hounds** (the line), **Gnawers** (a mountain of jaws that eats wrecks to heal), **Feeders** (their harvesters), **Hours** (living carriers that lead a Hand) and **Nurseries** (flesh growths that bud Ticks and Feeders).
 - **Their economy is ichor:** Feeders strip it from wrecks, every ship that dies near a demon gives some up, and Nurseries trickle it. Shearers cutting the wrecks first starve them, so salvage is a weapon.
@@ -463,6 +474,21 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
   - or find one in an old archive.
 - **Rooms** (the Forge tab): see [The deck plan](#the-deck-plan).
 
+### The story
+
+| Act | Region | Story places (and who remembers) | Memories |
+| --- | --- | --- | --- |
+| I | the Drift | the Anchorage; the Steward, Erik's yacht; the first fight with the Wardens of Ninefold | the emblem (and the radar); "We are here to help"; the old man's ship |
+| II | the Middens | the Quiet Lamp (a research hulk); the Tally of Owls (a Moot tally-barge); the Long Account (a prison barge in the Ragged Clans' fields); the Deacon at the Tallow Bell | the Fray; "Afraid is cooperative"; the lists; the oath |
+| III | the Hush | the Reliquary of Ninefold; the Choir, who come to you; the Meridian Horologe; the Tithe Barge | the other half; the waking; the date; the offering |
+| IV | the Shore | the Founding Hall; Deck 9, once everything else is known; the Mainspring's lair | Enough; the whole truth; the final battle |
+
+- **Finding them:** each place's events point to the next with a clue circle on the chart, and the Shearers cut each memory out of its hulk. Their memories stay in every life. The Hollowkin holds, the Waiting and the Unforgiving, are in the Middens; hail them with `C`.
+- **The date:** UNKNOWN; after the emblem, the Anchorage's last record (Year 4324, Month 3, Day 2); after the Horologe, the running Meridian date (it wakes each life at Year 4471, Month 6, Day 17, 06:42:19).
+- **The final battle:** go in at the lair. Break the two **hearts** and the **coil** and the core opens. Bring frigates, destroyers and lances: the Mainspring grows Stingers against big hulls and Chimes against fighters. The final jump needs the Heartstone and the Mainspring dead. On a short voyage it is 60% of itself.
+- **The endings:** without the whole truth, the escape. With it, the true ending and a final choice: give the Twain to the Mainspring, give the stolen half back to the Knotfolk, or keep it whole. Then the narration plays (`Space` or a click for the next line, `Esc` to skip).
+- **Where the words live:** `content/core/memories.yaml` (memories and story places), `content/core/events/story.yaml` (their events and the endings), `content/core/dialogs/` (the peoples), `content/core/narration.yaml` (Jacob's narration).
+
 ### The Wound: the tech demons
 
 | Ship | Mirrors | Ichor | Strong against | Weak against | Notes |
@@ -475,6 +501,7 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 | Feeder | Gleaner and Shearer | 60 | — | everything | strips wrecks and the dead for ichor |
 | Hour | the Forge, small | — | fighters close in | a fleet that goes for it | gestates two at a time; time drags near it; flees at 35% and regrows |
 | Nursery | — | 300 | — | anything | anchored to a rock or wreck; buds Ticks and Feeders; its creep mends demons |
+| The Mainspring | the Forge | — | everything near it | lances and destroyers | only in its lair; two hearts and a coil ward its core; regrows from the dead; gestates; time drags round it |
 
 - **Attention.** Each memory recovered adds 5; a point every 4 days; a point a day after 4 days at one place; 2 for each Nursery burned and 4 for each Hour killed. Silent running takes a point a day, a stay with the Choir 2 a day, a stitch through a static field 4. Noticed at 20, Hunted at 45, Marked at 75. A new life wakes with 3 points for each memory (up to 60).
 - **The Hands.** One sets out from the Shore at Hunted, two at Marked, and moves a lane every 2–3 days (2 when strong) toward where the Forge was last heard, losing the trail a fifth of the time. They won't cross static fields. Running silent, the Forge is only heard where it fights. A Hand grows stronger every day it hunts.
@@ -742,6 +769,14 @@ Runs the headless tests:
   - a trader has no map to play, holds its own stock, prices by standing with its faction, and won't trade with the Hostile;
   - the workshop needs its plan, which can be bought once a life; the next life, the plan is gone, the trader has one again and the chart still shows where it is; the Murmur sells echoes and a clue; the Last Stop sells Sabre plans and a chart;
   - drifters come aboard once a life, some with names; they need berths, and hiring stops at the berths.
+- **The story** (`tools/storytest.js`): checks that:
+  - every story place is in its act's region, reachable at its drive level, never in a pocket or on a trader, the lair at the Shore's edge, the Hollowkin holds in the Middens, on 10 full and 10 short galaxies;
+  - every story memory can be had in play, act by act, and every one has its text;
+  - the date is UNKNOWN until the Horologe, shows the last record after the emblem, runs with the days, and stays known in a new life;
+  - the narration's 57 lines each have their own id, every scene with memories has gap lines, each scene appears only with its memories, and the last follows the ending;
+  - the Mainspring's core takes no harm while its organs live, the Twain answers it, a fleet of frigates, destroyers, lances and escorts kills it, and the battle is deterministic;
+  - the final jump needs the Heartstone and the Mainspring dead; the escape and true endings, with the true ending's three choices; the new peoples;
+  - the test captain reaches the true ending on every seed tried.
 - **The tech demons** (`tools/demontest.js`): checks that:
   - all eight types are in the rules, and each counter works both ways round in cost-matched fights (Pickets beat Ticks, Stingers beat Halberds, Chimes beat Darts, Talons beat Hounds, Darts beat a Gnawer, a Gnawer beats Halberds);
   - an Hour grows Chimes against fighters, Stingers against big hulls and its own mix otherwise; Feeders strip wrecks for ichor and starve when the wrecks were salvaged first;
@@ -875,19 +910,22 @@ src/engine/           deterministic core: world, actors, traits, orders, lockste
 src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Asteroid, Cloud, Armament,
                       Attacks, AutoTarget, Stance, Formations, Wreck, PointLayout, Hangar, Skein,
                       Diplomacy, Station, Burrows, Interdicts, Sensors, Shroud, Ranks; the Wound's
-                      Feeds, Gestates, Buds, Drags, Flees and its mind, WoundAI, in demons.js, ...)
+                      Feeds, Gestates, Buds, Drags, Flees and its mind, WoundAI, in demons.js; the
+                      Mainspring's Organs, Regrows and the LairBattle in mainspring.js, ...)
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
                       travel and saves (voyage.js), lives (life.js), the crew (crew.js), the base: rooms, strain,
                       stations, mood, strikes and All hands (base.js), standing (standing.js),
                       comms, dialogs, trade and treaties (comms.js), events (events.js), the Wound's
-                      attention, Hands and infested places (wound.js), practice runs (run.js)
+                      attention, Hands and infested places (wound.js), the ending narration's scenes
+                      (narration.js), practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, the Wound's grown hulls
                       (demons.js), rocks, clouds, crystal, nebulae, wrecks, combat effects, the star
                       chart (galaxy.js)
 src/ui/               orbit camera, movement disc, input, HUD, the star chart screen (chart.js), the
-                      comms and trade panel (comms.js), the Loom (loom.js), the bridge (bridge.js), audio
+                      comms and trade panel (comms.js), the Loom (loom.js), the bridge (bridge.js), the
+                      ending narration (narration.js), audio
 tools/                dev server, headless tests, the abstract captain (captain.js), determinism lint
 ```
 
