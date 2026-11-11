@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–35, and the steampunk style guide (§16, §3, §9). Two new decisions are open (§17). Milestones 1–20 are built (§12); names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** the 24 answers, the story skeleton and its update, decisions 25–37, and the steampunk style guide (§16, §3, §9). Only the true ending's final choice stays open (§17). Milestones 1–20 are built (§12); names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -146,7 +146,7 @@ Targets, all measured by the test bot:
 7. **The trap.** The Mainspring, lord of the tech demons, winds the galaxy shut. No stitch leaves the Wrack.
 8. **A hostage.** The Company becomes the demons' hostage: do as we say, or the Anchorage is unmade. Under that threat it does terrible things across the galaxy, including taking people from the scavenger clans.
 9. **The sacrifices.** The captives are given to the Mainspring, on Erik's orders. Each offering makes it stronger.
-10. **Enough.** Erik realises the offerings are feeding the demon lord, not calming it, and refuses to give any more. The demons' punishment is the fall (decision 37, recommended a): the Hands fall on the Anchorage, and it burns for three days. Erik holds the line so the evacuation ships can get away, and stays to the end. The survivors flee to moons, large asteroids and wrecks across the galaxy, and start again there. The havens exist because he finally stood up.
+10. **Enough.** Erik realises the offerings are feeding the demon lord, not calming it, and refuses to give any more. The demons' punishment is the fall (decision 37: a, approved): the Hands fall on the Anchorage, and it burns for three days. Erik holds the line so the evacuation ships can get away, and stays to the end. The survivors flee to moons, large asteroids and wrecks across the galaxy, and start again there. The havens exist because he finally stood up.
 11. **The relic saved Jacob (changed).**
     - When everything fell apart, the Twain stopped time around Jacob and the Forge. For them, not a minute has passed.
     - **147 years later** (proposal, below), the Forge comes out of a fold in space and time, its crew with their memories gone.
@@ -1153,23 +1153,14 @@ The decisions made after the story update:
 | 33 | All hands | **Approved** |
 | 34 | What lasts on the bridge | **Approved** |
 | 35 | The bridge's details | **Nine stations, the signals officer, a layered 2D drawing** |
+| 36 | The tech demons' names | **Approved:** the Wound (the faction, the Company's name for them); Ticks, Stingers, Chimes, Hounds, Gnawers, Feeders, Hours and Nurseries (the ships); ichor (their resource); the Mainspring (unchanged) |
+| 37 | How Erik's refusal brings the fall | **a. Punishment:** the Hands fall on the Anchorage; Erik holds the docks so the evacuation ships get away, and the havens exist because of him |
 | — | The style guide | **Approved as shown**: palette, type, the chart on parchment, instruments, ships |
 | — | The force | **A real RTS faction: the tech demons.** Their lord is a living mothership (the Mainspring), their fleets are the Hands, and the final battle is mothership against mothership |
 
 ## 17. Decisions still open
 
-Neither blocks Milestones 15 to 20.
-
-36. **The tech demons' names:**
-    - the faction: **the Wound**, the Company's name for them;
-    - the ships: **Ticks, Stingers, Chimes, Hounds, Gnawers, Feeders, Hours** and **Nurseries**;
-    - their resource: **ichor**.
-
-    *Recommended: approve, or rename any.* The Mainspring keeps its approved name.
-37. **How Erik's refusal brings the fall:**
-    - a. **Punishment (recommended).** The Hands fall on the Anchorage. Erik holds the docks so the evacuation ships get away, and the havens exist because of him.
-    - b. **He strikes first.** Erik throws the Company fleet at the Mainspring; it fails, and the counter-attack burns the Anchorage.
-    - c. **He asks for the Twain.** Erik demands the Twain from Jacob, to give it back and end it. Jacob refuses, and the demon lord punishes the Company. This is darker for Jacob, and could be kept as a later twist.
+Decisions 36 and 37 were answered after Milestone 20 (§16).
 
 The true ending's final choice and the deeper mysteries stay open, as you asked.
 
