@@ -291,15 +291,34 @@ export class ChartScreen {
       const m = s.morale, V2 = C.voyage;
       h += `<h3>Morale</h3><div class="sr"><span>${m < +V2.MoraleDesert ? 'Deserting' : m < +V2.MoraleSlow ? 'Low' : m < 60 ? 'Steady' : 'Good'}</span><div class="bar"><i style="width:${m}%;background:${m < 30 ? 'var(--bad)' : m < 55 ? 'var(--height)' : 'var(--good)'}"></i></div><b>${m}</b></div>`;
       h += '<p class="fp-note">Rises with rest and full stores; falls with shortages and losses. Below 30, work is slower; below 15, people take the pods and leave.</p>';
+      const cv = V.crewView(rules, s);
+      const when = (w) => w.replace(/^day >= (\d+)$/, 'from day $1').replace(/^morale >= (\d+)$/, 'while morale is $1 or more').replace(/^morale <= (\d+)$/, 'while morale is $1 or less');
+      const trait = (p) => `<span class="trait${p.active ? '' : ' off'}" title="${esc(p.text)}${p.when ? ` (${esc(when(p.when))})` : ''}">${esc(p.trait)}</span>`;
+      const eff = (p) => (p.effects.length ? `<span class="eff${p.active ? '' : ' off'}">${esc(p.effects.join(', '))}${p.active || !p.when ? '' : ` · ${esc(when(p.when))}`}</span>` : '');
+      h += '<h3>Officers</h3><ul class="people">';
+      for (const o of cv.officers) {
+        h += o.vacant ? `<li class="vacant" title="${esc(o.duty)}"><span class="post">${esc(o.post)}</span><b>Vacant</b><span class="eff">nobody among the ${esc(o.role)} to promote</span></li>`
+          : `<li title="${esc(o.duty)}"><span class="post">${esc(o.post)}</span><b>${esc(o.name)}</b>${trait(o)}${eff(o)}</li>`;
+      }
+      h += '</ul>';
       h += `<h3>Crew: ${count(s.crew)}</h3><table class="ct"><thead><tr><th></th><th>Aboard</th><th>Flying</th><th>Free</th></tr></thead><tbody>`;
       for (const r of ROLES) h += `<tr><th>${r[0].toUpperCase() + r.slice(1)}</th><td>${s.crew.roles[r]}</td><td>${s.crew.assigned[r]}</td><td>${free(s.crew, r)}</td></tr>`;
-      h += '</tbody></table><p class="fp-note">Every ship needs crew: building one takes them from the free crew. When a ship is destroyed, half its crew get away in pods.</p>';
-      h += '<h3>Hangar</h3><table class="ct"><tbody>';
-      for (const e of [...s.fleet].sort((a, b) => (b.xp | 0) - (a.xp | 0))) {
-        const max = V.shipMaxHp(rules, e), rk = V.rankName(rules, e.xp);
-        h += `<tr><th>${esc(rules.actor(e.type).traitInfo('Tooltip').Name)}</th><td class="${rk ? 'rk' : ''}">${rk || 'Green'}</td><td>${e.xp | 0} xp</td><td>${Math.trunc(((e.hp | 0) * 100) / max)}%</td></tr>`;
+      h += '</tbody></table><p class="fp-note">Officers are counted with their role and never fly. Every ship needs crew: building one takes them from the free crew. When a ship is destroyed, half its crew get away in pods; its named lead goes down with it.</p>';
+      h += '<h3>Hangar</h3><ul class="people ships">';
+      for (const e of [...cv.ships].sort((a, b) => b.xp - a.xp)) {
+        h += `<li><span class="post">${esc(e.ship)} <i class="${e.rank ? 'rk' : ''}">${e.rank || 'Green'} · ${e.xp} xp · ${e.hp}%</i></span>${e.lead ? `<b>${esc(e.lead.title)} ${esc(e.lead.name)}</b>${trait(e.lead)}${eff(e.lead)}${e.lead.kills ? `<span class="eff">${e.lead.kills} kill${e.lead.kills > 1 ? 's' : ''}</span>` : ''}` : '<span class="eff">no named lead</span>'}</li>`;
       }
-      h += `</tbody></table><p class="fp-note">${s.fleet.length ? 'Ships earn experience for every kill and every fight they come home from; ranks add 10% damage and hull each. Ships aboard mend a little every day.' : 'Empty.'}</p>`;
+      h += `</ul><p class="fp-note">${s.fleet.length ? 'Ships earn experience for every kill and every fight they come home from; ranks add 10% damage and hull each. Ships aboard mend a little every day. Every armed ship has a named pilot or captain, whose trait changes it.' : 'Empty.'}</p>`;
+      if (cv.standing.length) {
+        h += '<h3>Standing by</h3><ul class="people">';
+        for (const p of cv.standing) h += `<li><span class="post">${esc(p.title)}, no ship</span><b>${esc(p.name)}</b>${trait(p)}${eff(p)}</li>`;
+        h += '</ul><p class="fp-note">They will take the next ship that needs them.</p>';
+      }
+      if (cv.fallen.length) {
+        h += `<h3>In memory: ${cv.fallen.length}</h3><ol class="fallen">`;
+        for (const f of cv.fallen.slice(0, 40)) h += `<li><span>Day ${f.day}</span><b>${esc(f.title)} ${esc(f.name)}</b> ${esc(f.how)}.${f.kills ? ` ${f.kills} kill${f.kills > 1 ? 's' : ''}.` : ''}</li>`;
+        h += `</ol>${cv.fallen.length > 40 ? `<p class="fp-note">And ${cv.fallen.length - 40} more.</p>` : ''}`;
+      }
     } else if (this.tab === 'hold') {
       const f = V.forecast(rules, s), n = V.needs(rules, s), left = V.daysLeft(rules, s);
       h += `<p class="fp-note">${n.crew} crew need ${n.water} water, ${n.food} food and ${n.air} air a day. Life support makes air from water; the hydroponics grow food from water, and much faster with spores.</p><table class="ct"><thead><tr><th></th><th>Aboard</th><th>A day</th><th>Lasts</th></tr></thead><tbody>`;
@@ -332,7 +351,7 @@ export class ChartScreen {
     $('ce-title').textContent = won ? 'Home' : 'The voyage ends';
     $('ce-text').textContent = s.over.text;
     const fitted = Object.values(s.items).filter((v) => v === 'installed').length;
-    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Crew', count(s.crew)], ['Drive parts fitted', `${fitted} of 4`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Crew', count(s.crew)], ['Named crew lost', (s.crew.fallen || []).length], ['Drive parts fitted', `${fitted} of 4`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     $('chart-end').hidden = false;
     $('ce-new').onclick = () => this.onEnd('new');
     $('ce-title-btn').onclick = () => this.onEnd('title');

@@ -57,6 +57,9 @@ export function captain(rules, seed, { events = false, length = 'full' } = {}) {
   settle();
   for (let guard = 0; !s.over && guard < 600; guard++) {
     settle();
+    // a damaged drive stitches shorter: mend it (and anything badly hurt) while there is water
+    const sick = s.systems.drive < 100 ? 'drive' : V.SYSTEMS.find((k) => s.systems[k] < 70);
+    if (sick && V.daysLeft(rules, s).ice > 8 && V.repairPlan(rules, s, sick).ok) { V.repair(rules, s, sick); settle(); continue; }
     const next = order.find((id) => s.items[id] !== 'installed');
     const left = V.daysLeft(rules, s), here = g.points[s.at];
     // supplies first, checked at every stop

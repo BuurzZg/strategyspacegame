@@ -28,6 +28,9 @@ async function map(prep) {
 {
   const m = await map();
   m.tick(25 * 6);
+  // ranks alone here: no named leads' touch (crewtest covers those)
+  for (const a of m.w.actors) if (a.owner === m.me && a.lead) { a.leadDamage = a.leadHull = a.leadLearn = 0; m.w.ranks.fit(a); }
+  m.me.slot.xpPct = 100;
   const hal = m.w.actors.find((a) => a.owner === m.me && a.type === 'halberd');
   const hp0 = hal.health.maxHp;
   let kills = 0;
@@ -72,7 +75,7 @@ async function map(prep) {
 {
   const s = V.newVoyage(rules, { seed: 5 });
   s.queue = [];
-  const e = s.fleet.find((x) => x.type === 'halberd'), max = V.shipMaxHp(rules, e);
+  const e = s.fleet.find((x) => x.type === 'halberd'), max = V.shipMaxHp(rules, e, s);
   e.hp = Math.trunc(max / 2);
   V.dayTick(rules, s);
   const one = e.hp - Math.trunc(max / 2);

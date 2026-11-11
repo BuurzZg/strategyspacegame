@@ -399,12 +399,11 @@ New kinds of test arrive with the new layers:
 | 10 | Events, monsters, story | 25 events in YAML (the prologue, each drive part's arrival, discovery and fitting, the Hush, the Shore, the ending; distress calls that may be lures, pods, comet storms, signals, stowaways, spore blooms); Scrapwyrms that lie buried in rock fields and ambush; rust mites that hatch from infested wrecks; the Hollowhorn, whose song shakes a spooling Skein loose; the Choir and the Gaunt as other routes to the Lens and the Spindle |
 | 11 | Sensors, fog, engineering | Sensor fog on voyage maps (unseen ships cannot be seen or targeted by anyone; nebulae halve sensor range; last-seen markers); the Tactical Plot (Tab); the Wisp scout; deep scans on the chart; blueprints (Talon, Spindle and Sabre start locked: found by cutting wrecks of that hull, bought, or given in events); five engineering projects |
 | 12 | Polish and the first full run | New-run setup (seed, full or short voyage, permanent death or free saves, a guided first voyage with hint cards); saving anywhere, mid-map saves replayed exactly; named save slots; veterancy (ships earn ranks and keep them in the hangar); eleven Forge upgrades, some building on others; ships mend aboard; a sound pass; the AI captain finishes seeded runs of both lengths inside the target play time. No difficulty setting (decided: the pressure is survival and hostiles) |
+| 13 | Named crew | Eight officer posts and a named pilot or captain for every armed ship, counted in their roles; 17 traits in YAML (work, damage, hull, learning, morale; conditions; growth; Lucky escapes); losses pick who dies, fairly; leads die with their ships on maps; promotions fill empty posts; crew events by name, the memorial; old saves load with named crew. Decided: officers and pilots are named, everyone else stays a head count; deaths are permanent |
 
 ### Next
 
-| # | Milestone | Playable result | Checks |
-| --- | --- | --- | --- |
-| **13** | **Named crew** | Named crew members with roles and traits, built on the crew interface from Milestone 7. Traits live in YAML. Losses pick who dies; events can mention people by name | Trait modifiers apply through the condition system; role counts and named crew always agree; old saves still load |
+Every planned milestone is done. What comes next is a choice: playtesting and balance, or add-on packs (below).
 
 Each milestone is playable on its own. Milestones 4 and 5 run in the **Proving Grounds** sandbox, which stays in the game as a testing mode. From Milestone 6 you play generated points. From Milestone 7 you play a whole voyage.
 
@@ -464,7 +463,7 @@ Each milestone is playable on its own. Milestones 4 and 5 run in the **Proving G
 | 4 | Same galaxy or random | **A new seeded galaxy each run**; story locations are placed by rules |
 | 5 | Story | **Hand-written story moments plus random events** |
 | 6 | Leaving a map | **Always possible**, but some enemies can interrupt the spool-up |
-| 7 | Crew depth | **Role counts for now**, designed so named crew with traits can come later (Milestone 13) |
+| 7 | Crew depth | **Role counts for now**, designed so named crew with traits can come later (Milestone 13). Then: **officers and pilots are named**, everyone else stays a head count; **named crew die for good** (a Lucky pilot can get out once) |
 | 8 | Fleet between maps | **Ships travel with you**, limited by hangar space; losses are permanent |
 | 9 | Scale of fights | **Up to about 40 ships a side** |
 | 10 | Sandbox | **Keep the Proving Grounds** for testing |

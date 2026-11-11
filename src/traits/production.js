@@ -136,8 +136,12 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     const side = n % 2 ? -1 : 1;
     const pose = bay ? bay.pose(side) : { x: self.x, y: self.y, z: self.z, yaw: self.yaw };
     const unit = w.createActor(type, self.owner, pose);
+    // its lead: whoever led it before, or for a new armed ship the next named recruit
+    const roster = self.owner.crew, crew = this.crewOf(type);
+    const lead = !roster ? null : from ? roster.lead(from.lead) : crew && unit.info.traitInfo('Armament') ? roster.recruit(crew.Role) : null;
+    if (w.ranks) w.ranks.equip(unit, from ? from.xp | 0 : 0, lead);
+    unit.kills = from ? from.kills | 0 : 0;
     if (from) {
-      if (from.xp && w.ranks) w.ranks.set(unit, from.xp);
       if (unit.health && from.hp) unit.health.hp = Math.max(1, Math.min(unit.health.maxHp, from.hp));
       if (unit.collector && from.cargo) { unit.collector.cargo = from.cargo; unit.collector.kind = from.kind; }
       w.fx({ t: 'ready', actor: unit.id, type, owner: self.owner.index, x: pose.x, y: pose.y, z: pose.z, hangar: true });

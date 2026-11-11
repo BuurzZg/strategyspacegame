@@ -123,7 +123,7 @@ const place = (a, x, y, z) => { a.x = x; a.y = y; a.z = z; a.px = x; a.py = y; a
   check(all && V.sensorRange(rules, s) === Math.trunc((sense0 * 150) / 100) && V.forecast(rules, s).food > food0 && V.stitchCost(rules, s, len) < glim0 && V.forgeMaxHp(rules, s) === Math.trunc((rules.actor('forge').traitInfo('Health').HP * 125) / 100),
     `projects built: sensors ${sense0} → ${V.sensorRange(rules, s)} spans, food ${food0} → ${V.forecast(rules, s).food} a day, a stitch ${glim0} → ${V.stitchCost(rules, s, len)} Glim, hull ×1.25`);
   const m = await map(7, (v) => { v.items = { ...s.items }; v.forge.hp = V.forgeMaxHp(rules, v); });
-  check(m.me.capacity.cap() === 40 && m.forge.health.maxHp === V.forgeMaxHp(rules, s) && m.me.sensorPct === 150, `on a map: fleet capacity ${m.me.capacity.cap()}, the plated Forge's hull, and sensors at 150%`);
+  check(m.me.capacity.cap() === 40 && m.forge.health.maxHp === V.forgeMaxHp(rules, s) && m.me.sensorPct === V.projectBonus(rules, s, 'SensorPct'), `on a map: fleet capacity ${m.me.capacity.cap()}, the plated Forge's hull, and sensors at ${m.me.sensorPct}% (the array's 150%, and the watch officer)`);
 }
 
 // 5. A deep scan

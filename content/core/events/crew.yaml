@@ -1,0 +1,179 @@
+# The crew's own stories. They name people: {engineer}, {surgeon} and the other posts (the
+# officer at that post), {pilot} (the lead of the most experienced ship) and {pilotship} (that
+# ship), {fallen} (the last of the named dead). Conditions about them: officer <post> [trait],
+# trait <trait> (someone aboard has it), leads >= n, fallen >= n, morale >= n, morale <= n.
+# Effects: kill <post|pilot>, mark <post|pilot> <trait>, mend <system|hull> n, train n
+# (experience for every armed ship).
+
+Memorial:
+	When: arrive
+	If: fallen >= 3
+	Title: The memorial
+	Start: ask
+	Node@ask:
+		Say: The crew ask for a day to remember the dead. {fallen} was the last of them, and there are others. Someone has painted their names along the hangar wall.
+		Choice@hold:
+			Text: Hold the memorial.
+			Do: days 1, morale 8, close
+		Choice@later:
+			Text: Not now. We keep moving.
+			Do: morale -4, close
+
+LetterHome:
+	When: travel
+	Chance: 8
+	Once: false
+	If: leads >= 1, day >= 10
+	Title: A letter home
+	Start: ask
+	Node@ask:
+		Say: {pilot}, who flies the {pilotship}, asks for an hour on the long-range transmitter to send a letter home. Nobody knows if anything gets out of the Wrack. It would cost Glim.
+		Choice@yes:
+			Text: Give them the hour.
+			Do: pay glim 20, morale 4, close
+		Choice@no:
+			Text: We can't spare it.
+			Do: morale -2, close
+
+EngineersIdea:
+	When: day
+	Chance: 10
+	Once: false
+	If: officer engineer, day >= 20
+	Title: The chief engineer's idea
+	Start: idea
+	Node@idea:
+		Say: {engineer} wants to run the reactor hot for a day to burn the soot out of the drive couplings. "It works on paper," they say. "Mostly."
+		Choice@gifted:
+			If: officer engineer gifted
+			Text: You have never been wrong yet. Do it.
+			Do: mend drive 12, close
+		Choice@try:
+			Text: Try it.
+			Do: roll 55 good bad
+		Choice@no:
+			Text: Not on this ship.
+			Do: close
+	Node@good:
+		Say: The drive hums cleaner than it has in weeks.
+		Choice@ok:
+			Text: Well done.
+			Do: mend drive 10, close
+	Node@bad:
+		Say: A coupling cracks. {engineer} gets the reactor down before it gets worse, and does not speak to anyone for a day.
+		Choice@ok:
+			Text: It happens.
+			Do: damage reactor 8, mark engineer shaken, close
+
+Fever:
+	When: day
+	Chance: 8
+	Once: false
+	If: crew >= 40, day >= 15
+	Title: Fever on the lower decks
+	Start: fever
+	Node@fever:
+		Say: A fever is going through the hands' quarters: a dozen down already, and the recyclers are struggling.
+		Choice@surgeon:
+			If: officer surgeon
+			Text: {surgeon} wants to try a spore tincture. It might work.
+			Do: pay spores 80, roll 70 cured worse
+		Choice@seal:
+			Text: Seal the quarters until it burns out.
+			Do: lose hands 3, morale -4, days 1, close
+	Node@cured:
+		Say: It works. {surgeon} goes three days without sleep, and nobody else dies.
+		Choice@ok:
+			Text: Good work.
+			Do: morale 3, close
+	Node@worse:
+		Say: The tincture does nothing. {surgeon} keeps working the wards anyway, and catches it.
+		Choice@ok:
+			Text: Seal the quarters.
+			Do: lose hands 3, kill surgeon, morale -6, close
+
+Quarrel:
+	When: day
+	Chance: 8
+	Once: false
+	If: officer engineer, officer foundry, day >= 30
+	Title: A quarrel
+	Start: q
+	Node@q:
+		Say: {engineer} and {foundry} have not spoken in a week. It started over who gets the next load of salvage. Now their crews are taking sides.
+		Choice@eng:
+			Text: Side with {engineer}.
+			Do: mark foundry grim, morale -2, close
+		Choice@fdy:
+			Text: Side with {foundry}.
+			Do: mark engineer grim, morale -2, close
+		Choice@room:
+			Text: Lock them in a room until they settle it.
+			Do: days 1, roll 50 settled worse
+	Node@settled:
+		Say: They come out a day later, hoarse, with a joint salvage plan and something like respect.
+		Choice@ok:
+			Text: Good.
+			Do: morale 3, close
+	Node@worse:
+		Say: They come out a day later, still not speaking. The crews notice.
+		Choice@ok:
+			Text: Fine. Back to work.
+			Do: morale -4, close
+
+Drills:
+	When: arrive
+	Chance: 7
+	Once: false
+	If: officer wing, leads >= 2, day >= 8
+	Title: Drills
+	Start: ask
+	Node@ask:
+		Say: {wing} wants to put the pilots and captains through live drills off the bow before the fleet goes out again. It burns Glim, and it teaches.
+		Choice@yes:
+			Text: Run the drills.
+			Do: pay glim 40, train 2, close
+		Choice@no:
+			Text: Save the Glim.
+			Do: close
+
+FoldInTheSkein:
+	When: travel
+	Chance: 6
+	Once: false
+	If: officer navigator, day >= 12
+	Title: A fold in the Skein
+	Start: fold
+	Node@fold:
+		Say: Mid-stitch, {navigator} spots a fold in the Skein that could shave hours off the next one, if they thread it right.
+		Choice@thread:
+			Text: Thread it.
+			Do: roll 60 good bad
+		Choice@no:
+			Text: Stay on the plotted course.
+			Do: close
+	Node@good:
+		Say: The Forge slides through the fold like a needle. The Glim tanks read fuller than they should.
+		Choice@ok:
+			Text: Nicely done.
+			Do: give glim 60, close
+	Node@bad:
+		Say: The fold snaps shut around the drive's wake. Something in the coils screams.
+		Choice@ok:
+			Text: Hold together.
+			Do: damage drive 6, close
+
+TheStill:
+	When: day
+	Chance: 8
+	If: trait drinker
+	Title: The still
+	Start: s
+	Node@s:
+		Say: The watch has found a still behind the hydroponics racks, and a line of very cheerful hands waiting at it.
+		Choice@blind:
+			Text: Look the other way.
+			Do: morale 4, close
+		Choice@shut:
+			Text: Shut it down.
+			Do: morale -3, give food 40, close

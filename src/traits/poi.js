@@ -11,7 +11,7 @@ defineTrait('PointLayout', class extends Trait {
   worldLoaded() {
     const w = this.world, L = w.settings.layout;
     w.point = this;
-    this.log = new Map(); // player index -> { built, destroyed, arrived, found, crewLost, crewSaved }
+    this.log = new Map(); // player index -> { built, destroyed, arrived, found, crewLost, crewSaved, leadsLost, leadsSaved }
     this.encounters = [];
     w.nebulae = L ? L.nebulae : [];
     w.on('produced', (u) => { const l = this.logOf(u.owner); l.built[u.type] = (l.built[u.type] || 0) + 1; });
@@ -27,10 +27,16 @@ defineTrait('PointLayout', class extends Trait {
       }
       if (!a.mobile) return;
       l.destroyed[a.type] = (l.destroyed[a.type] || 0) + 1;
-      // half the crew (rounded down) get away in pods and come home; the rest are lost
-      const c = a.info.traitInfo('Crew');
+      // half the crew (rounded down) get away in pods and come home; the rest are lost. Its
+      // named lead goes down with it, unless their luck holds (Escape) one more time.
+      const c = a.info.traitInfo('Crew'), lead = a.lead && a.owner.crew ? a.owner.crew.lead(a.lead) : null;
+      if (lead) {
+        const name = a.info.traitInfo('Tooltip')?.Name || a.type;
+        if (lead.escape) { lead.escape = 0; l.leadsSaved.push({ id: lead.id, name: `${lead.title} ${lead.name}`, type: a.type, kills: a.kills | 0 }); w.notify(a.owner, `${lead.title} ${lead.name} got out of the ${name} in a pod.`, 'info'); }
+        else { l.leadsLost.push({ id: lead.id, name: `${lead.title} ${lead.name}`, type: a.type, kills: a.kills | 0, how: 'killed' }); w.notify(a.owner, `${lead.title} ${lead.name} was lost with the ${name}.`, 'bad'); }
+      }
       if (c && c.Count) {
-        const saved = c.Count >> 1;
+        const saved = Math.max(c.Count >> 1, lead && l.leadsSaved.some((x) => x.id === lead.id) ? 1 : 0);
         l.crewLost[c.Role] = (l.crewLost[c.Role] || 0) + c.Count - saved;
         l.crewSaved[c.Role] = (l.crewSaved[c.Role] || 0) + saved;
         if (a.owner.crew) a.owner.crew.give(c.Role, saved);
@@ -60,7 +66,7 @@ defineTrait('PointLayout', class extends Trait {
       this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' && e.behaviour !== 'escort' });
     }
   }
-  logOf(p) { if (!this.log.has(p.index)) this.log.set(p.index, { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {} }); return this.log.get(p.index); }
+  logOf(p) { if (!this.log.has(p.index)) this.log.set(p.index, { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {}, leadsLost: [], leadsSaved: [] }); return this.log.get(p.index); }
   tick() {
     const w = this.world;
     for (const e of this.encounters) {
@@ -116,7 +122,7 @@ defineTrait('Hangar', class Hangar extends Trait {
       c.cargo = 0;
     }
     const xp = (ship.xp | 0) + (ship.fought ? 1 : 0);
-    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '', xp });
+    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '', xp, ...(ship.lead ? { lead: ship.lead, kills: ship.kills | 0 } : {}) });
     w.fx({ t: 'aboard', actor: ship.id, type: ship.type, owner: ship.owner.index, x: ship.x, y: ship.y, z: ship.z });
     if (w.formations) w.formations.leave([ship]);
     ship.dead = true; // not destroyed: it is aboard (its DockHangar activity ends this tick)
@@ -173,7 +179,7 @@ defineTrait('Skein', class Skein extends Trait {
 // end = start + the sum of the changes, kind by kind. Ships: launched on arrival, built,
 // destroyed, left behind (outside the Forge when it left) and aboard (the fleet that goes on).
 export function visitReport(w, player, { forgeLost = false } = {}) {
-  const res = player.resources, log = w.point ? w.point.logOf(player) : { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {} };
+  const res = player.resources, log = w.point ? w.point.logOf(player) : { built: {}, destroyed: {}, arrived: [], found: [], crewLost: {}, crewSaved: {}, leadsLost: [], leadsSaved: [] };
   const forge = forgeLost ? null : w.actors.find((a) => a.owner === player && a.has('Hangar') && !a.dead);
   const hangar = forge ? forge.trait('Hangar') : null;
   const kinds = Object.keys(res.amounts);
@@ -187,7 +193,13 @@ export function visitReport(w, player, { forgeLost = false } = {}) {
   const count = (list) => list.reduce((m, t) => { m[t] = (m[t] || 0) + 1; return m; }, {});
   // crew: lost with ships destroyed (half get away in pods) and with every ship left behind
   const lost = { ...log.crewLost };
-  for (const a of outside) { const c = a.info.traitInfo('Crew'); if (c && c.Count) lost[c.Role] = (lost[c.Role] || 0) + c.Count; }
+  const leadsLost = [...log.leadsLost];
+  for (const a of outside) {
+    const c = a.info.traitInfo('Crew');
+    if (c && c.Count) lost[c.Role] = (lost[c.Role] || 0) + c.Count;
+    const l = a.lead && player.crew ? player.crew.lead(a.lead) : null;
+    if (l) leadsLost.push({ id: l.id, name: `${l.title} ${l.name}`, type: a.type, kills: a.kills | 0, how: 'left' });
+  }
   // hostiles destroyed
   let kills = 0;
   if (w.point) for (const p of w.players) if (player.isEnemy(p)) for (const n of Object.values(w.point.logOf(p).destroyed)) kills += n;
@@ -198,14 +210,15 @@ export function visitReport(w, player, { forgeLost = false } = {}) {
     forgeLost,
     kills,
     found: [...log.found],
-    crew: { lost, saved: { ...log.crewSaved } },
+    crew: { lost, saved: { ...log.crewSaved }, leadsLost, leadsSaved: [...log.leadsSaved], recruited: player.crew && player.crew.recruited ? player.crew.recruited.map((l) => ({ ...l })) : [] },
     standing: w.diplomacy && player === w.players[0] ? w.diplomacy.report() : { changes: {}, met: [] },
     stores,
     forge: forge ? { hp: forge.health.hp, maxHp: forge.health.maxHp } : null,
     ships: {
       arrived: count(log.arrived), built: { ...log.built }, destroyed: { ...log.destroyed },
       leftBehind: count(outside.map((a) => a.type)),
-      aboard: hangar ? hangar.aboard.map((e) => ({ ...e })) : [],
+      // aboard, and any still waiting in the bays to launch
+      aboard: hangar ? [...hangar.aboard, ...hangar.queue].map((e) => ({ ...e })) : [],
     },
   };
 }

@@ -143,7 +143,7 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   const s = V.newVoyage(rules, { seed: 7 });
   const g = V.galaxyOf(rules, s);
   s.at = g.components.coils; // the derelict with the Coils in it
-  s.crew.roles.pilots = s.crew.assigned.pilots + 2; // room for exactly one more Dart
+  s.crew.roles.pilots = s.crew.assigned.pilots + s.crew.people.filter((x) => x.post && x.role === 'pilots').length + 2; // room for exactly one more Dart (officers stay aboard)
   const settings = V.visitSettings(rules, s);
   const w = await makeWorld(settings), me = w.players[0];
   const order = (name, subjects, target, extra) => w.resolveOrder(makeOrder(name, subjects, target, extra), me);

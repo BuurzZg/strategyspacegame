@@ -32,11 +32,27 @@ defineTrait('PlayerResources', class extends Trait {
 // Free crew on a map, by role (engineers, pilots, miners, hands), from the voyage. A new ship
 // takes its crew from here when it is queued; cancelling gives them back. Without a roster in
 // the slot (the Proving Grounds, a single place) crew are not limited.
+// Named leads (crew.js): `leads` the people leading the ships aboard, by id; `recruits` by role,
+// who will lead each new ship built here, in order (decided by the voyage).
 defineTrait('CrewRoster', class extends Trait {
   created() {
     const slot = this.self.owner.slot || {};
     this.free = slot.crew ? { ...slot.crew } : null;
+    this.leads = {};
+    for (const [id, l] of Object.entries(slot.leads || {})) this.leads[id] = { ...l };
+    this.recruits = Object.fromEntries(Object.entries(slot.recruits || {}).map(([r, list]) => [r, list.map((l) => ({ ...l }))]));
+    this.recruited = [];
     this.self.owner.crew = this;
+  }
+  lead(id) { return id ? this.leads[id] || null : null; }
+  // the lead for a new ship crewed by `role` (null: nobody is named for it)
+  recruit(role) {
+    const list = this.recruits[role];
+    if (!list || !list.length) return null;
+    const l = list.shift();
+    this.leads[l.id] = l;
+    this.recruited.push({ ...l });
+    return l;
   }
   has(role, n) { return !this.free || (this.free[role] | 0) >= n; }
   take(role, n) { if (this.free) this.free[role] = (this.free[role] | 0) - n; }

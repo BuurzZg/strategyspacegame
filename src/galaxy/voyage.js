@@ -3,11 +3,11 @@ import { hashMix } from '../engine/math.js';
 import { mapKinds, weights } from '../engine/content.js';
 import { CELL } from '../engine/math.js';
 import { standingOf, tierIndex, tierName, meet, change, hasLeave, factionsAtWar } from './standing.js';
-import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart } from './comms.js';
+import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, applyOnChart, crewHolds } from './comms.js';
 import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
-import { ROLES, makeRoster, count, free, freeAll, loseAny, lose, assignFleet } from './crew.js';
+import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
 
 // The voyage: the run on the galaxy map. Plain data (it saves as JSON) plus pure,
 // deterministic functions that act on it. The galaxy itself is not saved: it is rebuilt from
@@ -17,7 +17,7 @@ import { ROLES, makeRoster, count, free, freeAll, loseAny, lose, assignFleet } f
 //   seed, day, ticks (map play not yet a whole day), at (place id), known (place ids seen),
 //   visited { id: times }, stores { every resource }, crew (crew.js roster), morale,
 //   systems { drive, reactor, life, hydro, foundry, sensors: 0-100 }, forge { hp },
-//   fleet [ { type, hp } ], items { id: 'found' | 'installed' }, airless (days in a row),
+//   fleet [ { type, hp, xp, lead (a person's id: crew.js) } ], items { id: 'found' | 'installed' }, airless (days in a row),
 //   over (null, or why it ended), log [ { day, text, kind } ]
 
 export const START_FLEET = ['halberd', 'dart', 'dart', 'gleaner', 'gleaner', 'shearer', 'skimmer'];
@@ -43,7 +43,7 @@ export function newVoyage(rules, { seed = 1, length = 'full', saves = 'permadeat
     version: SAVE_VERSION, kind: 'voyage', seed: seed | 0, length, saves, guided, hints: [],
     day: 1, ticks: 0, at: g.start, known: [], visited: {},
     stores,
-    crew: makeRoster(pairs(V.Crew)),
+    crew: makeRoster(pairs(V.Crew), seed),
     morale: num(V, 'Morale'),
     systems: Object.fromEntries(SYSTEMS.map((k) => [k, 100])),
     forge: { hp: rules.actor('forge').traitInfo('Health').HP },
@@ -54,7 +54,8 @@ export function newVoyage(rules, { seed = 1, length = 'full', saves = 'permadeat
     blueprints: [...(rules.content.blueprintStart || [])],
     log: [],
   };
-  assignFleet(s.crew, rules, s.fleet);
+  assignFleet(s.crew, rules, s.fleet, { day: 1, fresh: true });
+  for (const e of s.fleet) e.hp = shipMaxHp(rules, e, s); // a lead's touch on the hull
   reveal(rules, s);
   note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
   signalNote(rules, s);
@@ -83,8 +84,9 @@ function signalNote(rules, s) {
 export function note(s, text, kind = 'info') { s.log.push({ day: s.day, text, kind }); if (s.log.length > 400) s.log.splice(0, s.log.length - 400); }
 
 // ---------------------------------------------------------------- the Forge
-// Engineering projects fitted: percent bonuses multiply (FoodPct, SensorPct, GlimPct, HullPct),
-// Capacity adds.
+// Engineering projects fitted and the officers' work: percent bonuses multiply (FoodPct,
+// SensorPct, GlimPct, HullPct, BuildPct, RepairPct, TradePct, CarePct, XpPct, ...); Capacity
+// and Heal add (projects only).
 const ADDITIVE = ['Capacity', 'Heal'];
 export function projectBonus(rules, s, key) {
   let v = ADDITIVE.includes(key) ? 0 : 100;
@@ -93,13 +95,22 @@ export function projectBonus(rules, s, key) {
     if (st !== 'installed' || !it || it.Kind !== 'project' || it[key] === undefined) continue;
     v = ADDITIVE.includes(key) ? v + (+it[key] | 0) : Math.trunc((v * +it[key]) / 100);
   }
+  if (!ADDITIVE.includes(key) && s.crew.people) v = Math.trunc((v * officerPct(rules, s.crew, key, crewHolds(rules, s))) / 100);
   return v;
 }
-// A ship's full hull at its rank (veterancy)
-export function shipMaxHp(rules, e) {
+// A ship's lead and what they bring to it now (null if it has none)
+export function leadOf(rules, s, e) {
+  const p = e.lead && personById(s.crew, e.lead);
+  if (!p) return null;
+  const m = mods(rules, p, crewHolds(rules, s)), t = traitOf(rules, p);
+  return { id: p.id, name: p.name, role: p.role, title: titleOf(rules, p), trait: p.trait, traitName: t.Name, text: t.Text || '', damage: m.damage, hull: m.hull, learn: m.learn, escape: t.Escape ? 1 : 0, kills: p.kills | 0 };
+}
+// A ship's full hull at its rank (veterancy), and with its lead's touch when `s` is given
+export function shipMaxHp(rules, e, s = null) {
   const V = rules.content.voyage, steps = weights(V.Ranks || 'Seasoned 4, Veteran 10, Elite 20');
   let r = 0; steps.forEach(([, n], i) => { if ((e.xp | 0) >= n) r = i + 1; });
-  return Math.trunc((rules.actor(e.type).traitInfo('Health').HP * (100 + (V.RankBonus === undefined ? 10 : +V.RankBonus) * r)) / 100);
+  const lead = s ? leadOf(rules, s, e) : null;
+  return Math.trunc((rules.actor(e.type).traitInfo('Health').HP * Math.max(10, 100 + (V.RankBonus === undefined ? 10 : +V.RankBonus) * r + (lead ? lead.hull : 0))) / 100);
 }
 export function rankName(rules, xp) {
   const steps = weights(rules.content.voyage.Ranks || 'Seasoned 4, Veteran 10, Elite 20');
@@ -192,13 +203,17 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
   if (dry) return;
   // ships aboard mend (more with repair bays)
   const heal = num(V, 'FleetHeal') + projectBonus(rules, s, 'Heal');
-  for (const e of s.fleet) { const max = shipMaxHp(rules, e); e.hp = Math.min(max, (e.hp | 0) + Math.trunc((max * heal) / 100)); }
+  for (const e of s.fleet) { const max = shipMaxHp(rules, e, s); e.hp = Math.min(max, (e.hp | 0) + Math.trunc((max * heal) / 100)); }
 
   // the consequences, rung by rung
   s.airless = breathless ? s.airless + 1 : 0;
   const crew = count(s.crew);
-  if (hungry) { const k = Math.max(1, Math.trunc((crew * num(V, 'StarvePct')) / 100)); out.starved = sum(loseAny(s.crew, k)); note(s, `No food. ${out.starved} of the crew died.`, 'bad'); }
-  if (breathless) { const k = Math.max(1, Math.trunc((count(s.crew) * num(V, 'SuffocatePct')) / 100)); out.suffocated = sum(loseAny(s.crew, k)); note(s, `The air ran out. ${out.suffocated} of the crew suffocated.`, 'bad'); }
+  // the surgeon's care keeps some of them alive
+  const care = (pct) => Math.max(1, Math.trunc((Math.trunc((count(s.crew) * pct) / 100) * projectBonus(rules, s, 'CarePct')) / 100));
+  let f0 = s.crew.fallen.length;
+  if (hungry) { out.starved = sum(loseAny(s.crew, care(num(V, 'StarvePct')), { day: s.day, how: 'starved' }, s.fleet)); note(s, `No food. ${out.starved} of the crew died.${among(rules, s, f0)}`, 'bad'); }
+  f0 = s.crew.fallen.length;
+  if (breathless) { out.suffocated = sum(loseAny(s.crew, care(num(V, 'SuffocatePct')), { day: s.day, how: 'suffocated' }, s.fleet)); note(s, `The air ran out. ${out.suffocated} of the crew suffocated.${among(rules, s, f0)}`, 'bad'); }
   if (thirsty && !s.dry) note(s, 'The water is gone. Life support and the hydroponics have nothing to work with.', 'bad');
   s.dry = thirsty;
 
@@ -209,14 +224,19 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
     if (outNow) target -= num(V, 'MoraleOut'); else if (low(have, per)) target -= num(V, 'MoraleLow');
   }
   target += rest * num(V, 'MoraleRest');
+  target += moraleMod(rules, s.crew, crewHolds(rules, s)); // who is aboard
   if (out.starved || out.suffocated) target -= num(V, 'MoraleLow');
   target = Math.max(0, Math.min(100, target));
   s.morale = s.morale < target ? Math.min(target, s.morale + num(V, 'MoraleRise') * (1 + rest)) : Math.max(target, s.morale - num(V, 'MoraleFall'));
   if (s.morale < num(V, 'MoraleDesert') && count(s.crew) > 0) {
     const k = Math.max(1, Math.trunc((count(s.crew) * num(V, 'DesertPct')) / 100));
-    const n = lose(s.crew, 'hands', k) || sum(loseAny(s.crew, k));
-    note(s, `${n} of the crew took a pod and left in the night.`, 'bad');
+    const f1 = s.crew.fallen.length, why = { day: s.day, how: 'took a pod and left' };
+    const n = lose(s.crew, 'hands', k, why, s.fleet) || sum(loseAny(s.crew, k, why, s.fleet));
+    note(s, `${n} of the crew took a pod and left in the night.${among(rules, s, f1)}`, 'bad');
   }
+  // people grow into their traits, and whoever is gone is replaced
+  for (const t of grow(rules, s.crew, s.day + 1)) note(s, t, 'info'); // as the next day begins
+  for (const t of assignFleet(s.crew, rules, s.fleet, { day: s.day })) note(s, t, 'info');
 
   if (count(s.crew) <= 0) end(s, 'crew', 'There is nobody left aboard the Forge.');
   else if (s.airless >= num(V, 'AirlessDays')) end(s, 'air', `${s.airless} days without air. The Forge goes quiet.`);
@@ -224,6 +244,12 @@ export function dayTick(rules, s, { rest = 0, dry = false } = {}) {
   return out;
 }
 const sum = (m) => Object.values(m).reduce((a, b) => a + b, 0);
+// " Among them: Chief engineer Ada Voss and Pilot Kit Rask." for the named lost since `from`
+function among(rules, s, from) {
+  const f = s.crew.fallen.slice(from).map((p) => fullName(rules, p));
+  return f.length ? ` Among them: ${f.length > 1 ? `${f.slice(0, -1).join(', ')} and ${f[f.length - 1]}` : f[0]}.` : '';
+}
+export { among };
 
 export function passDays(rules, s, n, opts) { for (let i = 0; i < n && !s.over; i++) dayTick(rules, s, opts); }
 
@@ -308,7 +334,8 @@ function arrived(rules, s, stitched) {
 // An event's choice, on the star chart: its effects on the voyage (time passing, drive parts
 // found). Returns what the panel needs: { close, goto, notes }.
 export function eventChoice(rules, s, effects) {
-  const g = galaxyOf(rules, s), r = applyOnChart(rules, s, g, null, effects);
+  const g = galaxyOf(rules, s), ev = rules.content.events[(s.queue || [])[0]];
+  const r = applyOnChart(rules, s, g, null, effects, { how: ev ? `lost: ${ev.Title}` : 'lost' });
   if (r.days) passDays(rules, s, r.days);
   if (r.found) trigger(rules, s, g, 'found', { item: r.found });
   return r;
@@ -360,10 +387,11 @@ export function rest(rules, s) {
 export function repairPlan(rules, s, sys) {
   const V = rules.content.voyage, eng = free(s.crew, 'engineers'), pct = workPct(rules, s);
   if (eng <= 0) return no('No engineers are free.');
+  const crewPct = projectBonus(rules, s, 'RepairPct'); // the chief engineer
   if (sys === 'hull') {
     const max = forgeMaxHp(rules, s), missing = Math.trunc(((max - s.forge.hp) * 100) / max);
     if (missing <= 0) return no('The hull is sound.');
-    let p = Math.max(1, Math.trunc((eng * num(V, 'HullPer10Engineers') * pct) / 1000));
+    let p = Math.max(1, Math.trunc((Math.trunc((eng * num(V, 'HullPer10Engineers') * pct) / 1000) * crewPct) / 100));
     p = Math.min(p, missing, Math.trunc(s.stores.ore / Math.max(1, num(V, 'HullOre'))), Math.trunc(s.stores.salvage / Math.max(1, num(V, 'HullSalvage'))));
     if (p <= 0) return no('Not enough ore and salvage.');
     return { ok: true, points: p, ore: p * num(V, 'HullOre'), salvage: p * num(V, 'HullSalvage') };
@@ -371,7 +399,7 @@ export function repairPlan(rules, s, sys) {
   const c = s.systems[sys];
   if (c === undefined) return no('No such system.');
   if (c >= 100) return no('It needs no repair.');
-  let p = Math.max(1, Math.trunc((eng * num(V, 'RepairPer10Engineers') * pct) / 1000));
+  let p = Math.max(1, Math.trunc((Math.trunc((eng * num(V, 'RepairPer10Engineers') * pct) / 1000) * crewPct) / 100));
   p = Math.min(p, 100 - c, Math.trunc(s.stores.ore / Math.max(1, num(V, 'RepairOre'))), Math.trunc(s.stores.salvage / Math.max(1, num(V, 'RepairSalvage'))));
   if (p <= 0) return no('Not enough ore and salvage.');
   return { ok: true, points: p, ore: p * num(V, 'RepairOre'), salvage: p * num(V, 'RepairSalvage') };
@@ -440,6 +468,28 @@ export function jumpHome(rules, s) {
   return { ok: true };
 }
 
+// ---------------------------------------------------------------- the named crew, for the screens
+const LABEL = { RepairPct: 'repairs', BuildPct: 'build speed', FoodPct: 'food grown', GlimPct: 'Glim a stitch', SensorPct: 'sensor range', TradePct: 'prices you pay', CarePct: 'deaths from hunger and bad air', XpPct: 'experience earned' };
+const pc = (n) => `${n > 0 ? '+' : '−'}${Math.abs(n)}%`;
+// What a trait does for this person, in words: ['repairs +10%', 'morale +3'], and whether it
+// holds now (When). `post`: their post, or null for a ship's lead.
+function effects(rules, p, post, holds) {
+  const t = traitOf(rules, p), m = mods(rules, p, () => true), out = [];
+  if (post && m.work) out.push(`${LABEL[post.Bonus] || post.Bonus} ${pc(post.Less === 'true' ? -m.work : m.work)}`);
+  if (!post) { if (m.damage) out.push(`damage ${pc(m.damage)}`); if (m.hull) out.push(`hull ${pc(m.hull)}`); if (m.learn) out.push(`experience ${pc(m.learn)}`); if (t.Escape) out.push('gets out once'); }
+  if (m.morale) out.push(`morale ${m.morale > 0 ? '+' : '−'}${Math.abs(m.morale)}`);
+  return { list: out, active: !t.When || holds(t.When), when: t.When || '' };
+}
+export function crewView(rules, s) {
+  const c = s.crew, C = rules.content.crew, holds = crewHolds(rules, s);
+  const person = (p, post) => { const t = traitOf(rules, p), e = effects(rules, p, post, holds); return { id: p.id, name: p.name, title: titleOf(rules, p), trait: t.Name, text: t.Text || '', effects: e.list, active: e.active, when: e.when, since: p.joined | 0, kills: p.kills | 0 }; };
+  const officers = Object.values(C.posts).map((post) => { const o = c.people.find((p) => p.post === post.id); return o ? { post: post.Name, duty: post.Text || '', ...person(o, post) } : { post: post.Name, duty: post.Text || '', vacant: true, role: post.Role }; });
+  const ships = s.fleet.map((e) => { const p = e.lead && personById(c, e.lead); return { type: e.type, ship: rules.actor(e.type).traitInfo('Tooltip').Name, xp: e.xp | 0, rank: rankName(rules, e.xp), hp: Math.trunc(((e.hp | 0) * 100) / shipMaxHp(rules, e, s)), lead: p ? person(p, null) : null }; });
+  const standing = c.people.filter((p) => !p.post && !s.fleet.some((e) => e.lead === p.id)).map((p) => person(p, null));
+  const fallen = [...c.fallen].reverse().map((f) => ({ name: f.name, title: titleOf(rules, f), trait: traitOf(rules, f).Name, day: f.day, how: f.how, kills: f.kills | 0 }));
+  return { officers, ships, standing, fallen };
+}
+
 // ---------------------------------------------------------------- the maps
 // World settings for going in to the place the Forge is at.
 export function visitSettings(rules, s) {
@@ -495,6 +545,7 @@ export function visitSettings(rules, s) {
   settings.poi.leave = p.owner ? hasLeave(rules, s, p.owner) || activeTreaties(s, p.owner).includes('Leave') : true;
   settings.poi.treaties = Object.fromEntries(factions.map((fid) => [fid, activeTreaties(s, fid)]));
   settings.poi.danger = +R.Danger || 1;
+  const { leads, recruits } = mapCrew(rules, s);
   settings.voyage = { flags: [...(s.flags || [])], day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
   return {
     ...settings,
@@ -503,7 +554,8 @@ export function visitSettings(rules, s) {
     players: [
       {
         name: 'You', faction: 'meridian', client: 0, ships: ['forge'], stores, hangar: s.fleet.map((e) => ({ ...e })), forgeHp: s.forge.hp,
-        crew: freeAll(s.crew), buildSpeed: Math.trunc((Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100) * projectBonus(rules, s, 'BuildPct')) / 100),
+        crew: Object.fromEntries(ROLES.map((r) => [r, free(s.crew, r) - officersIn(s.crew, r).length])), leads, recruits,
+        xpPct: projectBonus(rules, s, 'XpPct'), buildSpeed: Math.trunc((Math.trunc((output(s, 'foundry') * workPct(rules, s)) / 100) * projectBonus(rules, s, 'BuildPct')) / 100),
         forgeDamagePct: projectBonus(rules, s, 'ForgeDamagePct'), launchPct: projectBonus(rules, s, 'LaunchPct'),
         blueprints: [...(s.blueprints || [])], capacityBonus: projectBonus(rules, s, 'Capacity'), sensorPct: projectBonus(rules, s, 'SensorPct'), forgeHpPct: projectBonus(rules, s, 'HullPct'),
         spoolPct: Math.max(100, Math.trunc(10000 / Math.max(1, 50 + (s.systems.drive >> 1)))),
@@ -513,6 +565,30 @@ export function visitSettings(rules, s) {
     ],
     relations: relationsFor(rules, factions, (fid) => (truce(fid) && tierOf(fid) === 0 ? 1 : tierOf(fid))),
   };
+}
+
+// The named crew a map needs: the leads of the ships aboard, and for ships built there, who
+// would lead them (named leads with no ship first, then new people, decided now so the
+// simulation stays deterministic). Officers stay aboard the Forge.
+const RECRUITS = 6;
+export function mapCrew(rules, s) {
+  const c = s.crew, leads = {}, recruits = {}, taken = namesInUse(c);
+  // the visit a save from before named crew was made in: replay it as it was played
+  const plain = s.plainVisit === s.visits;
+  const strip = (l) => (plain ? { ...l, damage: 0, hull: 0, learn: 0, escape: 0 } : l);
+  for (const e of s.fleet) { const l = leadOf(rules, s, e); if (l) leads[l.id] = strip(l); }
+  const roles = Object.keys(rules.content.crew?.leads || {}).filter((r) => ROLES.includes(r));
+  for (const r of roles) {
+    const list = idle(c, s.fleet, r).map((p) => strip(leadOf(rules, s, { lead: p.id })));
+    for (let i = 0; i < RECRUITS; i++) {
+      const p = newPerson(rules, c, c.next + i * ROLES.length + ROLES.indexOf(r), r, { lead: true, day: s.day, taken });
+      taken.add(p.name);
+      const t = traitOf(rules, p), m = mods(rules, p, crewHolds(rules, s));
+      list.push(strip({ id: p.id, name: p.name, role: r, title: titleOf(rules, p), trait: p.trait, traitName: t.Name, text: t.Text || '', damage: m.damage, hull: m.hull, learn: m.learn, escape: t.Escape ? 1 : 0, kills: 0, fresh: 1 }));
+    }
+    recruits[r] = list;
+  }
+  return { leads, recruits };
 }
 
 // Who fights whom on a map: you and each faction by your standing (Hostile: enemies, Allied:
@@ -536,11 +612,38 @@ export function returnFromMap(rules, s, report) {
   for (const [k, st] of Object.entries(report.stores)) s.stores[k] = st.end;
   const maxHp = forgeMaxHp(rules, s), hpBefore = s.forge.hp;
   s.forge.hp = report.forge ? report.forge.hp : 0;
-  s.fleet = report.ships.aboard.map((e) => ({ type: e.type, hp: e.hp, xp: e.xp | 0 }));
-  // crew lost with ships destroyed or left behind
-  const lost = report.crew ? report.crew.lost : {};
-  for (const r of ROLES) if (lost[r]) lose(s.crew, r, lost[r]);
-  assignFleet(s.crew, rules, s.fleet);
+  // the named: new leads of ships built there join; leads who got out of a lost ship come back
+  // shaken; leads lost with their ships, or left behind, are gone
+  const C = report.crew || {}, c = s.crew, lost = { ...(C.lost || {}) };
+  for (const l of C.recruited || []) {
+    if (personById(c, l.id) || c.fallen.some((f) => f.id === l.id)) continue;
+    c.people.push({ id: l.id, name: l.name, role: l.role, post: '', trait: l.trait, traitDay: s.day, joined: s.day, kills: 0 });
+    c.next = Math.max(c.next, l.id + 1);
+  }
+  for (const l of C.leadsSaved || []) {
+    const q = personById(c, l.id), t = q && traitOf(rules, q);
+    if (!q) continue;
+    q.kills = (q.kills | 0) + (l.kills | 0);
+    if (t.Escape && rules.content.crew.traits[t.Escape]) { q.trait = t.Escape; q.traitDay = s.day; }
+    note(s, `${fullName(rules, q)} got out in a pod when the ${shipName(rules, l.type)} was lost. ${traitOf(rules, q).Name} now.`, 'info');
+  }
+  const kills = {};
+  for (const e of report.ships.aboard) if (e.lead && e.kills) kills[e.lead] = (kills[e.lead] | 0) + e.kills;
+  for (const l of C.leadsLost || []) {
+    const q = personById(c, l.id);
+    if (!q) continue;
+    q.kills = (q.kills | 0) + (l.kills | 0);
+    kill(c, q.id, { day: s.day, how: l.how === 'left' ? `left behind at ${p.name} with the ${shipName(rules, l.type)}` : `killed at ${p.name}, flying the ${shipName(rules, l.type)}` });
+    lost[q.role] = Math.max(0, (lost[q.role] | 0) - 1);
+    note(s, `${fullName(rules, q)} ${l.how === 'left' ? 'was left behind' : 'was lost'} with the ${shipName(rules, l.type)}.${q.kills ? ` ${q.kills} kill${q.kills > 1 ? 's' : ''}.` : ''}`, 'bad');
+  }
+  for (const [id, n] of Object.entries(kills)) { const q = personById(c, +id); if (q) q.kills = (q.kills | 0) + n; }
+  s.fleet = report.ships.aboard.map((e) => ({ type: e.type, hp: e.hp, xp: e.xp | 0, ...(e.lead && personById(c, e.lead) ? { lead: e.lead } : {}) }));
+  // the rest of the crew lost with ships destroyed or left behind
+  const f0 = c.fallen.length;
+  for (const r of ROLES) if (lost[r]) loseFlying(c, r, lost[r], { day: s.day, how: `killed at ${p.name}` }, s.fleet);
+  if (c.fallen.length > f0) note(s, `Also lost at ${p.name}:${among(rules, s, f0).replace(' Among them:', '')}`, 'bad');
+  for (const t of assignFleet(c, rules, s.fleet, { day: s.day })) note(s, t, 'info');
   // hull damage wears the Forge's systems down
   const hullLost = Math.trunc(((hpBefore - s.forge.hp) * 100) / maxHp);
   if (hullLost > 0 && report.forge) {
@@ -576,7 +679,7 @@ export function returnFromMap(rules, s, report) {
   if ((report.kills || 0) >= 3) s.morale = Math.min(100, s.morale + num(V, 'MoraleWin'));
   s.visited[p.id] = (s.visited[p.id] | 0) + 1;
   s.visits++;
-  const lostCrew = sum(lost);
+  const lostCrew = sum(C.lost || {});
   note(s, `Left ${p.name} after ${(report.ticks / num(V, 'DayTicks')).toFixed(1)} days.${shipsLost ? ` ${shipsLost} ship${shipsLost > 1 ? 's' : ''} lost${lostCrew ? `, and ${lostCrew} crew` : ''}.` : ''}`, shipsLost ? 'bad' : 'info');
   if (!report.forge) { end(s, 'forge', `The Forge was destroyed at ${p.name}.`); return s; }
   // the days spent there
@@ -588,12 +691,22 @@ export function returnFromMap(rules, s, report) {
   return s;
 }
 
+const shipName = (rules, type) => (rules.actors.has(type) ? rules.actor(type).traitInfo('Tooltip').Name : type);
+
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
   if (s && s.kind === 'voyage' && s.version === 2) { s.standing = {}; s.met = {}; s.version = 3; } // from Milestone 7
+  // from Milestone 12 and before: the crew get their names now (and a visit in progress is
+  // replayed without their traits, as it was played)
+  if (s && s.kind === 'voyage' && s.version === 3) {
+    Object.assign(s.crew, { seed: s.seed | 0, next: 1, rolls: 0, people: [], fallen: [] });
+    assignFleet(s.crew, rules, s.fleet || [], { day: s.day | 0, fresh: true });
+    s.plainVisit = s.visits | 0;
+    s.version = 4;
+  }
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   // from Milestone 10: everything could be built then, so keep it that way
   if (s && s.kind === 'voyage' && !s.blueprints) s.blueprints = [...new Set([...(rules.content.blueprintStart || []), ...Object.values(rules.content.items).filter((i) => i.Kind === 'blueprint').map((i) => i.Unlocks)])];

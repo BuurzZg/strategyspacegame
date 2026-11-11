@@ -31,8 +31,16 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
   // early and late, with and without each flag
   const s0 = V.newVoyage(rules, { seed: 3 }), g = V.galaxyOf(rules, s0);
   const flags = [...new Set(Object.values(E).flatMap((e) => list(e.If).map(C.parseCond).filter((c) => c.op === 'flag').map((c) => c.flag)))];
+  // and a crew that has lost people, with every officer's trait and every trait that events ask for
+  const sx = JSON.parse(JSON.stringify(s0)), conds = [];
+  for (const e of Object.values(E)) { conds.push(...list(e.If).map(C.parseCond)); for (const n of Object.values(e)) if (n && typeof n === 'object') for (const c of Object.values(n)) if (c && c.If) conds.push(...list(c.If).map(C.parseCond)); }
+  sx.crew.fallen = [1, 2, 3].map((i) => ({ id: 900 + i, name: `Lost ${i}`, role: 'hands', post: '', trait: 'steady', day: 1, how: 'lost' }));
+  for (const c of conds) {
+    if (c.op === 'officer' && c.trait) sx.crew.people.find((p) => p.post === c.post).trait = c.trait;
+    if (c.op === 'trait') sx.crew.people.push({ id: 950 + sx.crew.people.length, name: `Someone ${c.trait}`, role: 'hands', post: '', trait: c.trait });
+  }
   const states = [];
-  for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...s0, items, day, flags: fl });
+  for (const base of [s0, sx]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
   const unreachable = [];
   let choices = 0;
   for (const e of Object.values(E)) {
@@ -42,8 +50,8 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
     // nodes and choices, from Start, following Goto and rolls
     const seen = new Set([e.Start]), queue = [e.Start], picked = new Set();
     while (queue.length) {
-      const id = queue.shift(), v = C.nodeView(V.eventContext(rules, s0, g, e), id);
-      for (const c of v.choices) {
+      const id = queue.shift();
+      for (const c of [s0, sx].flatMap((st) => C.nodeView(V.eventContext(rules, st, g, e), id).choices)) {
         picked.add(`${id}.${c.id}`);
         const next = [c.goto, ...c.effects.filter((x) => x.op === 'roll').flatMap((x) => [x.yes, x.no])].filter(Boolean);
         for (const n of next) if (!seen.has(n)) { seen.add(n); queue.push(n); }

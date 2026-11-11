@@ -1,0 +1,183 @@
+# Named crew. Most of the people aboard the Forge are a head count in four roles (engineers,
+# pilots, miners, hands). A few have names: the officers who head its departments, and the
+# lead of every armed ship (its pilot, or the captain of a ship crewed by hands). They are
+# counted in their role like everyone else, so the head counts and the names always agree.
+#
+# Posts: the officers.
+#   Role   which role they come from
+#   Bonus  what their work changes (the same percent keys engineering projects use):
+#          RepairPct (a day's repairs), BuildPct (the foundry), FoodPct (the hydroponics),
+#          GlimPct (Glim a stitch), SensorPct (sensor range), TradePct (prices you pay),
+#          CarePct (people lost to hunger and bad air), XpPct (experience ships earn)
+#   Less   true when their work lowers the number (GlimPct, TradePct, CarePct)
+#
+# Traits: what someone is like. An officer's Work adds to their post's bonus, in percent;
+# a lead's Damage, Hull and Learn (experience) change their ship, in percent. Morale adds to
+# the crew's morale while they are aboard. Modifiers hold only while When holds (the same
+# conditions as events: morale >= 60, day >= 200, officer surgeon, ...).
+#   For      officer, lead or both (who can be given it when they join)
+#   Weight   how often it is given (0: only by events and growth)
+#   After, Becomes   after this many days in the trait, it becomes another
+#   Escape   once, they get out of their ship when it is lost, and take this trait
+#
+# Leads: the title of an armed ship's lead, by its crew's role. Ships crewed by other roles
+# have no named lead.
+
+Posts:
+	engineer:
+		Name: Chief engineer
+		Role: engineers
+		Bonus: RepairPct
+		Text: Runs the repair crews. Their work changes how much a day of repairs mends.
+	foundry:
+		Name: Foundry master
+		Role: engineers
+		Bonus: BuildPct
+		Text: Runs the foundry. Their work changes how fast ships are built.
+	grower:
+		Name: Grower
+		Role: hands
+		Bonus: FoodPct
+		Text: Keeps the hydroponics. Their work changes how much food grows.
+	navigator:
+		Name: Navigator
+		Role: pilots
+		Bonus: GlimPct
+		Less: true
+		Text: Plots the stitches. Their work changes the Glim each stitch burns.
+	watch:
+		Name: Watch officer
+		Role: hands
+		Bonus: SensorPct
+		Text: Keeps the sensor watch. Their work changes how far the sensors reach.
+	quartermaster:
+		Name: Quartermaster
+		Role: hands
+		Bonus: TradePct
+		Less: true
+		Text: Does the haggling. Their work changes what traders ask.
+	surgeon:
+		Name: Surgeon
+		Role: hands
+		Bonus: CarePct
+		Less: true
+		Text: Keeps people alive. Their work changes how many are lost to hunger and bad air.
+	wing:
+		Name: Wing commander
+		Role: pilots
+		Bonus: XpPct
+		Text: Drills the pilots and captains. Their work changes how fast ships earn experience.
+
+Leads:
+	pilots: Pilot
+	hands: Captain
+
+Traits:
+	steady:
+		Name: Steady
+		Text: Does the job, every day, without fuss.
+		For: both
+		Weight: 30
+		Work: 10
+		Hull: 10
+	gifted:
+		Name: Gifted
+		Text: The best at this the Forge has had.
+		For: officer
+		Weight: 8
+		Work: 25
+	green:
+		Name: Green
+		Text: New to it, and still learning. In 50 days they will have the hang of it.
+		For: both
+		Weight: 10
+		Work: -10
+		Damage: -10
+		After: 50
+		Becomes: steady
+	grim:
+		Name: Grim
+		Text: Gets results and does not care who it upsets.
+		For: both
+		Weight: 8
+		Work: 15
+		Damage: 10
+		Morale: -2
+	beloved:
+		Name: Beloved
+		Text: People would follow them anywhere.
+		For: both
+		Weight: 8
+		Morale: 3
+	drinker:
+		Name: Drinker
+		Text: Keeps a still behind the hydroponics racks, and shares.
+		For: officer
+		Weight: 6
+		Work: -10
+		Morale: 2
+	fairweather:
+		Name: Fair-weather
+		Text: Brilliant while things go well.
+		For: both
+		Weight: 6
+		Work: 20
+		Damage: 15
+		When: morale >= 60
+	iron:
+		Name: Iron
+		Text: At their best when everything is falling apart.
+		For: both
+		Weight: 6
+		Work: 25
+		Damage: 20
+		When: morale <= 40
+	homesick:
+		Name: Homesick
+		Text: Counts the days. After the 250th, it starts to show.
+		For: both
+		Weight: 5
+		Work: -15
+		Damage: -10
+		Morale: -1
+		When: day >= 250
+	ace:
+		Name: Ace
+		Text: Born for a cockpit.
+		For: lead
+		Weight: 10
+		Damage: 20
+	careful:
+		Name: Careful
+		Text: Flies as if the hull were their own skin.
+		For: lead
+		Weight: 10
+		Hull: 20
+	hotshot:
+		Name: Hotshot
+		Text: Fast, loud and closer to the enemy than anyone needs to be.
+		For: lead
+		Weight: 8
+		Damage: 30
+		Hull: -15
+	quick:
+		Name: Quick study
+		Text: Learns something from every fight.
+		For: lead
+		Weight: 8
+		Learn: 60
+	lucky:
+		Name: Lucky
+		Text: Has walked away from wrecks before. Once more, maybe.
+		For: lead
+		Weight: 6
+		Escape: shaken
+	shaken:
+		Name: Shaken
+		Text: Got out of a dying ship and has not been the same since. It may pass in 40 days.
+		For: both
+		Weight: 0
+		Work: -10
+		Damage: -15
+		After: 40
+		Becomes: steady

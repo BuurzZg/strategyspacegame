@@ -164,7 +164,7 @@ export class Hud {
     $('report-title').textContent = r.forgeLost ? `The Forge is lost at ${r.place ? r.place.name : 'this place'}` : `Leaving ${r.place ? r.place.name : 'this place'}`;
     const crewLost = r.crew ? Object.values(r.crew.lost).reduce((a, b) => a + b, 0) : 0;
     const found = (r.found || []).map((id) => this.world.rules.content.items[id]?.Name || id);
-    $('report-sub').textContent = `${Math.floor(r.seconds / 60)} min ${r.seconds % 60} s here${r.ticks ? ` (${(r.ticks / 6000).toFixed(1)} days)` : ''}. ${lost + behind ? `${lost + behind} ship${lost + behind > 1 ? 's' : ''} did not come home${crewLost ? `, and ${crewLost} crew with them` : ''}.` : 'Everyone came home.'}${found.length ? ` Found: the ${found.join(' and the ')}.` : ''}`;
+    $('report-sub').textContent = `${Math.floor(r.seconds / 60)} min ${r.seconds % 60} s here${r.ticks ? ` (${(r.ticks / 6000).toFixed(1)} days)` : ''}. ${lost + behind ? `${lost + behind} ship${lost + behind > 1 ? 's' : ''} did not come home${crewLost ? `, and ${crewLost} crew with them` : ''}.` : 'Everyone came home.'}${r.crew && r.crew.leadsLost && r.crew.leadsLost.length ? ` Lost: ${r.crew.leadsLost.map((l) => l.name).join(', ')}.` : ''}${r.crew && r.crew.leadsSaved && r.crew.leadsSaved.length ? ` Got out: ${r.crew.leadsSaved.map((l) => l.name).join(', ')}.` : ''}${found.length ? ` Found: the ${found.join(' and the ')}.` : ''}`;
     $('report-stores').innerHTML = `<thead><tr><th></th><th>Arrived with</th><th>Gathered</th><th>Spent</th><th>Leaving with</th></tr></thead><tbody>${rows}</tbody>`;
     $('report-ships').innerHTML = [
       ['Aboard', list(aboard)],
@@ -589,6 +589,12 @@ export class Hud {
       if (this.world.ranks && a.mobile && !a.has('Hangar') && this.input.isMine(a)) {
         const R = this.world.ranks, next = R.steps[a.rank | 0];
         stats.push(['Rank', `${R.nameOf(a.rank) || 'Green'}${a.rank ? ` (+${R.bonus * a.rank}%)` : ''}`], ['Experience', next ? `${a.xp | 0} / ${next[1]}` : `${a.xp | 0}`]);
+        // its named pilot or captain, and what they bring
+        const l = a.lead && a.owner.crew ? a.owner.crew.lead(a.lead) : null;
+        if (l) {
+          const fx = [l.damage && `damage ${l.damage > 0 ? '+' : ''}${l.damage}%`, l.hull && `hull ${l.hull > 0 ? '+' : ''}${l.hull}%`, l.learn && `learns ${l.learn > 0 ? '+' : ''}${l.learn}%`, l.escape && 'lucky'].filter(Boolean).join(', ');
+          stats.push([l.title, `${esc(l.name)} · <span title="${esc(l.text || '')}">${esc(l.traitName)}</span>${fx ? ` <span class="sub">(${fx})</span>` : ''}${(l.kills | 0) + (a.kills | 0) ? ` · ${(l.kills | 0) + (a.kills | 0)} kills` : ''}`]);
+        }
       }
       const dropoff = a.trait('OreDropoff');
       if (dropoff) stats.push(['Docked', `${dropoff.slots.filter(Boolean).length} of ${dropoff.slots.length}`]);
@@ -598,7 +604,7 @@ export class Hud {
         stats.push(['Building', cur ? `${this.world.rules.actor(cur).traitInfo('Tooltip').Name} ${Math.floor((q.progress / q.duration(cur)) * 100)}%` : 'Idle']);
       } else if (!dropoff) stats.splice(3, 0, ['Pitch', `${Math.round((a.pitch / 1024) * 360)}°`]);
       $('sel-status').textContent = status;
-      $('sel-stats').innerHTML = stats.map(([k, v]) => `<div${k === 'Building' || k === 'Hold' ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+      $('sel-stats').innerHTML = stats.map(([k, v]) => `<div${k === 'Building' || k === 'Hold' || k === 'Pilot' || k === 'Captain' ? ' class="wide"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('');
     } else {
       const counts = {};
       for (const a of sel) { const n = a.info.traitInfo('Tooltip').Name; counts[n] = (counts[n] || 0) + 1; }

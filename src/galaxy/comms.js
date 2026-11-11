@@ -1,6 +1,6 @@
 import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
-import { ROLES } from './crew.js';
+import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
 // offer choices; a choice shows when its conditions hold and does a short list of effects from
@@ -39,6 +39,12 @@ export function parseCond(text) {
   if (w[0] === 'item' && w[1] && ['missing', 'found', 'installed'].includes(w[2])) return { op: 'item', item: w[1], state: w[2] };
   if (w[0] === 'here' && w[1] === 'relic' && w[2]) return { op: 'relic', item: w[2] };
   if (w[0] === 'crew' && w[1] === '>=' && +w[2] >= 0) return { op: 'crew', n: +w[2] };
+  // the named crew (traits' When, and events)
+  if (w[0] === 'morale' && (w[1] === '>=' || w[1] === '<=') && Number.isFinite(+w[2])) return { op: 'morale', cmp: w[1], n: +w[2] };
+  if (w[0] === 'officer' && w[1]) return { op: 'officer', post: w[1], trait: w[2] || '' };
+  if (w[0] === 'trait' && w[1]) return { op: 'trait', trait: w[1] };
+  if (w[0] === 'fallen' && w[1] === '>=' && +w[2] >= 0) return { op: 'fallen', n: +w[2] };
+  if (w[0] === 'leads' && w[1] === '>=' && +w[2] >= 0) return { op: 'leads', n: +w[2] };
   return { op: 'bad', text };
 }
 export function parseEffect(text) {
@@ -62,6 +68,11 @@ export function parseEffect(text) {
     case 'monster': return w[1] ? { op: 'ambush', side: 'fauna', ships: w[1].split('+'), delay: +w[2] || 0, behaviour: w[1] === 'wyrm' ? 'burrow' : 'hunt' } : { op: 'bad', text };
     case 'roll': return +w[1] > 0 && w[2] && w[3] ? { op: 'roll', chance: +w[1], yes: w[2], no: w[3] } : { op: 'bad', text };
     case 'faction': return w[1] && Number.isFinite(+w[2]) ? { op: 'fstanding', fid: w[1], n: +w[2] } : { op: 'bad', text };
+    // the named crew: someone dies, someone changes; repairs; the fleet drills
+    case 'kill': return w[1] ? { op: 'kill', who: w[1] } : { op: 'bad', text };
+    case 'mark': return w[1] && w[2] ? { op: 'mark', who: w[1], trait: w[2] } : { op: 'bad', text };
+    case 'mend': return (w[1] === 'hull' || ['drive', 'reactor', 'life', 'hydro', 'foundry', 'sensors'].includes(w[1])) && +w[2] > 0 ? { op: 'mend', system: w[1], n: +w[2] } : { op: 'bad', text };
+    case 'train': return +w[1] > 0 ? { op: 'train', n: +w[1] } : { op: 'bad', text };
     default: return { op: 'bad', text };
   }
 }
@@ -88,8 +99,26 @@ export function lintDialog(rules, d) {
       if (c.Goto && !d[nodeKey(c.Goto)]) errs.push(`${where}: Goto "${c.Goto}" is not a node`);
       for (const x of list(c.Do)) { const p = parseEffect(x); if (p.op === 'roll') for (const n of [p.yes, p.no]) if (!d[nodeKey(n)]) errs.push(`${where}: roll goes to "${n}", which is not a node`); if (p.op === 'item' && !rules.content.items[p.item]) errs.push(`${where}: unknown item "${p.item}"`); if (p.op === 'fstanding' && !rules.content.factions[p.fid]) errs.push(`${where}: unknown faction "${p.fid}"`); if (p.op === 'ambush' && p.side !== 'fauna' && !rules.content.factions[p.side]) errs.push(`${where}: unknown side "${p.side}"`); if (p.op === 'ambush') for (const t of p.ships) if (!rules.actors.has(t)) errs.push(`${where}: unknown ship "${t}"`); }
       if (!c.Goto && !list(c.Do).some((x) => ['close', 'trade', 'hire', 'roll'].includes(x.trim().split(/\s+/)[0]))) errs.push(`${where}: neither Goto nor close, trade, hire or roll`);
+      errs.push(...lintCrew(rules, where, list(c.If).map(parseCond), list(c.Do).map(parseEffect), [c.Text]));
     }
+    if (node.Say) errs.push(...lintCrew(rules, `${d.id}.${k}`, [], [], [node.Say]));
   }
+  return errs;
+}
+// Names of people, posts and traits in conditions, effects and {placeholders}.
+const REFS = ['place', 'region', 'faction', 'pilot', 'pilotship', 'fallen'];
+function lintCrew(rules, where, conds, effects, texts) {
+  const C = rules.content.crew || { posts: {}, traits: {} }, errs = [];
+  const who = (x) => x === 'pilot' || !!C.posts[x];
+  for (const c of conds) {
+    if (c.op === 'officer' && !C.posts[c.post]) errs.push(`${where}: unknown post "${c.post}"`);
+    if ((c.op === 'officer' && c.trait && !C.traits[c.trait]) || (c.op === 'trait' && !C.traits[c.trait])) errs.push(`${where}: unknown trait "${c.trait}"`);
+  }
+  for (const e of effects) {
+    if ((e.op === 'kill' || e.op === 'mark') && !who(e.who)) errs.push(`${where}: unknown person "${e.who}" (a post, or pilot)`);
+    if (e.op === 'mark' && !C.traits[e.trait]) errs.push(`${where}: unknown trait "${e.trait}"`);
+  }
+  for (const t of texts) for (const m of String(t || '').matchAll(/\{(\w+)\}/g)) if (!REFS.includes(m[1]) && !C.posts[m[1]]) errs.push(`${where}: unknown placeholder {${m[1]}}`);
   return errs;
 }
 
@@ -112,10 +141,45 @@ function holds(ctx, c) {
     case 'item': { if (!ctx.s) return false; const st = ctx.s.items[c.item]; return c.state === 'missing' ? !st : st === c.state; }
     case 'relic': return !!ctx.s && ctx.point && ctx.point.relic === c.item;
     case 'crew': return !!ctx.s && ROLES.reduce((t, r) => t + ctx.s.crew.roles[r], 0) >= c.n;
+    case 'morale': return !!ctx.s && (c.cmp === '>=' ? ctx.s.morale >= c.n : ctx.s.morale <= c.n);
+    case 'officer': { const o = ctx.s && officerOf(ctx.s.crew, c.post); return !!o && (!c.trait || o.trait === c.trait); }
+    case 'trait': return !!ctx.s && (ctx.s.crew.people || []).some((p) => p.trait === c.trait);
+    case 'fallen': return !!ctx.s && (ctx.s.crew.fallen || []).length >= c.n;
+    case 'leads': return !!ctx.s && ctx.s.fleet.filter((e) => e.lead && personById(ctx.s.crew, e.lead)).length >= c.n;
     default: return false;
   }
 }
-const fill = (ctx, t) => String(t).replace(/\{place\}/g, ctx.place || '').replace(/\{region\}/g, ctx.region || '').replace(/\{faction\}/g, ctx.factionName || '');
+// Who an event means: an officer by post, or "pilot" (the lead of the most experienced ship).
+export function whoIs(s, ref) {
+  if (!s || !s.crew.people) return null;
+  if (ref !== 'pilot') return officerOf(s.crew, ref);
+  let best = null;
+  for (const e of s.fleet) { const p = e.lead && personById(s.crew, e.lead); if (p && (!best || (e.xp | 0) > (best.e.xp | 0) || ((e.xp | 0) === (best.e.xp | 0) && p.id < best.p.id))) best = { e, p }; }
+  return best ? best.p : null;
+}
+function fill(ctx, t) {
+  return String(t).replace(/\{(\w+)\}/g, (m, k) => {
+    if (k === 'place') return ctx.place || '';
+    if (k === 'region') return ctx.region || '';
+    if (k === 'faction') return ctx.factionName || '';
+    const s = ctx.s;
+    if (k === 'fallen') { const f = s && s.crew.fallen?.length ? s.crew.fallen[s.crew.fallen.length - 1] : null; return f ? f.name : 'the dead'; }
+    if (k === 'pilotship') { const p = whoIs(s, 'pilot'), e = p && s.fleet.find((x) => x.lead === p.id); return e ? ctx.rules.actor(e.type).traitInfo('Tooltip').Name : 'ship'; }
+    const p = whoIs(s, k);
+    return p ? p.name : 'someone';
+  });
+}
+// Whether a trait's When conditions hold for the voyage now (conditions that need a place
+// do not hold here).
+const condCache = new Map();
+export function crewHolds(rules, s) {
+  let ctx = null;
+  return (text) => {
+    if (!condCache.has(text)) condCache.set(text, list(text).map(parseCond));
+    ctx ||= { rules, s, point: null, fid: null, tier: 2, station: false, where: 'chart', atWar: false, treaties: [], flags: new Set(s.flags || []), stores: s.stores };
+    return conditionsHold(ctx, condCache.get(text));
+  };
+}
 
 export const conditionsHold = (ctx, conds) => conds.every((c) => holds(ctx, c));
 
@@ -163,7 +227,7 @@ export function chartContext(rules, s, galaxy, fid) {
 }
 
 // Do a choice's effects on the voyage (the star chart). Returns { open, close, notes: [] }.
-export function applyOnChart(rules, s, galaxy, fid, effects) {
+export function applyOnChart(rules, s, galaxy, fid, effects, why = { how: 'lost' }) {
   const out = { open: null, close: false, notes: [] }, F = rules.content.factions[fid];
   for (const e of effects) {
     if (e.op === 'pay') { s.stores[e.store] = Math.max(0, (s.stores[e.store] | 0) - e.n); out.notes.push(`Paid ${e.n} ${e.store}.`); }
@@ -175,21 +239,37 @@ export function applyOnChart(rules, s, galaxy, fid, effects) {
     else if (e.op === 'threaten') out.notes.push(threatenOnChart(rules, s, galaxy, fid));
     else if (e.op === 'trade' || e.op === 'hire') out.open = e.op;
     else if (e.op === 'close') out.close = true;
-    else applyEventEffect(rules, s, galaxy, e, out);
+    else applyEventEffect(rules, s, galaxy, e, out, { day: s.day, ...why });
   }
+  for (const t of assignFleet(s.crew, rules, s.fleet, { day: s.day })) out.notes.push(t);
   return out;
 }
 
 // Effects that events use (and dialogs may): goods and crew gained or lost, damage, morale,
 // a drive part, time passing, an ambush or a monster waiting on the next map here, a roll.
-function applyEventEffect(rules, s, galaxy, e, out) {
+function applyEventEffect(rules, s, galaxy, e, out, why) {
   const sys = rules.content.systems, maxHp = rules.actor('forge').traitInfo('Health').HP;
   if (e.op === 'give') { s.stores[e.store] = (s.stores[e.store] | 0) + e.n; out.notes.push(`+${e.n} ${rules.content.resources[e.store]?.Name || e.store}.`); }
   else if (e.op === 'crew') { s.crew.roles[e.role] += e.n; out.notes.push(`${e.n} ${e.role} join the crew.`); }
   else if (e.op === 'lose') {
-    let n = e.n;
-    if (e.role === 'crew') { const lost = lossFrom(s, n); n = lost; } else n = Math.min(n, s.crew.roles[e.role]), s.crew.roles[e.role] -= n, s.crew.assigned[e.role] = Math.min(s.crew.assigned[e.role], s.crew.roles[e.role]);
-    out.notes.push(`${n} of the crew lost.`);
+    const f0 = s.crew.fallen.length;
+    const n = e.role === 'crew' ? loseFree(s.crew, e.n, why, s.fleet) : lose(s.crew, e.role, e.n, why, s.fleet);
+    const f = s.crew.fallen.slice(f0).map((p) => fullName(rules, p));
+    out.notes.push(`${n} of the crew lost.${f.length ? ` Among them: ${f.join(', ')}.` : ''}`);
+  } else if (e.op === 'kill') {
+    const p = whoIs(s, e.who);
+    if (p) { const ttl = fullName(rules, p); kill(s.crew, p.id, why); out.notes.push(`${ttl} is dead.`); }
+  } else if (e.op === 'mark') {
+    const p = whoIs(s, e.who), t = rules.content.crew.traits[e.trait];
+    if (p && t && p.trait !== e.trait) { p.trait = e.trait; p.traitDay = s.day; out.notes.push(`${fullName(rules, p)}: ${t.Name}.`); }
+  } else if (e.op === 'mend') {
+    if (e.system === 'hull') s.forge.hp = Math.min(maxHp, s.forge.hp + Math.trunc((maxHp * e.n) / 100));
+    else s.systems[e.system] = Math.min(100, s.systems[e.system] + e.n);
+    out.notes.push(`${e.system === 'hull' ? 'Hull' : sys[e.system].Name} +${e.n}%.`);
+  } else if (e.op === 'train') {
+    let n = 0;
+    for (const x of s.fleet) if (rules.actor(x.type).traitInfo('Armament')) { x.xp = (x.xp | 0) + e.n; n++; }
+    out.notes.push(`${n} ship${n === 1 ? '' : 's'}: +${e.n} experience.`);
   } else if (e.op === 'damage') {
     if (e.system === 'hull') s.forge.hp = Math.max(1, s.forge.hp - Math.trunc((maxHp * e.n) / 100));
     else s.systems[e.system] = Math.max(0, s.systems[e.system] - e.n);
@@ -211,11 +291,6 @@ export function learnBlueprint(rules, s, id) {
   if (s.blueprints.includes(it.Unlocks)) return false;
   s.blueprints.push(it.Unlocks);
   return true;
-}
-function lossFrom(s, n) {
-  let left = n;
-  for (const r of ROLES) { const k = Math.min(left, Math.max(0, s.crew.roles[r] - s.crew.assigned[r])); s.crew.roles[r] -= k; left -= k; }
-  return n - left;
 }
 // A deterministic roll: the same voyage, day and place give the same result.
 function rollFor(s, chance) {
@@ -319,6 +394,8 @@ export function quote(rules, s, fid, pointId, buy, sell) {
     pay += sellPrice(rules, tier, fid, g) * n;
   }
   if (tier === 0) why.push('They will not trade with you.');
+  // the quartermaster's haggling
+  if (s.crew.people) cost = Math.trunc((cost * officerPct(rules, s.crew, 'TradePct', crewHolds(rules, s))) / 100);
   cost = Math.ceil(cost / 100); pay = Math.trunc(pay / 100);
   // ships need room in the hangar
   const ships = Object.entries(buy).filter(([g, n]) => g.startsWith('ship:') && n > 0);
@@ -350,6 +427,7 @@ export function deal(rules, s, fid, pointId, buy, sell) {
       if (crew && crew.Count) { s.crew.roles[crew.Role] += crew.Count * n; s.crew.assigned[crew.Role] += crew.Count * n; }
     } else s.stores[g] = (s.stores[g] | 0) + n;
   }
+  assignFleet(s.crew, rules, s.fleet, { day: s.day });
   s.stock ||= {};
   s.stock[String(pointId)] = { day: s.day, goods };
   meet(rules, s, fid);

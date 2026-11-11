@@ -1,6 +1,6 @@
 import { parseYaml, mergeFiles } from './miniyaml.js';
 import { Rules } from './rules.js';
-import { lintDialog } from '../galaxy/comms.js';
+import { lintDialog, parseCond } from '../galaxy/comms.js';
 
 // Content packs. Each pack is a folder under content/ with a pack.yaml manifest that lists
 // its rule, weapon and data files. Packs load in order; files from later packs merge into
@@ -21,7 +21,7 @@ export function nodesToObject(nodes) {
 }
 
 export async function loadContent(readText, packs = DEFAULT_PACKS) {
-  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [] }, manifests = [];
+  const ruleTexts = [], weaponTexts = [], data = { Resources: [], PoiTypes: [], Regions: [], Items: [], Voyage: [], Names: [], Races: [], Factions: [], Trade: [], Dialogs: [], Events: [], Hints: [], Crew: [] }, manifests = [];
   for (const id of packs) {
     const base = `content/${id}/`;
     const nodes = parseYaml(await readText(`${base}pack.yaml`), `${base}pack.yaml`);
@@ -55,6 +55,9 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.events = Object.fromEntries([...mergeFiles(data.Events)].map(([k, n]) => [k, { id: k, nodes: n.nodes, ...nodesToObject(n.nodes) }]));
   rules.content.hints = Object.fromEntries([...mergeFiles(data.Hints)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
+  const crew = new Map(mergeFiles(data.Crew));
+  const crewPart = (k) => (crew.has(k) ? Object.fromEntries(crew.get(k).nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {});
+  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -101,6 +104,21 @@ export function lintContent(rules) {
   for (const [id, it] of Object.entries(rules.content.items || {})) {
     if (it.Region && !rules.content.regions[it.Region]) errs.push(`items: ${id}.Region: unknown region "${it.Region}"`);
   }
+  // named crew: posts come from a role and change a known bonus; traits point at traits
+  const crew = rules.content.crew || { posts: {}, traits: {}, leads: {} };
+  const BONUS = ['RepairPct', 'BuildPct', 'FoodPct', 'GlimPct', 'SensorPct', 'TradePct', 'CarePct', 'XpPct', 'HullPct', 'LaunchPct', 'ForgeDamagePct'];
+  const ROLES = ['engineers', 'pilots', 'miners', 'hands'];
+  for (const [id, p] of Object.entries(crew.posts)) {
+    if (!ROLES.includes(p.Role)) errs.push(`crew: Posts.${id}.Role: unknown role "${p.Role}"`);
+    if (!BONUS.includes(p.Bonus)) errs.push(`crew: Posts.${id}.Bonus: unknown bonus "${p.Bonus}"`);
+  }
+  for (const r of Object.keys(crew.leads)) if (!ROLES.includes(r)) errs.push(`crew: Leads.${r}: unknown role`);
+  for (const [id, tr] of Object.entries(crew.traits)) {
+    if (!['officer', 'lead', 'both'].includes(tr.For || 'both')) errs.push(`crew: Traits.${id}.For: officer, lead or both`);
+    for (const k of ['Becomes', 'Escape']) if (tr[k] && !crew.traits[tr[k]]) errs.push(`crew: Traits.${id}.${k}: unknown trait "${tr[k]}"`);
+    for (const c of list(tr.When)) if (parseCond(c).op === 'bad') errs.push(`crew: Traits.${id}.When: unknown condition "${c}"`);
+  }
+  if (Object.keys(crew.posts).length && !(rules.content.names?.People?.Given && rules.content.names?.People?.Family)) errs.push('names: People needs Given and Family names for the crew');
   for (const a of rules.actors.values()) {
     const c = a.traitInfo('Collector');
     if (c) for (const k of list(c.Kinds)) if (!resources[k]) errs.push(`${a.name}: Collector.Kinds: unknown resource "${k}"`);

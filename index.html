@@ -326,6 +326,22 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
 .fs p { grid-column: 1 / -1; margin: 2px 0 0; font-size: 12px; color: var(--muted); }
 .t-Hostile { color: var(--bad); } .t-Wary { color: var(--height); } .t-Neutral { color: var(--muted); } .t-Friendly { color: var(--good); } .t-Allied { color: var(--accent); }
 .ct td.rk { color: #ffd778; }
+/* named crew */
+.people { list-style: none; margin: 0 0 6px; padding: 0; }
+.people li { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; row-gap: 1px; padding: 5px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+.people .post { grid-column: 1 / -1; font: 600 10px var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.people .post i { font: 11px var(--f-mono); letter-spacing: 0; text-transform: none; font-style: normal; margin-left: 4px; }
+.people .post i.rk { color: #ffd778; }
+.people b { font-weight: 600; color: var(--text); }
+.people .trait { justify-self: end; font-size: 11px; padding: 0 6px; border: 1px solid var(--line); border-radius: 9px; color: var(--accent); cursor: help; }
+.people .trait.off { color: var(--muted); }
+.people .eff { grid-column: 1 / -1; font: 11.5px var(--f-mono); color: var(--muted); }
+.people .eff:not(.off) { color: var(--text); opacity: 0.8; }
+.people .vacant b { color: var(--height); }
+.fallen { list-style: none; margin: 0 0 8px; padding: 0; font-size: 12.5px; color: var(--muted); }
+.fallen li { padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+.fallen li span { font: 11px var(--f-mono); margin-right: 6px; }
+.fallen b { color: var(--text); font-weight: 600; }
 .log { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; }
 .log span { display: block; font: 10px var(--f-mono); color: var(--muted); letter-spacing: 0.08em; }
 .log li.bad, .log li.end { color: #ffb0b5; }

@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 12, the first full run.** Start a new voyage from the title screen and choose:
+**Status: Milestone 13, named crew.** The people who run the Forge have names now. Eight officers head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
+
+**Milestone 12, the first full run:** start a new voyage from the title screen and choose:
 
 - **the length:** a full voyage (about 300 places, four to six hours) or a short one (about 120 places, an hour and a half);
 - **saving:** permanent death (save and quit any time; the save is gone when the voyage ends) or free saves (named saves, anywhere);
@@ -46,7 +48,6 @@ Fleets fly in formation, follow a stance, and can be saved as control groups.
 
 Five resources: **ore** and **ice** (Gleaners mine them from rocks), **salvage** (Shearers cut it from wrecks), and **Glim** fuel and **spores** (Skimmers skim them from clouds).
 
-Named crew members with traits come in Milestone 13.
 
 ## Running the game
 
@@ -168,6 +169,29 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 | Glim recycler | Stitches cost 20% less Glim | |
 | Armoured plating | +25% hull | |
 | Heavy plating | +25% hull again | Armoured plating |
+
+### Named crew
+
+The **Crew** tab on the star chart lists everyone with a name.
+
+- **Officers** head the Forge's departments. Each one's trait changes their department's work, in percent:
+
+| Post | From | Their work changes |
+| --- | --- | --- |
+| Chief engineer | engineers | how much a day of repairs mends |
+| Foundry master | engineers | how fast ships are built on maps |
+| Grower | hands | how much food the hydroponics grow |
+| Navigator | pilots | the Glim each stitch burns |
+| Watch officer | hands | how far the sensors reach |
+| Quartermaster | hands | what traders ask |
+| Surgeon | hands | how many are lost to hunger and bad air |
+| Wing commander | pilots | how fast ships earn experience |
+
+- **Pilots and captains:** every armed ship has a named lead: a pilot, or a captain for ships crewed by hands. Select a ship on a map to see who flies it and what their trait does (damage, hull, faster experience). New ships built on a map get a new pilot from the crew. A lead whose ship is lost dies with it, or is left behind with it. A **Lucky** pilot gets out in a pod, once, and comes home **Shaken**. A lead with no ship stands by and takes the next one.
+- **Traits** are defined in `content/core/crew.yaml`: a trait's work, damage, hull, learning and morale modifiers, who can have it, and when it holds. **Fair-weather** officers are brilliant only while morale is 60 or more; **Iron** ones only when it is 40 or less; the **Homesick** start to flag after day 250. Some traits grow into others: the **Green** become **Steady** after 50 days, and so do the **Shaken** after 40.
+- **Losses pick who dies.** Hunger, bad air, desertion and events take people at random from the role they hit, named or not: each officer is as likely to die as anyone else in their role. The log says who. When an officer is gone, someone from their role steps up, Green.
+- **Head counts and names always agree.** Officers are counted in their role, never fly, and are not offered for new ships on maps.
+- **Events by name:** crew events include a fever, a quarrel between officers, the chief engineer's ideas, drills, a fold in the Skein and letters home. Some only happen if a certain officer is aboard, or someone with a certain trait. When three named people are gone, the crew ask for a memorial.
 
 ### The voyage: the star chart
 
@@ -509,9 +533,17 @@ Runs the headless tests:
   - ships aboard mend 5% a day, 20% with repair bays;
   - an upgrade that needs another is refused until that is built;
   - two hangars give 50 capacity; launch rails and the foundry line are faster; fire control is set.
+- **Named crew** (`tools/crewtest.js`): checks that:
+  - a new voyage fills all eight posts and gives every armed ship a named lead (and the miners none); the same seed gives the same people;
+  - traits work through their conditions: repairs with a Gifted, a Green and a neutral chief engineer; a Fair-weather grower at morale 70 and 50; a Homesick one on day 100 and 260; a Gifted navigator and quartermaster; morale pulled up by the Beloved and down by the Grim; the Green turning Steady after 50 days;
+  - losses are fair: losing half the free hands, 200 times, kills about half the named officers among them; forty days of hunger kill named people, the log names them and every post is refilled;
+  - on a map: an Ace's Dart hits 20% harder, a Careful pilot's has 20% more hull, a Quick study learns faster; a new Dart gets a new pilot; a lead dies with their ship, a Lucky one gets out and comes home Shaken; the report and the voyage agree on who; a lead standing by takes the next ship;
+  - events fill in names, `kill` and `mark` work, the memorial waits for three dead, and an unknown `{placeholder}` is a content error;
+  - a save from before named crew loads with named crew, replays a visit in progress without the new traits, and saves again identically;
+  - head counts and names agree at every step, and at the end of whole scripted voyages.
 - **Whole runs** (`tools/runtest.js`): checks that:
-  - the AI captain (`tools/captain.js`, answering every event) gets home on eight seeds of each length;
-  - most runs take four to six hours (full) and one to two hours (short) of estimated play. The estimate is 15 minutes per map visit, three quarters of a minute per stitch and a tenth of a minute per day. The captain plays lean, visiting only when it needs to;
+  - the AI captain (`tools/captain.js`, answering every event, and repairing what is damaged) gets home on eight seeds of each length;
+  - the typical run (the median) takes four to six hours (full) or one to two hours (short) of estimated play, with at least half the runs inside. The estimate is 15 minutes per map visit, three quarters of a minute per stitch and a tenth of a minute per day. The captain plays lean, visiting only when it needs to, and its runs swing by a visit or two with small changes such as a crew's traits;
   - saving on frame 1,100 of a map, loading and playing on gives exactly the same game as playing straight through.
 - **Fog and engineering** (`tools/fogtest.js`): checks that:
   - a ship beyond sensor range is hidden and untargetable until one of yours comes close, then hidden again with its last position remembered;
@@ -581,7 +613,8 @@ content/core/regions.yaml       the galaxy's regions: rings, place counts, dange
 content/core/items.yaml         the Skein Drive's four parts: where they are, what they open, fitting costs
 content/core/voyage.yaml        every number behind the voyage (needs, life support, hydroponics,
                                 stitch costs, repairs, morale) and the Forge's systems
-content/core/names.yaml         name generators (derelicts)
+content/core/names.yaml         name generators (derelicts, and people)
+content/core/crew.yaml          named crew: officers' posts, traits, ship leads (the format is at the top)
 content/core/races.yaml         races, and where their factions start
 content/core/factions.yaml      factions: seats, territory, patrols, enemies, leave; and every
                                 reputation number (tiers, penalties, ranges)
