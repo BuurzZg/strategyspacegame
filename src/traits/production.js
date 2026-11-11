@@ -60,6 +60,8 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
   get rules() { return this.world.rules; }
   buildables() { return this.rules.buildablesFor(this.info.Type); }
   duration(type) { return this.rules.actor(type).traitInfo('Buildable').BuildDuration; }
+  // what a ship costs here: its ore, made dearer by the crew's mood and strain (slot.costPct)
+  costOf(type) { return Math.trunc((this.rules.actor(type).traitInfo('Valued').Cost * ((this.self.owner.slot || {}).costPct || 100)) / 100); }
 
   // null if `type` can be queued now, otherwise the reason shown to the player.
   canQueue(type) {
@@ -74,10 +76,10 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     if (this.queue.length >= this.info.MaxQueue) return 'Build queue is full';
     const need = info.traitInfo('ConsumesCapacity')?.Amount || 0;
     if (p.capacity && p.capacity.used() + need > p.capacity.cap()) return 'Fleet capacity reached';
-    if (p.resources.cash < info.traitInfo('Valued').Cost) return 'Not enough ore';
+    if (p.resources.cash < this.costOf(type)) return 'Not enough ore';
     const crew = this.crewOf(type);
     if (crew && p.crew && !p.crew.has(crew.Role, crew.Count)) return `Not enough ${crew.Role}: it needs ${crew.Count}`;
-    if (this.speed <= 0) return 'The foundry is wrecked';
+    if (this.speed <= 0) return 'The foundry is down';
     return null;
   }
 
@@ -87,7 +89,7 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
       const type = String(o.extra);
       const err = this.canQueue(type);
       if (err) { this.world.notify(p, err, 'bad'); return; }
-      p.resources.take(this.rules.actor(type).traitInfo('Valued').Cost, 'spent');
+      p.resources.take(this.costOf(type), 'spent');
       const crew = this.crewOf(type);
       if (crew && p.crew) p.crew.take(crew.Role, crew.Count);
       this.queue.push(type);
@@ -102,7 +104,7 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
 
   refund(type) {
     const p = this.self.owner, crew = this.crewOf(type);
-    p.resources.give(this.rules.actor(type).traitInfo('Valued').Cost, 'refunded');
+    p.resources.give(this.costOf(type), 'refunded');
     if (crew && p.crew) p.crew.give(crew.Role, crew.Count);
   }
   // everything still queued is cancelled (the Forge is destroyed, or leaves)

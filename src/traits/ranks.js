@@ -22,8 +22,9 @@ defineTrait('Ranks', class extends Trait {
   nameOf(r) { return r > 0 ? this.steps[r - 1][0] : ''; }
   // percent: damage and hull at this rank
   pct(r) { return 100 + this.bonus * (r | 0); }
-  // a ship's damage and hull in percent: its rank, and its lead's touch
-  damagePct(a) { return Math.max(10, this.pct(a.rank) + (a.leadDamage | 0)); }
+  // a ship's damage and hull in percent: its rank, and its lead's touch; damage also follows the
+  // crew's strain and All hands (slot.shipPct, Milestone 17)
+  damagePct(a) { const sp = (a.owner.slot && a.owner.slot.shipPct) || 100; return Math.max(10, Math.trunc(((this.pct(a.rank) + (a.leadDamage | 0)) * sp) / 100)); }
   hullPct(a) { return Math.max(10, this.pct(a.rank) + (a.leadHull | 0)); }
   fit(a) {
     if (!a.health) return;

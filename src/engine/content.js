@@ -57,12 +57,14 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   const crew = new Map(mergeFiles(data.Crew));
   const crewPart = (k) => (crew.has(k) ? Object.fromEntries(crew.get(k).nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {});
-  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
+  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), stations: crewPart('Stations'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
   const mem = [...mergeFiles(data.Memories)];
   rules.content.memories = Object.fromEntries(mem.filter(([k]) => k !== 'Anchors').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   const anc = mem.find(([k]) => k === 'Anchors');
   rules.content.anchors = anc ? Object.fromEntries(anc[1].nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   rules.content.hazards = Object.fromEntries([...mergeFiles(data.Hazards)].map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
+  // strain, moods and All hands (Milestone 17)
+  for (const k of ['Strain', 'Mood', 'AllHands']) rules.content[k[0].toLowerCase() + k.slice(1)] = voyage.has(k) ? nodesToObject(voyage.get(k).nodes) : {};
   rules.content.systems = voyage.has('Systems') ? Object.fromEntries(voyage.get('Systems').nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {};
   lintContent(rules);
   return rules;
@@ -95,7 +97,7 @@ export function lintContent(rules) {
   for (const d of Object.values(rules.content.dialogs || {})) errs.push(...lintDialog(rules, d));
   for (const e of Object.values(rules.content.events || {})) {
     errs.push(...lintDialog(rules, e));
-    if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
+    if (!['start', 'arrive', 'travel', 'day', 'found', 'install', 'home', 'hazard', 'allhands'].includes(e.When)) errs.push(`events: ${e.id}.When: unknown trigger "${e.When}"`);
     if (e.Item && !rules.content.items[e.Item] && !(rules.content.memories || {})[e.Item] && !(rules.content.hazards || {})[e.Item]) errs.push(`events: ${e.id}.Item: unknown item, memory or hazard "${e.Item}"`);
   }
   for (const [id, f] of Object.entries(factions)) {
@@ -118,6 +120,14 @@ export function lintContent(rules) {
     if (!BONUS.includes(p.Bonus)) errs.push(`crew: Posts.${id}.Bonus: unknown bonus "${p.Bonus}"`);
   }
   for (const r of Object.keys(crew.leads)) if (!ROLES.includes(r)) errs.push(`crew: Leads.${r}: unknown role`);
+  for (const [id, st] of Object.entries(crew.stations || {})) {
+    if (st.Post && !crew.posts[st.Post]) errs.push(`crew: Stations.${id}.Post: unknown post "${st.Post}"`);
+    if (st.System && !(rules.content.systems || {})[st.System]) errs.push(`crew: Stations.${id}.System: unknown system "${st.System}"`);
+    if (st.Room && (rules.content.items || {})[st.Room]?.Kind !== 'room') errs.push(`crew: Stations.${id}.Room: unknown room "${st.Room}"`);
+    if (st.Needs && !(rules.content.memories || {})[st.Needs]) errs.push(`crew: Stations.${id}.Needs: unknown memory "${st.Needs}"`);
+  }
+  for (const [k, ids] of Object.entries((rules.content.strain || {}).Dark || {})) for (const id of list(ids)) if (!(crew.stations || {})[id]) errs.push(`voyage: Strain.Dark.${k}: unknown station "${id}"`);
+  for (const [id, it] of Object.entries(rules.content.items || {})) if (it.Kind === 'room' && it.Requires && rules.content.items[it.Requires]?.Kind !== 'room') errs.push(`items: ${id}.Requires: unknown room "${it.Requires}"`);
   for (const [id, tr] of Object.entries(crew.traits)) {
     if (!['officer', 'lead', 'both'].includes(tr.For || 'both')) errs.push(`crew: Traits.${id}.For: officer, lead or both`);
     for (const k of ['Becomes', 'Escape']) if (tr[k] && !crew.traits[tr[k]]) errs.push(`crew: Traits.${id}.${k}: unknown trait "${tr[k]}"`);
@@ -141,7 +151,8 @@ export function lintContent(rules) {
       else if (op === 'hull' && !rules.actors.has(arg)) errs.push(`memories: ${id}.Gives: unknown ship "${arg}"`);
       else if (op === 'echoes' && !(+arg > 0)) errs.push(`memories: ${id}.Gives: echoes needs a number`);
       else if (op === 'open' && !(rules.content.hazards || {})[arg]) errs.push(`memories: ${id}.Gives: unknown hazard "${arg}"`);
-      else if (!['radar', 'drive', 'hull', 'echoes', 'open'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
+      else if (op === 'room' && items[arg]?.Kind !== 'room') errs.push(`memories: ${id}.Gives: unknown room "${arg}"`);
+      else if (!['radar', 'drive', 'hull', 'echoes', 'open', 'room'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
     }
   }
   for (const [id, m] of Object.entries(M)) if (m.Seen && !(rules.content.hazards || {})[m.Seen]) errs.push(`memories: ${id}.Seen: unknown hazard "${m.Seen}"`);

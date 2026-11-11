@@ -67,6 +67,8 @@ export class Audio {
       case 'rankup': [523, 659, 784, 1046].forEach((f, i) => this.tone('triangle', f, f, 0.14, 0.09 * v, i * 0.07)); break;
       case 'stitch': this.tone('sine', 180, 1400, 0.55, 0.1 * v); this.burst(0.6, 0.08 * v, 2600, 1.2, 'bandpass'); this.tone('sine', 1400, 300, 0.4, 0.05 * v, 0.5); break;
       case 'event': [392, 523, 659].forEach((f, i) => this.tone('sine', f, f * 1.01, 0.5, 0.06 * v, i * 0.12)); break;
+      // All hands: a brass bell, then a short organ chord
+      case 'allhands': [1568, 1568 * 2.76].forEach((f, i) => this.tone('sine', f, f, 1.4, (i ? 0.03 : 0.08) * v)); [262, 330, 392, 523].forEach((f) => this.tone('triangle', f, f, 1.2, 0.05 * v, 0.35)); break;
       case 'deal': this.tone('triangle', 880, 1320, 0.08, 0.09 * v); this.tone('triangle', 1320, 1760, 0.1, 0.07 * v, 0.08); break;
       case 'hint': this.tone('sine', 988, 988, 0.08, 0.05 * v); this.tone('sine', 1319, 1319, 0.12, 0.05 * v, 0.09); break;
       case 'objective': [659, 880].forEach((f, i) => this.tone('triangle', f, f, 0.16, 0.1 * v, i * 0.1)); break;

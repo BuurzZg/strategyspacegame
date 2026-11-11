@@ -12,7 +12,8 @@
 #                it needs are known
 #   Blueprint    a blueprint item that also brings it back (a wreck of that hull, a trader)
 #   Gives        what it does: radar (the chart's sensors), drive <part> (a Skein Drive part,
-#                items.yaml), hull <ship> (the foundry can build it), echoes <n>, open <hazard>
+#                items.yaml), hull <ship> (the foundry can build it), echoes <n>, open <hazard>,
+#                room <room> (it can be built on the deck plan, items.yaml)
 #                (its lanes open, hazards.yaml)
 #   Echoes       echoes it gives when it comes back
 #   Seen         a hazard (hazards.yaml): it can be recalled only once you have been turned away by it
@@ -307,7 +308,8 @@ messhall:
 	Branch: decks
 	Order: 1
 	Cost: 1
-	Ready: false
+	Gives: room messhall
+	Text: Long tables and somebody cooking. The engineers remember how the mess hall went together. It can be built on the deck plan, in every life.
 	Hint: A place for the crew to eat together.
 
 infirmary:
@@ -317,7 +319,8 @@ infirmary:
 	Order: 2
 	Needs: messhall
 	Cost: 2
-	Ready: false
+	Gives: room infirmary
+	Text: Cots, lamps and clean hands. The surgeon remembers how the infirmary was laid out. It can be built on the deck plan, in every life.
 	Hint: Someone used to keep people alive here.
 
 chartroom:
@@ -327,5 +330,6 @@ chartroom:
 	Order: 3
 	Needs: radar
 	Cost: 1
-	Ready: false
+	Gives: room chartroom
+	Text: Brass rails and glass, and charts pinned flat. The watch remember the chart room. It can be built on the deck plan, in every life.
 	Hint: A room full of maps nobody can read yet.

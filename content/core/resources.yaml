@@ -37,6 +37,12 @@ food:
 air:
 	Name: Air
 	Color: d8f0ff
-	Description: Made from water by life support, and kept in the Forge's tanks. Three days without it ends everything.
+	Description: Made from water by life support, and kept in the Forge's tanks. Without it the crew faint at their posts.
 	Order: 7
+	Galaxy: true
+cogmarks:
+	Name: Cogmarks
+	Color: e0b04a
+	Description: Stamped brass cogs, the Wrack's money. Traders take them, Shearers find them in wrecks, and strikers can be paid with them.
+	Order: 8
 	Galaxy: true

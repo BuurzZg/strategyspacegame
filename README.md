@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 16, routes closed until remembered.** Every galaxy now has **hazard pockets**: a few places off to the side of a region, cut off on every side by **asteroid shoals**, **ember lanes** near the dead star, **static fields** or **the Glare**. Their lanes are drawn in the hazard's colour, and nothing gets the Forge through until Jacob remembers what does: Shields, Heat baffles, Lightning rods or Lead-lined decks. Try for a place behind one and the officer at that post tells you why, by name (*Chief engineer Lune Tennant: "Shields are dead, Captain. Take her into that field and the rocks will open us like a tin."*), or whoever is acting in the post. From then on that memory can be recalled on the Loom for two echoes, and the hazard stays open in every life. Places inside are half again as rich, and each pocket hides a wreck with a strongbox worth two echoes, once in a campaign. The navigator now reports the Veil and the drive's reach the same way. Pockets never block the way home: a single life can always escape. See [Hazards: closed routes](#hazards-closed-routes).
+**Status: Milestone 17, the Forge as a base, and survival that weakens.** Running out of water, food, air or Glim **never kills** now. Each shortage builds **strain** (thirst, hunger, bad air, cold), a level a day up to 3, and every level makes the Forge weaker: slower work, dearer building, more Glim a stitch, weaker ships. At strain 2 and 3, stations go dark: life support stops making air, the foundry stops building, comms falls silent. The **boilers** burn 10 Glim a day; with none they go cold and everything works at half. The crew's **mood** is a medallion in the top bar (Content, Uneasy or Angry), with its causes beside it, and it changes what things cost. Under morale 15, stations' crews **strike** instead of leaving, until morale recovers or you **parley** (a day of talking, or cogmarks). When every station is green it's **All hands**: the bell rings, work is faster, stitches cheaper, ships better, and a long streak earns a song. The Forge has a **deck plan** of 8 slots for 17 **rooms** (today's projects, plus crew quarters, a mess hall, an infirmary, a chart room, a workshop and a still room), lost with each life. **Cogmarks**, stamped brass cogs, are money now: traders pay them from a purse, take them for anything, and make up the difference in a swap. See [Staying alive](#staying-alive) and [The deck plan](#the-deck-plan).
+
+**Milestone 16, routes closed until remembered:** Every galaxy now has **hazard pockets**: a few places off to the side of a region, cut off on every side by **asteroid shoals**, **ember lanes** near the dead star, **static fields** or **the Glare**. Their lanes are drawn in the hazard's colour, and nothing gets the Forge through until Jacob remembers what does: Shields, Heat baffles, Lightning rods or Lead-lined decks. Try for a place behind one and the officer at that post tells you why, by name (*Chief engineer Lune Tennant: "Shields are dead, Captain. Take her into that field and the rocks will open us like a tin."*), or whoever is acting in the post. From then on that memory can be recalled on the Loom for two echoes, and the hazard stays open in every life. Places inside are half again as rich, and each pocket hides a wreck with a strongbox worth two echoes, once in a campaign. The navigator now reports the Veil and the drive's reach the same way. Pockets never block the way home: a single life can always escape. See [Hazards: closed routes](#hazards-closed-routes).
 
 **Milestone 15, the Loom: memories:** You wake on a bridge you don't remember, and the chart is dark: you can see only the places one lane away. A faint signal draws a circle on the chart, "somewhere in here". Inside it is the Anchorage, a destroyed station wearing the same emblem as your ship. Cut into its core and two memories come back: the emblem, and the radar, which lights the chart. What Jacob remembers stays in every life. **The Loom** (press `L`) is the memory tree, drawn in the new brass style: 31 memories in five branches, with the ones you haven't found shown as question marks. The Skein Drive's four parts are memories now. They are found in derelicts, inside circles that sharpen as you get close, and there is nothing to fit. Hulls you have blueprints for are memories too. **Echoes**, from memories, old voices, and the place where an earlier life ended, recall memories such as the Wisp. See [Memories and the Loom](#memories-and-the-loom).
 
@@ -203,21 +205,7 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Ranks:** a ship earns experience for every enemy it destroys (more for bigger ones), and a point each time it comes home from a visit where it fought. Ranks: **Seasoned** (4), **Veteran** (10), **Elite** (20); each adds 10% damage and hull. Chevrons over the selection brackets show the rank; the selection card shows it with the experience; the **Crew** tab lists the hangar with ranks and hull.
 - **The hangar carries them:** recall a ship and it keeps its experience and damage until the next place. Lose it and the rank is gone with it.
 - **Mending:** ships aboard mend 5% of their hull a day; repair bays make it 20%.
-- **Forge upgrades** (the Forge tab, Engineering), built with ore, salvage, days and free engineers:
-
-| Upgrade | What it does | Needs |
-| --- | --- | --- |
-| Expanded hangar | +10 fleet capacity | |
-| Second hangar | +10 more | Expanded hangar |
-| Repair bays | Ships aboard mend 20% a day instead of 5% | |
-| Foundry line | Ships are built 30% faster | |
-| Fire control | The Forge's own guns do 40% more damage | |
-| Launch rails | The fleet launches twice as fast on arrival | |
-| Hydroponic racks | Hydroponics grow 50% more | |
-| Long-range array | Sensors reach 50% further | |
-| Glim recycler | Stitches cost 20% less Glim | |
-| Armoured plating | +25% hull | |
-| Heavy plating | +25% hull again | Armoured plating |
+- **Forge upgrades** are rooms on the deck plan now (Milestone 17): see [The deck plan](#the-deck-plan).
 
 ### Named crew
 
@@ -256,10 +244,10 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 
 - **What you see:** places are points, coloured by kind once the sensors have seen them (grey until then). Teal lanes are stitches the drive can make now; lanes into a hazard pocket are drawn in the hazard's colour until you remember what gets the Forge through. The teal ring round the Forge is the drive's reach, and the dashed ring the sensors'. A gold ring marks the drive part the engineers have a fix on.
 - **The card** shows the route (stitches, days, Glim, distance) and what you will have on arrival. With no Glim, the Forge can **drift** one lane at sub-light, slowly. At the Forge's place, **Go in** plays the map, and **Rest a day** raises morale (twice as much in still water).
-- **The top bar** shows the day, the stores (water, food and air with the days they will last), the crew and morale.
+- **The top bar** shows the day, the stores (water, food and air with the days they will last, and cogmarks), the crew, and the crew's mood: a medallion, the morale, and what is behind it.
 - **The Forge panel:**
-  - **Forge:** the Skein Drive's reach and its four parts, with **Fit it**; the hull and six systems (drive, reactor, life support, hydroponics, foundry, sensors), each with **Repair** (a day's work by the free engineers, for ore and salvage);
-  - **Crew:** morale, and engineers, pilots, miners and hands (aboard, flying ships, free);
+  - **Forge:** the Loom, the Skein Drive's reach and its four parts, the deck plan and its rooms, blueprints, and the hull and six systems (drive, reactor, life support, hydroponics, foundry, sensors), each with **Repair** (a day's work by the free engineers, for ore and salvage);
+  - **Crew:** the mood and its causes, strain, the nine stations and their state, strikes and parleys, the officers, engineers, pilots, miners and hands (aboard, flying ships, free), the hangar and the memorial;
   - **Hold:** every store, its change per day, and how long it lasts;
   - **Log:** what has happened.
 - **Save and quit** at any time. **Permanent death:** the save is removed when the voyage ends. (A visit in progress is not saved: continuing returns to the chart as it was before going in.)
@@ -268,16 +256,46 @@ The chart is a 3D view of the galaxy, a mostly flat disc. Each region is ringed 
 
 - **Every day** (each stitch takes one to three; on a map, one day passes every four minutes) 150 crew need 90 water, 120 food and 150 air.
 - **Life support** makes air from water. The **hydroponics** grow food from water, and much faster with **spores**. Ice from Ice Tails is the water.
-- **Glim** runs the drive: about 6 per 10 spans of stitch, and a little each day for the reactor. Lantern Mists are full of it.
-- **When things run short:**
-  1. a store under three days' need lowers morale;
-  2. with no water, no air or food is made;
-  3. with no food, 2% of the crew die each day;
-  4. with no air, 8% die each day, and three days without air ends the voyage.
-- **The voyage also ends** if the crew reaches zero or the Forge is destroyed on a map.
-- **Morale** drifts toward how things are. Below 30, work is slower; below 15, people take the pods and leave.
+- **Glim** runs the drive (about 6 per 10 spans of stitch) and the **boilers** (10 a day). Lantern Mists are full of it. With no Glim the boilers go cold: every system works at half, and the crew start to shiver.
+- **Shortages weaken; they never kill.** A store under three days' need lowers morale. Each day a store is out, its **strain** rises a level, to 3 (thirst, hunger, bad air, cold), and once it is back it eases off a level a day (the mess hall and infirmary ease it faster). Every level of strain, of any kind, makes work 15% slower, building and ships 10% dearer, stitches 10% more Glim and ships 5% weaker on maps, capped at four levels. The surgeon's work softens it.
+- **Stations go dark** at strain 2 and 3, one each: thirst takes life support, then the infirmary; hunger the hangar, then stores; bad air the infirmary, then comms; cold engineering, then the foundry.
+- **A life ends** only when the Forge is destroyed, everyone aboard is lost in fights, or you let it go.
+- **Morale and mood:** morale drifts toward how things are. Over it sits the mood everyone can see:
+
+| Mood | When | What it does |
+| --- | --- | --- |
+| Content | Morale 60 or more, nothing short | Work 10% faster |
+| Uneasy | Morale 30 to 59, a store running low, or strain easing off | Building, ships and Glim a stitch 10% dearer |
+| Angry | Morale under 30, or a store gone | 30% dearer |
+
+  The medallion's causes say why: thirst, hunger, bad air, cold, grief after deaths, crowding (more crew than berths), a strike. Resting, a mess hall and full stores pull the mood back up.
+- **Strikes:** under morale 15, one station's crew walk off each day, and it stops working. They come back when morale is over 30, or after a **parley** on the Crew tab: a day of talking, or 40 cogmarks a station. Nobody leaves for good.
+- **All hands:** when every station is green (morale 60 or more, nothing short, no strain, every station that is open online and staffed, no strike), the bell rings. While it lasts, work is a further 10% faster, stitches cost 10% less Glim, ships do 5% better, and morale doesn't fall overnight. Six days in a row earns a song.
+- **Stations** (the Crew tab): engineering, navigation, sensors, foundry, life support, hangar, comms, infirmary and stores, each run by an officer. A station is online, dim (no officer, or its system under half), dark, on strike or cold. Dark, it loses what it does: no repairs or building; stitches 50% dearer; the chart dark past the next lane; no ships built; no air made; launches at half speed; nobody to hail; strain eases no faster; traders charge a quarter more. Sensors open with the radar, and the infirmary with its memory and room. Training and the bridge itself come in Milestone 18.
 - **The Forge's systems** wear down when its hull is damaged on a map. A damaged reactor slows everything; a damaged drive reaches less far and spools slower; a damaged foundry builds slower.
 - **Crew:** building a ship takes its crew from the free crew. When a ship is destroyed, half its crew get away in pods; ships left behind take all theirs.
+
+### The deck plan
+
+The Forge tab shows a deck plan of **8 slots**. Rooms are built with ore, salvage, days and free engineers (dearer when the crew are unhappy or strained, and not at all while engineering is dark). **Strip** a room to free its slot: a day, and nothing comes back. Rooms are physical: a new life wakes without them, but what Jacob remembers about building them stays.
+
+| Room | Slots | What it does |
+| --- | --- | --- |
+| Expanded hangar, then Second hangar | 1 each | +10 fleet capacity each |
+| Hydroponic racks | 1 | Hydroponics grow 50% more |
+| Long-range array | 1 | Sensors reach 50% further, on the chart and on maps |
+| Glim recycler | 1 | Stitches cost 20% less Glim |
+| Repair bays | 1 | Ships aboard mend much faster |
+| Foundry line | 1 | Ships are built a third faster |
+| Fire control | 1 | The Forge's turrets hit 40% harder |
+| Armoured plating, then Heavy plating | none (on the hull) | The hull is 25% stronger each |
+| Launch rails | none (in the hangar) | The fleet launches twice as fast |
+| Crew quarters | 1 | 40 more berths (160 to start) |
+| Mess hall (remember it first) | 1 | Morale settles 5 higher; hunger and thirst ease off twice as fast |
+| Infirmary (remember it first) | 1 | Every strain eases off faster, strain costs less, and the infirmary station opens |
+| Chart room (remember it first) | 1 | New clue circles are a third smaller |
+| Workshop | 1 | Repairs take a quarter less ore and salvage |
+| Still room | 1 | The crew drink a fifth less water |
 
 ### The drive's parts
 
@@ -325,7 +343,9 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 
 - **Hailing:** on the star chart, at a place a faction holds, **Hail** (or `C`) on the place card. On a map, select one of their ships or their station and press **Hail** (or `C`); the map waits while you talk.
 - **The comms panel** shows what they say and your choices (number keys pick them). What you can say depends on your standing, whether this is their station, whether you are at war on the map, and the treaties you have. Choices you cannot pay for are shown, with what you are short of.
-- **Trade** (at their station, Neutral or better) is barter: there is no money in the Wrack. Every good has a value. Pick what you take and what you give; the deal is fair when what you give is worth at least what they ask.
+- **Trade** (at their station, Neutral or better) is barter, with **cogmarks** to carry value. Every good has a value. Pick what you take and what you give; the deal is fair when what you give is worth at least what they ask.
+  - Cogmarks are worth exactly 1 to both sides. Sell goods for cogmarks out of their purse (300, refilling like their stock), buy with them, or swap goods and press **Pay the difference in cogmarks** (or **Take the change**). Cogmarks also come from the wrecks the Shearers cut (one for every 20 salvage), and pay strikers. They are physical: a new life starts with 60.
+  - While the stores station is dark, traders charge a quarter more.
   - Prices follow your standing: 30% dearer when they are Hostile or Wary, 10% when Neutral, at value when Friendly, 30% cheaper when Allied. What they pay you moves the other way.
   - Prices rise as their stock runs down (up to +50% at zero), and stock comes back a little each day.
   - They pay 70% of value for goods they want, 30% for the rest.
@@ -346,7 +366,7 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 
 ### Sensors, blueprints and engineering
 
-(The table of upgrades is under [Veterans and the Forge](#veterans-and-the-forge).)
+(The rooms that upgrade the Forge are under [The deck plan](#the-deck-plan).)
 
 - **Sensor fog** (maps on the voyage, and practice): you see other ships and stations only within sensor range of one of your own. Most ships see about 900 m, a Halberd 1.1 km, a Sabre 1.2 km, the Forge 1.6 km, a Wisp 2.6 km. Inside a nebula, seeing and being seen both happen at half range. What cannot be seen cannot be targeted, by you or by anyone else. A faint red diamond marks where a hostile was last seen.
 - **The Tactical Plot** (`Tab`): the whole map from above. It shows your ships and their sensor reach, what you can see, last-seen marks, deposits, wrecks and nebulae. Click to look there.
@@ -356,15 +376,7 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
   - cut half the salvage out of a wreck of that hull;
   - buy one (Rivet Moot and Ashen Gaunt: Talon; Cinder Pact: Spindle and Sabre);
   - or find one in an old archive.
-- **Engineering projects** (the Forge tab), built with ore, salvage, days and free engineers:
-
-| Project | What it does |
-| --- | --- |
-| Expanded hangar | +10 fleet capacity |
-| Hydroponic racks | Hydroponics grow 50% more |
-| Long-range array | Sensors reach 50% further, on the chart and on maps |
-| Glim recycler | Stitches cost 20% less Glim |
-| Armoured plating | The Forge's hull is 25% stronger |
+- **Rooms** (the Forge tab): see [The deck plan](#the-deck-plan).
 
 ### Events and monsters
 
@@ -560,7 +572,7 @@ Runs the headless tests:
 - **The voyage** (`tools/voyagetest.js`): checks that:
   - the galaxy is the same for the same seed, about 300 places in four regions, every place reachable once the hazards are open;
   - each region opens at its own drive level, all of it but its hazard pockets, and not before; each part lies where the drive that can fetch it reaches without opening any hazard;
-  - one day's water, food, air and Glim exactly; the starvation ladder (no food, no water then no air, low stores, no crew);
+  - one day's water, food, air and Glim exactly; shortages that weaken but never kill (five days without food, forty without water), low stores, no crew;
   - stitching (Glim and days), range, the Veil, a damaged or wrecked drive, drifting without Glim;
   - repairs, fitting a part, the final jump;
   - on a map: building takes crew, a relic found by cutting a hulk, pods, ships left behind, days passing, system wear, places yielding less when visited again;
@@ -585,7 +597,7 @@ Runs the headless tests:
 - **Named crew** (`tools/crewtest.js`): checks that:
   - a new voyage fills all eight posts and gives every armed ship a named lead (and the miners none); the same seed gives the same people;
   - traits work through their conditions: repairs with a Gifted, a Green and a neutral chief engineer; a Fair-weather grower at morale 70 and 50; a Homesick one on day 100 and 260; a Gifted navigator and quartermaster; morale pulled up by the Beloved and down by the Grim; the Green turning Steady after 50 days;
-  - losses are fair: losing half the free hands, 200 times, kills about half the named officers among them; forty days of hunger kill named people, the log names them and every post is refilled;
+  - losses are fair: losing half the free hands, 200 times, kills about half the named officers among them; forty days of losses kill named people, the memorial names them and every post is refilled; forty days of hunger kill nobody;
   - on a map: an Ace's Dart hits 20% harder, a Careful pilot's has 20% more hull, a Quick study learns faster; a new Dart gets a new pilot; a lead dies with their ship, a Lucky one gets out and comes home Shaken; the report and the voyage agree on who; a lead standing by takes the next ship;
   - events fill in names, `kill` and `mark` work, the memorial waits for three dead, and an unknown `{placeholder}` is a content error;
   - a save from before named crew loads with named crew, replays a visit in progress without the new traits, and saves again identically;
@@ -609,6 +621,16 @@ Runs the headless tests:
   - the cache gives two echoes once, not twice, and not again in a later life; places in a pocket yield half again as much;
   - drifting is refused too; a voyage saved inside a pocket can get out;
   - the test captain gets home in a single life on 50 full and 50 short seeds, going round every pocket.
+- **The base and survival** (`tools/basetest.js`): checks that:
+  - there are 17 rooms for 8 slots; the mess hall needs its memory; eight rooms fill the deck plan and a ninth won't fit, but plating takes no slot; stripping takes a day and frees a slot; the still room saves water and the quarters add berths; a new life wakes with an empty deck plan, remembering how;
+  - with no water, thirst strain rises a level a day to 3 and eases off a level a day after; the mess hall eases hunger and thirst faster; penalties are capped at four levels; the right stations go dark at 2 and 3 for each shortage; dark engineering, foundry and life support lose what they do; two hundred days with nothing kill nobody;
+  - the boilers burn 10 Glim a day and go cold without it (systems at half, cold strain, stations cold), and light again;
+  - costs follow the mood (content, uneasy, angry: 100%, 110%, 130%); a store gone makes them angry, and says why; crowding counts; an angry, strained ship with its stores back is content again within days of rest; content crews work faster;
+  - under morale 15 one more station strikes each day; a parley (a day, or cogmarks) or morale over 30 ends it;
+  - All hands starts when every station is green, with its bonus (work 121%, Glim 90%, ships 105%) and steady morale, earns a song after six days, and stops the day a station dims or a store runs out;
+  - cogmarks are worth 1 either way; a trader's purse limits what they pay out; settling makes the difference exactly; a dark stores station charges more; a new life has 60; Shearers find them in wrecks;
+  - a map is told the mood, its causes, ship cost and strength; on the map a Dart costs 150% at 150%;
+  - strain, strikes and All hands save and load exactly; older saves load with none.
 - **Campaigns and lives** (`tools/campaigntest.js`): checks that:
   - a new campaign starts on life 1 with one save; the first life opens with the prologue, later ones with waking;
   - after letting go, the next life is life 2, in the same galaxy, on day 1, at the wake-up point, with stores, systems, hull, fleet and drive parts as they were at waking;
@@ -685,11 +707,12 @@ content/core/poi-types.yaml     place templates: size, sky, rock fields, wrecks,
                                 documented at the top of the file)
 content/core/regions.yaml       the galaxy's regions: rings, place counts, danger, the Veil, the
                                 Shore's edge, place-type weights, names
-content/core/items.yaml         the Skein Drive's four parts: where they are, what they open, fitting costs
+content/core/items.yaml         the Skein Drive's four parts, blueprints, and the rooms of the deck plan
 content/core/voyage.yaml        every number behind the voyage (needs, life support, hydroponics,
-                                stitch costs, repairs, morale) and the Forge's systems
+                                stitch costs, repairs, morale, the boilers, the deck plan), strain,
+                                moods, strikes and All hands, and the Forge's systems
 content/core/names.yaml         name generators (derelicts, and people)
-content/core/crew.yaml          named crew: officers' posts, traits, ship leads (the format is at the top)
+content/core/crew.yaml          named crew: officers' posts, the stations they run, traits, ship leads (the format is at the top)
 content/core/memories.yaml      the Loom: 31 memories, and the anchors where story memories wait
 content/core/hazards.yaml       hazards: what each closes, who reports it and what they say, the memory
                                 that opens it, its pockets per region and its colour on the chart
@@ -722,7 +745,8 @@ src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Aster
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
-                      travel and saves (voyage.js), lives (life.js), the crew (crew.js), standing (standing.js),
+                      travel and saves (voyage.js), lives (life.js), the crew (crew.js), the base: rooms, strain,
+                      stations, mood, strikes and All hands (base.js), standing (standing.js),
                       comms, dialogs, trade and treaties (comms.js), events (events.js),
                       practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,

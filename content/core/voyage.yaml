@@ -8,9 +8,9 @@ Voyage:
 	DayTicks: 6000
 	# what a new voyage starts with
 	Crew: engineers 30, pilots 24, miners 30, hands 66
-	Stores: ore 1500, ice 2400, salvage 150, glim 700, spores 120, food 1600, air 900
+	Stores: ore 1500, ice 2400, salvage 150, glim 700, spores 120, food 1600, air 900, cogmarks 60
 	# a short voyage starts better supplied, and fitting drive parts costs this percent
-	ShortStores: ore 2500, ice 7000, salvage 600, glim 2200, spores 500, food 3000, air 1000
+	ShortStores: ore 2500, ice 7000, salvage 600, glim 2200, spores 500, food 3000, air 1000, cogmarks 120
 	ShortInstallPct: 60
 	Morale: 70
 	# per 10 crew per day
@@ -29,10 +29,10 @@ Voyage:
 	SporesPerDay: 20
 	# percent: a store is "low" under this many days of need
 	LowDays: 3
-	# people lost each day, in percent of the crew (at least one): no food, no air
+	# (before Milestone 17, hunger and bad air killed: StarvePct, SuffocatePct and AirlessDays
+	# are no longer used. Shortages strain the crew instead: see Strain below)
 	StarvePct: 2
 	SuffocatePct: 8
-	# the run ends after this many days without air
 	AirlessDays: 3
 	# the Skein Drive: base stitch in spans; Glim per 10 spans; days per stitch = 1 + length / DaySpan
 	BaseRange: 100
@@ -49,8 +49,10 @@ Voyage:
 	FleetHeal: 5
 	# a day's deep scan from the chart: Glim it costs (it sees twice the sensor range)
 	ScanGlim: 40
-	# the reactor's daily draw of Glim
-	ReactorGlim: 3
+	# the boilers' daily draw of Glim. With none, the boilers go cold: every system works at
+	# ColdPct of its output, and cold strain builds
+	ReactorGlim: 10
+	ColdPct: 50
 	# sensors: how far the chart reveals what a place is (spans, at full condition)
 	SensorRange: 170
 	# repairs, per day of work: points of condition per engineer (in tenths), and cost per point
@@ -70,7 +72,8 @@ Voyage:
 	MoraleRest: 10
 	MoraleLoss: 2
 	MoraleWin: 4
-	# below Slow, work is slower (percent); below Desert, people leave (percent a day)
+	# (MoraleSlow, SlowPct, MoraleDesert and DesertPct are no longer used: moods and strikes
+	# below take their place)
 	MoraleSlow: 30
 	SlowPct: 75
 	MoraleDesert: 15
@@ -84,6 +87,58 @@ Voyage:
 	# holds this many echoes, once in a campaign
 	PocketRichness: 150
 	CacheEchoes: 2
+	# the deck plan: room slots; people who can live aboard before the quarters are crowded
+	DeckSlots: 8
+	Berths: 160
+	# cogmarks: Shearers find one in the wrecks for every this much salvage cut
+	SalvagePerCogmark: 20
+
+# Strain (PLAN.md §6): running out of water, food, air or boiler heat weakens the Forge; it never
+# kills. Each kind rises a level (to 3) for each day it is out, and falls a level a day once it
+# is back (the mess hall and infirmary take off more: items.yaml Recover). Every level, of any
+# kind, costs: Work percent slower, Cost percent dearer to build, Glim percent more a stitch,
+# Ships percent weaker on maps; each capped at Cap levels. At levels 2 and 3, the stations
+# named go dark, one each (crew.yaml Stations).
+Strain:
+	Work: 15
+	Cost: 10
+	Glim: 10
+	Ships: 5
+	Cap: 4
+	Dark:
+		thirst: lifesupport, infirmary
+		hunger: hangar, stores
+		air: infirmary, comms
+		cold: engineering, foundry
+
+# The crew's mood: a mark everyone can see over the morale number. Content: morale Content or
+# more and nothing short, work WorkPct faster. Uneasy: morale under Content or a store low,
+# building, ships and Glim a stitch Cost percent dearer. Angry: morale under Angry or a store
+# out, Cost percent dearer. Under Strike, a station's crew walk off each day (one at a time),
+# and come back once morale is over Back, or after a parley (a day, or Pay cogmarks a station).
+# Grief: days the crew grieve after deaths. Crowded: morale they lose over the berths.
+Mood:
+	Content: 60
+	Angry: 30
+	WorkPct: 110
+	UneasyCost: 110
+	AngryCost: 130
+	Strike: 15
+	Back: 30
+	Pay: 40
+	ParleyMorale: 5
+	Grief: 3
+	Crowded: 10
+
+# All hands: every station green (morale Content or more, nothing short, no strain, every
+# station that is built online and staffed, no strike). While it lasts: work Work percent
+# faster on top of Content, ships Ships percent better, Glim a stitch Glim percent, and morale
+# doesn't fall overnight. Song: days of it in a row that earn a crew moment (events).
+AllHands:
+	Work: 110
+	Ships: 105
+	Glim: 90
+	Song: 6
 
 # The Forge's systems, in the order the Forge screen lists them.
 Systems:

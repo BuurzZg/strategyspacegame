@@ -20,6 +20,7 @@ export class CommsPanel {
     $('comms-choices').addEventListener('click', (e) => this.choose(e));
     $('trade-body').addEventListener('click', (e) => this.tradeClick(e));
     $('trade-deal').addEventListener('click', () => this.makeDeal());
+    $('trade-settle').addEventListener('click', () => { const { s, pointId } = this.o.trade, r = C.settle(this.rules, s, this.o.fid, pointId, this.buy, this.sell); this.buy = r.buy; this.sell = r.sell; this.renderTrade(); });
     $('trade-back').addEventListener('click', () => this.showDialog(this.node));
   }
   get isOpen() { return !!this.o; }
@@ -118,6 +119,11 @@ export class CommsPanel {
     const pct = q.cost ? Math.min(100, (q.pay / q.cost) * 100) : 0;
     $('trade-balance').innerHTML = `<span>You give <b>${fmt(q.pay)}</b> · they ask <b>${fmt(q.cost)}</b></span><div class="bar"><i style="width:${pct}%;background:${q.ok ? 'var(--good)' : 'var(--height)'}"></i></div><p>${esc(q.why)}</p>`;
     $('trade-deal').disabled = !q.ok;
+    // cogmarks can make up the difference, either way
+    const st = C.settle(rules, s, fid, pointId, this.buy, this.sell);
+    $('trade-settle').hidden = this.mode === 'hire' && !(s.stores.cogmarks | 0);
+    $('trade-settle').disabled = (st.sell.cogmarks | 0) === (this.sell.cogmarks | 0) && (st.buy.cogmarks | 0) === (this.buy.cogmarks | 0);
+    $('trade-settle').textContent = q.cost > q.pay ? 'Pay the difference in cogmarks' : 'Take the change in cogmarks';
   }
   tradeClick(e) {
     const b = e.target.closest('button[data-g]');

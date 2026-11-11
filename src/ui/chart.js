@@ -7,6 +7,7 @@ import * as CM from '../galaxy/comms.js';
 import * as V from '../galaxy/voyage.js';
 import { laneOpen } from '../galaxy/galaxy.js';
 import { ROLES, count, free, titleOf } from '../galaxy/crew.js';
+import * as B from '../galaxy/base.js';
 
 // The star chart screen: the galaxy map, where the voyage is planned and time passes only
 // when you act. Click a place to see what is known about it and the route there; stitch,
@@ -18,7 +19,16 @@ const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&
 const fmt = (n) => (n === Infinity ? '∞' : Math.round(n).toLocaleString('en-US'));
 const hex = (c) => `#${(typeof c === 'number' ? c.toString(16).padStart(6, '0') : c)}`;
 const DRAG = 5;
-const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores']];
+const STORES = [['ice', 'Water', 'Ice, melted for drinking, air and growing food'], ['food', 'Food'], ['air', 'Air'], ['glim', 'Glim', 'Glim: the drive burns it for every stitch, and the boilers every day'], ['ore', 'Ore'], ['salvage', 'Salvage'], ['spores', 'Spores'], ['cogmarks', 'Cogmarks']];
+const MOOD = { content: 'Content', uneasy: 'Uneasy', angry: 'Angry' };
+// The crew's mood as a medallion, with what is behind it (and All hands, while it lasts)
+function moodBadge(rules, s) {
+  const m = B.moodOf(rules, s), ah = (s.allHands && s.allHands.days) | 0;
+  const tip = `Morale ${s.morale}. ${m.causes.length ? m.causes.map((c) => c.text).join(' ') : 'Nothing is wrong.'}`;
+  const chips = m.causes.map((c) => `<i class="cause${c.bad ? ' bad' : ''}" title="${esc(c.text)}">${esc(c.text.split(':')[0])}</i>`).join('');
+  return `<div class="cs mood m-${m.mark}${ah ? ' allhands' : ''}" title="${esc(tip)}"><span class="medal"></span><span class="cs-k">${ah ? `All hands · ${ah} d` : MOOD[m.mark]}</span><b>${s.morale}</b>${chips}</div>`;
+}
+const STATE = { online: 'Online', dim: 'Dim', dark: 'Dark', striking: 'On strike', cold: 'Cold' };
 
 export class ChartScreen {
   constructor({ canvas, camera, rules, voyage, audio, hud, comms, loom, hint, onGoIn, onQuit, onChange, onEnd, onSave }) {
@@ -161,9 +171,12 @@ export class ChartScreen {
 
   // ---------------------------------------------------------------- actions
   act(fn, ...args) {
+    const was = (this.s.allHands && this.s.allHands.days) | 0;
     const r = fn(this.rules, this.s, ...args);
     if (!r.ok) { this.hud.toast(r.why, 'bad'); this.audio.play('error'); return r; }
     this.audio.play('order');
+    // All hands: every lamp gold at once, the bell and the organ
+    if (!was && this.s.allHands && this.s.allHands.days) { this.hud.toast('All hands! Every station is green.', 'good'); this.audio.play('allhands'); }
     this.onChange(this.s);
     this.refresh();
     this.pumpEvents();
@@ -179,7 +192,7 @@ export class ChartScreen {
     else if (a === 'scan') this.act(V.scan);
     else if (a === 'home') this.act(V.jumpHome);
     else if (a === 'go') this.onGoIn();
-    else if (a === 'hail') this.hail(this.g.points[this.s.at].owner);
+    else if (a === 'hail') { const h = V.canHail(this.rules, this.s); if (h.ok) this.hail(this.g.points[this.s.at].owner); else { this.hud.toast(h.why, 'bad'); this.audio.play('error'); } }
   }
   // Talk to the faction that holds the Forge's place: their dialog, trade and hiring.
   hail(fid) {
@@ -198,6 +211,8 @@ export class ChartScreen {
     if (!b || b.disabled) return;
     if (b.dataset.act === 'repair') this.act(V.repair, b.dataset.k);
     else if (b.dataset.act === 'install') this.act(V.install, b.dataset.k);
+    else if (b.dataset.act === 'strip' && window.confirm('Strip this room out? Nothing comes back, and it takes a day.')) this.act(V.strip, b.dataset.k);
+    else if (b.dataset.act === 'parley') this.act(V.parley, b.dataset.k);
     else if (b.dataset.act === 'home') this.act(V.jumpHome);
     else if (b.dataset.act === 'loom' && this.onLoom) this.onLoom();
     else if (b.dataset.act === 'letgo' && window.confirm('Let this life go? You will wake again at the start, and the chart keeps what you found. Everything else is lost.')) this.act(V.letGo);
@@ -226,8 +241,8 @@ export class ChartScreen {
     if (Math.min(left.ice, left.food, left.air) < 7 && !(this.comms && this.comms.isOpen)) this.hint('low');
     $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
       const d = days[k], warn = d !== undefined && d < 3 ? 'bad' : d !== undefined && d < 7 ? 'warn' : '';
-      return `<div class="cs ${warn}" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k])}</b>${d !== undefined ? `<span class="cs-d">${d === Infinity ? '' : `${fmt(d)} d`}</span>` : ''}</div>`;
-    }).join('') + `<div class="cs" title="Everyone aboard, flying ships or not"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div><div class="cs ${s.morale < 30 ? 'warn' : ''}" title="Morale: below 30, work is slower; below 15, people leave"><span class="cs-k">Morale</span><b>${s.morale}</b></div>`;
+      return `<div class="cs ${warn}" title="${esc(tip || res[k].Description)}"><span class="cs-k" style="color:${hex(res[k].Color)}">${name}</span><b>${fmt(s.stores[k] | 0)}</b>${d !== undefined ? `<span class="cs-d">${d === Infinity ? '' : `${fmt(d)} d`}</span>` : ''}</div>`;
+    }).join('') + `<div class="cs" title="Everyone aboard, flying ships or not; berths for ${B.berths(this.rules, s)}"><span class="cs-k">Crew</span><b>${count(s.crew)}</b></div>` + moodBadge(this.rules, s);
   }
 
   refreshCard() {
@@ -251,7 +266,8 @@ export class ChartScreen {
     if (here) {
       btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');
-      if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, false, p.seat ? 'Talk, trade and hire at their station' : 'Talk to them']);
+      const hc = V.canHail(this.rules, s);
+      if (p.owner && this.rules.content.factions[p.owner]) btns.push(['hail', `Hail the ${this.rules.content.factions[p.owner].Name} <kbd>C</kbd>`, !hc.ok, hc.ok ? (p.seat ? 'Talk, trade and hire at their station' : 'Talk to them') : hc.why]);
       btns.push(['rest', p.type === 'StillWater' ? 'Rest a day (still water: twice the rest)' : 'Rest a day', false, 'Morale rises; the crew still eat, drink and breathe']);
       const sp = V.scanPlan(this.rules, s);
       btns.push(['scan', `Deep scan: a day, ${this.rules.content.voyage.ScanGlim} Glim`, !sp.ok, sp.ok ? `Places within ${sp.range} spans become known` : sp.why]);
@@ -293,12 +309,19 @@ export class ChartScreen {
       }
       h += '</ul>';
       if (d.finalJump) { const hj = V.canJumpHome(rules, s); h += `<button type="button" class="big" data-act="home" ${hj.ok ? '' : 'disabled'}>Make the final jump</button>${hj.ok ? '' : `<p class="why">${esc(hj.why)}</p>`}`; }
-      h += '<h3>Engineering</h3><ul class="items">';
-      for (const it of Object.values(C.items)) {
-        if (it.Kind !== 'project') continue;
-        const built = s.items[it.id] === 'installed', pl = built ? null : V.installPlan(rules, s, it.id), I = it.Install;
-        h += `<li class="${built ? 'installed' : 'found'}"><div><b>${esc(it.Name)}</b><span>${built ? 'Built' : ''}</span></div><p>${esc(it.Description)}</p>`;
-        if (!built) h += `<button type="button" data-act="install" data-k="${it.id}" ${pl.ok ? '' : 'disabled'} title="${esc(pl.ok ? '' : pl.why)}">Build: ${I.Ore} ore, ${I.Salvage} salvage, ${pl.days || I.Days} days, ${I.Engineers} engineers</button>`;
+      // the deck plan: slots, the rooms in them, and what could be built
+      const used = B.slotsUsed(rules, s), slots = B.deckSlots(rules), rooms = B.rooms(rules), cp = B.costPctOf(rules, s);
+      h += `<h3>Deck plan: ${used} of ${slots} slots</h3><div class="deck">`;
+      for (const it of rooms.filter((r) => B.built(s, r.id) && B.slotsOf(rules, r) > 0)) for (let k = 0; k < B.slotsOf(rules, it); k++) h += `<div class="slot full" title="${esc(it.Description)}">${esc(it.Name)}</div>`;
+      for (let k = used; k < slots; k++) h += '<div class="slot"></div>';
+      h += `</div><p class="fp-note">Rooms are built with ore, salvage, days and free engineers${cp !== 100 ? `, ${cp > 100 ? `${cp - 100}% dearer while the crew are ${B.moodOf(rules, s).mark === 'angry' ? 'angry' : 'uneasy'} or strained` : ''}` : ''}. They are lost with everything else when a life ends; how to build them is not.</p><ul class="items">`;
+      for (const it of rooms) {
+        const built = B.built(s, it.id), known = B.roomKnown(rules, s, it.id), I = it.Install, sl = B.slotsOf(rules, it);
+        const where = sl === 0 ? 'no slot' : sl > 1 ? `${sl} slots` : '1 slot';
+        h += `<li class="${built ? 'installed' : known ? 'found' : 'missing'}"><div><b>${esc(it.Name)}</b><span>${built ? 'Built' : known ? where : 'Not remembered'}</span></div><p>${esc(known ? it.Description : (B.roomMemory(rules, it.id) || {}).Hint || '')}</p>`;
+        if (built) { const sp = V.stripPlan(rules, s, it.id); h += `<button type="button" data-act="strip" data-k="${it.id}" ${sp.ok ? '' : 'disabled'} title="${esc(sp.ok ? 'Frees its slots; a day, and nothing comes back' : sp.why)}">Strip it out</button>`; }
+        else if (known) { const pl = V.installPlan(rules, s, it.id); h += `<button type="button" data-act="install" data-k="${it.id}" ${pl.ok ? '' : 'disabled'} title="${esc(pl.ok ? '' : pl.why)}">Build: ${pl.ore ?? I.Ore} ore, ${pl.salvage ?? I.Salvage} salvage, ${pl.days || I.Days} days, ${I.Engineers} engineers</button>${pl.ok ? '' : `<p class="why">${esc(pl.why)}</p>`}`; }
+        else h += `<p class="why">Recall the ${esc((B.roomMemory(rules, it.id) || { Name: '' }).Name.toLowerCase())} on the Loom first.</p>`;
         h += '</li>';
       }
       h += `</ul><h3>Blueprints</h3><p class="fp-note">The foundry can build: ${(s.blueprints || []).map((t) => esc(rules.actor(t).traitInfo('Tooltip').Name)).join(', ')}. Others come from cutting up wrecks of that hull, from traders, or from luck.</p>`;
@@ -314,9 +337,19 @@ export class ChartScreen {
       const C2 = s.campaign || { life: 1, lives: [] };
       h += `<h3>Life ${C2.life}</h3><p class="fp-note">${C2.lives.length ? `Before this one: ${C2.lives.map((l) => `life ${l.life}, ${l.days} day${l.days === 1 ? '' : 's'}`).join('; ')}. ` : ''}When a life is going nowhere you can let it go. You wake again at the start; the chart keeps what you found, and everything else is lost.</p><button type="button" data-act="letgo" ${s.over ? 'disabled' : ''}>Let go</button>`;
     } else if (this.tab === 'crew') {
-      const m = s.morale, V2 = C.voyage;
-      h += `<h3>Morale</h3><div class="sr"><span>${m < +V2.MoraleDesert ? 'Deserting' : m < +V2.MoraleSlow ? 'Low' : m < 60 ? 'Steady' : 'Good'}</span><div class="bar"><i style="width:${m}%;background:${m < 30 ? 'var(--bad)' : m < 55 ? 'var(--height)' : 'var(--good)'}"></i></div><b>${m}</b></div>`;
-      h += '<p class="fp-note">Rises with rest and full stores; falls with shortages and losses. Below 30, work is slower; below 15, people take the pods and leave.</p>';
+      const m = s.morale, Mo = C.mood || {}, md = B.moodOf(rules, s), ah = s.allHands || { days: 0, best: 0 };
+      h += `<h3>Mood: ${MOOD[md.mark]}</h3><div class="sr"><span>Morale</span><div class="bar"><i style="width:${m}%;background:${md.mark === 'angry' ? 'var(--bad)' : md.mark === 'uneasy' ? 'var(--height)' : 'var(--good)'}"></i></div><b>${m}</b></div>`;
+      h += md.causes.length ? `<ul class="causes">${md.causes.map((c) => `<li class="${c.bad ? 'bad' : ''}">${esc(c.text)}</li>`).join('')}</ul>` : '<p class="fp-note">Nothing is wrong.</p>';
+      h += `<p class="fp-note">Content (morale ${Mo.Content} or more, nothing short): work goes 10% faster. Uneasy: building, ships and Glim a stitch cost 10% more. Angry (morale under ${Mo.Angry}, or a store gone): 30% more. Under ${Mo.Strike}, a station's crew walk off each day.${ah.best ? ` All hands: ${ah.days ? `${ah.days} days and counting` : 'not now'}; the best so far, ${ah.best} days.` : ''}</p>`;
+      const strain = B.strainOf(s);
+      if (B.strainTotal(s)) h += `<h3>Strain</h3><div class="strain">${B.KINDS.map((k) => `<span class="${strain[k] ? 'on' : ''}">${{ thirst: 'Thirst', hunger: 'Hunger', air: 'Bad air', cold: 'Cold' }[k]} <b>${strain[k]}</b></span>`).join('')}</div><p class="fp-note">Shortages never kill. Each day a store is out, its strain rises a level (to 3); every level makes work slower, building, ships and stitches dearer, and ships weaker. At 2 and 3, stations go dark. It eases off a level a day once the store is back; the mess hall and infirmary ease it faster.</p>`;
+      h += '<h3>Stations</h3><ul class="stations">';
+      for (const st of B.stations(rules, s)) h += `<li class="st-${st.notYet ? 'notyet' : st.state}" title="${esc(st.text)}"><span class="lamp ${st.mood ? `m-${st.mood}` : ''}"></span><b>${esc(st.name)}</b><span class="who">${st.officer ? esc(st.officer) : st.post ? 'nobody' : 'the hands'}</span><span class="state">${st.notYet ? 'Not yet' : STATE[st.state]}</span>${st.why ? `<p>${esc(st.why)}${st.state === 'dark' || st.state === 'striking' ? ` ${esc(st.dark)}` : ''}</p>` : ''}</li>`;
+      h += '</ul>';
+      if ((s.strikes || []).length) {
+        const pd = V.parleyPlan(rules, s, 'day'), pp = V.parleyPlan(rules, s, 'pay');
+        h += `<div class="parley"><button type="button" data-act="parley" data-k="day" ${pd.ok ? '' : 'disabled'}>Parley: a day of talking</button><button type="button" data-act="parley" data-k="pay" ${pp.ok ? '' : 'disabled'} title="${esc(pp.ok ? '' : pp.why)}">Pay them: ${pp.cogmarks} cogmarks</button></div><p class="fp-note">The strikers go back once morale is over ${Mo.Back}, or after a parley.</p>`;
+      }
       const cv = V.crewView(rules, s);
       const when = (w) => w.replace(/^day >= (\d+)$/, 'from day $1').replace(/^morale >= (\d+)$/, 'while morale is $1 or more').replace(/^morale <= (\d+)$/, 'while morale is $1 or less');
       const trait = (p) => `<span class="trait${p.active ? '' : ' off'}" title="${esc(p.text)}${p.when ? ` (${esc(when(p.when))})` : ''}">${esc(p.trait)}</span>`;

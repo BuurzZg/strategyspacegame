@@ -8,7 +8,7 @@
 #   Bonus  what their work changes (the same percent keys engineering projects use):
 #          RepairPct (a day's repairs), BuildPct (the foundry), FoodPct (the hydroponics),
 #          GlimPct (Glim a stitch), SensorPct (sensor range), TradePct (prices you pay),
-#          CarePct (people lost to hunger and bad air), XpPct (experience ships earn)
+#          CarePct (what strain costs the Forge), XpPct (experience ships earn)
 #   Less   true when their work lowers the number (GlimPct, TradePct, CarePct)
 #
 # Traits: what someone is like. An officer's Work adds to their post's bonus, in percent;
@@ -61,12 +61,72 @@ Posts:
 		Role: hands
 		Bonus: CarePct
 		Less: true
-		Text: Keeps people alive. Their work changes how many are lost to hunger and bad air.
+		Text: Keeps people going. Their work changes how hard strain hits the Forge.
 	wing:
 		Name: Wing commander
 		Role: pilots
 		Bonus: XpPct
 		Text: Drills the pilots and captains. Their work changes how fast ships earn experience.
+
+# Stations: the Forge's departments, each run by an officer's post (PLAN.md §6). A station is
+# online, dim (no officer, or its system under half), dark (strain, or what it needs is not
+# there yet), striking (its crew have walked off) or cold (the boilers are out: half its work).
+#   Post       the officer who runs it (none: the hands keep it)
+#   System     the Forge system it works through (voyage.yaml Systems)
+#   Needs      a memory it needs before it can open; Room: a room it needs on the deck plan
+#   Text       what it runs; Dark: what is lost while it is dark or striking
+Stations:
+	engineering:
+		Name: Engineering
+		Post: engineer
+		Text: Repairs, the hull, the Forge's systems, and building rooms.
+		Dark: No repairs and no building on the deck plan.
+	navigation:
+		Name: Navigation
+		Post: navigator
+		System: drive
+		Text: Stitches and routes.
+		Dark: Every stitch burns half again as much Glim.
+	sensors:
+		Name: Sensors
+		Post: watch
+		System: sensors
+		Needs: radar
+		Text: The chart's reach, deep scans and clue circles.
+		Dark: The chart goes dark past the next lane; no deep scans.
+	foundry:
+		Name: Foundry
+		Post: foundry
+		System: foundry
+		Text: Building ships on maps.
+		Dark: No ships can be built.
+	lifesupport:
+		Name: Life support
+		Post: grower
+		System: life
+		Text: Air, water and the hydroponics.
+		Dark: No air is made.
+	hangar:
+		Name: Hangar
+		Post: wing
+		Text: Launches, and the fleet between maps.
+		Dark: Launches take twice as long.
+	comms:
+		Name: Comms
+		Text: Hailing, trade and signals. The hands keep it until there is a signals officer.
+		Dark: Nobody can be hailed.
+	infirmary:
+		Name: Infirmary
+		Post: surgeon
+		Needs: infirmary
+		Room: infirmary
+		Text: Strain recovery and care.
+		Dark: Strain eases no faster than a level a day.
+	stores:
+		Name: Stores
+		Post: quartermaster
+		Text: The hold, trade and cogmarks.
+		Dark: Traders charge a quarter more.
 
 Leads:
 	pilots: Pilot

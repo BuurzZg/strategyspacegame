@@ -88,8 +88,13 @@ const officer = (s, post) => K.officerOf(s.crew, post);
   const s = V.newVoyage(rules, { seed: 3 });
   s.queue = [];
   let ok = true;
-  for (let d = 0; d < 40; d++) { s.stores.food = 0; s.stores.spores = 0; V.dayTick(rules, s); if (sound(s).length) ok = false; }
-  check(ok && s.crew.fallen.length > 0 && s.log.some((l) => /Among them:/.test(l.text)) && Object.keys(CR.posts).every((p) => officer(s, p)), `forty days of hunger: ${150 - K.count(s.crew)} die, ${s.crew.fallen.length} of them named (the log says who), every post refilled by promotion, and the counts agree every day`);
+  // forty days of losses (in fights and accidents: hunger no longer kills, Milestone 17)
+  for (let d = 0; d < 40; d++) { K.loseAny(s.crew, 1, { day: s.day, how: 'killed in a test' }, s.fleet); V.dayTick(rules, s); if (sound(s).length) ok = false; }
+  check(ok && s.crew.fallen.length > 0 && s.crew.fallen.every((f) => f.name && f.how) && Object.keys(CR.posts).every((p) => officer(s, p)), `forty days of losses: ${150 - K.count(s.crew)} die, ${s.crew.fallen.length} of them named (the memorial says who and how), every post refilled by promotion, and the counts agree every day`);
+  const h = V.newVoyage(rules, { seed: 3 });
+  h.queue = [];
+  for (let d = 0; d < 40; d++) { h.stores.food = 0; h.stores.spores = 0; V.dayTick(rules, h); }
+  check(!h.over && K.count(h.crew) === 150 && !h.crew.fallen.length && h.strain.hunger === 3, 'forty days of hunger: nobody dies, the life goes on, and hunger strain is at its worst');
   // with nobody free in a role, ships lose theirs too: the leads among them
   const u = V.newVoyage(rules, { seed: 3 });
   const pilots0 = K.named(u.crew, 'pilots').length;

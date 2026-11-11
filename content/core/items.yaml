@@ -76,15 +76,22 @@ bp-sabre:
 	Unlocks: sabre
 	Description: How to build a destroyer with torpedoes and two pulse batteries.
 
-# Engineering projects: upgrades to the Forge, built from the Forge panel.
+# Rooms: the Forge's deck plan (PLAN.md §6), built from the Forge panel with ore, salvage, days
+# and free engineers. The deck plan has DeckSlots (voyage.yaml) slots; each room takes Slots of
+# them (1 unless given; 0 for what goes on the hull or in the hangar). Rooms are physical: they
+# are lost with everything else when a life ends, and built again in the next.
 #   Capacity (fleet capacity), FoodPct (hydroponics output), SensorPct (sensor range on the
 #   chart and on maps), GlimPct (Glim per stitch), HullPct (the Forge's hull), Heal (percent of
 #   their hull ships aboard mend each day), BuildPct (foundry speed), ForgeDamagePct (the
-#   Forge's own guns), LaunchPct (time between launches from the hangar)
-#   Requires: another project that must be built first
+#   Forge's own guns), LaunchPct (time between launches from the hangar), Berths (people who
+#   can live aboard), Recover (strain levels it takes off each day, on top of one: Strain lists
+#   which kinds, or all), MoraleUp (to the morale the crew settle at), CluePct (the size of new
+#   clue circles), RepairCostPct (ore and salvage a repair takes), WaterPct (water the crew drink)
+#   Requires: another room that must be built first. A memory that Gives "room <id>" must be
+#   remembered before it can be built (memories.yaml).
 hangar:
 	Name: Expanded hangar
-	Kind: project
+	Kind: room
 	Description: Gut two cargo decks and fit them as bays. Room for ten more capacity of ships.
 	Capacity: 10
 	Install:
@@ -94,7 +101,7 @@ hangar:
 		Engineers: 16
 racks:
 	Name: Hydroponic racks
-	Kind: project
+	Kind: room
 	Description: Stack the grow beds three high. The hydroponics grow half as much again.
 	FoodPct: 150
 	Install:
@@ -104,7 +111,7 @@ racks:
 		Engineers: 10
 array:
 	Name: Long-range array
-	Kind: project
+	Kind: room
 	Description: A second sensor dish on the spine. The Forge sees half again as far, on the chart and on maps.
 	SensorPct: 150
 	Install:
@@ -114,7 +121,7 @@ array:
 		Engineers: 12
 recycler:
 	Name: Glim recycler
-	Kind: project
+	Kind: room
 	Description: Catch what the Skein spills on every stitch. Stitches cost a fifth less Glim.
 	GlimPct: 80
 	Install:
@@ -124,9 +131,10 @@ recycler:
 		Engineers: 14
 plating:
 	Name: Armoured plating
-	Kind: project
+	Kind: room
 	Description: Salvaged plate welded over the Forge's flanks. A quarter more hull.
 	HullPct: 125
+	Slots: 0
 	Install:
 		Ore: 1200
 		Salvage: 800
@@ -134,7 +142,7 @@ plating:
 		Engineers: 18
 second-hangar:
 	Name: Second hangar
-	Kind: project
+	Kind: room
 	Requires: hangar
 	Description: A whole new hangar deck where the ore holds were. Room for ten more capacity of ships.
 	Capacity: 10
@@ -145,7 +153,7 @@ second-hangar:
 		Engineers: 20
 repair-bays:
 	Name: Repair bays
-	Kind: project
+	Kind: room
 	Description: Cradles and welders in the hangar. Ships aboard mend much faster between places.
 	Heal: 15
 	Install:
@@ -155,7 +163,7 @@ repair-bays:
 		Engineers: 12
 foundry-line:
 	Name: Foundry line
-	Kind: project
+	Kind: room
 	Description: A second casting line in the foundry. Ships are built a third faster.
 	BuildPct: 130
 	Install:
@@ -165,7 +173,7 @@ foundry-line:
 		Engineers: 16
 fire-control:
 	Name: Fire control
-	Kind: project
+	Kind: room
 	Description: A proper fire-control room for the Forge's own turrets. They hit four tenths harder.
 	ForgeDamagePct: 140
 	Install:
@@ -175,9 +183,10 @@ fire-control:
 		Engineers: 12
 launch-rails:
 	Name: Launch rails
-	Kind: project
+	Kind: room
 	Description: Magnetic rails in the bays. The fleet launches twice as fast on arrival.
 	LaunchPct: 50
+	Slots: 0
 	Install:
 		Ore: 400
 		Salvage: 300
@@ -185,12 +194,77 @@ launch-rails:
 		Engineers: 8
 heavy-plating:
 	Name: Heavy plating
-	Kind: project
+	Kind: room
 	Requires: plating
 	Description: A second skin over the first. A quarter more hull again.
 	HullPct: 125
+	Slots: 0
 	Install:
 		Ore: 1800
 		Salvage: 1200
 		Days: 6
 		Engineers: 22
+# The rooms that came with the new deck plan
+quarters:
+	Name: Crew quarters
+	Kind: room
+	Description: Bunks where the cargo nets were. Forty more people can live aboard without sleeping in the corridors.
+	Berths: 40
+	Install:
+		Ore: 500
+		Salvage: 300
+		Days: 2
+		Engineers: 10
+messhall:
+	Name: Mess hall
+	Kind: room
+	Description: Long tables, a stove, and somewhere to sit together. The crew settle happier, and hunger and thirst ease off faster.
+	MoraleUp: 5
+	Recover: 1
+	Strain: hunger, thirst
+	Install:
+		Ore: 400
+		Salvage: 300
+		Days: 2
+		Engineers: 8
+infirmary:
+	Name: Infirmary
+	Kind: room
+	Description: Cots, lamps and a surgeon's tools. Every kind of strain eases off a level faster, and the infirmary station can open.
+	Recover: 1
+	CarePct: 80
+	Install:
+		Ore: 600
+		Salvage: 500
+		Days: 3
+		Engineers: 12
+chartroom:
+	Name: Chart room
+	Kind: room
+	Description: A table of brass and glass, and old charts nobody aboard can read yet. New clue circles are a third smaller.
+	CluePct: 67
+	Install:
+		Ore: 400
+		Salvage: 400
+		Days: 2
+		Engineers: 8
+workshop:
+	Name: Workshop
+	Kind: room
+	Description: Lathes, a forge and racks of spares. Repairs take a quarter less ore and salvage.
+	RepairCostPct: 75
+	Install:
+		Ore: 500
+		Salvage: 200
+		Days: 2
+		Engineers: 10
+stillroom:
+	Name: Still room
+	Kind: room
+	Description: Coils and condensers that win back every drop the crew sweat and breathe. They drink a fifth less water.
+	WaterPct: 80
+	Install:
+		Ore: 300
+		Salvage: 400
+		Days: 2
+		Engineers: 8

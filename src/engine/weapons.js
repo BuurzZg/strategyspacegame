@@ -150,7 +150,7 @@ defineWarhead('SpreadDamage', {
       let dmg = Math.trunc((((wh.Damage * versus) / 100) * pct) / 100);
       if (firer) {
         // veterans hit harder; so does a Forge with fire control (engineering)
-        if ((firer.rank || firer.leadDamage) && world.ranks) dmg = Math.trunc((dmg * world.ranks.damagePct(firer)) / 100);
+        if ((firer.rank || firer.leadDamage || (firer.owner.slot && firer.owner.slot.shipPct && firer.owner.slot.shipPct !== 100 && !firer.has('Hangar'))) && world.ranks) dmg = Math.trunc((dmg * world.ranks.damagePct(firer)) / 100);
         const fc = firer.owner.slot && firer.owner.slot.forgeDamagePct;
         if (fc && firer.has('Hangar')) dmg = Math.trunc((dmg * fc) / 100);
         firer.fought = true;

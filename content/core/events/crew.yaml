@@ -4,6 +4,8 @@
 # trait <trait> (someone aboard has it), leads >= n, fallen >= n, morale >= n, morale <= n.
 # Effects: kill <post|pilot>, mark <post|pilot> <trait>, mend <system|hull> n, train n
 # (experience for every armed ship).
+# The base (Milestone 17): allhands >= n (an All hands streak of n days), strain <kind> >= n
+# (thirst, hunger, air, cold). When: allhands fires the day a streak reaches the song (voyage.yaml).
 
 Memorial:
 	When: arrive
@@ -177,3 +179,18 @@ TheStill:
 		Choice@shut:
 			Text: Shut it down.
 			Do: morale -3, give food 40, close
+
+AllHandsSong:
+	When: allhands
+	Once: false
+	If: allhands >= 6
+	Title: A song about the Forge
+	Start: song
+	Node@song:
+		Say: Six days of All hands. Somebody in the mess has written a song about the Forge, and it is not very good, and everyone knows the words by supper. {engineer} sings the low part. Even {surgeon} joins in.
+		Choice@toast:
+			Text: Raise a glass to the crew.
+			Do: morale 6, close
+		Choice@quiet:
+			Text: Let them sing. Stand at the back and listen.
+			Do: morale 3, close

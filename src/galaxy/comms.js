@@ -2,6 +2,7 @@ import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
 import { lifeMix, lifeOf, remembers, markMemory, memoryOfBlueprint } from './life.js';
 import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
+import { stationDown, strainOf, KINDS } from './base.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
 // offer choices; a choice shows when its conditions hold and does a short list of effects from
@@ -49,6 +50,9 @@ export function parseCond(text) {
   if (w[0] === 'trait' && w[1]) return { op: 'trait', trait: w[1] };
   if (w[0] === 'fallen' && w[1] === '>=' && +w[2] >= 0) return { op: 'fallen', n: +w[2] };
   if (w[0] === 'leads' && w[1] === '>=' && +w[2] >= 0) return { op: 'leads', n: +w[2] };
+  // the base (Milestone 17): an All hands streak of n days or more; a kind of strain at n or more
+  if (w[0] === 'allhands' && w[1] === '>=' && +w[2] >= 0) return { op: 'allhands', n: +w[2] };
+  if (w[0] === 'strain' && KINDS.includes(w[1]) && w[2] === '>=' && +w[3] >= 0) return { op: 'strain', kind: w[1], n: +w[3] };
   return { op: 'bad', text };
 }
 export function parseEffect(text) {
@@ -160,6 +164,8 @@ function holds(ctx, c) {
     case 'trait': return !!ctx.s && (ctx.s.crew.people || []).some((p) => p.trait === c.trait);
     case 'fallen': return !!ctx.s && (ctx.s.crew.fallen || []).length >= c.n;
     case 'leads': return !!ctx.s && ctx.s.fleet.filter((e) => e.lead && personById(ctx.s.crew, e.lead)).length >= c.n;
+    case 'allhands': return !!ctx.s && ((ctx.s.allHands && ctx.s.allHands.days) | 0) >= c.n;
+    case 'strain': return !!ctx.s && (strainOf(ctx.s)[c.kind] | 0) >= c.n;
     default: return false;
   }
 }
@@ -365,6 +371,8 @@ export function stockOf(rules, s, fid, pointId) {
   const F = rules.content.factions[fid];
   const max = Object.fromEntries([...weights(F.Sells), ...weights(F.Hires)]);
   for (const t of list(F.Ships)) max[`ship:${t}`] = 2;
+  // their purse: the cogmarks they can pay out
+  max.cogmarks = F.Purse !== undefined ? +F.Purse | 0 : num(rules.content.trade, 'Purse', 300);
   s.stock ||= {};
   const k = String(pointId), rec = s.stock[k];
   if (!rec) return { max, goods: { ...max } };
@@ -382,13 +390,16 @@ const standingPct = (rules, tier) => Object.fromEntries(weights(rules.content.tr
 // Prices are in hundredths of a value unit, so small goods keep their discounts; a deal's total
 // is rounded at the end (up for what you pay, down for what you get).
 // What one unit costs you, bought from them: dearer when they dislike you and as stock runs low.
+// Cogmarks are money: always worth exactly 1, either way.
 export function buyPrice(rules, tier, good, stock, max) {
+  if (good === 'cogmarks') return 100;
   const T = rules.content.trade, base = valueOf(rules, good);
   const scarce = max > 0 ? Math.trunc((num(T, 'Scarce', 50) * (max - Math.min(max, stock))) / max) : 0;
   return Math.trunc((base * (100 + standingPct(rules, tier)) * (100 + scarce)) / 100);
 }
 // What they give you for one unit, sold to them: more for what they want, less when they dislike you.
 export function sellPrice(rules, tier, fid, good) {
+  if (good === 'cogmarks') return 100;
   const T = rules.content.trade, base = valueOf(rules, good);
   const wants = list(rules.content.factions[fid].Wants).includes(good) ? num(T, 'Wants', 70) : num(T, 'Unwanted', 30);
   return Math.trunc((base * wants * (100 - standingPct(rules, tier))) / 100);
@@ -396,14 +407,24 @@ export function sellPrice(rules, tier, fid, good) {
 
 // What you could sell them: everything in the hold that has a value.
 export const sellable = (rules, s) => Object.keys(s.stores).filter((k) => valueOf(rules, k) > 0 && s.stores[k] > 0);
+// Settle a deal in cogmarks: the bags with cogmarks added to whichever side is short, as far
+// as your cogmarks or their purse allow. Returns { buy, sell }.
+export function settle(rules, s, fid, pointId, buy, sell) {
+  const b = { ...buy, cogmarks: 0 }, l = { ...sell, cogmarks: 0 };
+  const q = quote(rules, s, fid, pointId, b, l), purse = stockOf(rules, s, fid, pointId).goods.cogmarks | 0;
+  if (q.cost > q.pay) l.cogmarks = Math.min(s.stores.cogmarks | 0, q.cost - q.pay);
+  else if (q.pay > q.cost) b.cogmarks = Math.min(purse, q.pay - q.cost);
+  return { buy: b, sell: l };
+}
 
 // Price a deal: buy { good: n } from them, sell { store: n } to them.
 export function quote(rules, s, fid, pointId, buy, sell) {
   const tier = tierIndex(rules, standingOf(rules, s, fid)), { max, goods } = stockOf(rules, s, fid, pointId);
-  let cost = 0, pay = 0;
+  let cost = 0, pay = 0, cogs = 0;
   const why = [];
   for (const [g, n] of Object.entries(buy)) {
     if (n <= 0) continue;
+    if (g === 'cogmarks') { if ((goods.cogmarks | 0) < n) why.push(`Their purse holds only ${goods.cogmarks | 0} cogmarks.`); cogs += n * 100; continue; }
     if ((goods[g] | 0) < n) why.push(`They have only ${goods[g] | 0} ${g.replace('ship:', '')}.`);
     if (g.startsWith('bp-') && (s.blueprints || []).includes(rules.content.items[g]?.Unlocks)) why.push('You already have that blueprint.');
     // price rises as their stock runs down: each unit at the price for the stock left
@@ -415,9 +436,10 @@ export function quote(rules, s, fid, pointId, buy, sell) {
     pay += sellPrice(rules, tier, fid, g) * n;
   }
   if (tier === 0) why.push('They will not trade with you.');
-  // the quartermaster's haggling
+  // the quartermaster's haggling (or nobody at the ledgers while the stores station is dark)
   if (s.crew.people) cost = Math.trunc((cost * officerPct(rules, s.crew, 'TradePct', crewHolds(rules, s))) / 100);
-  cost = Math.ceil(cost / 100); pay = Math.trunc(pay / 100);
+  if (s.crew.people && stationDown(rules, s, 'stores')) cost = Math.trunc((cost * 125) / 100);
+  cost = Math.ceil((cost + cogs) / 100); pay = Math.trunc(pay / 100);
   // ships need room in the hangar
   const ships = Object.entries(buy).filter(([g, n]) => g.startsWith('ship:') && n > 0);
   if (ships.length) {
@@ -435,7 +457,7 @@ export function deal(rules, s, fid, pointId, buy, sell) {
   const q = quote(rules, s, fid, pointId, buy, sell);
   if (!q.ok) return { ok: false, why: q.why || 'Nothing to trade.' };
   const { goods } = stockOf(rules, s, fid, pointId);
-  for (const [g, n] of Object.entries(sell)) if (n > 0) s.stores[g] -= n;
+  for (const [g, n] of Object.entries(sell)) if (n > 0) { s.stores[g] -= n; if (g === 'cogmarks') goods.cogmarks = (goods.cogmarks | 0) + n; } // cogmarks paid go in their purse
   for (const [g, n] of Object.entries(buy)) {
     if (n <= 0) continue;
     goods[g] -= n;

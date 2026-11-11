@@ -105,8 +105,11 @@ export class Hud {
     const left = (have, rate) => (rate >= 0 ? Infinity : Math.max(0, Math.trunc(have / -rate)));
     const d = { water: left(ice, v.forecast.ice), food: left(v.stores.food + v.forecast.food * gone, v.forecast.food), air: left(v.stores.air + v.forecast.air * gone, v.forecast.air) };
     const worst = Object.entries(d).sort((a, b) => a[1] - b[1])[0];
-    $('place').textContent = `${poi.name} · Day ${day}${worst[1] < 10 ? ` · ${worst[0]} ${worst[1]} d` : ''}`;
-    $('place').classList.toggle('warn', worst[1] < 4);
+    // the crew's mood rides along (Milestone 17)
+    const mood = v.allHands ? 'All hands' : { content: 'Content', uneasy: 'Uneasy', angry: 'Angry' }[v.mood] || '';
+    $('place').textContent = `${poi.name} · Day ${day}${worst[1] < 10 ? ` · ${worst[0]} ${worst[1]} d` : ''}${mood ? ` · ${mood}` : ''}`;
+    $('place').title = (v.causes || []).join(' ');
+    $('place').classList.toggle('warn', worst[1] < 4 || v.mood === 'angry');
     if (gone > 0 && worst[1] < 4) this.toast(`Day ${day}: ${worst[1] ? `${worst[0]} for ${worst[1]} more day${worst[1] > 1 ? 's' : ''}` : `the ${worst[0]} is gone`}`, 'bad');
   }
 
@@ -138,6 +141,7 @@ export class Hud {
   hail() {
     const a = this.hailTarget();
     if (!a || !this.comms) return;
+    if (this.world.settings.voyage && this.world.settings.voyage.commsDark) { this.toast('Comms is dark: nobody at the set to hail them.', 'bad'); this.audio.play('error'); return; }
     const w = this.world, me = this.s.viewer, p = a.owner, fid = p.faction, v = w.settings.voyage || {}, rules = w.rules;
     this.savedSpeed = this.s.speed || 1;
     this.s.speed = 0; // the map waits while you talk
@@ -367,7 +371,7 @@ export class Hud {
       btn.innerHTML = `
         <span class="bi-name">${esc(tt.Name)}<span class="bi-count"></span></span>
         <span class="bi-role">${esc(tt.Role)}</span>
-        <span class="bi-stats"><span class="bi-ore" title="Ore">${fmtNum(info.traitInfo('Valued').Cost)}</span><span title="Build time">${fmtTime(b.BuildDuration)}</span><span title="Fleet capacity">cap ${info.traitInfo('ConsumesCapacity')?.Amount || 0}</span>${info.traitInfo('Crew')?.Count ? `<span title="Crew it takes from the free crew">${info.traitInfo('Crew').Count} ${info.traitInfo('Crew').Role}</span>` : ''}</span>
+        <span class="bi-stats"><span class="bi-ore" title="Ore">${fmtNum(Math.trunc((info.traitInfo('Valued').Cost * (((this.s.viewer && this.s.viewer.slot) || {}).costPct || 100)) / 100))}</span><span title="Build time">${fmtTime(b.BuildDuration)}</span><span title="Fleet capacity">cap ${info.traitInfo('ConsumesCapacity')?.Amount || 0}</span>${info.traitInfo('Crew')?.Count ? `<span title="Crew it takes from the free crew">${info.traitInfo('Crew').Count} ${info.traitInfo('Crew').Role}</span>` : ''}</span>
         <span class="bi-why"></span>`;
       btn.title = `${tt.Name}: ${tt.Description}`;
       // blur after a click so Space/Enter can't queue it again by accident

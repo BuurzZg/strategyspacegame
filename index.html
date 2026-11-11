@@ -273,6 +273,37 @@ body.at-chart #cgroups, body.at-chart #move-hint, body.at-chart #skein { display
 .cs-d { font: 11px var(--f-mono); color: var(--muted); }
 .cs.warn b, .cs.warn .cs-d { color: var(--height); }
 .cs.bad b, .cs.bad .cs-d { color: var(--bad); }
+/* the crew's mood (Milestone 17): a medallion, the morale, and what is behind it */
+.cs.mood { align-items: center; flex-wrap: wrap; }
+.cs.mood .medal { width: 12px; height: 12px; border-radius: 50%; align-self: center; box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 8px currentColor; background: currentColor; }
+.cs.mood.m-content { color: var(--good); } .cs.mood.m-uneasy { color: var(--height); } .cs.mood.m-angry { color: var(--bad); }
+.cs.mood .cs-k { color: inherit; }
+.cs.mood.allhands { color: #f0c060; }
+.cs.mood.allhands .medal { animation: ahpulse 1.6s ease-in-out infinite; }
+@keyframes ahpulse { 50% { box-shadow: 0 0 0 2px rgba(0,0,0,0.4), 0 0 16px currentColor; } }
+.cs .cause { font: normal 10px var(--f-body); color: var(--muted); border: 1px solid var(--line); padding: 0 5px; border-radius: 8px; }
+.cs .cause.bad { color: var(--bad); border-color: currentColor; }
+#fp-body .deck { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 6px 0; }
+#fp-body .slot { height: 34px; border: 1px dashed var(--line); font-size: 11px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 2px; line-height: 1.1; }
+#fp-body .slot.full { border: 1px solid #b08a4a; background: rgba(176, 138, 74, 0.14); color: var(--text); }
+#fp-body ul.causes { margin: 4px 0; padding-left: 18px; font-size: 13px; color: var(--muted); }
+#fp-body ul.causes li.bad { color: var(--bad); }
+#fp-body .strain { display: flex; gap: 6px; flex-wrap: wrap; }
+#fp-body .strain span { border: 1px solid var(--line); padding: 2px 8px; font-size: 12px; color: var(--muted); }
+#fp-body .strain span.on { color: var(--bad); border-color: currentColor; }
+#fp-body ul.stations { list-style: none; margin: 4px 0; padding: 0; }
+#fp-body ul.stations li { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 2px 8px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+#fp-body ul.stations li p { grid-column: 2 / -1; margin: 0; font-size: 12px; color: var(--muted); }
+#fp-body ul.stations .who { color: var(--muted); font-size: 12px; }
+#fp-body ul.stations .state { font: 11px var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+#fp-body ul.stations .lamp { width: 10px; height: 10px; border-radius: 50%; background: #333a44; }
+#fp-body ul.stations .lamp.m-content { background: var(--good); box-shadow: 0 0 6px var(--good); }
+#fp-body ul.stations .lamp.m-uneasy { background: var(--height); box-shadow: 0 0 6px var(--height); }
+#fp-body ul.stations .lamp.m-angry { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+#fp-body ul.stations .st-dark .state, #fp-body ul.stations .st-striking .state { color: var(--bad); }
+#fp-body ul.stations .st-dim .state, #fp-body ul.stations .st-cold .state { color: var(--height); }
+#fp-body ul.stations .st-notyet { opacity: 0.55; }
+#fp-body .parley { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 #pcard { position: absolute; left: 16px; bottom: 16px; width: min(380px, calc(100vw - 32px)); background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 12px 14px; }
 #pcard header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 #pc-name { margin: 0; font: 700 18px var(--f-display); letter-spacing: 0.05em; }
@@ -668,7 +699,7 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
         <h3 id="trade-title"></h3>
         <div id="trade-body"></div>
         <div id="trade-balance"></div>
-        <div class="launch-row"><button id="trade-deal" type="button" class="primary">Make the deal</button><button id="trade-back" type="button">Back to talking</button></div>
+        <div class="launch-row"><button id="trade-deal" type="button" class="primary">Make the deal</button><button id="trade-settle" type="button">Pay the difference in cogmarks</button><button id="trade-back" type="button">Back to talking</button></div>
       </div>
       <ul id="comms-notes"></ul>
     </div>

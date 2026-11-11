@@ -5,6 +5,8 @@
 import * as V from '../src/galaxy/voyage.js';
 import { stitchGlim } from '../src/galaxy/galaxy.js';
 import { nodeView } from '../src/galaxy/comms.js';
+import * as B from '../src/galaxy/base.js';
+import * as K from '../src/galaxy/crew.js';
 
 export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => c.ok)) {
   for (let n = 0; s.queue && s.queue.length && n < 50; n++) {
@@ -71,15 +73,17 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     // supplies first, checked at every stop
     const lowGlim = s.stores.glim < (g.points[s.at].ri >= 2 ? 900 : 600) || (s.stores.food < 900 && s.stores.spores < 100);
     // keep a supply run going once started, unless water gets desperate
-    // enough water for the trip to the goal and a margin, or at least twelve days
-    const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 6;
-    const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.min(30, Math.max(12, trip)) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
+    // enough water for what is left of the trip to the objective, with a margin
+    const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 3;
+    const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.max(10, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
     if (trace) trace(s, goal, urgent);
+    // a crowded Forge is an unhappy one: build crew quarters when it can
+    if (!urgent && B.berths(rules, s) < K.count(s.crew) && V.installPlan(rules, s, 'quarters').ok && left.ice > 10) { V.install(rules, s, 'quarters'); settle(); continue; }
     // already at the drive part's derelict: cut it open before running for supplies
     if (next && goal && goal.kind === next && s.at === goal.id && left.ice >= 3) { visit(); goal = null; continue; }
     if (urgent) {
       // at a supply place: stay (visit again) until the stores are well up
-      if (type(urgent)(here)) { visit(); if (urgent !== 'IceTail' || V.daysLeft(rules, s).ice >= Math.max(20, trip) || !type(urgent)(here)) goal = null; continue; }
+      if (type(urgent)(here)) { visit(); if (urgent !== 'IceTail' || V.daysLeft(rules, s).ice >= Math.max(20, trip + 3) || !type(urgent)(here)) goal = null; continue; }
       if (!goal || goal.kind !== urgent) { const n = nearest(type(urgent)); if (n) goal = { ...n, kind: urgent }; }
     }
     if (!goal) {

@@ -1,8 +1,8 @@
 // The voyage simulator, no browser needed:  npm test
 // The galaxy: deterministic, about 300 places in four regions, every place reachable (hazard
 // pockets once their memories open them), each region opened by its drive component and not before, each component where the drive that
-// can fetch it reaches. The day clock: consumption maths exactly, the starvation ladder, game
-// over. Travel: Glim and days, range, the Veil, drifting. Maps: crew, losses, days, system
+// can fetch it reaches. The day clock: consumption maths exactly; shortages that weaken but
+// never kill; game over. Travel: Glim and days, range, the Veil, drifting. Maps: crew, losses, days, system
 // wear, relics, the Forge destroyed. Saving: save and load give the identical voyage. And an
 // abstract captain who plays the galaxy layer to the end, to show it can be won.
 import { rules as loadRules, makeWorld } from './headless.js';
@@ -61,35 +61,30 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   check(JSON.stringify(want) === JSON.stringify(got) && s.day === 2, `a day for 150 crew: water ${n.water}, food ${n.food}, air ${n.air}; life support makes ${airMade} air from ${airWater} water, hydroponics ${foodMade} food (${JSON.stringify(got)})`);
 }
 
-// 3. The starvation ladder
+// 3. Shortages weaken; they never kill (Milestone 17: the strain test checks the rest)
 {
-  // no food and no way to grow it: people die slowly, but the voyage goes on
+  // no food and no way to grow it: nobody dies, hunger strain builds, and the voyage goes on
   const s = V.newVoyage(rules, { seed: 3 });
   s.stores.food = 0; s.stores.spores = 0; s.systems.hydro = 0;
   const crew0 = count(s.crew), m0 = s.morale;
   V.passDays(rules, s, 5);
-  const lost = crew0 - count(s.crew);
-  let want = 0;
-  for (let d = 0, n = crew0; d < 5; d++) { const k = Math.max(1, Math.trunc((n * +VY.StarvePct) / 100)); want += k; n -= k; }
-  check(!s.over && lost === want && s.morale < m0, `no food: ${lost} of ${crew0} die over five days (2% a day), morale ${m0} → ${s.morale}, the voyage goes on`);
-  // no water: no air is made; the tank empties, then people suffocate, and three airless days end it
+  check(!s.over && count(s.crew) === crew0 && s.strain.hunger === 3 && s.morale < m0, `no food: nobody dies over five days, hunger strain reaches ${s.strain.hunger}, morale ${m0} → ${s.morale}, the voyage goes on`);
+  // no water: no air is made; the tank empties, and people faint, but forty days later the Forge still flies
   const t = V.newVoyage(rules, { seed: 3 });
   t.stores.ice = 0;
-  let firstAirless = 0;
-  for (let d = 0; d < 40 && !t.over; d++) { V.dayTick(rules, t); if (!firstAirless && t.airless) firstAirless = t.day - 1; }
-  check(t.over && t.over.reason === 'air' && t.over.day === firstAirless + 2 && t.log.some((l) => /suffocated/.test(l.text)), `no water: the air lasts until day ${firstAirless}, people suffocate, and the run ends on day ${t.over && t.over.day} (three days without air)`);
+  for (let d = 0; d < 40 && !t.over; d++) V.dayTick(rules, t);
+  check(!t.over && count(t.crew) === crew0 && t.strain.thirst === 3 && t.strain.air === 3, 'no water for forty days: thirst and bad air at their worst, nobody lost, the life goes on');
   // low stores pull morale down before anything runs out
   const u = V.newVoyage(rules, { seed: 3 });
   u.stores.ice = 400; // under three days
   const m1 = u.morale;
   V.dayTick(rules, u);
   check(u.morale < m1 && !u.over, `a store running low pulls morale down (${m1} → ${u.morale}) before it runs out`);
-  // nobody left
+  // nobody left (lost in fights): the life ends
   const w = V.newVoyage(rules, { seed: 3 });
-  w.crew.roles = { engineers: 0, pilots: 0, miners: 0, hands: 1 }; w.crew.assigned = { engineers: 0, pilots: 0, miners: 0, hands: 0 };
-  w.stores.food = 0; w.stores.spores = 0; w.systems.hydro = 0;
+  w.crew.roles = { engineers: 0, pilots: 0, miners: 0, hands: 0 }; w.crew.assigned = { engineers: 0, pilots: 0, miners: 0, hands: 0 };
   V.dayTick(rules, w);
-  check(w.over && w.over.reason === 'crew', 'when the last of the crew is gone, the run ends');
+  check(w.over && w.over.reason === 'crew', 'when the last of the crew is gone, the life ends');
 }
 
 // 4. Travel

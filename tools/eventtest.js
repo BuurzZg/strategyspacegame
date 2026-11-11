@@ -41,8 +41,10 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
   }
   // and a later life of the campaign
   const sl = JSON.parse(JSON.stringify(s0)); sl.campaign.life = 2;
+  // and a happy ship, six days into All hands
+  const sa = JSON.parse(JSON.stringify(s0)); sa.allHands = { days: 6, best: 6 };
   const states = [];
-  for (const base of [s0, sx, sl]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
+  for (const base of [s0, sx, sl, sa]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
   const unreachable = [];
   let choices = 0;
   for (const e of Object.values(E)) {
