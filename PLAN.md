@@ -28,7 +28,7 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
 ## 1. The concept on one page
 
 - **A campaign is one galaxy.** You choose a seed when you start a campaign. The layout, the story locations and the traders are fixed for that campaign. A new campaign means a new seed and starting from zero.
-- **A life** starts at the wake-up point on day 1, with the Forge as it was when you woke. It ends when the Forge is destroyed, the crew are gone, or the air runs out. Then you wake again: same galaxy, same moment, and everything you remember.
+- **A life** starts at the wake-up point on day 1, with the Forge as it was when you woke. It ends when the Forge is destroyed in battle or by some other danger, or when you let it go. Shortages only weaken you (§6). Then you wake again: same galaxy, same moment, and everything you remember.
 - **Memories are the progress.** About 30 memories sit in a tree screen called **the Loom**. Unknown ones show as question marks. There are two kinds:
   - **Knowledge:** story, lore and locations.
   - **Abilities:** radar, shields, ship types, Forge rooms and new options.
@@ -36,7 +36,7 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
   Once remembered, a memory stays for the whole campaign.
 - **Routes stay closed until you remember.** Asteroid shoals need shields, the Veil needs the Stillwater Lens, and so on. When you try to go there, a named officer tells you why you can't. Remembering opens the route for good, and it leads into parts of the galaxy you couldn't reach before.
 - **The chart remembers.** Places you discovered, traders you found and clue circles stay marked after death.
-- **The Forge is a small base.** You build rooms, keep people fed, and trade in a new currency. The crew's mood shows as a clear green, amber or red mark. A bad mood makes everything cost more.
+- **The Forge is a small base, and its bridge is the heart of it.** You build rooms, keep people fed, and trade in a new currency. The crew screen is the Forge's bridge: Jacob's chair in the middle, the stations and their officers around it, dark until you remember and train them. The crew's mood shows as green, amber or red on every station. Running short never kills, but it makes the Forge weaker. When every station is green, it's All hands.
 - **After each map, you muster the fleet.** The hangar holds 10 ships to start. You keep the best and scrap or leave the rest. Ships that come home from a map gain a level. Ships that die are gone, with their pilot.
 - **Each region has its own trader.** You trade with them straight from the chart, with no map to play.
 - **Steampunk space.** Brass, copper, rivets, steam, and Glim burning in boilers. A style guide comes first, for your approval.
@@ -48,10 +48,11 @@ No names, assets or lore are taken from any of them. Everything stays data (YAML
 
 - **Starting a campaign:** pick a seed, or take a random one, and the galaxy is generated. This is today's generator, with additions (§5).
 - **Starting a life:** the Forge wakes at the start point in the middle of the galaxy, which is the Drift around the dead star Orrin. It is day 1, with the starting stores, crew and fleet.
-- **Ending a life:** death works as today:
-  - the Forge is destroyed on a map;
-  - nobody is left aboard;
-  - three days pass without air.
+- **Ending a life:**
+  - the Forge is destroyed, on a map or by a danger in an event;
+  - or nobody is left aboard, which can now only happen through losses in combat.
+
+  Running out of water, air, food or heat no longer kills: it weakens the Forge instead (§6, "Survival weakens"). Until Milestone 17, the old rules still apply: starvation deaths, and three days without air.
 
   A wake screen follows. It shows how long this life lasted, what you found and who was lost, and then you wake again.
 - **Giving up a life (decision 9):** a **Let go** button on the chart ends the life on purpose, for when a life is going nowhere. It counts as a death.
@@ -334,13 +335,13 @@ Leave with the whole Twain and the Mainspring broken behind you. As the Forge pa
 
 The base game hints at all of these and answers none.
 
-### The ending narration (built in Milestone 20)
+### The ending narration (built in Milestone 21)
 
 When the player finishes the game, the whole story plays from beginning to end, narrated by old Jacob himself.
 
 - **Format:** illustrated still scenes in the steampunk style, with slow camera moves, Jacob's narration as dramatic text, and music and sound.
 - **Only what you found:** each scene needs certain memories. A scene whose memories weren't found plays blacked out, and Jacob falters ("...I don't remember this part."). The escape ending therefore has gaps; the true ending tells it all.
-- **The voice:** old, tired, guilty, with dry humour. Your draft sets the tone and the beats; the final text gets written in Milestone 20.
+- **The voice:** old, tired, guilty, with dry humour. Your draft sets the tone and the beats; the final text gets written in Milestone 21.
 
 | Scene | From your draft | Needs |
 | --- | --- | --- |
@@ -503,7 +504,7 @@ The four drive parts **become memories** with the same names and effects:
 
 They are recovered at their story locations, as today, but there is nothing to fit, and they hold in every later life. The range ring, the Veil and the final-jump rule all stay as they are. Today's "fit a part with ore, salvage and days" goes away.
 
-## 6. The Forge as a small base
+## 6. The Forge: base, survival and the bridge
 
 ### Rooms
 
@@ -551,17 +552,141 @@ They are recovered at their story locations, as today, but there is nothing to f
 
 ### Crew mood
 
-The crew's **mood** is a mark everyone can see. It is built on today's morale, the 0–100 number that rises with rest and full stores and falls with shortages and losses.
+The crew's **mood** is a mark everyone can see. Underneath it is today's morale, the 0–100 number that rises with rest and full stores and falls with shortages and losses.
 
 | Mark | When | Effect (decided; to be tuned in play) |
 | --- | --- | --- |
 | **Content** (green) | Fed and cared for: morale 60 or more, nothing running short | Repairs and building go 10% faster |
 | **Uneasy** (amber) | Hungry: a store running low, or morale 30–59 | Building, ships and the Glim for each stitch cost 10% more |
-| **Angry** (red) | Very hungry: a store gone, or morale under 30 | Building, ships and the Glim for each stitch cost 30% more. Under 15, people desert, as today |
+| **Angry** (red) | Very hungry: a store gone, or morale under 30 | Building, ships and the Glim for each stitch cost 30% more. Under 15, stations strike (below) |
 
 - **On screen:** the mark is a medallion in the top bar of both the chart and the maps. Small cause icons sit beside it: hunger, thirst, bad air, cold boilers, grief after deaths. You always see how they feel and why.
-- **The officers' traits still count:** Beloved and Grim officers already push morale up or down (Milestone 13).
+- **Each station has a mood too** (see "The bridge" below). It starts from the crew's morale and is pulled up or down by what that station lives with:
+  - **its officer's trait:** a Beloved officer's station leans green, and a Grim one's leans amber;
+  - **its own causes:** life support turns red when the air runs out, and the hangar grieves after pilots die;
+  - **its state:** a station that is offline or overworked.
+- **Traits still count:** Beloved and Grim officers already push morale up or down (Milestone 13).
 - **Stopping the spiral:** a red mood makes things cost more, which can make the mood worse. Resting, a mess hall and full stores pull it back. The numbers are tuned so it can always be climbed out of.
+
+**Desertion becomes strikes (decision 17, revised; decision 32).**
+Under 15 morale, people no longer leave for good, because that would slowly end the run.
+
+- **Strikes (recommended).** Each day under 15, one station's crew walk off and the station goes dark: arms folded on the bridge, a red mark, a cause icon. It returns when morale is back above 30, or after a parley.
+  - A parley is a short event at the bridge that costs a day or some cogmarks.
+  - Nobody is lost, but you are weaker until you fix it.
+- **The alternative.** Some hands desert, but only when docked at a haven or trader, where they have somewhere to go. Never officers or ship leads, and never below 60% of the crew you woke with. You might meet them again later, living at that haven.
+
+**All hands: the reward for a happy ship (decision 33).**
+
+- **When:** every station is green, which means morale 60 or more, nothing short, every station online and staffed, and no strike.
+- **What you see and hear:** the bridge lights up, every lamp warm gold at once. The pipes sing, a brass bell rings and an organ sting plays. A toast appears: "All hands!"
+- **The bonus, while it lasts:**
+  - work 10% faster on top of Content;
+  - ships 5% better on maps;
+  - stitches cost 10% less Glim;
+  - morale doesn't fall overnight.
+- **The streak:** "All hands for 6 days" counts up on the bridge.
+- **Long streaks:** a long one can earn a small crew moment, an event where someone writes a song about the Forge or the officers drink a toast to the captain.
+- **Data:** the numbers live in YAML.
+
+### Survival weakens, it never kills
+
+Running out of water, air, food or boiler heat no longer ends a life. It makes the Forge **weaker**, step by step. Lives end through combat and other dangers. This replaces the old escalation ladder (crew starving, three days without air ending the voyage), which goes in Milestone 17.
+
+- **Strain.** Each kind of shortage (thirst, hunger, bad air, cold) has a **strain** level from 0 to 3:
+  - it rises by one each day the store is empty, and falls by one each day after it is restored;
+  - the infirmary and mess hall help it fall faster.
+- **What each level of strain costs, added up and capped:**
+  - work 15% slower (repairs, building, fitting);
+  - costs 10% higher (building and ships);
+  - Glim for each stitch 10% higher;
+  - ships 5% worse on maps (damage, speed and rate of fire).
+  - The total is capped at −60% work, so you can always still act.
+- **Stations go offline.** At strain 2 and 3, one more station goes dark, chosen by the shortage:
+  - bad air: the crew faint at their posts, starting with the infirmary and comms;
+  - cold: the boilers' neighbours go first, engineering and the foundry;
+  - hunger: the hangar and stores;
+  - thirst: life support and the infirmary.
+
+  Each dark station loses its function until it comes back (see the stations below).
+- **Nobody dies of it.** People faint, sicken and shiver, and the named crew stay alive. Losses that pick who dies (Milestone 13) still happen, but only through combat and events.
+- **How a life ends now:** the Forge is destroyed (in battle, or by a danger on a map or in an event), or you **Let go**. "Nobody left aboard" can still happen through combat losses, but no longer through starvation.
+- **Why it still matters:** a weak Forge loses fights, burns more Glim and builds less. Glim still decides whether you can stitch at all, and the Hands (if chosen) catch a slow ship. Shortages still matter; they just don't end the life.
+- **Tests:** the voyage and campaign tests that expect starvation deaths and airless endings change with it. The test captain learns that weakness, not death, is the cost.
+
+### The bridge: the crew screen (decision 34)
+
+The crew screen becomes the **Forge's bridge**: the visual centrepiece of the management layer, and the place you look after your people. It works like a town screen in a management game, but the buildings are **stations** and the people at them.
+
+**What you see**
+- A steampunk bridge seen from behind the captain's chair. **Jacob's chair** sits in the middle, raised, with the **stations** in a ring around it: brass consoles, gauges, pipes, and the warm light of each station's lamps.
+- **A dark station** is grey glass and still needles. **A lit one** glows, steam drifts from its vents, and its needles move. Every lamp goes gold at once for All hands.
+- **On each station:**
+  - its officer's name plate and portrait;
+  - their mood medallion (green, amber or red) with its cause icons;
+  - the station's level as a row of lamps;
+  - a state gauge (online, dim, dark, striking, cold).
+- **Click a station** to open its panel:
+  - the officer (name, trait, mood and why);
+  - what the station does now;
+  - its skills, as known, trainable or "?";
+  - the training it can do this life, and its cost;
+  - anything that is keeping it dark.
+- **Click the chair** for the captain's panel:
+  - the life, the day and the Meridian date (UNKNOWN until the Horologe);
+  - morale and the All hands streak;
+  - a way into the Loom;
+  - the Let go button.
+- **How it is drawn (decision 35):** a layered 2D illustration in SVG and canvas, with per-station lighting, animated gauges, drifting steam and slow parallax. It is crisp on phones, where the ring becomes a scrolling column of stations. The alternative is a small three.js bridge interior with real lights, which is heavier but can be orbited. Recommended: the 2D illustration.
+
+**The stations**
+
+The officers' posts become the stations, one each, with one new post (decision 35).
+
+| Station | Officer (post) | What it runs | Skills from memories (permanent) | Training (each life) |
+| --- | --- | --- | --- | --- |
+| **Engineering** | Chief engineer | Repairs, hull, systems | Shields, heat baffles, lightning rods, lead-lined decks (the systems that open routes) | Field repairs (repairs cost less); damage control (hull damage wears systems less) |
+| **Navigation** | Navigator | Stitches and routes | Threadwound Coils, Stillwater Lens, Anchor Spindle, Heartstone | Plotted courses (less Glim); quick stitch (long stitches take a day less) |
+| **Sensors** | Watch officer | The chart's reach, scans, clue circles | The radar (lights the station); the chart room's sharper circles | Long watch (sensor range); cheap deep scans |
+| **Foundry** | Foundry master | Building ships on maps | Hull types: Wisp, Talon, Sabre, Spindle, Monolith | Shift work (build speed); salvage line (scrap returns more) |
+| **Life support** | Grower | Air, water, hydroponics | — | Ration plan (needs a little less); recyclers (water goes further) |
+| **Hangar** | Wing commander | Launches, levels, perks | Silent running (the fleet's discipline) | Drills (levels come sooner); fast launch |
+| **Comms** | **Signals officer** (new post, from the hands) | Hailing, havens, signals, clues | Story memories: what you can say to each faction, and the havens' dialects as you learn who they are | Long-range hails (the next place over); signal decoding (clue circles from intercepted signals) |
+| **Infirmary** | Surgeon | Strain recovery, care, pods | The infirmary | Triage (more pilots get out of lost ships) |
+| **Stores** | Quartermaster | The hold, trade, cogmarks | — | Ledgers (better prices); tight holds (more cargo per stitch) |
+
+**What lasts and what resets**
+
+The crew wake with no memories in every life, but Jacob remembers.
+
+- **Permanent: what a station can do, because Jacob remembers how to teach it.**
+  - **Skills:** a station's skills come from **memories**. Once Jacob remembers shields, the engineering station knows them in every life.
+  - **Muscle memory:** the crew's hands remember what their minds don't. A station whose basic memory is known starts every life **lit at level 1**. For example, once the radar is remembered, sensors are lit from day 1.
+  - **Faster teaching:** a known memory also makes that station's training cheaper and quicker, because Jacob knows how to teach it.
+  - **Echoes:** they are spent only here, on memories.
+- **Each life: how well the crew can do it, because they have to relearn it.**
+  - **Training:** each life, you **train** stations up to the levels their memories allow, using cogmarks and days. Training is short (about a day), so a new life gets back up to speed quickly once you know what to teach.
+  - **Rooms:** many stations need their room on the deck plan; the infirmary needs the infirmary, for example. Rooms are built with materials each life.
+  - **Traders:** some sell one-off station gear for that life, such as a sounding horn for sensors or a better ledger for stores.
+  - **Cogmarks:** they are spent only here, on training and trade.
+- **Levels:** a station has levels 0 to 3.
+  - **0, dark:** it doesn't work, because no memory is known, its room is missing, or it is offline.
+  - **1, manned:** basic function.
+  - **2, trained:** its officer's bonus counts in full, and it gains its first trained skill.
+  - **3, expert:** a second trained skill.
+- **At the very start of a campaign** several stations are dark or barely working:
+  - sensors are dark until the radar is remembered;
+  - the infirmary is dark until its memory and room exist;
+  - comms can only hail the place you're at;
+  - navigation does short stitches only.
+
+  Over a campaign, more of the bridge lights up for good, and each life you light the rest.
+
+**How it connects to what is built**
+- **Officers and posts:** the officers become the stations' officers. The officer's trait still shapes the station's work and now its mood.
+- **The signals officer:** a new ninth post, filled the same way as the others: drawn from the hands, promoted Green when empty.
+- **Rooms** are the physical side, per life, on the deck plan. **Stations** are the crew's skill, also per life, on the bridge. **Memories** are what both are allowed to become, and they last.
+- **Survival:** strain and strikes take stations dark on the bridge.
 
 ### Keeping the Forge running (decided: the boilers burn Glim)
 
@@ -572,7 +697,7 @@ A light version of Frostpunk's coal. Three options:
 - If Glim runs out, the boilers go cold:
   - every system works at half;
   - life support slows;
-  - the crew get cold (an amber or red cause icon).
+  - the crew get cold (an amber or red cause icon), and cold strain builds (see "Survival weakens").
 - One resource you already collect, with a real reason to keep some in reserve beyond stitching.
 
 **b. A new fuel.**
@@ -708,7 +833,9 @@ The models stay procedural (built in code, as today), so the restyle doesn't nee
 | Veterancy (experience from kills) | **Replaced** | Levels from coming home; the HUD chevrons and Crew-tab rows are reused |
 | Fleet capacity (points) | **Split** | A hangar berth count between places; the capacity limit stays on maps |
 | Named crew, traits, losses that pick who dies | **Kept** | Officers report closed routes; across lives, decision 6 |
-| Morale | **Kept underneath** | Shown as the mood mark, with costs; the slow-work rule is replaced by the marks |
+| Morale | **Kept underneath** | Shown as the mood mark, with costs; the slow-work rule is replaced by the marks; desertion becomes strikes (decision 32) |
+| The consequence ladder (starvation deaths, three days without air ending the run) | **Replaced** | Strain: shortages weaken the Forge and take stations dark, but never kill (Milestone 17) |
+| The Crew tab, the officer posts and their traits | **Become the bridge** | Each post becomes a station, plus a new signals officer; the traits shape each station's work and mood (Milestone 18) |
 | Factions, standing, comms dialogs, treaties | **Kept** | Standing resets each life (decision 7) |
 | Barter trade (value, quote, deal) | **Kept, extended** | Cogmarks; trading at traders from the chart |
 | Events, the condition and effect vocabulary | **Kept, extended** | New conditions (`remembers`, `life >=`, `clue`) and effects (`remember`, `echoes`, `clue`, `open`) |
@@ -725,7 +852,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 **Why this order:**
 - The campaign loop comes first, because everything else depends on what survives a death.
 - Memories come next, then the routes they open.
-- The base, the muster and the traders are independent of each other.
+- The base, the muster and the traders are independent of each other. Survival that weakens comes with the base, because strain needs stations. The bridge follows straight after, because it is where the stations, moods and training are shown.
 - The story builds on your skeleton, and benefits from every system being in place.
 - The reskin waits for your approval of the style guide. Once you approve it, new screens are built in the new style straight away.
 
@@ -734,12 +861,13 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | ~~14~~ | ~~Campaigns and lives~~ (done, §12) | Start a campaign on a seed; die and wake again in the same galaxy; the chart remembers places; maps vary each life; the wake screen; a campaign save, with old saves migrated. The goal is still today's drive parts | What persists and what resets; same layout but different map contents per life; determinism; old saves load; the bot plays several lives |
 | **15** | **The Loom: memories** | The memory tree screen with question marks; memories in YAML; echoes; the first life's opening: the short, confusing awakening, the dark chart, the signal, the Anchorage, the radar; clue circles; drive parts become memories | Memories persist; the radar beat works on every seed; a clue circle always contains its place; content lint for memories |
 | **16** | **Routes closed until remembered** | Hazard lanes and pockets; officers report closed routes by name; anchors placed within areas; shields, heat baffles, lightning rods and lead-lined decks | No way in without the memory; reports come from the right officer (or whoever is acting); the bot completes 50 seeds, and a single-life escape is possible on each |
-| **17** | **The Forge as a base** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers (if chosen) | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life |
-| **18** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
-| **19** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
-| **20** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
-| **21** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
-| **22** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
+| **17** | **The Forge as a base, and survival that weakens** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers burning Glim; **strain instead of death** for every shortage; stations as data (online, dim, dark, striking); strikes instead of desertion (if chosen); All hands and its bonus | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life; **no shortage ever kills or ends a life**; strain rises and falls a level a day and its penalties are capped; the right stations go dark for each shortage; All hands starts and stops exactly when every station is green |
+| **18** | **The bridge** | The crew screen as the Forge's bridge: Jacob's chair, nine stations with their officers, moods, lamps and states; station panels with skills (known, trainable, "?"), training with cogmarks and days, and what keeps a station dark; the signals officer, a new post; muscle memory (a known memory lights its station from day 1); the All hands moment in full (light, bell, organ sting, streak); built in the approved style | Memory-given skills persist across lives and trained levels reset; a known memory starts its station at level 1; training costs less where Jacob remembers; the bridge matches the voyage state; a browser run at desktop and phone width |
+| **19** | **The muster and levels** | 10 hangar berths; choosing who continues; scrap or leave adrift; levels from coming home; perks (if chosen) | Berths, scrap returns and crew moves; levels only for ships that launched and came back; the pilot dies with the ship |
+| **20** | **Traders and crew** | Four regional traders on the chart (icon, trade without a map, personalities, unique stock), kept after death; wayhouses and new crew; new hulls over time | Traders persist across lives; stock resets; prices follow standing; crew limits |
+| **21** | **The story** | Your skeleton and story update (§3): the 12 story memories and their locations, act by act; the Twain; the time gap; the havens (the Hollowkin, with the Waiting and the Unforgiving) and the Brass Reavers; the Knotfolk and the Ragged Clans; the Meridian Horologe and the HUD date (UNKNOWN until found); the Mainspring's boss map at the Shore; the Hands (if chosen); the escape ending and the true ending; **the ending narration**, Jacob's illustrated, narrated story, with gaps for memories not found and a line id for every line so a recorded voice can be added later | The bot reaches the true ending on every seed tried; every story memory can be reached; the confrontation can be won; the date stays UNKNOWN until the Horologe, then stays known; each narration scene appears only with its memories and falls back to its gap lines otherwise; every line has a unique id |
+| **22** | **Steampunk reskin** | Gauges, the parchment chart, telegraph comms, medallions, the Loom and the deck plan in the approved style; riveted copper ships with smokestacks; new effects and sounds | Screenshots against the guide; text contrast; frame rate with 40 ships a side |
+| **23** | **Whole campaigns** | Balance across seeds; the first life rewritten as a guided start; polish | Lives and hours inside the targets; a skilled first-life escape is possible; no seed is unwinnable |
 
 **Later, as add-on packs:** new regions beyond the Shore, new traders, races and factions, more memories and story arcs, and co-op multiplayer (the engine stays lockstep-ready).
 
@@ -887,7 +1015,7 @@ The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 an
 | 14 | Hazards | **As proposed** (§5) |
 | 15 | Rooms | **Reset each life**; the memory of how to build them stays |
 | 16 | Currency | **Cogmarks**, per life, alongside barter |
-| 17 | Mood | **Content +10% work; Uneasy +10% costs; Angry +30% costs; desertion under 15** |
+| 17 | Mood | **Content +10% work; Uneasy +10% costs; Angry +30% costs.** Desertion under 15 is being reconsidered so that it only weakens you (decision 32) |
 | 18 | Keeping the Forge running | **The boilers burn Glim** |
 | 19 | Hangar | **10 berths by count**; scrap returns half the ore and saves the crew; leaving adrift loses both |
 | 20 | Levels | **Only ships that launched and came home**; 5 levels at +5%; perks at 3 and 5; kills no longer count |
@@ -898,7 +1026,7 @@ The 24 questions of version 3 were answered "all recommended, except 2, 4, 12 an
 
 ## 17. Decisions still open
 
-None of these block the current milestones; the story milestone (20) needs them.
+None of these block the current milestones. The story milestone (21) needs 25–31, and the base and the bridge (17 and 18) need 32–35.
 
 25. **The chase clock** (§3): the Hands hunt the Twain within each life (a, recommended); a winding clock that closes lanes (b); or no chase (c).
 26. **The story names** in §15:
@@ -920,6 +1048,10 @@ None of these block the current milestones; the story milestone (20) needs them.
     - c. both stories exist, and the player never learns which is true.
 30. **Why we wake now:** the shield failing, the Waiting's ritual and the Mainspring prying, layered so no one is sure (recommended), or just one of them.
 31. **The time gap:** 147 years (recommended), with the clues in order as in §3.
+32. **Instead of desertion:** strikes, where a station goes dark until morale recovers or you parley (recommended); or desertion only at havens, never officers or leads, with a floor of 60% of the crew (§6).
+33. **All hands:** the trigger (every station green), the bonus (+10% work, ships +5%, −10% Glim a stitch, no overnight morale loss) and the streak. *Recommended: yes, tuned in play.*
+34. **What lasts on the bridge:** memories give the skills and light a station at level 1 from day 1 (muscle memory); training with cogmarks and days, rooms, and trader gear reset each life (§6). *Recommended: yes.*
+35. **The bridge's details:** the nine stations, including a new **signals officer** for comms, and the bridge drawn as a layered 2D illustration rather than a 3D interior. *Recommended: yes.*
 
 Not to decide yet, as you asked: the true ending's final choice (three options in §3) and the deeper mysteries. Both stay open.
 
