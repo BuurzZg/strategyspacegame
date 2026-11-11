@@ -49,7 +49,8 @@ export const fullName = (rules, p) => `${titleOf(rules, p)} ${p.name}`;
 
 // ---------------------------------------------------------------- dice and names
 const hash = (...xs) => { let h = 2166136261; for (const x of xs) h = hashMix(h, x | 0); return h >>> 0; };
-function roll(c, n) { c.rolls = (c.rolls | 0) + 1; return hash(c.seed, 0x5eed, c.rolls) % Math.max(1, n); }
+// the dice fall differently in each life of a campaign (c.life), but the same people wake
+function roll(c, n) { c.rolls = (c.rolls | 0) + 1; return ((c.life | 0) > 1 ? hash(c.seed, 0x5eed, c.rolls, c.life) : hash(c.seed, 0x5eed, c.rolls)) % Math.max(1, n); }
 
 const nameList = (rules, k) => String(rules.content.names?.People?.[k] || 'Nobody').split(',').map((x) => x.trim()).filter(Boolean);
 // Someone new, decided by the voyage's seed and their id. `taken`: names already in use.

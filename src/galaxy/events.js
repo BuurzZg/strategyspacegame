@@ -1,6 +1,7 @@
 import { Random } from '../engine/random.js';
 import { hashMix } from '../engine/math.js';
 import { parseCond, conditionsHold } from './comms.js';
+import { lifeMix } from './life.js';
 
 // Story and galaxy events (content/core/events). The voyage calls trigger() at moments that
 // matter (a new voyage, arriving somewhere, a stitch, a day of rest, finding or fitting a drive
@@ -10,6 +11,7 @@ import { parseCond, conditionsHold } from './comms.js';
 // Which ones fire is decided by the voyage's seed, the day and the place, so it is deterministic.
 
 export const WHEN = ['start', 'arrive', 'travel', 'day', 'found', 'install', 'home'];
+// Which events fire, and which choices roll which way, differ from life to life (lifeMix).
 const list = (v) => String(v || '').split(',').map((s) => s.trim()).filter(Boolean);
 
 export function eventContext(rules, s, galaxy, ev) {
@@ -23,7 +25,7 @@ export function eventContext(rules, s, galaxy, ev) {
 export function trigger(rules, s, galaxy, when, { item = '' } = {}) {
   s.queue ||= []; s.seen ||= [];
   const evs = Object.values(rules.content.events || {}).filter((e) => e.When === when);
-  const rng = new Random(hashMix(hashMix(hashMix(hashMix(s.seed | 0, s.day | 0), s.at + 1), WHEN.indexOf(when) + 7), s.seen.length) || 1);
+  const rng = new Random(hashMix(hashMix(hashMix(hashMix(lifeMix(s, s.seed | 0), s.day | 0), s.at + 1), WHEN.indexOf(when) + 7), s.seen.length) || 1);
   let chanced = false;
   const fired = [];
   for (const e of evs) {

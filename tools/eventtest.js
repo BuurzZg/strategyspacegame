@@ -39,8 +39,10 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
     if (c.op === 'officer' && c.trait) sx.crew.people.find((p) => p.post === c.post).trait = c.trait;
     if (c.op === 'trait') sx.crew.people.push({ id: 950 + sx.crew.people.length, name: `Someone ${c.trait}`, role: 'hands', post: '', trait: c.trait });
   }
+  // and a later life of the campaign
+  const sl = JSON.parse(JSON.stringify(s0)); sl.campaign.life = 2;
   const states = [];
-  for (const base of [s0, sx]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
+  for (const base of [s0, sx, sl]) for (const items of [{}, { coils: 'found', lens: 'found', spindle: 'found', heartstone: 'found' }]) for (const day of [1, 30]) for (const fl of [[], flags]) states.push({ ...base, items, day, flags: fl });
   const unreachable = [];
   let choices = 0;
   for (const e of Object.values(E)) {
@@ -51,7 +53,7 @@ const list = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boole
     const seen = new Set([e.Start]), queue = [e.Start], picked = new Set();
     while (queue.length) {
       const id = queue.shift();
-      for (const c of [s0, sx].flatMap((st) => C.nodeView(V.eventContext(rules, st, g, e), id).choices)) {
+      for (const c of [s0, sx, sl].flatMap((st) => C.nodeView(V.eventContext(rules, st, g, e), id).choices)) {
         picked.add(`${id}.${c.id}`);
         const next = [c.goto, ...c.effects.filter((x) => x.op === 'roll').flatMap((x) => [x.yes, x.no])].filter(Boolean);
         for (const n of next) if (!seen.has(n)) { seen.add(n); queue.push(n); }

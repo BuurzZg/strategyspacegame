@@ -1,6 +1,6 @@
 # Driftforge: plan
 
-*Version 3, the loop redesign. **Approved:** your answers to the 24 questions and your story skeleton are in (§16 and §3). Four smaller decisions are still open (§17). Milestone 14 is under way. Milestones 1–13 are built (§12), names are in §15, and Part II, at the end, describes the game as it is built today.*
+*Version 3, the loop redesign. **Approved:** your answers to the 24 questions and your story skeleton are in (§16 and §3). Four smaller decisions are still open (§17). Milestones 1–14 are built (§12); the steampunk style guide waits for your approval, names are in §15, and Part II, at the end, describes the game as it is built today.*
 
 Driftforge is a space survival game for the browser, built in three.js on a deterministic engine.
 
@@ -607,7 +607,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 
 | # | Milestone | Playable result | Checks |
 | --- | --- | --- | --- |
-| **14** | **Campaigns and lives** (with the style guide page, for your approval) | Start a campaign on a seed; die and wake again in the same galaxy; the chart remembers places; maps vary each life; the wake screen; a campaign save, with old saves migrated. The goal is still today's drive parts | What persists and what resets; same layout but different map contents per life; determinism; old saves load; the bot plays several lives |
+| ~~14~~ | ~~Campaigns and lives~~ (done, §12) | Start a campaign on a seed; die and wake again in the same galaxy; the chart remembers places; maps vary each life; the wake screen; a campaign save, with old saves migrated. The goal is still today's drive parts | What persists and what resets; same layout but different map contents per life; determinism; old saves load; the bot plays several lives |
 | **15** | **The Loom: memories** | The memory tree screen with question marks; memories in YAML; echoes (if chosen); the first life's opening: the dark chart, the signal, the Anchorage, the radar; clue circles; drive parts become memories | Memories persist; the radar beat works on every seed; a clue circle always contains its place; content lint for memories |
 | **16** | **Routes closed until remembered** | Hazard lanes and pockets; officers report closed routes by name; anchors placed within areas; shields, heat baffles, lightning rods and lead-lined decks | No way in without the memory; reports come from the right officer (or whoever is acting); the bot completes 50 seeds, and a single-life escape is possible on each |
 | **17** | **The Forge as a base** | The deck plan and rooms (from today's projects, plus new ones); crew quarters; cogmarks; mood marks with causes and costs; the boilers (if chosen) | Costs follow the mood; the spiral can be climbed out of; currency and barter agree; rooms reset per life |
@@ -636,6 +636,7 @@ Each milestone is playable and ends with tests, a browser run, the README and a 
 | 11 | Sensors, fog, engineering | Sensor fog on voyage maps (unseen ships cannot be seen or targeted by anyone; nebulae halve sensor range; last-seen markers); the Tactical Plot (Tab); the Wisp scout; deep scans on the chart; blueprints (Talon, Spindle and Sabre start locked: found by cutting wrecks of that hull, bought, or given in events); five engineering projects |
 | 12 | Polish and the first full run | New-run setup (seed, full or short voyage, permanent death or free saves, a guided first voyage with hint cards); saving anywhere, mid-map saves replayed exactly; named save slots; veterancy (ships earn ranks and keep them in the hangar); eleven Forge upgrades, some building on others; ships mend aboard; a sound pass; the AI captain finishes seeded runs of both lengths inside the target play time. No difficulty setting (decided: the pressure is survival and hostiles) |
 | 13 | Named crew | Eight officer posts and a named pilot or captain for every armed ship, counted in their roles; 17 traits in YAML (work, damage, hull, learning, morale; conditions; growth; Lucky escapes); losses pick who dies, fairly; leads die with their ships on maps; promotions fill empty posts; crew events by name, the memorial; old saves load with named crew. Decided: officers and pilots are named, everyone else stays a head count; deaths are permanent |
+| 14 | Campaigns and lives | One galaxy per campaign, played over lives; the wake screen and Let go; the chart, the memorial, hints and the Choir's standing carry over, everything physical resets; the same crew wake each life; map contents, events and dice vary per life (the first life plays as before); one campaign save (version 5), older saves load as a first life; the test captain plays campaigns of several lives. The steampunk style guide page is delivered for approval |
 
 ## 13. How each milestone is tested
 

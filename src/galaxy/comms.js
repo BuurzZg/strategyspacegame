@@ -1,5 +1,6 @@
 import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
+import { lifeMix, lifeOf } from './life.js';
 import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
@@ -39,6 +40,7 @@ export function parseCond(text) {
   if (w[0] === 'item' && w[1] && ['missing', 'found', 'installed'].includes(w[2])) return { op: 'item', item: w[1], state: w[2] };
   if (w[0] === 'here' && w[1] === 'relic' && w[2]) return { op: 'relic', item: w[2] };
   if (w[0] === 'crew' && w[1] === '>=' && +w[2] >= 0) return { op: 'crew', n: +w[2] };
+  if (w[0] === 'life' && (w[1] === '>=' || w[1] === '<=') && +w[2] >= 1) return { op: 'life', cmp: w[1], n: +w[2] };
   // the named crew (traits' When, and events)
   if (w[0] === 'morale' && (w[1] === '>=' || w[1] === '<=') && Number.isFinite(+w[2])) return { op: 'morale', cmp: w[1], n: +w[2] };
   if (w[0] === 'officer' && w[1]) return { op: 'officer', post: w[1], trait: w[2] || '' };
@@ -142,6 +144,7 @@ function holds(ctx, c) {
     case 'relic': return !!ctx.s && ctx.point && ctx.point.relic === c.item;
     case 'crew': return !!ctx.s && ROLES.reduce((t, r) => t + ctx.s.crew.roles[r], 0) >= c.n;
     case 'morale': return !!ctx.s && (c.cmp === '>=' ? ctx.s.morale >= c.n : ctx.s.morale <= c.n);
+    case 'life': { if (!ctx.s) return false; const L = lifeOf(ctx.s); return c.cmp === '>=' ? L >= c.n : L <= c.n; }
     case 'officer': { const o = ctx.s && officerOf(ctx.s.crew, c.post); return !!o && (!c.trait || o.trait === c.trait); }
     case 'trait': return !!ctx.s && (ctx.s.crew.people || []).some((p) => p.trait === c.trait);
     case 'fallen': return !!ctx.s && (ctx.s.crew.fallen || []).length >= c.n;
@@ -294,7 +297,7 @@ export function learnBlueprint(rules, s, id) {
 }
 // A deterministic roll: the same voyage, day and place give the same result.
 function rollFor(s, chance) {
-  let h = (s.seed ^ Math.imul(s.day, 0x9e3779b1) ^ Math.imul(s.at + 1, 0x85ebca77) ^ Math.imul((s.rolls = (s.rolls | 0) + 1), 0xc2b2ae3d)) >>> 0;
+  let h = (lifeMix(s, s.seed) ^ Math.imul(s.day, 0x9e3779b1) ^ Math.imul(s.at + 1, 0x85ebca77) ^ Math.imul((s.rolls = (s.rolls | 0) + 1), 0xc2b2ae3d)) >>> 0;
   h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
   return (h % 100) < chance;
 }

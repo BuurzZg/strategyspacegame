@@ -12,6 +12,7 @@
 #   Hires       crew for hire at their stations, by role; Ships: hulls they will sell, crewed
 #   Info        what they know and will sell: survey (every place within two stitches), chart (a region)
 #   Dialog      their comms tree (dialogs/<name>.yaml)
+#   Remembers   true: they know Jacob from one life to the next, and your standing with them carries over
 
 Reputation:
 	# the lowest standing of each tier
@@ -123,3 +124,4 @@ choir:
 	Wants: ice
 	Info: survey, chart
 	Dialog: choir
+	Remembers: true

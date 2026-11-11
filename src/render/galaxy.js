@@ -100,7 +100,8 @@ export class StarChart {
           // whose territory: a faint ring in the faction's colour
           vec3 claim = vT * smoothstep(0.16, 0.0, abs(d - 0.66)) * 0.9;
           float core = smoothstep(0.5, 0.05, d), halo = smoothstep(1.0, 0.25, d) * 0.45;
-          float ring = vR > 0.5 ? smoothstep(0.08, 0.0, abs(d - 0.82)) * 0.9 : 0.0;
+          // visited: a bright ring this life, a faint one in an earlier life
+          float ring = vR > 0.1 ? smoothstep(0.08, 0.0, abs(d - 0.82)) * (vR > 0.5 ? 0.9 : 0.35) : 0.0;
           gl_FragColor = vec4(vC * (core + halo) + claim + vec3(1.0) * ring * 0.8 + vec3(1.0) * pow(core, 3.0) * 0.5, 1.0);
         }`,
     });
@@ -168,7 +169,7 @@ export class StarChart {
   }
 
   // Colours, sizes and lines from the voyage as it is now.
-  // view: { at, known: Set, visited: {}, range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool }
+  // view: { at, known: Set, visited: {}, before: Set (visited in an earlier life), range, sensor, veil, signal (place id or -1), selected, open: lane index -> bool }
   update(view) {
     const g = this.g, n = g.points.length, c = new THREE.Color();
     const col = this.points.geometry.attributes.color, size = this.points.geometry.attributes.size, ring = this.points.geometry.attributes.ring, tint = this.points.geometry.attributes.tint;
@@ -178,7 +179,7 @@ export class StarChart {
       if (!known) c.multiplyScalar(0.55);
       col.setXYZ(i, c.r, c.g, c.b);
       size.setX(i, (known ? 3.2 : 2.2) * (i === view.selected ? 1.5 : 1) * (p.edge && known ? 1.15 : 1));
-      ring.setX(i, view.visited[i] ? 1 : 0);
+      ring.setX(i, view.visited[i] ? 1 : view.before && view.before.has(i) ? 0.3 : 0);
       const fc = known && p.owner ? factionColor(this.rules, p.owner) : null;
       if (fc) { c.setHex(fc); tint.setXYZ(i, c.r, c.g, c.b); } else tint.setXYZ(i, 0, 0, 0);
       if (known && p.seat) size.setX(i, size.getX(i) * 1.35);

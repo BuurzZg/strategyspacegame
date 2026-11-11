@@ -357,6 +357,8 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
 #ce-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 16px; }
 #ce-stats div { display: flex; flex-direction: column; }
 #chart-end .modal-card { width: min(560px, 100%); border-top: 3px solid #ffd778; }
+#chart-end.dead .modal-card { border-top-color: var(--accent); }
+#ce-lost { color: var(--muted); font-size: 13px; }
 #ce-title { font-size: 22px !important; }
 @media (max-width: 760px) {
   #fpanel { top: auto; bottom: 16px; max-height: 40vh; }
@@ -401,6 +403,7 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
 .setup-grid legend { font: 600 10px var(--f-body); letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); padding: 0 4px; }
 .setup-grid label { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; padding: 5px 0; cursor: pointer; }
 .setup-grid label span { grid-column: 2; font-size: 12px; color: var(--muted); }
+.setup-note { font-size: 12.5px; color: var(--muted); margin: 4px 0; }
 label.check { color: var(--text) !important; font-size: 13px !important; }
 #slot-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; max-height: 40vh; overflow-y: auto; }
 #slot-list li { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line-soft); padding: 6px 10px; }
@@ -509,32 +512,32 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
     <div class="modal-card">
       <h1>DRIFT<b>FORGE</b></h1>
       <div id="title-voyage">
-        <p class="title-intro">The Skein Drive tore loose mid-jump and threw the Forge into the Wrack, a galaxy of scrap. It can still make short stitches. Mend it, keep your people alive, and get home from the Shore.</p>
+        <p class="title-intro">You wake on the bridge of a great ship, adrift in a galaxy of scrap. You don't know where you are, who you are, or why you are here. Keep your people alive, find out, and get out. When you die, you wake again.</p>
         <div class="launch-row">
           <button id="voyage-continue" type="button" class="primary" hidden></button>
-          <button id="voyage-new" type="button" class="primary">New voyage</button>
-          <button id="voyage-load" type="button" hidden>Load a save</button>
+          <button id="voyage-new" type="button" class="primary">New campaign</button>
+          <button id="voyage-load" type="button" hidden>Old saves</button>
         </div>
         <div id="setup" hidden>
-          <h2>A new voyage</h2>
+          <h2>A new campaign</h2>
           <div class="setup-grid">
-            <fieldset><legend>Length</legend>
-              <label><input type="radio" name="length" value="full" checked> <b>Full voyage</b> <span>About 300 places; four to six hours</span></label>
-              <label><input type="radio" name="length" value="short"> <b>Short voyage</b> <span>About 120 places; an hour and a half</span></label>
+            <fieldset><legend>The galaxy</legend>
+              <label><input type="radio" name="length" value="full" checked> <b>Full</b> <span>About 300 places in four regions</span></label>
+              <label><input type="radio" name="length" value="short"> <b>Small</b> <span>About 120 places: a shorter campaign</span></label>
             </fieldset>
-            <fieldset><legend>Saving</legend>
-              <label><input type="radio" name="saves" value="permadeath" checked> <b>Permanent death</b> <span>Save and quit any time; the save is gone when the voyage ends</span></label>
-              <label><input type="radio" name="saves" value="free"> <b>Free saves</b> <span>Named saves, anywhere, and load them as often as you like</span></label>
+            <fieldset><legend>Lives</legend>
+              <p class="setup-note">One galaxy for the whole campaign. When you die, you wake again at the start, and the chart remembers what you found. The campaign saves as you play; save and quit any time.</p>
             </fieldset>
           </div>
           <div class="launch-row">
-            <label class="check"><input id="setup-guided" type="checkbox" checked> Guide me through my first voyage</label>
+            <label class="check"><input id="setup-guided" type="checkbox" checked> Guide me through my first life</label>
             <label>Galaxy seed <input id="voyage-seed" type="text" inputmode="numeric" placeholder="random" aria-label="Seed for the galaxy (blank for random)"></label>
           </div>
-          <div class="launch-row"><button id="setup-start" type="button" class="primary">Set out</button><button id="setup-back" type="button">Back</button></div>
+          <div class="launch-row"><button id="setup-start" type="button" class="primary">Wake up</button><button id="setup-back" type="button">Back</button></div>
         </div>
         <div id="slots" hidden>
-          <h2>Saves</h2>
+          <h2>Old saves</h2>
+          <p class="setup-note">Named saves from before campaigns. Loading one makes it your campaign.</p>
           <ul id="slot-list"></ul>
           <div class="launch-row"><button id="slots-back" type="button">Back</button></div>
         </div>
@@ -596,7 +599,8 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
         <h2 id="ce-title"></h2>
         <p id="ce-text"></p>
         <dl id="ce-stats"></dl>
-        <div class="launch-row"><button id="ce-new" type="button" class="primary">New voyage</button><button id="ce-title-btn" type="button">Title</button></div>
+        <p id="ce-lost"></p>
+        <div class="launch-row"><button id="ce-new" type="button" class="primary">Wake</button><button id="ce-title-btn" type="button">Title</button></div>
       </div>
     </div>
   </div>

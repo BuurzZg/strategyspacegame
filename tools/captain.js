@@ -21,9 +21,11 @@ export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => 
   }
 }
 
-export function captain(rules, seed, { events = false, length = 'full' } = {}) {
+// start: an existing voyage to play on (a later life of a campaign); giveUp: let go of the life
+// on this day (to test what a death carries over)
+export function captain(rules, seed, { events = false, length = 'full', start = null, giveUp = 0 } = {}) {
   const VY = rules.content.voyage;
-  const s = V.newVoyage(rules, { seed, length });
+  const s = start || V.newVoyage(rules, { seed, length });
   const g = V.galaxyOf(rules, s);
   const order = ['coils', 'lens', 'spindle', 'heartstone'];
   const YIELD = { IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
@@ -57,6 +59,7 @@ export function captain(rules, seed, { events = false, length = 'full' } = {}) {
   settle();
   for (let guard = 0; !s.over && guard < 600; guard++) {
     settle();
+    if (giveUp && s.day >= giveUp) { V.letGo(rules, s); break; }
     // a damaged drive stitches shorter: mend it (and anything badly hurt) while there is water
     const sick = s.systems.drive < 100 ? 'drive' : V.SYSTEMS.find((k) => s.systems[k] < 70);
     if (sick && V.daysLeft(rules, s).ice > 8 && V.repairPlan(rules, s, sick).ok) { V.repair(rules, s, sick); settle(); continue; }
@@ -94,6 +97,21 @@ export function captain(rules, seed, { events = false, length = 'full' } = {}) {
     stitches++;
   }
   return { s, visits, stitches };
+}
+
+// A campaign: lives played one after another in the same galaxy. giveUps: the day each early
+// life is let go (one entry per life given up); the last life plays to the end.
+export function campaign(rules, seed, { events = false, length = 'full', giveUps = [] } = {}) {
+  const lives = [];
+  let s = V.newVoyage(rules, { seed, length });
+  for (let i = 0; ; i++) {
+    const r = captain(rules, seed, { events, length, start: s, giveUp: giveUps[i] || 0 });
+    lives.push(r);
+    if (!V.lifeOver(r.s) || i >= giveUps.length + 3) break;
+    s = V.newLife(rules, r.s);
+  }
+  const last = lives[lives.length - 1];
+  return { s: last.s, lives, visits: lives.reduce((t, r) => t + r.visits, 0), stitches: lives.reduce((t, r) => t + r.stitches, 0) };
 }
 
 // Estimated play time of a captain's run, in minutes: a map visit (two and a half days of

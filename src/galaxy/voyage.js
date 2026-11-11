@@ -7,10 +7,12 @@ import { activeTreaties, addTreaty, breakTreaties, reveal as revealPlaces, apply
 import { trigger, eventContext } from './events.js';
 import { generatePoi, poiSeed } from '../engine/poi.js';
 import { generateGalaxy, driveOf, route, laneOpen, stitchGlim, stitchDays } from './galaxy.js';
+import { lifeOf, lifeMix } from './life.js';
 import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assignFleet, personById, officerPct, officersIn, moraleMod, grow, mods, fullName, titleOf, traitOf, idle, newPerson, namesInUse } from './crew.js';
 
-// The voyage: the run on the galaxy map. Plain data (it saves as JSON) plus pure,
-// deterministic functions that act on it. The galaxy itself is not saved: it is rebuilt from
+// The voyage: one life of a campaign on the galaxy map. Plain data (it saves as JSON) plus pure,
+// deterministic functions that act on it. The campaign (what outlasts a death) rides along in
+// s.campaign; newLife() starts the next life from it. The galaxy itself is not saved: it is rebuilt from
 // the seed. Every action that takes time runs the day clock, and each day the crew drink,
 // eat and breathe, the Forge's systems make what they can, and morale drifts.
 //
@@ -18,7 +20,8 @@ import { ROLES, makeRoster, count, free, loseAny, lose, loseFlying, kill, assign
 //   visited { id: times }, stores { every resource }, crew (crew.js roster), morale,
 //   systems { drive, reactor, life, hydro, foundry, sensors: 0-100 }, forge { hp },
 //   fleet [ { type, hp, xp, lead (a person's id: crew.js) } ], items { id: 'found' | 'installed' }, airless (days in a row),
-//   over (null, or why it ended), log [ { day, text, kind } ]
+//   over (null, or why it ended), log [ { day, text, kind } ],
+//   campaign { life, chart { known, visited }, lives [ ... ], memorial [ ... ], standing, met, hints }
 
 export const START_FLEET = ['halberd', 'dart', 'dart', 'gleaner', 'gleaner', 'shearer', 'skimmer'];
 export const SYSTEMS = ['drive', 'reactor', 'life', 'hydro', 'foundry', 'sensors'];
@@ -32,15 +35,23 @@ export function galaxyOf(rules, s) {
   return galaxies.get(key);
 }
 
-// length: 'full' (4 to 6 hours) or 'short' (about 90 minutes); saves: 'permadeath' or 'free';
-// guided: hint cards for a first voyage
-export function newVoyage(rules, { seed = 1, length = 'full', saves = 'permadeath', guided = false } = {}) {
+// A campaign's record of what outlasts a death (PLAN.md §2): the life number, what the chart
+// knows, how each life ended, everyone named who was lost, and standing with factions that
+// remember Jacob across lives (Remembers: true in factions.yaml).
+export function newCampaign() {
+  return { life: 1, chart: { known: [], visited: [] }, lives: [], memorial: [], standing: {}, met: {}, hints: [] };
+}
+
+// A new campaign's first life, or (with `campaign`) a later life in the same galaxy.
+// length: 'full' or 'short' (a smaller galaxy); guided: hint cards for a first campaign
+export function newVoyage(rules, { seed = 1, length = 'full', guided = false, campaign = null } = {}) {
   const V = rules.content.voyage, g = galaxyOf(rules, { seed, length });
   const stores = Object.fromEntries(Object.keys(rules.content.resources).map((k) => [k, 0]));
   Object.assign(stores, pairs(V.Stores));
   if (length === 'short' && V.ShortStores) Object.assign(stores, pairs(V.ShortStores));
   const s = {
-    version: SAVE_VERSION, kind: 'voyage', seed: seed | 0, length, saves, guided, hints: [],
+    version: SAVE_VERSION, kind: 'voyage', seed: seed | 0, length, saves: 'campaign', guided, hints: [...((campaign && campaign.hints) || [])],
+    campaign: campaign || newCampaign(),
     day: 1, ticks: 0, at: g.start, known: [], visited: {},
     stores,
     crew: makeRoster(pairs(V.Crew), seed),
@@ -54,10 +65,15 @@ export function newVoyage(rules, { seed = 1, length = 'full', saves = 'permadeat
     blueprints: [...(rules.content.blueprintStart || [])],
     log: [],
   };
+  s.crew.life = s.campaign.life; // the same people wake each life; the dice fall differently
   assignFleet(s.crew, rules, s.fleet, { day: 1, fresh: true });
   for (const e of s.fleet) e.hp = shipMaxHp(rules, e, s); // a lead's touch on the hull
+  // what the chart remembers from earlier lives, and who remembers Jacob
+  s.known = [...new Set([...s.campaign.chart.known, ...s.known])].sort((a, b) => a - b);
+  for (const [fid, n] of Object.entries(s.campaign.standing)) if (rules.content.factions[fid]) { s.standing[fid] = n; if (s.campaign.met[fid]) s.met[fid] = true; }
   reveal(rules, s);
-  note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
+  if (s.campaign.life > 1) note(s, `Life ${s.campaign.life}. You wake on the bridge of the Forge at ${g.points[g.start].name}, in the Drift, and you know this moment. The chart still holds what you found before.`, 'story');
+  else note(s, `The Forge comes out of a broken stitch at ${g.points[g.start].name}, in the Drift. The Skein Drive still works, barely.`, 'story');
   signalNote(rules, s);
   trigger(rules, s, g, 'start');
   return s;
@@ -258,6 +274,36 @@ function end(s, reason, text) {
   s.over = { reason, day: s.day, text };
   note(s, text, 'end');
 }
+
+// ---------------------------------------------------------------- lives
+// Giving up a life on purpose: it counts as a death.
+export function letGo(rules, s) {
+  if (s.over) return no('This life is already over.');
+  end(s, 'letgo', 'You let go. The bridge goes quiet, and then it goes dark.');
+  return { ok: true };
+}
+export const lifeOver = (s) => !!s.over && !s.won;
+
+// The next life, after a death: the same galaxy and the same crew, from the moment of waking.
+// The chart keeps what it knew and where you went; the memorial keeps everyone named who was
+// lost; factions that remember Jacob (the Choir) keep their standing. Everything else resets.
+export function newLife(rules, prev) {
+  const c = JSON.parse(JSON.stringify(prev.campaign || newCampaign()));
+  const union = (a, b) => [...new Set([...a, ...b])].sort((x, y) => x - y);
+  c.lives.push({ life: c.life, days: prev.day, reason: prev.over ? prev.over.reason : 'letgo', text: prev.over ? prev.over.text : '', visits: prev.visits | 0, lost: (prev.crew.fallen || []).length });
+  c.chart.known = union(c.chart.known, prev.known);
+  c.chart.visited = union(c.chart.visited, Object.keys(prev.visited).map(Number));
+  for (const f of prev.crew.fallen || []) c.memorial.push({ ...f, life: c.life });
+  for (const f of Object.values(rules.content.factions)) {
+    if (f.Remembers !== 'true' || !prev.met[f.id]) continue;
+    c.standing[f.id] = standingOf(rules, prev, f.id); c.met[f.id] = true;
+  }
+  c.hints = [...(prev.hints || [])];
+  c.life++;
+  return newVoyage(rules, { seed: prev.seed, length: prev.length, guided: prev.guided, campaign: c });
+}
+// Visited in an earlier life (the chart marks these)
+export const visitedBefore = (s, id) => !!s.campaign && s.campaign.chart.visited.includes(id);
 
 // ---------------------------------------------------------------- actions on the chart
 // Each returns { ok, why } and changes s only when ok.
@@ -496,7 +542,7 @@ export function visitSettings(rules, s) {
   const V = rules.content.voyage, g = galaxyOf(rules, s), p = g.points[s.at], R = rules.content.regions[p.region];
   const times = s.visited[p.id] | 0;
   const settings = generatePoi(rules, {
-    seed: poiSeed(s.seed, p.id, times), type: p.type, visit: times,
+    seed: lifeMix(s, poiSeed(s.seed, p.id, times)), type: p.type, visit: times,
     danger: +R.Danger || 1, name: p.name, ship: p.ship,
     richness: Math.max(num(V, 'RevisitFloor'), 100 - times * num(V, 'RevisitPct')),
     relic: p.relic && !s.items[p.relic] ? p.relic : '',
@@ -506,7 +552,7 @@ export function visitSettings(rules, s) {
   // who is here: the place's owner (its patrol, and its station), the template's encounters,
   // and now and then a faction's fleet passing through a place nobody claims
   const F = rules.content.factions, L = settings.layout, present = new Set();
-  const prng = new Random(hashMix(poiSeed(s.seed, p.id, times), 991) || 1);
+  const prng = new Random(hashMix(lifeMix(s, poiSeed(s.seed, p.id, times)), 991) || 1);
   const W = settings.space.w * CELL, D = settings.space.d * CELL;
   const patrol = (fid, at, behaviour, delay) => {
     const base = String(F[fid].Patrol || '').split(',').map((x) => x.trim()).filter(Boolean), ships = [];
@@ -546,7 +592,7 @@ export function visitSettings(rules, s) {
   settings.poi.treaties = Object.fromEntries(factions.map((fid) => [fid, activeTreaties(s, fid)]));
   settings.poi.danger = +R.Danger || 1;
   const { leads, recruits } = mapCrew(rules, s);
-  settings.voyage = { flags: [...(s.flags || [])], day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
+  settings.voyage = { life: lifeOf(s), flags: [...(s.flags || [])], day: s.day, ticks: s.ticks, dayTicks: num(V, 'DayTicks'), place: p.id, region: R.Name, needs: needs(rules, s), stores: { ...s.stores }, forecast: { ...forecast(rules, s), ice: daysLeft(rules, s).rate.ice } };
   return {
     ...settings,
     latency: 1,
@@ -694,7 +740,7 @@ export function returnFromMap(rules, s, report) {
 const shipName = (rules, type) => (rules.actors.has(type) ? rules.actor(type).traitInfo('Tooltip').Name : type);
 
 // ---------------------------------------------------------------- saving
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export function saveVoyage(s) { return JSON.stringify(s); }
 export function loadVoyage(rules, text) {
   const s = JSON.parse(text);
@@ -706,6 +752,13 @@ export function loadVoyage(rules, text) {
     assignFleet(s.crew, rules, s.fleet || [], { day: s.day | 0, fresh: true });
     s.plainVisit = s.visits | 0;
     s.version = 4;
+  }
+  // from Milestone 13 and before: a voyage becomes the first life of a campaign. Permanent death
+  // and free saves both become the one campaign save.
+  if (s && s.kind === 'voyage' && s.version === 4) {
+    s.campaign = { ...newCampaign(), chart: { known: [...(s.known || [])], visited: [] }, hints: [...(s.hints || [])] };
+    s.saves = 'campaign';
+    s.version = 5;
   }
   if (s && s.kind === 'voyage') { s.treaties ||= []; s.flags ||= []; s.stock ||= {}; s.queue ||= []; s.seen ||= []; s.ahead ||= []; } // from Milestones 8 and 9
   // from Milestone 10: everything could be built then, so keep it that way

@@ -6,7 +6,7 @@ import { standingOf, tierName, hasLeave, raceStanding, TIERS } from '../galaxy/s
 import * as CM from '../galaxy/comms.js';
 import * as V from '../galaxy/voyage.js';
 import { laneOpen } from '../galaxy/galaxy.js';
-import { ROLES, count, free } from '../galaxy/crew.js';
+import { ROLES, count, free, titleOf } from '../galaxy/crew.js';
 
 // The star chart screen: the galaxy map, where the voyage is planned and time passes only
 // when you act. Click a place to see what is known about it and the route there; stitch,
@@ -120,8 +120,8 @@ export class ChartScreen {
     this.on($('pc-btns'), 'click', (e) => this.cardClick(e));
     this.on($('chart-quit'), 'click', () => this.onQuit());
     this.on($('chart-save'), 'click', () => { if (this.onSave) this.onSave(); });
-    $('chart-save').hidden = this.s.saves !== 'free';
-    $('chart-quit').textContent = this.s.saves === 'free' ? 'Quit to title' : 'Save and quit';
+    $('chart-save').hidden = true; // one campaign save (named saves went with Milestone 14)
+    $('chart-quit').textContent = 'Save and quit';
     this.on($('chart-helpbtn'), 'click', () => $('chart-help').classList.toggle('open'));
   }
 
@@ -186,6 +186,7 @@ export class ChartScreen {
     if (b.dataset.act === 'repair') this.act(V.repair, b.dataset.k);
     else if (b.dataset.act === 'install') this.act(V.install, b.dataset.k);
     else if (b.dataset.act === 'home') this.act(V.jumpHome);
+    else if (b.dataset.act === 'letgo' && window.confirm('Let this life go? You will wake again at the start, and the chart keeps what you found. Everything else is lost.')) this.act(V.letGo);
   }
 
   // ---------------------------------------------------------------- panels
@@ -194,7 +195,7 @@ export class ChartScreen {
   refreshChart() {
     const s = this.s, d = V.drive(this.rules, s), t = V.target(this.rules, s);
     const open = this.g.lanes.map((l) => laneOpen(l, d));
-    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, range: d.range, sensor: V.sensorRange(this.rules, s), veil: d.veil, signal: t ? t.at : -1, selected: this.selected, open });
+    this.chart.update({ at: s.at, known: new Set(s.known), visited: s.visited, before: new Set((s.campaign && s.campaign.chart.visited) || []), range: d.range, sensor: V.sensorRange(this.rules, s), veil: d.veil, signal: t ? t.at : -1, selected: this.selected, open });
     const p = this.selected >= 0 && this.selected !== s.at ? V.plan(this.rules, s, this.selected) : null;
     this.chart.setRoute(p && p.route ? [s.at, ...p.route.hops] : []);
   }
@@ -202,7 +203,7 @@ export class ChartScreen {
   refreshTop() {
     const s = this.s, res = this.rules.content.resources, left = V.daysLeft(this.rules, s);
     const region = this.rules.content.regions[this.g.points[s.at].region];
-    $('chart-day').textContent = `Day ${s.day} · ${region.Name}`;
+    $('chart-day').textContent = `Life ${(s.campaign && s.campaign.life) || 1} · Day ${s.day} · ${region.Name}`;
     const days = { ice: left.ice, food: left.food, air: left.air };
     if (Math.min(left.ice, left.food, left.air) < 7 && !(this.comms && this.comms.isOpen)) this.hint('low');
     $('chart-stores').innerHTML = STORES.map(([k, name, tip]) => {
@@ -222,7 +223,7 @@ export class ChartScreen {
     const t = V.target(this.rules, s);
     const relic = t && t.at === id ? `The ${this.rules.content.items[t.id].Name} is aboard: cut into the hulk with Shearers to find it. ` : '';
     const claim = Fo ? (hasLeave(this.rules, s, p.owner) ? ` You have the ${Fo.Name}'s leave to mine and salvage here.` : ` Mining or salvaging here without the ${Fo.Name}'s leave costs standing, if they see it.`) : '';
-    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + claim;
+    $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + claim;
     const stats = [], btns = [];
     let why = '';
     if (here) {
@@ -287,6 +288,9 @@ export class ChartScreen {
         h += `<div class="sr" title="${esc(tip)}"><span>${esc(name)}</span><div class="bar"><i style="width:${c}%;background:${c < 30 ? 'var(--bad)' : c < 70 ? 'var(--height)' : 'var(--accent)'}"></i></div><b>${c}%</b><button type="button" data-act="repair" data-k="${k}" ${rp.ok ? '' : 'disabled'} title="${esc(rp.ok ? `+${rp.points}% for ${rp.ore} ore and ${rp.salvage} salvage; one day` : rp.why)}">Repair</button></div>`;
       }
       h += `</div><p class="fp-note">A day of repairs uses the free engineers (${free(s.crew, 'engineers')}), ore and salvage.</p>`;
+      // this life, and the ones before it
+      const C2 = s.campaign || { life: 1, lives: [] };
+      h += `<h3>Life ${C2.life}</h3><p class="fp-note">${C2.lives.length ? `Before this one: ${C2.lives.map((l) => `life ${l.life}, ${l.days} day${l.days === 1 ? '' : 's'}`).join('; ')}. ` : ''}When a life is going nowhere you can let it go. You wake again at the start; the chart keeps what you found, and everything else is lost.</p><button type="button" data-act="letgo" ${s.over ? 'disabled' : ''}>Let go</button>`;
     } else if (this.tab === 'crew') {
       const m = s.morale, V2 = C.voyage;
       h += `<h3>Morale</h3><div class="sr"><span>${m < +V2.MoraleDesert ? 'Deserting' : m < +V2.MoraleSlow ? 'Low' : m < 60 ? 'Steady' : 'Good'}</span><div class="bar"><i style="width:${m}%;background:${m < 30 ? 'var(--bad)' : m < 55 ? 'var(--height)' : 'var(--good)'}"></i></div><b>${m}</b></div>`;
@@ -319,6 +323,12 @@ export class ChartScreen {
         for (const f of cv.fallen.slice(0, 40)) h += `<li><span>Day ${f.day}</span><b>${esc(f.title)} ${esc(f.name)}</b> ${esc(f.how)}.${f.kills ? ` ${f.kills} kill${f.kills > 1 ? 's' : ''}.` : ''}</li>`;
         h += `</ol>${cv.fallen.length > 40 ? `<p class="fp-note">And ${cv.fallen.length - 40} more.</p>` : ''}`;
       }
+      const before = (s.campaign && s.campaign.memorial) || [];
+      if (before.length) {
+        h += `<h3>Lost in earlier lives: ${before.length}</h3><ol class="fallen">`;
+        for (const f of [...before].reverse().slice(0, 30)) h += `<li><span>Life ${f.life}, day ${f.day}</span><b>${esc(titleOf(rules, f))} ${esc(f.name)}</b> ${esc(f.how)}.</li>`;
+        h += '</ol><p class="fp-note">They wake with you every time, and remember none of it. The ship\'s log does.</p>';
+      }
     } else if (this.tab === 'hold') {
       const f = V.forecast(rules, s), n = V.needs(rules, s), left = V.daysLeft(rules, s);
       h += `<p class="fp-note">${n.crew} crew need ${n.water} water, ${n.food} food and ${n.air} air a day. Life support makes air from water; the hydroponics grow food from water, and much faster with spores.</p><table class="ct"><thead><tr><th></th><th>Aboard</th><th>A day</th><th>Lasts</th></tr></thead><tbody>`;
@@ -346,14 +356,19 @@ export class ChartScreen {
     $('fp-body').innerHTML = h;
   }
 
+  // The end of a life (the wake screen), or of the campaign (home).
   showEnd() {
-    const s = this.s, won = s.won;
-    $('ce-title').textContent = won ? 'Home' : 'The voyage ends';
-    $('ce-text').textContent = s.over.text;
+    const s = this.s, won = s.won, life = (s.campaign && s.campaign.life) || 1;
     const fitted = Object.values(s.items).filter((v) => v === 'installed').length;
-    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Crew', count(s.crew)], ['Named crew lost', (s.crew.fallen || []).length], ['Drive parts fitted', `${fitted} of 4`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    const lost = (s.crew.fallen || []).map((f) => `${titleOf(this.rules, f)} ${f.name}`);
+    $('ce-title').textContent = won ? 'Home' : `Life ${life} ends`;
+    $('ce-text').textContent = won ? s.over.text : `${s.over.text} Then white light, and the bridge, and the same alarms. You wake again, at the moment you first woke. The chart still holds what you found.`;
+    $('ce-stats').innerHTML = [['Days', s.day], ['Places visited', Object.keys(s.visited).length], ['Named crew lost', lost.length], won ? ['Lives', life] : ['Drive parts fitted', `${fitted} of 4`]].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+    $('ce-lost').textContent = lost.length ? `Lost in this life: ${lost.join(', ')}.` : '';
+    $('ce-new').textContent = won ? 'New campaign' : 'Wake';
+    $('chart-end').classList.toggle('dead', !won);
     $('chart-end').hidden = false;
-    $('ce-new').onclick = () => this.onEnd('new');
+    $('ce-new').onclick = () => this.onEnd(won ? 'new' : 'wake');
     $('ce-title-btn').onclick = () => this.onEnd('title');
     this.audio.play(won ? 'deposit' : 'alert');
   }

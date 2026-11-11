@@ -1,10 +1,10 @@
 # Story and galaxy events. An event is a small dialog (nodes, Say, choices) with a header:
-#   When     start (a new voyage), arrive (at a place, after a stitch or a drift), travel (on the
+#   When     start (a new life), arrive (at a place, after a stitch or a drift), travel (on the
 #            way, once a stitch), day (a day of rest or repairs), found / install (a drive part:
 #            set Item), home (the final jump)
 #   Chance   percent (default 100); a trigger fires all its story events and at most one chance one
 #   If       conditions, as in dialogs, plus: region X, type X, not type X, day >= n,
-#            item X missing|found|installed, here relic X, crew >= n
+#            item X missing|found|installed, here relic X, crew >= n, life >= n, life <= n
 #   Once     false: may happen again (story events happen once)
 #   Title    the panel's heading
 # Effects, as in dialogs, plus: give <store> n, crew <role> n, lose crew|<role> n,
@@ -14,6 +14,7 @@
 
 Prologue:
 	When: start
+	If: life <= 1
 	Title: The tear
 	Start: tear
 	Node@tear:
@@ -200,3 +201,18 @@ Ending:
 		Choice@end:
 			Text: Bring her in.
 			Do: close
+
+# Every life after the first opens here.
+Waking:
+	When: start
+	If: life >= 2
+	Title: Again
+	Start: wake
+	Node@wake:
+		Say: White light, then the bridge. The same alarms, the same smell of hot brass, the same crew blinking at the same instruments, reading their names off their uniforms. You know this moment. You have been here before, and something in you remembers how it ended.
+		Choice@again:
+			Text: Again, then.
+			Do: close
+		Choice@chart:
+			Text: Pull up the chart. We know more than we did.
+			Do: morale 2, close

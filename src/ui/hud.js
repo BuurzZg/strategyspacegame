@@ -191,17 +191,17 @@ export class Hud {
     $('launch-seed').value = '';
     $('setup').hidden = true; $('slots').hidden = true;
     $('voyage-continue').hidden = !save;
-    if (save) $('voyage-continue').textContent = `Continue: day ${save.day}, ${save.place}${save.inMap ? ' (on a map)' : ''}`;
+    if (save) $('voyage-continue').textContent = save.dead ? `Continue: life ${save.life} has ended` : `Continue: life ${save.life}, day ${save.day}, ${save.place}${save.inMap ? ' (on a map)' : ''}`;
     $('voyage-continue').onclick = onContinue;
     $('voyage-new').onclick = () => { $('setup').hidden = false; $('slots').hidden = true; };
     $('setup-back').onclick = () => { $('setup').hidden = true; };
     $('setup-start').onclick = () => {
       const pick = (n) => document.querySelector(`input[name="${n}"]:checked`).value;
-      if (save && save.saves !== 'free' && !window.confirm('Start a new voyage? The voyage you have now will be lost.')) return;
+      if (save && !window.confirm('Start a new campaign? The campaign you have now, and everything it remembers, will be lost.')) return;
       const v = $('voyage-seed').value.trim();
-      onNewVoyage({ seed: v ? parseInt(v, 10) || 0 : undefined, length: pick('length'), saves: pick('saves'), guided: $('setup-guided').checked });
+      onNewVoyage({ seed: v ? parseInt(v, 10) || 0 : undefined, length: pick('length'), guided: $('setup-guided').checked });
     };
-    // named saves (free-save voyages)
+    // named saves from before campaigns (free-save voyages): loading one makes it the campaign
     $('voyage-load').hidden = !slots.length;
     const listSlots = () => {
       $('slot-list').innerHTML = slots.map((x) => `<li><b>${esc(x.name)}</b><span>Day ${x.day}, ${esc(x.place)}${x.inMap ? ' (on a map)' : ''} · ${new Date(x.when).toLocaleString()}</span><button type="button" data-load="${esc(x.name)}">Load</button><button type="button" data-del="${esc(x.name)}">Delete</button></li>`).join('') || '<li>No saves.</li>';

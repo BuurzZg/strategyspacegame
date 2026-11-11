@@ -121,7 +121,7 @@ function showLauncher() {
   const sv = saved && saved.voyage;
   hud.showLauncher(true, {
     rules, run,
-    save: sv ? { day: sv.day, place: V.galaxyOf(rules, sv).points[sv.at].name, inMap: !!saved.map, saves: sv.saves } : null,
+    save: sv ? { day: sv.day, life: (sv.campaign && sv.campaign.life) || 1, dead: V.lifeOver(sv), place: V.galaxyOf(rules, sv).points[sv.at].name, inMap: !!saved.map } : null,
     onContinue: () => { const d = readSave(); if (d) loadData(d); },
     onNewVoyage: (o) => newVoyage(o),
     slots: listSlots(),
@@ -134,10 +134,12 @@ function showLauncher() {
 }
 
 // ---------------------------------------------------------------- the voyage and saving
-// A save is { voyage, map? }: the voyage, and when saved in the middle of a map, the map's order
-// log up to that frame (the map is rebuilt from the voyage and replayed, exactly). The voyage
-// autosaves after every action on the chart and every visit. Permanent death: one save, removed
-// when the voyage ends. Free saves: named saves as well, kept whatever happens.
+// A save is { voyage, map? }: the campaign's current life (with the campaign inside it), and when
+// saved in the middle of a map, the map's order log up to that frame (the map is rebuilt and
+// replayed, exactly). One campaign save, written after every action on the chart and every
+// visit; a life that has ended is saved too, so Continue comes back to the wake screen. It is
+// removed only when the campaign is won or a new one starts. Named saves from before campaigns
+// can still be loaded (they become the campaign); new ones are not made.
 function snapshot() {
   const data = { voyage: JSON.parse(V.saveVoyage(voyage)) };
   if (session && session.onVoyage && !session.world.report) data.map = { frames: session.om.replay.frames.slice(), frame: session.world.frame };
@@ -153,13 +155,13 @@ function parseSave(t) {
 function readSave() { try { return parseSave(localStorage.getItem(SAVE_KEY)); } catch (e) { console.warn(e); return null; } }
 function writeSave(withMap = false) {
   try {
-    if (!voyage || voyage.over) return;
+    if (!voyage || voyage.won) return;
     const d = snapshot();
     if (!withMap) delete d.map;
     localStorage.setItem(SAVE_KEY, JSON.stringify(d));
   } catch (e) { console.warn(e); }
 }
-function deleteSave() { try { if (!voyage || voyage.saves !== 'free') localStorage.removeItem(SAVE_KEY); } catch (e) { void e; } }
+function deleteSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { void e; } }
 function slotsAll() { try { return JSON.parse(localStorage.getItem(SLOTS_KEY) || '{}'); } catch (e) { return {}; } }
 function listSlots() { return Object.entries(slotsAll()).map(([name, x]) => ({ name, ...x, data: undefined })).sort((a, b) => b.when - a.when); }
 function readSlot(name) { const x = slotsAll()[name]; try { return x ? parseSave(JSON.stringify(x.data)) : null; } catch (e) { console.warn(e); return null; } }
@@ -203,14 +205,13 @@ function hint(when) {
 hud.hintFn = hint;
 hud.onMapSave = () => {
   if (!voyage) return;
-  if (voyage.saves === 'free') { saveSlot(); return; }
   writeSave(true);
   showLauncher();
 };
 
 function newVoyage(o = {}) {
   const seed = Number.isFinite(o.seed) ? o.seed : (Math.random() * 1e9) | 0;
-  voyage = V.newVoyage(rules, { seed, length: o.length || 'full', saves: o.saves || 'permadeath', guided: !!o.guided });
+  voyage = V.newVoyage(rules, { seed, length: o.length || 'full', guided: !!o.guided });
   hud.saveMode = voyage.saves;
   writeSave();
   startChart();
@@ -224,10 +225,15 @@ function startChart() {
   chart = new ChartScreen({
     canvas, camera, rules, voyage, audio, hud, comms: hud.comms, hint,
     onGoIn: () => goIn(),
-    onChange: () => (voyage.over ? deleteSave() : writeSave()),
+    onChange: () => (voyage.won ? deleteSave() : writeSave()),
     onQuit: () => { writeSave(); showLauncher(); },
     onSave: () => saveSlot(),
-    onEnd: (what) => { deleteSave(); if (what === 'new') newVoyage(); else showLauncher(); },
+    // the end of a life: wake into the next one; the end of the campaign: a new one or the title
+    onEnd: (what) => {
+      if (what === 'wake') { voyage = V.newLife(rules, voyage); writeSave(); startChart(); return; }
+      if (voyage.won) deleteSave();
+      if (what === 'new') { deleteSave(); newVoyage(); } else showLauncher();
+    },
   });
   resize();
 }
@@ -248,9 +254,9 @@ function checkDeparture() {
   if (session.onVoyage) {
     setTimeout(() => hud.showReport(report, () => {
       V.returnFromMap(rules, voyage, report);
-      if (voyage.over) deleteSave(); else writeSave();
+      if (voyage.won) deleteSave(); else writeSave();
       startChart();
-    }, { next: report.forgeLost ? 'The end' : 'Back to the star chart' }), report.forgeLost ? 2400 : 1600);
+    }, { next: report.forgeLost ? 'Continue' : 'Back to the star chart' }), report.forgeLost ? 2400 : 1600);
     return;
   }
   setTimeout(() => hud.showReport(report, () => { run = applyReport(run, report); showLauncher(); }), 1600);

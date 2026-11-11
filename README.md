@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 13, named crew.** The people who run the Forge have names now. Eight officers head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
+**Status: Milestone 14, campaigns and lives.** The game is being rebuilt around a new design (see [PLAN.md](PLAN.md), version 3): one galaxy per campaign, played over many lives. Start a **new campaign** from the title screen. When the Forge is destroyed, the crew are gone or the air runs out, the life ends, and you **wake** again at the moment you first woke, in the same galaxy. The chart remembers every place you found and marks the ones you visited before. The memorial keeps everyone you lost, and the Choir remember you. Everything else (stores, fleet, hull, systems, standing) starts over. The galaxy's layout never changes, but what is on each map, which events happen and how the dice fall differ from life to life. A **Let go** button gives up a life that is going nowhere. The campaign saves as you play. Saves from earlier versions load as a campaign's first life. Memories, closed routes and the story come next. See [Starting a campaign, lives and saving](#starting-a-campaign-lives-and-saving).
+
+**Milestone 13, named crew:** The people who run the Forge have names now. Eight officers head its departments (chief engineer, foundry master, grower, navigator, watch officer, quartermaster, surgeon, wing commander), and every armed ship has a named pilot or captain who flies with it and earns its ranks. Each has a trait (Steady, Gifted, Green, Grim, Beloved, Fair-weather, Iron, Ace, Careful, Hotshot, Lucky, ...) that changes their department or their ship, sometimes only under conditions ("while morale is 60 or more"). When people die, the losses pick who: an officer is as likely to starve as anyone. A pilot goes down with their ship, unless their luck holds one last time. Somebody steps up to fill every empty post. Events call people by name, and the **Crew** tab keeps a memorial. See [Named crew](#named-crew).
 
 **Milestone 12, the first full run:** start a new voyage from the title screen and choose:
 
@@ -137,16 +139,26 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 - **Fleet capacity:** the top bar shows ore and fleet capacity, as used / available. The Forge provides 30. Each hull uses some (see the table below), and ships waiting in the queue count too. When a hull won't fit, its button turns red and says why.
 - **Limits:** the queue holds 10 ships. If something can't be queued, a message under the top bar says why: not enough ore, fleet capacity reached, or the queue is full.
 
-### Starting a voyage and saving
+### Starting a campaign, lives and saving
 
-- **New voyage** opens the setup:
-  - **Full voyage:** about 300 places, four to six hours.
-  - **Short voyage:** about 120 places in the same four regions, with the drive's parts nearer each other, fuller stores at the start, cheaper fitting and one-day stitches. About an hour and a half.
-  - **Permanent death:** one save. Save and quit any time, on the chart or on a map; the save is removed when the voyage ends.
-  - **Free saves:** **Save…** (on the chart and on maps) makes a named save, and **Load a save** on the title screen lists them. The voyage also autosaves, so **Continue** always works.
-  - **Guide me through my first voyage:** short hint cards the first time each thing comes up (the chart, planning a stitch, going in, the foundry, spooling, the report, running low, a faction's claim).
-  - **Galaxy seed:** blank for a random one.
-- **Saving on a map** stores the voyage and the map's orders so far. Loading rebuilds the map from the voyage and replays the orders, so it comes back exactly as it was.
+- **New campaign** opens the setup:
+  - **Full galaxy:** about 300 places in four regions.
+  - **Small galaxy:** about 120 places in the same four regions, with the drive's parts nearer each other, fuller stores at the start, cheaper fitting and one-day stitches. A shorter campaign.
+  - **Guide me through my first life:** short hint cards the first time each thing comes up (the chart, planning a stitch, going in, the foundry, spooling, the report, running low, a faction's claim). Cards already seen stay seen in later lives.
+  - **Galaxy seed:** blank for a random one. The seed is the whole campaign.
+- **Lives:** the top bar shows the life and the day.
+  - **How a life ends:** the Forge is destroyed, nobody is left aboard, or three days pass without air. You can also give a life up with **Let go**, at the bottom of the Forge tab.
+  - **The wake screen** shows how long the life lasted and who was lost. **Wake** starts the next life, at the moment you first woke.
+- **What carries over:**
+  - every place the chart knew; places visited in an earlier life keep a faint ring and say so;
+  - the memorial: the Crew tab lists everyone named who was lost in earlier lives;
+  - your standing with the Choir, who remember you;
+  - hint cards already seen.
+- **What starts over:** stores, fleet, hull, systems, drive parts, and standing with everyone else.
+  - **The crew:** the same people wake again, alive, remembering nothing.
+  - **The maps:** the galaxy's layout is fixed, but what is on each map, which events happen and how the dice fall differ in every life.
+- **Saving:** one campaign save, written as you play. **Save and quit** works any time, on the chart or on a map. A life that has ended is saved too, so **Continue** brings back the wake screen. Saving on a map stores the map's orders so far; loading rebuilds the map and replays them, so it comes back exactly as it was. The save is removed when the campaign is won or a new one starts.
+- **Old saves:** voyages from earlier versions, with permanent death or free saves, load as a campaign's first life. Named saves from before are under **Old saves** on the title screen.
 - There is no difficulty setting. The pressure is survival (water, food, air, Glim) and what is out there.
 
 ### Veterans and the Forge
@@ -541,6 +553,13 @@ Runs the headless tests:
   - events fill in names, `kill` and `mark` work, the memorial waits for three dead, and an unknown `{placeholder}` is a content error;
   - a save from before named crew loads with named crew, replays a visit in progress without the new traits, and saves again identically;
   - head counts and names agree at every step, and at the end of whole scripted voyages.
+- **Campaigns and lives** (`tools/campaigntest.js`): checks that:
+  - a new campaign starts on life 1 with one save; the first life opens with the prologue, later ones with waking;
+  - after letting go, the next life is life 2, in the same galaxy, on day 1, at the wake-up point, with stores, systems, hull, fleet and drive parts as they were at waking;
+  - the same crew wake, the dead among them; the chart keeps every place it knew and marks places visited before; the memorial keeps the lost; the Choir's standing carries over and nobody else's does; hints stay seen; the campaign records how each life ended;
+  - the same place has the same name and type in every life, but different contents in life 2, always the same for life 2; the first life keeps its old seeds; random events fall differently in life 2; a map in life 2 is deterministic;
+  - a later life saves and loads identically; saves from before campaigns (permanent death, free saves, before named crew) load as a first life;
+  - the test captain plays campaigns of two lives on three seeds: it lets life 1 go, wakes knowing more of the chart, and gets home in life 2.
 - **Whole runs** (`tools/runtest.js`): checks that:
   - the AI captain (`tools/captain.js`, answering every event, and repairing what is damaged) gets home on eight seeds of each length;
   - the typical run (the median) takes four to six hours (full) or one to two hours (short) of estimated play, with at least half the runs inside. The estimate is 15 minutes per map visit, three quarters of a minute per stitch and a tenth of a minute per day. The captain plays lean, visiting only when it needs to, and its runs swing by a visit or two with small changes such as a crew's traits;
@@ -644,7 +663,7 @@ src/traits/           gameplay traits (Flight, ProductionQueue, Collector, Aster
 src/activities/       per-actor tasks (FlyTo, Launch, Harvest, DeliverOre, Attack, AttackMove,
                       FormationMove, DockHangar)
 src/galaxy/           the voyage: the galaxy generator (galaxy.js), the day clock, stores, systems,
-                      travel and saves (voyage.js), the crew (crew.js), standing (standing.js),
+                      travel and saves (voyage.js), lives (life.js), the crew (crew.js), standing (standing.js),
                       comms, dialogs, trade and treaties (comms.js), events (events.js),
                       practice runs (run.js)
 src/render/           three.js scene: space backdrop, procedural ships, rocks, clouds, crystal, nebulae,
