@@ -160,6 +160,25 @@ Stations:
 		Dark: Traders charge a quarter more.
 		Train: ledgers, tight-holds
 
+# Perks: at levels 3 and 5 (voyage.yaml PerkLevels) a ship's pilot picks one, from three on offer.
+# Each changes how the ship fights on a map, rather than a number (combat.js AutoTarget).
+Perks:
+	guardian:
+		Name: Covers the Forge
+		Text: Only goes after enemies near the Forge, and never strays far from it.
+	steady:
+		Name: Holds formation
+		Text: Launches holding back: returns fire from where it is, and never breaks formation to chase.
+	hunter:
+		Name: Hunter
+		Text: Looks further and chases longer than anyone else.
+	finisher:
+		Name: Finisher
+		Text: Goes for whatever enemy is closest to breaking, not whatever is closest.
+	survivor:
+		Name: Gets them home
+		Text: When the hull is badly hurt, turns for the Forge and goes aboard.
+
 # Skills: what a trained station can do (Stations, Train). Each is relearned every life.
 # Percent keys multiply like a room's (items.yaml): RepairCostPct, GlimPct, SensorPct, BuildPct,
 # WaterPct, XpPct, LaunchPct, CarePct, TradePct; and SystemWearPct (systems worn by hull damage),

@@ -1,6 +1,6 @@
-// Veterancy and the Forge's upgrades, no browser needed:  npm test
-// Kills earn experience and ranks; ranks add damage and hull; experience rides home in the
-// hangar and onto the next map; ships aboard mend between places; upgrades that need another
+// Levels and the Forge's upgrades, no browser needed:  npm test
+// Levels (not kills) add damage and hull; a level for each map a ship launched on, survived and
+// came home from, once a map, riding home in the hangar and onto the next map; ships aboard mend between places; upgrades that need another
 // are refused until it is built; the foundry line, launch rails and fire control do what they say.
 import { rules as loadCore, makeWorld } from './headless.js';
 import { makeOrder } from '../src/engine/order.js';
@@ -24,51 +24,54 @@ async function map(prep) {
   return { s, w, me, fauna, forge, tick: (n) => { for (let i = 0; i < n; i++) w.tick(); }, order: (n, sub, t, x) => w.resolveOrder(makeOrder(n, sub, t, x), me) };
 }
 
-// 1. Experience, ranks, bonuses
+// 1. Levels: kills don't count; each level adds 5% hull and damage
 {
   const m = await map();
   m.tick(25 * 6);
-  // ranks alone here: no named leads' touch (crewtest covers those)
+  // levels alone here: no named leads' touch (crewtest covers those)
   for (const a of m.w.actors) if (a.owner === m.me && a.lead) { a.leadDamage = a.leadHull = a.leadLearn = 0; m.w.ranks.fit(a); }
   m.me.slot.xpPct = 100;
   const hal = m.w.actors.find((a) => a.owner === m.me && a.type === 'halberd');
   const hp0 = hal.health.maxHp;
-  let kills = 0;
-  for (let i = 0; i < 6 && (hal.rank | 0) < 1; i++) {
-    const g = m.w.createActor('picket', m.fauna, { x: hal.x + 2500, y: hal.y, z: hal.z });
-    g.health.kill(hal, m.me);
-    kills++;
-  }
-  check(hal.rank === 1 && hal.health.maxHp === Math.trunc((hp0 * 110) / 100), `a Halberd that kills ${kills} Pickets (${hal.xp} xp) becomes Seasoned: +10% hull (${hp0} → ${hal.health.maxHp})`);
-  // and +10% damage: the same bolt hits harder from a veteran
+  for (let i = 0; i < 6; i++) { const g = m.w.createActor('picket', m.fauna, { x: hal.x + 2500, y: hal.y, z: hal.z }); g.health.kill(hal, m.me); }
+  check((hal.xp | 0) === 0 && (hal.rank | 0) === 0 && hal.kills === 6, `a Halberd that kills 6 Pickets is still level 1 (kills no longer count; ${hal.kills} kills on its record)`);
+  m.w.ranks.set(hal, 200);
+  check(hal.rank === 2 && hal.health.maxHp === Math.trunc((hp0 * 110) / 100), `at level 3 it has 10% more hull (${hp0} → ${hal.health.maxHp})`);
+  // and 10% more damage: the same bolt hits harder
   const t1 = m.w.createActor('halberd', m.fauna, { x: hal.x + 20 * CELL, y: hal.y, z: hal.z }), t2 = m.w.createActor('halberd', m.fauna, { x: hal.x - 20 * CELL, y: hal.y, z: hal.z });
   const green = m.w.actors.find((a) => a.owner === m.me && a.type === 'dart');
   const wh = m.w.rules.weapons.get('PulseBattery').warheads[0];
   const hit = (firer, target) => { const h = target.health.hp; wh.W.apply({ world: m.w, owner: m.me, firer }, wh, target.x, target.y, target.z, target); return h - target.health.hp; };
   let d1 = 0, d2 = 0;
   try { d1 = hit(hal, t1); d2 = hit(green, t2); } catch (e) { d1 = d2 = -1; console.log(e.message); }
-  check(d1 > 0 && d1 === Math.trunc((d2 * 110) / 100), `a Seasoned Halberd's pulse battery does ${d1} where a green ship's does ${d2}`);
+  check(d1 > 0 && d1 === Math.trunc((d2 * 110) / 100), `a level 3 Halberd's pulse battery does ${d1} where a level 1 ship's does ${d2}`);
+  m.w.ranks.set(hal, 9999);
+  check(hal.rank === 4 && m.w.ranks.nameOf(hal.rank) === 'Level 5', 'and no higher than level 5');
 }
 
-// 2. Experience rides home in the hangar, and onto the next map
+// 2. A level for each map a ship launched on, survived and came home from; it rides on
 {
   const m = await map();
   m.tick(25 * 6);
-  const dart = m.w.actors.find((a) => a.owner === m.me && a.type === 'dart');
-  for (let i = 0; i < 4; i++) { const g = m.w.createActor('gnasher', m.fauna, { x: dart.x + 3000, y: dart.y, z: dart.z }); g.health.kill(dart, m.me); }
-  dart.fought = true;
-  const xp0 = dart.xp;
+  const out = m.w.actors.filter((a) => a.owner === m.me && a.mobile && a !== m.forge);
+  const dart = out.find((a) => a.type === 'dart');
+  const xp0 = dart.xp | 0;
+  m.order('Recall', out);
+  m.tick(25 * 90);
+  // launched again and recalled again on the same map: still one level
+  m.order('LaunchAll', [m.forge]);
+  m.tick(25 * 20);
   m.order('Recall', m.w.actors.filter((a) => a.owner === m.me && a.mobile && a !== m.forge));
   m.tick(25 * 90);
   m.order('SpoolSkein', [m.forge]);
   for (let i = 0; i < m.forge.skein.time + 2 && !m.w.report; i++) m.w.tick();
   V.returnFromMap(rules, m.s, m.w.report);
-  const e = m.s.fleet.filter((x) => x.type === 'dart').sort((a, b) => b.xp - a.xp)[0];
-  check(e && e.xp === xp0 + 1, `a Dart with ${xp0} xp that fought comes home with ${e && e.xp} (a point for the fight) and the rank ${V.rankName(rules, e && e.xp) || 'Green'}`);
+  const darts = m.s.fleet.filter((x) => x.type === 'dart');
+  check(darts.length === 2 && darts.every((e) => e.xp >= xp0 + 100 && e.xp < xp0 + 200) && V.levelOf(rules, darts[0]) === 2, `a Dart that launched and came home is level ${V.levelOf(rules, darts[0])} (${darts[0].xp} points), once, however often it docked`);
   const n = await map((s) => { s.fleet = m.s.fleet; });
   n.tick(25 * 8);
   const best = n.w.actors.filter((a) => a.owner === n.me && a.type === 'dart').sort((a, b) => (b.xp | 0) - (a.xp | 0))[0];
-  check(best && best.xp === e.xp && best.rank === n.w.ranks.rankOf(e.xp), 'and launches on the next map with it');
+  check(best && best.xp === darts[0].xp && best.rank === 1, 'and launches on the next map at that level');
 }
 
 // 3. Mending aboard, and repair bays

@@ -84,7 +84,7 @@ bp-sabre:
 #   chart and on maps), GlimPct (Glim per stitch), HullPct (the Forge's hull), Heal (percent of
 #   their hull ships aboard mend each day), BuildPct (foundry speed), ForgeDamagePct (the
 #   Forge's own guns), LaunchPct (time between launches from the hangar), Berths (people who
-#   can live aboard), Recover (strain levels it takes off each day, on top of one: Strain lists
+#   can live aboard), Bays (ships the hangar berths between maps), Recover (strain levels it takes off each day, on top of one: Strain lists
 #   which kinds, or all), MoraleUp (to the morale the crew settle at), CluePct (the size of new
 #   clue circles), RepairCostPct (ore and salvage a repair takes), WaterPct (water the crew drink)
 #   Requires: another room that must be built first. A memory that Gives "room <id>" must be
@@ -92,8 +92,9 @@ bp-sabre:
 hangar:
 	Name: Expanded hangar
 	Kind: room
-	Description: Gut two cargo decks and fit them as bays. Room for ten more capacity of ships.
+	Description: Gut two cargo decks and fit them as bays. Three more berths, and room for ten more capacity of ships on a map.
 	Capacity: 10
+	Bays: 3
 	Install:
 		Ore: 900
 		Salvage: 500
@@ -144,8 +145,9 @@ second-hangar:
 	Name: Second hangar
 	Kind: room
 	Requires: hangar
-	Description: A whole new hangar deck where the ore holds were. Room for ten more capacity of ships.
+	Description: A whole new hangar deck where the ore holds were. Three more berths, and ten more capacity on a map.
 	Capacity: 10
+	Bays: 3
 	Install:
 		Ore: 1600
 		Salvage: 900

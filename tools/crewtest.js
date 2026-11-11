@@ -174,8 +174,8 @@ async function visit(prep) {
   const careful = darts.find((a) => m.me.crew.lead(a.lead).trait === 'careful'), quick = darts.find((a) => m.me.crew.lead(a.lead).trait === 'quick');
   const HP = rules.actor('dart').traitInfo('Health').HP;
   check(careful.health.maxHp === Math.trunc((HP * 120) / 100) && quick.health.maxHp === HP, `a careful pilot's Dart has ${careful.health.maxHp} hull, another ${quick.health.maxHp}`);
-  for (const a of [careful, quick]) { const g = m.w.createActor('picket', m.fauna, { x: a.x + 2500, y: a.y, z: a.z }); g.health.kill(a, m.me); }
-  check(quick.xp > careful.xp, `the same kill: ${quick.xp} xp for a quick study, ${careful.xp} for another`);
+  const qx = m.w.ranks.home(quick), cx = m.w.ranks.home(careful);
+  check(qx > cx, `coming home: ${qx} level points for a quick study, ${cx} for another`);
 }
 
 // 5. Events name people, and change them

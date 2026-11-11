@@ -388,6 +388,20 @@ button.big { width: 100%; justify-content: center; margin-top: 8px; border-color
 #ce-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 16px; }
 #ce-stats div { display: flex; flex-direction: column; }
 #chart-end .modal-card { width: min(560px, 100%); border-top: 3px solid #ffd778; }
+/* the muster (Milestone 19): perks to pick, and who continues */
+#muster .modal-card { width: min(720px, 100%); border-top: 3px solid #c9a04e; max-height: calc(100vh - 40px); overflow-y: auto; }
+#muster h3 { margin: 14px 0 6px; font: 600 12px var(--f-display); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+#muster .perk-ship { margin: 8px 0; }
+#muster .perk-ship p { margin: 0 0 6px; }
+#muster .perks { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 6px; }
+#muster .perks button { text-align: left; padding: 10px 12px; background: rgba(255, 255, 255, 0.03); color: var(--text); border: 1px solid var(--line); border-left: 3px solid #c9a04e; cursor: pointer; font: inherit; }
+#muster .perks button:hover, #muster .perks button:focus-visible { background: rgba(201, 160, 78, 0.12); border-color: #c9a04e; outline: none; }
+#muster .perks button b { display: block; }
+#muster .perks button span { font-size: 12px; color: var(--muted); }
+#muster table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#muster td, #muster th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+#muster select { font: inherit; background: var(--panel); color: var(--text); border: 1px solid var(--line); padding: 3px 6px; }
+#muster .why { color: var(--height); font-size: 13px; min-height: 1em; }
 #chart-end.dead .modal-card { border-top-color: var(--accent); }
 #ce-lost { color: var(--muted); font-size: 13px; }
 #ce-title { font-size: 22px !important; }
@@ -701,6 +715,14 @@ label.check { color: var(--text) !important; font-size: 13px !important; }
       <p><span class="a">Teal lanes</span> the drive can stitch now; the teal ring is its reach, the dashed ring the sensors'. <span class="v">Violet</span> is the Veil. The <span class="g">gold ring</span> marks the drive part the engineers have a fix on.</p>
       <p id="chart-hazards"></p>
     </aside>
+    <div id="muster" class="modal" hidden role="dialog" aria-labelledby="mu-title">
+      <div class="modal-card">
+        <h2 id="mu-title">The muster</h2>
+        <div id="mu-body"></div>
+        <p id="mu-why" class="why"></p>
+        <div class="launch-row"><button id="mu-ok" type="button" class="primary">Settle the muster</button></div>
+      </div>
+    </div>
     <div id="chart-end" class="modal" hidden role="dialog" aria-labelledby="ce-title">
       <div class="modal-card">
         <h2 id="ce-title"></h2>

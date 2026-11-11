@@ -2,7 +2,7 @@ import { weights } from '../engine/content.js';
 import { TIERS, tierIndex, standingOf, change, meet } from './standing.js';
 import { lifeMix, lifeOf, remembers, markMemory, memoryOfBlueprint } from './life.js';
 import { ROLES, officerOf, officerPct, personById, kill, lose, loseFree, assignFleet, fullName } from './crew.js';
-import { stationDown, strainOf, KINDS, officerPctAt, skillPct } from './base.js';
+import { stationDown, strainOf, KINDS, officerPctAt, skillPct, roomSum } from './base.js';
 
 // Comms and trade. Dialogs are YAML trees (content/core/dialogs): nodes that say something and
 // offer choices; a choice shows when its conditions hold and does a short list of effects from
@@ -288,8 +288,10 @@ function applyEventEffect(rules, s, galaxy, e, out, why) {
     out.notes.push(`${e.system === 'hull' ? 'Hull' : sys[e.system].Name} +${e.n}%.`);
   } else if (e.op === 'train') {
     let n = 0;
-    for (const x of s.fleet) if (rules.actor(x.type).traitInfo('Armament')) { x.xp = (x.xp | 0) + e.n; n++; }
-    out.notes.push(`${n} ship${n === 1 ? '' : 's'}: +${e.n} experience.`);
+    // a quarter of a level for each (Milestone 19: levels come from coming home)
+    const pts = Math.trunc((e.n * num(rules.content.voyage, 'LevelPoints', 100)) / 4);
+    for (const x of s.fleet) if (rules.actor(x.type).traitInfo('Armament')) { x.xp = (x.xp | 0) + pts; n++; }
+    out.notes.push(`${n} ship${n === 1 ? '' : 's'}: ${e.n >= 4 ? `+${Math.trunc(e.n / 4)} level${e.n >= 8 ? 's' : ''}` : 'a step closer to the next level'}.`);
   } else if (e.op === 'damage') {
     if (e.system === 'hull') s.forge.hp = Math.max(1, s.forge.hp - Math.trunc((maxHp * e.n) / 100));
     else s.systems[e.system] = Math.max(0, s.systems[e.system] - e.n);
@@ -447,6 +449,9 @@ export function quote(rules, s, fid, pointId, buy, sell) {
     const used = s.fleet.reduce((t, e) => t + (rules.actor(e.type).traitInfo('ConsumesCapacity')?.Amount || 0), 0);
     const add = ships.reduce((t, [g, n]) => t + n * (rules.actor(g.slice(5)).traitInfo('ConsumesCapacity')?.Amount || 0), 0);
     if (used + add > cap) why.push(used >= cap ? 'The hangar is full.' : `The hangar has room for ${cap - used} more capacity.`);
+    // and berths, by count (the muster, Milestone 19)
+    const berths = num(rules.content.voyage, 'HangarBerths', 10) + roomSum(rules, s, 'Bays'), n = ships.reduce((t, [, k]) => t + k, 0);
+    if (s.fleet.length + n > berths) why.push(`The hangar berths ${berths} ships, and ${s.fleet.length} are aboard.`);
   }
   return { cost, pay, ok: !why.length && pay >= cost && cost > 0, why: why.length ? why.join(' ') : pay < cost ? `Not a fair deal: you give ${pay}, they want ${cost}.` : '' };
 }

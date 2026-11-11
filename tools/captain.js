@@ -60,7 +60,13 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
   // where water and Glim can be had
   const SUPPLY = { IceTail: ['IceTail'], LanternMist: ['LanternMist', 'SynodRefinery', 'ChoirBloom'] };
   const type = (t) => (p) => (SUPPLY[t] || [t]).includes(p.type);
-  const settle = () => { if (events) resolveEvents(rules, s); else s.queue = []; };
+  // events answered (or skipped); pilots at a perk level take the first perk on offer; a muster
+  // keeps the best-levelled ships and scraps the rest
+  const settle = () => {
+    if (events) resolveEvents(rules, s); else s.queue = [];
+    s.fleet.forEach((e, i) => { if (e.offer) V.choosePerk(rules, s, i, e.offer[0]); });
+    if (s.muster) { const keep = new Set(s.fleet.map((e, i) => [e, i]).sort((a, b) => (b[0].xp | 0) - (a[0].xp | 0)).slice(0, V.berthsOf(rules, s)).map(([, i]) => i)); V.muster(rules, s, Object.fromEntries(s.fleet.map((_, i) => [i, keep.has(i) ? 'keep' : 'scrap']))); }
+  };
   settle();
   for (let guard = 0; !s.over && guard < 600; guard++) {
     settle();

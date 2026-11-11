@@ -42,9 +42,19 @@ Voyage:
 	ShortDaySpan: 1000
 	# drifting without Glim, at sub-light: days per 10 spans
 	DriftDaysPer10: 1
-	# veterancy: experience needed for each rank, and percent more damage and hull per rank
+	# levels (Milestone 19): a ship gains a level for each map it launched on, survived and came
+	# home from (LevelPoints each, sped by the wing commander's work and drills), up to Levels;
+	# each level above the first adds RankBonus percent damage and hull. At PerkLevels its pilot
+	# picks a perk (crew.yaml Perks). (Ranks: the old experience thresholds, for old saves.)
+	Levels: 5
+	LevelPoints: 100
+	RankBonus: 5
+	PerkLevels: 3, 5
 	Ranks: Seasoned 4, Veteran 10, Elite 20
-	RankBonus: 10
+	# the hangar (the muster): berths by count (hangar rooms add Bays); a ship scrapped gives back
+	# ScrapPct percent of its ore, and its crew move into the Forge
+	HangarBerths: 10
+	ScrapPct: 50
 	# ships aboard the Forge mend this percent of their hull a day (repair bays add more)
 	FleetHeal: 5
 	# a day's deep scan from the chart: Glim it costs (it sees twice the sensor range)

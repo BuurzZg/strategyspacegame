@@ -591,8 +591,9 @@ export class Hud {
       const crew = a.info.traitInfo('Crew');
       if (crew && crew.Count) stats.push(['Crew', `${crew.Count} ${crew.Count === 1 ? crew.Role.replace(/s$/, '') : crew.Role}`]);
       if (this.world.ranks && a.mobile && !a.has('Hangar') && this.input.isMine(a)) {
-        const R = this.world.ranks, next = R.steps[a.rank | 0];
-        stats.push(['Rank', `${R.nameOf(a.rank) || 'Green'}${a.rank ? ` (+${R.bonus * a.rank}%)` : ''}`], ['Experience', next ? `${a.xp | 0} / ${next[1]}` : `${a.xp | 0}`]);
+        const R = this.world.ranks, P = (this.world.rules.content.crew || {}).perks || {};
+        stats.push(['Level', `${R.nameOf(a.rank).replace('Level ', '')}${a.rank ? ` (+${R.bonus * a.rank}%)` : ''}${a.homed ? ', home once' : ''}`]);
+        if ((a.perks || []).length) stats.push(['Perks', a.perks.map((k) => (P[k] ? P[k].Name : k)).join(', ')]);
         // its named pilot or captain, and what they bring
         const l = a.lead && a.owner.crew ? a.owner.crew.lead(a.lead) : null;
         if (l) {

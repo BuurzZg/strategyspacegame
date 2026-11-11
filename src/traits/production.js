@@ -141,7 +141,7 @@ defineTrait('ProductionQueue', class ProductionQueue extends Trait {
     // its lead: whoever led it before, or for a new armed ship the next named recruit
     const roster = self.owner.crew, crew = this.crewOf(type);
     const lead = !roster ? null : from ? roster.lead(from.lead) : crew && unit.info.traitInfo('Armament') ? roster.recruit(crew.Role) : null;
-    if (w.ranks) w.ranks.equip(unit, from ? from.xp | 0 : 0, lead);
+    if (w.ranks) w.ranks.equip(unit, from ? from.xp | 0 : 0, lead, { perks: (from && from.perks) || [], homed: !!(from && from.homed) });
     unit.kills = from ? from.kills | 0 : 0;
     if (from) {
       if (unit.health && from.hp) unit.health.hp = Math.max(1, Math.min(unit.health.maxHp, from.hp));

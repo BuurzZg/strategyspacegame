@@ -3,7 +3,7 @@
 # ship), {fallen} (the last of the named dead). Conditions about them: officer <post> [trait],
 # trait <trait> (someone aboard has it), leads >= n, fallen >= n, morale >= n, morale <= n.
 # Effects: kill <post|pilot>, mark <post|pilot> <trait>, mend <system|hull> n, train n
-# (experience for every armed ship).
+# (n quarters of a level for every armed ship).
 # The base (Milestone 17): allhands >= n (an All hands streak of n days), strain <kind> >= n
 # (thirst, hunger, air, cold). When: allhands fires the day a streak reaches the song (voyage.yaml).
 

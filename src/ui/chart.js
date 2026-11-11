@@ -63,6 +63,7 @@ export class ChartScreen {
   pumpEvents() {
     const s = this.s, rules = this.rules;
     if (!this.comms || this.comms.isOpen) return;
+    if (this.showMuster()) return; // perks to pick, or more ships than berths: first things first
     if (!s.queue || !s.queue.length) { if (s.over && $('chart-end').hidden) this.showEnd(); else if (!s.over) { this.hint('chart'); if (Object.keys((s.campaign && s.campaign.memories) || {}).length) this.hint('memory'); } return; }
     const ev = rules.content.events[s.queue[0]];
     if (!ev) { s.queue.shift(); this.pumpEvents(); return; }
@@ -143,10 +144,44 @@ export class ChartScreen {
     const Hz = Object.values(this.rules.content.hazards || {});
     $('chart-hazards').innerHTML = Hz.length ? `Lanes into hazard pockets: ${Hz.map((h) => `<span style="color:#${esc(h.Color)}">${esc(h.Name)}</span>`).join(', ')}. Nothing gets through until you remember what does.` : '';
     this.on($('chart-loombtn'), 'click', () => this.openLoom());
+    this.on($('mu-body'), 'click', (e) => { const b = e.target.closest('button[data-perk]'); if (!b) return; const r = V.choosePerk(this.rules, this.s, +b.dataset.i, b.dataset.perk); if (r.ok) { this.audio.play('rankup'); this.onChange(this.s); } this.refresh(); this.showMuster(); });
+    this.on($('mu-body'), 'change', () => this.musterCheck());
+    this.on($('mu-ok'), 'click', () => { const r = V.muster(this.rules, this.s, this.musterFate()); if (!r.ok) { this.hud.toast(r.why, 'bad'); this.audio.play('error'); return; } this.audio.play('order'); this.onChange(this.s); this.refresh(); if (!this.showMuster()) this.pumpEvents(); });
     this.on($('chart-bridgebtn'), 'click', () => this.openBridge());
   }
 
   // The memory tree, over the chart.
+  // ---------------------------------------------------------------- the muster (PLAN.md §7)
+  // Pilots at a perk level pick a perk; when more ships came aboard than the hangar berths,
+  // choose for each left over: scrap it or leave it adrift. Returns true while it is showing.
+  showMuster() {
+    const s = this.s, rules = this.rules, offers = s.fleet.map((e, i) => [e, i]).filter(([e]) => e.offer);
+    if (!offers.length && !s.muster) { $('muster').hidden = true; return false; }
+    const name = (e) => rules.actor(e.type).traitInfo('Tooltip').Name, lead = (e) => (e.lead ? s.crew.people.find((p) => p.id === e.lead) : null);
+    let h = '';
+    if (offers.length) {
+      $('mu-title').textContent = 'A perk';
+      h += offers.map(([e, i]) => `<div class="perk-ship"><p><b>${esc(lead(e) ? `${titleOf(rules, lead(e))} ${lead(e).name}` : 'The pilot')}</b> of the ${esc(name(e))} is ${esc(V.rankName(rules, e.xp))} now, and picks a perk:</p><div class="perks">${e.offer.map((k) => `<button type="button" data-i="${i}" data-perk="${k}"><b>${esc(rules.content.crew.perks[k].Name)}</b><span>${esc(rules.content.crew.perks[k].Text)}</span></button>`).join('')}</div></div>`).join('');
+      $('mu-ok').hidden = true; $('mu-why').textContent = '';
+    } else {
+      const berths = V.berthsOf(rules, s);
+      $('mu-title').textContent = 'The muster';
+      h += `<p>${s.fleet.length} ships came aboard, and the hangar berths ${berths}. Choose who continues. A ship scrapped gives back half its ore, and its crew move into the Forge; one left adrift is lost, with everyone aboard.</p><table><thead><tr><th>Ship</th><th>Level</th><th>Hull</th><th>Lead</th><th></th></tr></thead><tbody>`;
+      s.fleet.forEach((e, i) => {
+        const ore = Math.trunc((+rules.actor(e.type).traitInfo('Valued').Cost * +rules.content.voyage.ScrapPct) / 100), l = lead(e);
+        h += `<tr><td>${esc(name(e))}</td><td>${V.levelOf(rules, e)}</td><td>${Math.trunc(((e.hp | 0) * 100) / V.shipMaxHp(rules, e, s))}%</td><td>${l ? esc(l.name) : '—'}</td><td><select data-i="${i}"><option value="keep">Keep</option><option value="scrap">Scrap: +${ore} ore</option><option value="adrift">Leave adrift</option></select></td></tr>`;
+      });
+      h += '</tbody></table>';
+      $('mu-ok').hidden = false;
+    }
+    $('mu-body').innerHTML = h;
+    $('muster').hidden = false;
+    if (!offers.length) this.musterCheck();
+    return true;
+  }
+  musterFate() { const f = {}; for (const sel of $('mu-body').querySelectorAll('select[data-i]')) f[+sel.dataset.i] = sel.value; return f; }
+  musterCheck() { const p = V.musterPlan(this.rules, this.s, this.musterFate()); $('mu-ok').disabled = !p.ok; $('mu-why').textContent = p.ok ? (p.ore ? `Scrap: +${p.ore} ore.` : '') : p.why; }
+
   openLoom() { if (this.loom && !(this.comms && this.comms.isOpen)) this.loom.open(this.s, { onChange: () => { this.onChange(this.s); this.refresh(); } }); }
   openBridge() {
     if (!this.bridge || (this.comms && this.comms.isOpen)) return;
@@ -203,7 +238,7 @@ export class ChartScreen {
     else if (a === 'rest') this.act(V.rest);
     else if (a === 'scan') this.act(V.scan);
     else if (a === 'home') this.act(V.jumpHome);
-    else if (a === 'go') this.onGoIn();
+    else if (a === 'go') { if (this.s.muster) { this.showMuster(); return; } this.onGoIn(); }
     else if (a === 'hailfar') this.hail(this.g.points[id].owner, true);
     else if (a === 'hail') { const h = V.canHail(this.rules, this.s); if (h.ok) this.hail(this.g.points[this.s.at].owner); else { this.hud.toast(h.why, 'bad'); this.audio.play('error'); } }
   }
@@ -383,9 +418,9 @@ export class ChartScreen {
       h += '</tbody></table><p class="fp-note">Officers are counted with their role and never fly. Every ship needs crew: building one takes them from the free crew. When a ship is destroyed, half its crew get away in pods; its named lead goes down with it.</p>';
       h += '<h3>Hangar</h3><ul class="people ships">';
       for (const e of [...cv.ships].sort((a, b) => b.xp - a.xp)) {
-        h += `<li><span class="post">${esc(e.ship)} <i class="${e.rank ? 'rk' : ''}">${e.rank || 'Green'} · ${e.xp} xp · ${e.hp}%</i></span>${e.lead ? `<b>${esc(e.lead.title)} ${esc(e.lead.name)}</b>${trait(e.lead)}${eff(e.lead)}${e.lead.kills ? `<span class="eff">${e.lead.kills} kill${e.lead.kills > 1 ? 's' : ''}</span>` : ''}` : '<span class="eff">no named lead</span>'}</li>`;
+        h += `<li><span class="post">${esc(e.ship)} <i class="${e.level > 1 ? 'rk' : ''}">${e.rank} · ${e.hp}%${e.perks.length ? ` · ${esc(e.perks.join(', '))}` : ''}</i></span>${e.lead ? `<b>${esc(e.lead.title)} ${esc(e.lead.name)}</b>${trait(e.lead)}${eff(e.lead)}${e.lead.kills ? `<span class="eff">${e.lead.kills} kill${e.lead.kills > 1 ? 's' : ''}</span>` : ''}` : '<span class="eff">no named lead</span>'}</li>`;
       }
-      h += `</ul><p class="fp-note">${s.fleet.length ? 'Ships earn experience for every kill and every fight they come home from; ranks add 10% damage and hull each. Ships aboard mend a little every day. Every armed ship has a named pilot or captain, whose trait changes it.' : 'Empty.'}</p>`;
+      h += `</ul><p class="fp-note">${s.fleet.length ? `${s.fleet.length} of ${V.berthsOf(rules, s)} berths. A ship gains a level for every map it launches on, survives and comes home from, up to level 5; each adds 5% damage and hull. At levels 3 and 5 its pilot picks a perk. Ships aboard mend a little every day. Every armed ship has a named pilot or captain, whose trait changes it.` : 'Empty.'}</p>`;
       if (cv.standing.length) {
         h += '<h3>Standing by</h3><ul class="people">';
         for (const p of cv.standing) h += `<li><span class="post">${esc(p.title)}, no ship</span><b>${esc(p.name)}</b>${trait(p)}${eff(p)}</li>`;

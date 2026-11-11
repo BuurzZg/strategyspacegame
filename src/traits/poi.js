@@ -121,8 +121,9 @@ defineTrait('Hangar', class Hangar extends Trait {
       w.fx({ t: 'deposit', owner: ship.owner.index, kind: c.kind, amount: c.cargo, x: ship.x, y: ship.y, z: ship.z });
       c.cargo = 0;
     }
-    const xp = (ship.xp | 0) + (ship.fought ? 1 : 0);
-    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '', xp, ...(ship.lead ? { lead: ship.lead, kills: ship.kills | 0 } : {}) });
+    // launched, survived and home: a level's worth of points, once a map (ranks.js)
+    const xp = w.ranks ? w.ranks.home(ship) : ship.xp | 0;
+    this.aboard.push({ type: ship.type, hp: ship.health ? ship.health.hp : 0, cargo: c ? c.cargo : 0, kind: c ? c.kind : '', xp, homed: true, perks: [...(ship.perks || [])], ...(ship.lead ? { lead: ship.lead, kills: ship.kills | 0 } : {}) });
     w.fx({ t: 'aboard', actor: ship.id, type: ship.type, owner: ship.owner.index, x: ship.x, y: ship.y, z: ship.z });
     if (w.formations) w.formations.leave([ship]);
     ship.dead = true; // not destroyed: it is aboard (its DockHangar activity ends this tick)

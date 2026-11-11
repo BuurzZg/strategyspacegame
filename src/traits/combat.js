@@ -3,6 +3,7 @@ import { isqrt, dirVec, cos as COS } from '../engine/math.js';
 import { fireWeapon, muzzleOf } from '../engine/weapons.js';
 import { reach } from '../engine/avoid.js';
 import { Attack, AttackMove } from '../activities/attack.js';
+import { DockHangar } from '../activities/hangar.js';
 import { FlyTo } from '../activities/fly.js';
 import { CELL, clamp } from '../engine/math.js';
 
@@ -129,33 +130,50 @@ defineTrait('Stance', class Stance extends Trait {
 // ---------------------------------------------------------------- AutoTarget
 // An idle armed ship goes after enemies that come within ScanRange (and after anyone who
 // shoots it), but gives up a chase that drags it more than Leash from where it started.
-// Stances arrive with Milestone 5.
+// Stances arrive with Milestone 5. A pilot's perks (crew.yaml Perks, Milestone 19) change it:
+//   guardian  only goes after enemies within Guard of its own Forge, on a shorter leash
+//   hunter    scans and chases further
+//   finisher  goes for the most damaged enemy in range, not the nearest
+//   survivor  turns for home (docks) when its hull falls under Retreat percent
+// (steady, "holds formation", launches in the defensive stance: ranks.js)
+const GUARD = 6144, RETREAT = 30;
 defineTrait('AutoTarget', class AutoTarget extends Trait {
   created() { this.timer = (this.self.id * 3) % this.info.ScanInterval; }
+  has(perk) { const p = this.self.perks; return !!p && p.includes(perk); }
+  forge() { const self = this.self; return this.world.actors.find((a) => a.owner === self.owner && !a.dead && a.has('Hangar')) || null; }
+  leash() { return this.has('guardian') ? this.info.Leash >> 1 : this.has('hunter') ? this.info.Leash * 2 : this.info.Leash; }
   tick() {
     if (this.self.burrowed) return; // buried monsters neither scan nor shoot
     const self = this.self;
     if (!self.attack || --this.timer > 0) return;
     this.timer = this.info.ScanInterval;
-    if (!self.isIdle || (self.stance && self.stance.mode !== 'aggressive')) return;
-    const t = this.acquire(this.info.ScanRange);
-    if (t) self.queueActivity(new Attack(t, { leash: this.info.Leash }), false);
+    // Gets them home: badly hurt, it turns for the Forge and goes aboard
+    if (this.has('survivor') && !self.retreating && self.health && self.health.hp * 100 < self.health.maxHp * RETREAT) {
+      const f = this.forge();
+      if (f) { self.retreating = true; self.cancelActivity(); self.queueActivity(new DockHangar(f.id), false); return; }
+    }
+    if (self.retreating || !self.isIdle || (self.stance && self.stance.mode !== 'aggressive')) return;
+    const t = this.acquire(this.has('hunter') ? Math.trunc((this.info.ScanRange * 3) / 2) : this.info.ScanRange);
+    if (t) self.queueActivity(new Attack(t, { leash: this.leash() }), false);
   }
   damaged({ attacker }) {
     const self = this.self;
-    if (!self.attack || !self.isIdle || !attacker || attacker.dead || !self.attack.canTarget(attacker)) return;
+    if (!self.attack || !self.isIdle || self.retreating || !attacker || attacker.dead || !self.attack.canTarget(attacker)) return;
     if (self.stance && self.stance.mode !== 'aggressive') return; // defensive ships return fire from where they are
-    self.queueActivity(new Attack(attacker, { leash: this.info.Leash }), false);
+    self.queueActivity(new Attack(attacker, { leash: this.leash() }), false);
   }
-  // The best enemy within range: armed ships before unarmed ones, then the nearest.
+  // The best enemy within range: armed ships before unarmed ones, then the nearest (or, for a
+  // finisher, the most damaged; for a guardian, only those near its Forge).
   acquire(range) {
-    const self = this.self, w = this.world, at = self.attack;
+    const self = this.self, w = this.world, at = self.attack, guard = this.has('guardian') ? this.forge() : null, fin = this.has('finisher');
     let best = null, bs = Infinity;
     for (const a of w.unitsInSphere(self.x, self.y, self.z, range + w.maxHalfLength + 1500, [])) {
       if (!at.canTarget(a)) continue;
       const d = w.edgeDist(self, a);
       if (d > range) continue;
-      const s = d + (a.attack ? 0 : 4096);
+      if (guard && w.edgeDist(guard, a) > GUARD) continue;
+      const hurt = fin && a.health ? Math.trunc((a.health.hp * 4096) / Math.max(1, a.health.maxHp)) : 0;
+      const s = (fin ? hurt : d) + (a.attack ? 0 : fin ? 8192 : 4096);
       if (s < bs) { bs = s; best = a; }
     }
     return best;

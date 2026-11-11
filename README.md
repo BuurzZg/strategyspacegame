@@ -5,7 +5,9 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 18, the bridge.** The crew screen is now the Forge's **bridge** (press `B`), drawn in the brass style. You look down from behind Jacob's chair at nine stations, each a console with its officer's name plate, a mood medallion, three level lamps and a state gauge. Lit consoles glow, their needles waver and steam drifts from their vents. Dark ones are grey glass and still needles, and every lamp goes gold for All hands. A new **signals officer** runs comms. Click a station for its panel: its officer, what it runs, what Jacob remembers for it (lit, or a question mark), and **training**. Every open station wakes at level 1 each life. Cogmarks and a day or two train it to level 2, then 3, and each level brings a skill: field repairs, plotted courses, quick stitch, long watch, ration plan, drills, long-range hails, signal decoding, triage, ledgers and more. Training is relearned every life, but it costs half where Jacob remembers something for that station. An officer's work counts half until their station is trained. Click the chair for the captain's panel: the life, the day, the Meridian date (UNKNOWN), the All hands streak, the Loom and Let go. On a phone the ring becomes a column. See [The bridge](#the-bridge).
+**Status: Milestone 19, the muster and levels.** Ships no longer rank up from kills. A ship gains a **level** for every map it launches on, survives and comes home from, once per map, up to level 5, and each level adds 5% damage and hull. A good wing commander, drills or a quick-study pilot can make levels come sooner. At **levels 3 and 5** the ship's pilot picks a **perk**, from three on offer, that changes how it fights: *Covers the Forge*, *Holds formation*, *Hunter*, *Finisher* or *Gets them home*. The hangar **berths 10 ships**, plus three for each hangar room. When more come aboard, **the muster** asks who continues. A ship scrapped gives back half its ore, its crew move into the Forge and its pilot stands by; one left adrift is lost with everyone aboard. Nothing stitches until it is settled, and no trader will sell a hull you have no berth for. See [The muster and levels](#the-muster-and-levels).
+
+**Milestone 18, the bridge:** The crew screen is now the Forge's **bridge** (press `B`), drawn in the brass style. You look down from behind Jacob's chair at nine stations, each a console with its officer's name plate, a mood medallion, three level lamps and a state gauge. Lit consoles glow, their needles waver and steam drifts from their vents. Dark ones are grey glass and still needles, and every lamp goes gold for All hands. A new **signals officer** runs comms. Click a station for its panel: its officer, what it runs, what Jacob remembers for it (lit, or a question mark), and **training**. Every open station wakes at level 1 each life. Cogmarks and a day or two train it to level 2, then 3, and each level brings a skill: field repairs, plotted courses, quick stitch, long watch, ration plan, drills, long-range hails, signal decoding, triage, ledgers and more. Training is relearned every life, but it costs half where Jacob remembers something for that station. An officer's work counts half until their station is trained. Click the chair for the captain's panel: the life, the day, the Meridian date (UNKNOWN), the All hands streak, the Loom and Let go. On a phone the ring becomes a column. See [The bridge](#the-bridge).
 
 **Milestone 17, the Forge as a base, and survival that weakens:** Running out of water, food, air or Glim **never kills** now. Each shortage builds **strain** (thirst, hunger, bad air, cold), a level a day up to 3, and every level makes the Forge weaker: slower work, dearer building, more Glim a stitch, weaker ships. At strain 2 and 3, stations go dark: life support stops making air, the foundry stops building, comms falls silent. The **boilers** burn 10 Glim a day; with none they go cold and everything works at half. The crew's **mood** is a medallion in the top bar (Content, Uneasy or Angry), with its causes beside it, and it changes what things cost. Under morale 15, stations' crews **strike** instead of leaving, until morale recovers or you **parley** (a day of talking, or cogmarks). When every station is green it's **All hands**: the bell rings, work is faster, stitches cheaper, ships better, and a long streak earns a song. The Forge has a **deck plan** of 8 slots for 17 **rooms** (today's projects, plus crew quarters, a mess hall, an infirmary, a chart room, a workshop and a still room), lost with each life. **Cogmarks**, stamped brass cogs, are money now: traders pay them from a purse, take them for anything, and make up the difference in a swap. See [Staying alive](#staying-alive) and [The deck plan](#the-deck-plan).
 
@@ -204,10 +206,27 @@ The Forge builds one ship at a time from its queue. You pay for a ship when you 
 
 ### Veterans and the Forge
 
-- **Ranks:** a ship earns experience for every enemy it destroys (more for bigger ones), and a point each time it comes home from a visit where it fought. Ranks: **Seasoned** (4), **Veteran** (10), **Elite** (20); each adds 10% damage and hull. Chevrons over the selection brackets show the rank; the selection card shows it with the experience; the **Crew** tab lists the hangar with ranks and hull.
-- **The hangar carries them:** recall a ship and it keeps its experience and damage until the next place. Lose it and the rank is gone with it.
+- **Levels** (Milestone 19, replacing ranks from kills): see [The muster and levels](#the-muster-and-levels). Chevrons over the selection brackets show a ship's level, and the selection card shows its level and perks. The **Crew** tab lists the hangar with levels, hull and perks.
+- **The hangar carries them:** recall a ship and it keeps its level and damage until the next place. Lose it and its level is gone with it.
 - **Mending:** ships aboard mend 5% of their hull a day; repair bays make it 20%.
 - **Forge upgrades** are rooms on the deck plan now (Milestone 17): see [The deck plan](#the-deck-plan).
+
+### The muster and levels
+
+- **Levels:** a ship gains a level for every map it **launched on, survived and came home from**, once a map however often it docks, up to **level 5**. A ship that never leaves the bays gains nothing, and kills don't count (they stay on the pilot's record). Each level above the first adds 5% damage and hull. A good wing commander, a hangar trained in drills and a quick-study pilot can earn an extra level now and then. They never slow a level down.
+- **Perks:** at levels 3 and 5 the ship's pilot picks a perk, from three on offer, that changes how it fights:
+
+| Perk | What it does on a map |
+| --- | --- |
+| Covers the Forge | Only goes after enemies within about 6 km of the Forge, on a shorter leash |
+| Holds formation | Launches in the defensive stance: returns fire from where it is and never chases |
+| Hunter | Scans half again as far and chases twice as long |
+| Finisher | Goes for the enemy closest to breaking, not the nearest |
+| Gets them home | Under 30% hull, turns for the Forge and goes aboard |
+
+- **Berths:** the hangar holds 10 ships between maps, by count; an expanded hangar and a second hangar add three each. On a map you can still build past that, up to the fleet capacity.
+- **The muster:** when more ships come aboard than the berths, the chart asks who continues. For each ship left over, **scrap** it (half its ore back; its crew move into the Forge; its pilot stands by for the next ship) or **leave it adrift** (it and everyone aboard are lost). Nothing stitches until the muster is settled.
+- **Losses are permanent:** a ship lost on a map is gone, and its pilot with it, unless a Lucky pilot gets out, or the infirmary's triage pulls them out.
 
 ### Named crew
 
@@ -620,9 +639,9 @@ Runs the headless tests:
   - firing, kills and helping change standing by the listed amounts;
   - theft costs standing when seen without leave, nothing when unseen or with leave, and the voyage keeps the change;
   - a visit with factions is deterministic.
-- **Veterans and upgrades** (`tools/ranktest.js`): checks that:
-  - kills earn experience and ranks, and a rank adds 10% hull and 10% damage;
-  - experience comes home in the hangar (plus a point for fighting) and launches on the next map;
+- **Levels and upgrades** (`tools/ranktest.js`): checks that:
+  - kills no longer earn levels; level 3 adds 10% hull and 10% damage; nothing goes past level 5;
+  - a ship that launched and came home gains one level, however often it docked, and launches on the next map at that level;
   - ships aboard mend 5% a day, 20% with repair bays;
   - an upgrade that needs another is refused until that is built;
   - two hangars give 50 capacity; launch rails and the foundry line are faster; fire control is set.
@@ -663,6 +682,13 @@ Runs the headless tests:
   - cogmarks are worth 1 either way; a trader's purse limits what they pay out; settling makes the difference exactly; a dark stores station charges more; a new life has 60; Shearers find them in wrecks;
   - a map is told the mood, its causes, ship cost and strength; on the map a Dart costs 150% at 150%;
   - strain, strikes and All hands save and load exactly; older saves load with none.
+- **The muster and levels** (`tools/mustertest.js`): checks that:
+  - the hangar berths 10, an expanded hangar three more, and no trader sells a hull with every berth full;
+  - eleven ships for ten berths call a muster, nothing stitches until it is settled, and keeping all eleven is refused; scrapping returns half the ore and moves the crew into the Forge (the pilot stands by); leaving adrift loses the ship and its crew, the pilot on the memorial;
+  - on a real map, ships that launched and came home gain a level and ships held in the bays don't; a pilot dies with their ship;
+  - reaching level 3, a pilot is offered three different perks and picks one, once; at level 5, a second from three they don't have;
+  - each perk does what it says on a map: defensive stance, guarding the Forge, the most damaged target, a longer hunt, and turning for home when badly hurt;
+  - a save from before levels turns its ranks into levels.
 - **The bridge** (`tools/bridgetest.js`): checks that:
   - there are nine stations, each with its officer (the signals officer runs comms), and two trained skills each;
   - the first life wakes with sensors and the infirmary dark and the rest manned; once the radar is remembered, sensors are lit from day 1 of every life; the infirmary opens with its memory and room; strain takes a station to level 0;

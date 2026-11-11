@@ -57,7 +57,7 @@ export async function loadContent(readText, packs = DEFAULT_PACKS) {
   rules.content.names = Object.fromEntries([...mergeFiles(data.Names)].map(([k, n]) => [k, nodesToObject(n.nodes)]));
   const crew = new Map(mergeFiles(data.Crew));
   const crewPart = (k) => (crew.has(k) ? Object.fromEntries(crew.get(k).nodes.map((n) => [n.key, { id: n.key, ...nodesToObject(n.nodes) }])) : {});
-  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), stations: crewPart('Stations'), skills: crewPart('Skills'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
+  rules.content.crew = { posts: crewPart('Posts'), traits: crewPart('Traits'), stations: crewPart('Stations'), skills: crewPart('Skills'), perks: crewPart('Perks'), leads: crew.has('Leads') ? nodesToObject(crew.get('Leads').nodes) : {} };
   const mem = [...mergeFiles(data.Memories)];
   rules.content.memories = Object.fromEntries(mem.filter(([k]) => k !== 'Anchors').map(([k, n]) => [k, { id: k, ...nodesToObject(n.nodes) }]));
   const anc = mem.find(([k]) => k === 'Anchors');
