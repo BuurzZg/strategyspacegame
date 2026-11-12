@@ -10,7 +10,7 @@ import { makeOrder } from '../src/engine/order.js';
 import { generateGalaxy, tiers, reach, route, stitchGlim, stitchDays } from '../src/galaxy/galaxy.js';
 import * as V from '../src/galaxy/voyage.js';
 import { count, free } from '../src/galaxy/crew.js';
-import { captain as runCaptain } from './captain.js';
+import { campaign as runCampaign } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
@@ -76,7 +76,7 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   check(!t.over && count(t.crew) === crew0 && t.strain.thirst === 3 && t.strain.air === 3, 'no water for forty days: thirst and bad air at their worst, nobody lost, the life goes on');
   // low stores pull morale down before anything runs out
   const u = V.newVoyage(rules, { seed: 3 });
-  u.stores.ice = 400; // under three days
+  u.stores.ice = Math.trunc(-V.forecast(rules, u).ice * 2); // two days' worth: under three
   const m1 = u.morale;
   V.dayTick(rules, u);
   check(u.morale < m1 && !u.over, `a store running low pulls morale down (${m1} → ${u.morale}) before it runs out`);
@@ -225,17 +225,35 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
   check(a === b && b === c, `saving and loading gives the identical voyage (hash ${a.toString(16)} three ways)`);
 }
 
+// 8b. Charted space (Milestone 24): a lane stitched before, in this life or an earlier one, is
+// quicker and cheaper; and the crew drink half what they did
+{
+  const s = V.newVoyage(rules, { seed: 6 }); s.queue = [];
+  const g = V.galaxyOf(rules, s), VY = rules.content.voyage;
+  const to = g.adj[s.at].map((li) => (g.lanes[li].a === s.at ? g.lanes[li].b : g.lanes[li].a)).sort((a, b) => V.plan(rules, s, b).route.glim - V.plan(rules, s, a).route.glim).find((j) => V.plan(rules, s, j).ok);
+  const fresh = to !== undefined && V.plan(rules, s, to).route;
+  const home = s.at;
+  V.stitch(rules, s, to);
+  const back = V.plan(rules, s, home).route;
+  const next = V.newLife(rules, Object.assign(s, { over: { reason: 'letgo', day: s.day, text: '' } }));
+  const again = V.plan(rules, next, to).route;
+  check(fresh && back.days === +VY.ChartedDays && back.glim <= Math.ceil((fresh.glim * +VY.ChartedGlim) / 100) + 1 && again && again.days === +VY.ChartedDays,
+    `a lane stitched before is charted: ${fresh && fresh.days} days and ${fresh && fresh.glim} Glim the first time, ${back.days} day and ${back.glim} Glim back, and still ${again && again.days} day in the next life`);
+  check(+VY.Need.Water === 3, `the crew need ${VY.Need.Water} water per ten a day (halved in Milestone 24: water runs were two map visits in three)`);
+}
+
 // 9. The abstract captain: plays the galaxy layer to the end with simple rules, and visits that
 // yield what a short stay at that kind of place would (no maps are played). It shows the voyage
-// can be won, and roughly how long it takes.
+// can be won, and roughly how long it takes. Since Milestone 24 it plays the real loop: a life
+// ends when the Wound gets the Forge, and it wakes and goes on (drive parts only, no story).
 {
   const rows = [];
   let allWon = true;
   for (const seed of [1, 2, 3]) {
-    const { s, visits, stitches } = runCaptain(rules, seed);
+    const c = runCampaign(rules, seed, { mortal: true }), s = c.s, visits = c.visits, stitches = c.stitches;
     if (!s.won) allWon = false;
     // a rough play time: ten minutes a map, half a minute per stitch on the chart
-    rows.push(`seed ${seed}: ${s.won ? 'home' : `lost (${s.over ? s.over.reason : 'stuck'})`} on day ${s.day}, ${visits} visits, ${stitches} stitches, ~${Math.round((visits * 10 + stitches * 0.5) / 6) / 10} h, crew ${count(s.crew)}`);
+    rows.push(`seed ${seed}: ${s.won ? `home in life ${c.lives.length}` : `lost (${s.over ? s.over.reason : 'stuck'})`} on day ${s.day}, ${visits} visits, ${stitches} stitches, ~${Math.round((visits * 10 + stitches * 0.5) / 6) / 10} h, crew ${count(s.crew)}`);
   }
   check(allWon, `an abstract captain gets home on every seed tried: ${rows.join('; ')}`);
 }

@@ -390,8 +390,8 @@ export class ChartScreen {
         const r = pl.route, a = pl.arrive, use = -V.daysLeft(this.rules, s).rate.ice;
         stats.push(['Stitches', r.hops.length], ['Days', r.days], ['Glim', fmt(r.glim)], ['Distance', `${fmt(r.len)} spans`]);
         stats.push(['Glim left', fmt(Math.max(0, a.glim))], ['Water on arrival', `${use > 0 ? fmt(Math.max(0, Math.trunc(a.ice / use))) : '∞'} days`]);
-        const esc0 = Wd.escapePlan(this.rules, s);
-        btns.push(['stitch', esc0 ? `Tear free and stitch there <kbd>Enter</kbd>` : `Stitch there <kbd>Enter</kbd>`, !pl.ok, pl.ok ? `${r.days} days, ${r.glim} Glim${esc0 ? `; tearing free of the Hand costs ${esc0.hull}% hull, ${esc0.morale} morale and a hit to a system` : ''}` : pl.why]);
+        const esc0 = Wd.escapePlan(this.rules, s), fatal = esc0 && s.forge.hp * 100 <= V.forgeMaxHp(this.rules, s) * esc0.hull;
+        btns.push(['stitch', esc0 ? (fatal ? 'Tear free: the hull won\'t hold <kbd>Enter</kbd>' : `Tear free and stitch there <kbd>Enter</kbd>`) : `Stitch there <kbd>Enter</kbd>`, !pl.ok, pl.ok ? `${r.days} days, ${r.glim} Glim${esc0 ? `; tearing free of the Hand costs ${esc0.hull}% of the hull, ${esc0.morale} morale and a hit to a system${fatal ? '. With this little hull left, the Forge comes apart: fight it instead, or mend the hull first' : ''}` : ''}` : pl.why]);
         if (!pl.ok) why = pl.why;
       } else why = pl.why;
       const dp = V.driftPlan(this.rules, s, id);

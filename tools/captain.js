@@ -32,7 +32,13 @@ export function resolveEvents(rules, s, pick = (choices) => choices.find((c) => 
 // trace(s, goal, urgent): called each turn, for debugging
 // story: also go after every story memory (Milestone 22), act by act, before the last fight; so
 // a campaign can reach the true ending. Without it, only the drive parts, then the Mainspring.
-export function captain(rules, seed, { events = false, length = 'full', start = null, giveUp = 0, trace = null, story = false } = {}) {
+// mortal (Milestone 24): the captain can die. It plays like a decent player: it builds warships
+// from the ore aboard, keeps the hull mended, tears free of a Hand it can't beat, and when a fight
+// on a map goes against it, spools out with the hull loss a real map shows (MORTAL below), or is
+// destroyed if the hull can't take it. strong: a strong player (sooner repairs, a bigger fleet,
+// never stays in a fight it can't win). Without mortal the captain can't die (the reachability
+// tests: every place and part can be had in a single life).
+export function captain(rules, seed, { events = false, length = 'full', start = null, giveUp = 0, trace = null, story = false, mortal = false, strong = false } = {}) {
   const VY = rules.content.voyage;
   const s = start || V.newVoyage(rules, { seed, length });
   const g = V.galaxyOf(rules, s);
@@ -46,7 +52,32 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     IceTail: { ice: 3200, ore: 400 }, LanternMist: { glim: 2400, spores: 700, ore: 200 }, OreReef: { ore: 2000 }, ScrapShoal: { ore: 900, salvage: 700, ice: 300 }, Wreck: { salvage: 1600, ore: 300 }, StillWater: { ore: 300, ice: 200 }, HollowhornGrounds: { glim: 1500, ice: 1500 }, Anchorage: { salvage: 1200, ice: 400 }, HullTown: { ore: 500, salvage: 300 }, SynodRefinery: { glim: 1500, spores: 300 }, GauntDen: { salvage: 1200 }, CinderHold: { ore: 1200, ice: 600 }, ChoirBloom: { glim: 1500, spores: 600 } };
   // objDays: how far the objective (the next drive part, or home) was when last planned, so a
   // supply run takes on water for the trip after it, not just for the way to the ice
-  let visits = 0, stitches = 0, goal = null, objDays = 0;
+  let visits = 0, stitches = 0, goal = null, objDays = 0, fights = { won: 0, lost: 0, fled: 0 };
+  const cost = (x) => +rules.actor(x).traitInfo('Valued').Cost || 0;
+  const worth = (list) => list.reduce((t, x) => t + cost(x), 0);
+  // what the Wound brings to a fight here: its ships, tougher in a long life (hpPct)
+  const woundWorth = (wm) => (wm ? wm.encounters.filter((e) => e.behaviour !== 'hunt').reduce((t, e) => t + Math.trunc((worth(e.ships) * (e.hpPct || 100)) / 100), 0) : 0);
+  const ours = (fleet = s.fleet) => fleetPower(rules, fleet) + FORGE_WORTH;
+  // a decent player builds warships from the ore aboard: Halberds where it can, then Pickets and
+  // Darts, keeping some ore for repairs, as many as there are berths and time for in a visit
+  const build = (ore) => {
+    const out = [], reserve = strong ? 300 : 600, budget = strong ? 2400 : 1500;
+    let spent = 0;
+    while (s.fleet.length + out.length < V.berthsOf(rules, s)) {
+      const x = ['halberd', 'picket', 'dart'].find((y) => (s.blueprints || []).includes(y) && cost(y) <= ore - reserve && spent + cost(y) <= budget);
+      if (!x) break;
+      out.push({ type: x, hp: rules.actor(x).traitInfo('Health').HP, xp: 0 }); ore -= cost(x); spent += cost(x);
+    }
+    return { ships: out, ore };
+  };
+  // armed ships lost, the cheapest first, until the losses come to `value`
+  const losses = (fleet, value) => {
+    const order = fleet.map((e, i) => [e, i]).filter(([e]) => rules.actor(e.type).traitInfo('Armament')).sort((a, b) => cost(a[0].type) - cost(b[0].type));
+    const gone = new Set();
+    let lost = 0;
+    for (const [e, i] of order) { if (lost >= value) break; gone.add(i); lost += cost(e.type); }
+    return fleet.filter((_, i) => !gone.has(i));
+  };
   const visit = () => {
     const p = g.points[s.at], times = s.visited[p.id] | 0, rich = Math.max(+VY.RevisitFloor, 100 - times * +VY.RevisitPct);
     const stores = {};
@@ -57,32 +88,40 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     // the Wound here: fight it if the fleet (and the Forge's guns) outweigh it, losing ships worth
     // some of what it brought; otherwise spool out with the Hand shaken off and the hull hurt
     const wm = Wd.mapWound(rules, s, g, s.at);
-    let wound = null, aboard = s.fleet, hp = s.forge.hp;
+    let wound = null, aboard = s.fleet, hp = s.forge.hp, destroyed = false;
+    if (mortal) { const b = build(stores.ore.end); stores.ore.end = b.ore; aboard = [...s.fleet, ...b.ships]; }
     // the Mainspring's lair: the player builds what the fight needs from the ore aboard, and wins
     // if the fleet, the Forge and the ore together outweigh it (LAIR_WORTH); every warship is lost
     if (p.relic && V.isLair(rules, p.relic)) {
-      const short = Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) - fleetPower(rules, s.fleet) - FORGE_WORTH;
-      if (short > (s.stores.ore | 0)) { wound = { lair: { dead: false, core: 60 }, hand: 0, hours: 0, burned: 0, nurseries: 1, planted: 1 }; hp = Math.max(1, hp - Math.trunc((hp * 15) / 100)); }
+      const short = Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) - fleetPower(rules, aboard) - FORGE_WORTH;
+      if (short > (mortal ? stores.ore.end : s.stores.ore | 0)) { wound = { lair: { dead: false, core: 60 }, hand: 0, hours: 0, burned: 0, nurseries: 1, planted: 1 }; hp = mortal ? hp - Math.trunc((V.forgeMaxHp(rules, s) * 15) / 100) : Math.max(1, hp - Math.trunc((hp * 15) / 100)); destroyed = hp <= 0; }
       else {
         if (short > 0) stores.ore.end -= short;
         wound = { lair: { dead: true, core: 0 }, hand: 0, hours: 1, burned: 1, nurseries: 0, planted: 1 };
         aboard = s.fleet.filter((e) => !rules.actor(e.type).traitInfo('Armament'));
       }
     } else if (wm && (wm.hand || wm.infested)) {
-      const worth = (list) => list.reduce((t, x) => t + (+rules.actor(x).traitInfo('Valued').Cost || 0), 0);
-      const theirs = wm.encounters.filter((e) => e.behaviour !== 'hunt').reduce((t, e) => t + worth(e.ships), 0), ours = fleetPower(rules, s.fleet) + FORGE_WORTH;
-      const win = ours >= theirs;
+      // (a strong captain outfights its weight: tactics are worth a fifth more than the ships)
+      const theirs = woundWorth(wm), mine = Math.trunc((ours(aboard) * (strong ? 125 : 100)) / 100);
+      const win = mine >= theirs;
       wound = { hand: wm.hand ? 1 : 0, hours: win && wm.hand ? 1 : 0, hourPct: 100, burned: win ? wm.slot.plant : 0, nurseries: win ? 0 : wm.slot.plant, planted: wm.slot.plant };
-      if (win) {
-        // the cheapest armed ships go first, until the losses come to 40% of what it brought
-        const order = s.fleet.map((e, i) => [e, i]).filter(([e]) => rules.actor(e.type).traitInfo('Armament')).sort((a, b) => worth([a[0].type]) - worth([b[0].type]));
-        const gone = new Set();
-        let lost = 0;
-        for (const [e, i] of order) { if (lost * 100 >= theirs * 40) break; gone.add(i); lost += worth([e.type]); }
-        aboard = s.fleet.filter((_, i) => !gone.has(i));
+      // the cheapest armed ships go first, until the losses come to 40% of what it brought
+      if (win) { aboard = losses(aboard, Math.trunc((theirs * 40) / 100)); fights.won++; }
+      else if (mortal) {
+        // MORTAL: losing, the captain spools out: the Hour's pack has the Forge for the minute the
+        // Skein takes, and the hull loss grows with how badly it is outmatched, 5% to 45% of the
+        // hull (on a real map, left to fight, a Hand of power 300 takes 15 to 40% in two minutes
+        // and destroys the Forge in five); the escorts fight and most are lost; half of what was
+        // gathered is left behind. A hull that can't take it is destroyed.
+        const pct = Math.max(5, Math.min(45, Math.round(5 + 45 * (1 - mine / Math.max(1, theirs)))));
+        hp -= Math.trunc((V.forgeMaxHp(rules, s) * pct) / 100);
+        destroyed = hp <= 0;
+        aboard = losses(aboard, Math.trunc((fleetPower(rules, aboard) * 60) / 100));
+        for (const st of Object.values(stores)) if (st.end > st.start) st.end = st.start + ((st.end - st.start) >> 1);
+        fights.lost++;
       } else hp = Math.max(1, hp - Math.trunc((hp * 8) / 100));
     }
-    V.returnFromMap(rules, s, { stores, forge: { hp }, ships: { aboard, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0, wound, standing: { changes: {}, met } });
+    V.returnFromMap(rules, s, { stores, forge: destroyed ? null : { hp: Math.max(1, hp) }, ships: { aboard, destroyed: {}, leftBehind: {}, built: {} }, ticks: (+VY.DayTicks * 5) / 2, found, crew: { lost: {} }, kills: 0, wound, standing: { changes: {}, met } });
     visits++;
   };
   // at an objective: the Tallow Bell is hailed (the Deacon remembers you); anywhere else, go in
@@ -120,8 +159,16 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     return true;
   };
   const drifted = new Set();
+  // nowhere to go (mortal): mend the drive or the hull if it can, else let the life go, as a
+  // player would; returns true to keep playing
+  const stuck = () => {
+    if (!mortal) return false;
+    for (const k of ['drive', 'hull', ...V.SYSTEMS]) if ((k === 'hull' ? s.forge.hp < V.forgeMaxHp(rules, s) : s.systems[k] < 100) && V.repairPlan(rules, s, k).ok) { V.repair(rules, s, k); settle(); return !s.over; }
+    V.letGo(rules, s);
+    return false;
+  };
   // where water and Glim can be had
-  const SUPPLY = { IceTail: ['IceTail'], LanternMist: ['LanternMist', 'SynodRefinery', 'ChoirBloom'] };
+  const SUPPLY = { IceTail: ['IceTail'], LanternMist: ['LanternMist', 'SynodRefinery', 'ChoirBloom'], OreReef: ['OreReef', 'CinderHold', 'ScrapShoal'] };
   const type = (t) => (p) => (SUPPLY[t] || [t]).includes(p.type);
   // events answered (or skipped); pilots at a perk level take the first perk on offer; a muster
   // keeps the best-levelled ships and scraps the rest
@@ -136,6 +183,24 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     if (giveUp && s.day >= giveUp) { V.letGo(rules, s); break; }
     // the Mainspring is dead and the way is open: go now (the jump needs no stores)
     if (s.at === lair && V.canJumpHome(rules, s).ok && (!story || V.trueEnding(s))) { V.jumpHome(rules, s); settle(); break; }
+    // caught by a Hand it can beat: go in and kill its Hour (the Hand is gone for the life)
+    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) >= woundWorth(Wd.mapWound(rules, s, g, s.at)) * (strong ? 1 : 1.3) && V.daysLeft(rules, s).ice >= 3) { visit(); goal = null; continue; }
+    // caught by a Hand it can't beat: tear free (it costs hull) toward the goal, or anywhere
+    // (not if the hull can't take the tearing free: then it fights)
+    // (a decent captain only takes on a Hand it clearly outguns; a strong one fights any it can beat)
+    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) < woundWorth(Wd.mapWound(rules, s, g, s.at)) * (strong ? 1 : 1.3) && s.forge.hp * 100 > V.forgeMaxHp(rules, s) * ((Wd.escapePlan(rules, s) || { hull: 0 }).hull + 1)) {
+      const to = (goal && goal.id !== s.at && V.plan(rules, s, goal.id).ok ? [V.plan(rules, s, goal.id).route.hops[0]] : []).concat(g.adj[s.at].map((li) => { const l = g.lanes[li]; return l.a === s.at ? l.b : l.a; }));
+      const hop = to.find((j) => V.plan(rules, s, j).ok);
+      if (hop !== undefined && V.stitch(rules, s, hop).ok) { stitches++; fights.fled++; continue; }
+    }
+    // caught with too little hull to tear free: stand and fight
+    // (the captain that can't die mends the hull under the Hand's pickets instead, until it can)
+    if (Wd.caughtBy(rules, s) && s.forge.hp * 100 <= V.forgeMaxHp(rules, s) * ((Wd.escapePlan(rules, s) || { hull: 0 }).hull + 1)) {
+      if (!mortal && V.repairPlan(rules, s, 'hull').ok) { V.repair(rules, s, 'hull'); settle(); continue; }
+      visit(); goal = null; continue;
+    }
+    // a hurt hull: mend it while there is water (a strong player sooner)
+    if (mortal && !Wd.caughtBy(rules, s) && s.forge.hp * 100 < V.forgeMaxHp(rules, s) * (strong ? 80 : 60) && V.daysLeft(rules, s).ice > 6 && V.repairPlan(rules, s, 'hull').ok) { V.repair(rules, s, 'hull'); settle(); continue; }
     // a damaged drive stitches shorter: mend it (and anything badly hurt) while there is water
     const sick = s.systems.drive < 100 ? 'drive' : V.SYSTEMS.find((k) => s.systems[k] < 70);
     if (sick && V.daysLeft(rules, s).ice > 8 && V.repairPlan(rules, s, sick).ok) { V.repair(rules, s, sick); settle(); continue; }
@@ -147,10 +212,17 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     // keep a supply run going once started, unless water gets desperate
     // enough water for what is left of the trip to the objective, with a margin
     const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 3;
-    const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist') ? goal.kind : left.ice < Math.max(10, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : null;
+    // before the last fight, a sensible captain gathers the ore it needs (mortal: a failed attack
+    // costs hull, and can cost the life)
+    const lairShort = mortal && next === 'lair' ? Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) - fleetPower(rules, s.fleet) - FORGE_WORTH + 300 : 0;
+    // a strong captain arms ahead of the Hands: a fleet to beat one, growing with the life
+    const armUp = strong && fleetPower(rules, s.fleet) + FORGE_WORTH < 3200 + 45 * s.day && fleetPower(rules, s.fleet) + 450 <= 450 * (V.berthsOf(rules, s) - 4) && (s.stores.ore | 0) < 1200;
+    const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist' || goal.kind === 'OreReef') ? goal.kind : left.ice < Math.max(10, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : lairShort > (s.stores.ore | 0) || armUp ? 'OreReef' : null;
     if (trace) trace(s, goal, urgent);
     // spare cogmarks: train navigation, which saves the most Glim and days
     if (!urgent && left.ice > 10) { const tr = ['navigation'].find((id) => V.trainPlan(rules, s, id).ok); if (tr) { V.train(rules, s, tr); settle(); continue; } }
+    // a strong captain makes room for a bigger fleet
+    if (strong && !urgent && left.ice > 10 && V.installPlan(rules, s, 'hangar').ok) { V.install(rules, s, 'hangar'); settle(); continue; }
     // a crowded Forge is an unhappy one: build crew quarters when it can
     if (!urgent && B.berths(rules, s) < K.count(s.crew) && V.installPlan(rules, s, 'quarters').ok && left.ice > 10) { V.install(rules, s, 'quarters'); settle(); continue; }
     // already at the objective: deal with it before running for supplies
@@ -163,7 +235,7 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     if (!goal) {
       const n = next ? nearest((p) => p.id === (next === 'lair' ? lair : where(next)), true) : nearest((p) => p.id === lair, true);
       if (n) { goal = { ...n, kind: next || 'home' }; objDays = n.days; }
-      else { const m = nearest(type('LanternMist')) || nearest(type('IceTail')); if (!m) break; goal = { ...m, kind: 'any' }; }
+      else { const m = nearest(type('LanternMist')) || nearest(type('IceTail')); if (!m) { if (stuck()) continue; break; } goal = { ...m, kind: 'any' }; }
     }
     if (s.at === goal.id) {
       if (!next && s.at === lair) {
@@ -174,38 +246,56 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
       reach(); goal = null; continue;
     }
     const pl = V.plan(rules, s, goal.id);
-    if (!pl.route || s.stores.glim < stitchGlim(VY, g.lanes[pl.route.lanes[0]].len)) {
+    // (what the route really costs: charted lanes are cheaper, strain makes them dearer)
+    if (!pl.route || (mortal ? !pl.ok && s.stores.glim < pl.route.glim : s.stores.glim < stitchGlim(VY, g.lanes[pl.route.lanes[0]].len))) {
       goal = null;
       const m = nearest(type('LanternMist'));
       if (m) { goal = { ...m, kind: 'LanternMist' }; continue; }
       if (type('LanternMist')(here)) { visit(); continue; }
-      if (!driftToward(type('LanternMist'))) break;
+      if (!driftToward(type('LanternMist')) && !stuck()) break;
       continue;
     }
     // how far the goal is now (not when it was picked)
     goal.days = pl.route.days;
     if (goal.kind === (next || 'home')) objDays = goal.days;
-    // one stitch at a time
+    // through charted space (Milestone 24) the whole route in one order, as a player would plot
+    // it; elsewhere one stitch at a time, looking again at every stop
     // (strain and the mood make a stitch dearer than its base cost: if it can't be paid, drift)
-    if (!V.stitch(rules, s, pl.route.hops[0]).ok) { goal = null; if (!driftToward(type('LanternMist'))) break; continue; }
+    const known = mortal && pl.ok && pl.route.lanes.every((li) => V.charted(s, li));
+    if (!V.stitch(rules, s, known ? goal.id : pl.route.hops[0]).ok) { goal = null; if (!driftToward(type('LanternMist')) && !stuck()) break; continue; }
     stitches++;
   }
-  return { s, visits, stitches };
+  return { s, visits, stitches, fights };
 }
 
 // A campaign: lives played one after another in the same galaxy. giveUps: the day each early
-// life is let go (one entry per life given up); the last life plays to the end.
-export function campaign(rules, seed, { events = false, length = 'full', giveUps = [] } = {}) {
+// life is let go (one entry per life given up); the last life plays to the end. mortal: the real
+// loop (Milestone 24): each life plays until the Forge is destroyed or the ending, and on waking
+// the captain spends its echoes on the Loom; up to maxLives lives.
+export function campaign(rules, seed, { events = false, length = 'full', giveUps = [], mortal = false, story = false, strong = false, maxLives = 14 } = {}) {
   const lives = [];
   let s = V.newVoyage(rules, { seed, length });
   for (let i = 0; ; i++) {
-    const r = captain(rules, seed, { events, length, start: s, giveUp: giveUps[i] || 0 });
+    const r = captain(rules, seed, { events, length, start: s, giveUp: giveUps[i] || 0, mortal, story, strong });
     lives.push(r);
-    if (!V.lifeOver(r.s) || i >= giveUps.length + 3) break;
+    if (!V.lifeOver(r.s) || i + 1 >= (mortal ? maxLives : giveUps.length + 4)) break;
     s = V.newLife(rules, r.s);
+    if (mortal) wake(rules, s);
   }
   const last = lives[lives.length - 1];
   return { s: last.s, lives, visits: lives.reduce((t, r) => t + r.visits, 0), stitches: lives.reduce((t, r) => t + r.stitches, 0) };
+}
+
+// Waking: the echoes go on the Loom. Silent running first (the Hands hear less), then what gets
+// the Forge through the hazards it has met, then whatever else is cheapest.
+export function wake(rules, s) {
+  const M = rules.content.memories;
+  const rank = (id) => (id === 'silent' ? 0 : M[id].Seen ? 1 : 2 + (+M[id].Cost || 9));
+  for (let n = 0; n < 20; n++) {
+    const can = Object.keys(M).filter((id) => V.recallPlan(rules, s, id).ok).sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : 1));
+    if (!can.length) break;
+    V.recall(rules, s, can[0]);
+  }
 }
 
 // Estimated play time of a captain's run, in minutes: a map visit (two and a half days of

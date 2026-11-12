@@ -62,7 +62,10 @@ defineTrait('PointLayout', class extends Trait {
         const a = (i * 1024) / Math.max(1, e.ships.length) | 0, r = i ? ring : 0;
         const x = e.at[0] + Math.trunc((COS(a) * r) / 1024), y = e.at[1] + Math.trunc((SIN(a) * r) / 1024);
         const yaw = angleOf(((w.bounds.x0 + w.bounds.x1) >> 1) - x, ((w.bounds.y0 + w.bounds.y1) >> 1) - y);
-        return w.createActor(type, side, { x, y, z: e.at[2], yaw }).id;
+        const act = w.createActor(type, side, { x, y, z: e.at[2], yaw });
+        // tougher than usual (a long life's Hands): more hull, full
+        if (e.hpPct && act.health) { act.health.maxHp = Math.max(1, Math.trunc((act.health.maxHp * e.hpPct) / 100)); act.health.hp = act.health.maxHp; }
+        return act.id;
       });
       // (a Hand's moves are the Wound's own: traits/demons.js)
       this.encounters.push({ ...e, ids, done: e.behaviour !== 'hunt' && e.behaviour !== 'escort' });

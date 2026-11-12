@@ -5,7 +5,17 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
-**Status: Milestone 23, the brass age.** The whole game now wears the approved steampunk style (PLAN.md section 9):
+**Status: Milestone 24, whole campaigns.** The death loop is the game now. A long life gets dangerous through play, and the test captain plays the real loop: it dies, wakes with its memories and goes further each life.
+
+- **A long life is a loud one.** The days count for more the longer a life lasts (a day's attention times 4, then 8 from day 20, then 12 from day 40), so a Hand sets out around day 25 to 30 even in a first life. Hands grow with the life: 15% more Hounds and Ticks, every ship 15% tougher, for every 30 days. From day 60 a second, strong Hand hunts whatever the attention. From day 42 the Hands keep the trail: they follow the Forge itself, a lane a day, and rest only two days after you tear free.
+- **Fight well and you buy time.** Every Hour you kill takes 45 days off the life's age. Killing both Hands clears the life of them.
+- **Tearing free costs 12% of the whole hull.** With less than that left, the Forge comes apart; the chart warns you ("Tear free: the hull won't hold"). Being caught and harassed still never ends a life on its own.
+- **Shorter campaigns.** The crew drink half the water they did (two map visits in three were water runs). Every life wakes with full tanks (7,000 ice, 2,200 Glim). **Charted space:** a lane the Forge has stitched before, in this life or an earlier one, takes a day and half the Glim, so later lives get back to the frontier fast.
+- **Small galaxies** age twice as fast, are hunted from day 1, and their Mainspring is at full strength.
+- **Stripped places** were already in: each return to a place in the same life yields 35% less (never under 30%). Faster wear and slower restocks were not needed.
+- **The numbers** (the test captain, eight seeds each): a full galaxy takes a median of 6.5 lives and 12.8 hours to the true ending, a life about 124 minutes; a small one 5 lives and 8.2 hours, about 103 minutes a life. A strong player can escape a full galaxy in the first life on 1 seed in 8; an ordinary one never does. These targets were set with the designer after the first measurements (see PLAN.md section 12).
+
+**Milestone 23, the brass age:** The whole game now wears the approved steampunk style (PLAN.md section 9):
 
 - **Brass, soot and steam everywhere:** riveted soot-iron panels with dark brass edges, engraved headings in IM Fell English, a readable Spectral body and typewriter numbers in Cutive Mono. Every text colour on every background is checked at 4.5:1 or better.
 - **Instruments, not numbers:** water, food, air, Glim and the boilers are round brass gauges with cream dials, a red zone and an odometer counter, on the chart and on maps. The boilers read in PSI and drop to COLD. The crew's mood is an enamel **medallion with a face** (content, uneasy, angry) with stamped icons for what is wrong. The Skein spools in a **glass pressure tube** filling with Glim light.
@@ -514,9 +524,10 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 | Nursery | — | 300 | — | anything | anchored to a rock or wreck; buds Ticks and Feeders; its creep mends demons |
 | The Mainspring | the Forge | — | everything near it | lances and destroyers | only in its lair; two hearts and a coil ward its core; regrows from the dead; gestates; time drags round it |
 
-- **Attention.** Each memory recovered adds 5; a point every 4 days; a point a day after 4 days at one place; 2 for each Nursery burned and 4 for each Hour killed. Silent running takes a point a day, a stay with the Choir 2 a day, a stitch through a static field 4. Noticed at 20, Hunted at 45, Marked at 75. A new life wakes with 3 points for each memory (up to 60).
+- **Attention.** Each memory recovered adds 5; a point every 5 days (several, later in a life: see below); a point a day after 6 days at one place; 2 for each Nursery burned and 4 for each Hour killed. Silent running takes a point a day, a stay with the Choir 2 a day, a stitch through a static field 4. Noticed at 20, Hunted at 45, Marked at 80. A new life wakes with 3 points for each memory (up to 60).
 - **The Hands.** One sets out from the Shore at Hunted, two at Marked, and moves a lane every 2–3 days (2 when strong) toward where the Forge was last heard, losing the trail a fifth of the time. They won't cross static fields. Running silent, the Forge is only heard where it fights. A Hand grows stronger every day it hunts.
-- **Caught.** A Hand at the Forge's place has caught it. Each day there costs 3% hull. Going in brings its Hour and pack on after 45 seconds, growing more as the fight goes on. Kill the Hour and the Hand is destroyed for the life; spool out and it loses you for a few days; stitch away without a fight and tearing free costs 12% hull, 8 morale and a hit to a system.
+- **Caught.** A Hand at the Forge's place has caught it. Each day there costs 3% hull (never the last of it). Going in brings its Hour and pack on after 45 seconds, growing more as the fight goes on. Kill the Hour and the Hand is destroyed for the life, and the life counts 45 days younger; spool out and it loses you for a few days; stitch away without a fight and tearing free costs 12% of the hull, 8 morale and a hit to a system, and with less hull than that left the Forge comes apart.
+- **A long life** (Milestone 24). A day's attention counts 4 times from the start of a life, 8 from day 20 and 12 from day 40. A Hand's pack is 15% bigger and tougher for every 30 days of the life. From day 60 two Hands hunt, one strong, whatever the attention; from day 42 they keep the trail (following the Forge, running silent or not), move a lane a day and rest only 2 days. A small galaxy's life ages twice as fast and is hunted from day 1.
 - **Infested places.** Hands may infest places they leave (Hunted and on). An infested map has two or three Nurseries, a garrison, and a spore haze (sensors at 70%). Burn every Nursery to clean it: an echo, and 40% of the time 3 to 8 captives from the havens join as hands.
 - **The Proving Grounds** have a Wound section: Ticks, a Hound pack, Stingers, Chimes, a Gnawer, or a whole Hand.
 - **Where the numbers live:** `content/core/rules/demons.yaml` (the ships), `weapons.yaml` (their weapons), and the `Wound` block of `voyage.yaml` (attention and the Hands).
@@ -788,7 +799,7 @@ Runs the headless tests:
   - the narration's 57 lines each have their own id, every scene with memories has gap lines, each scene appears only with its memories, and the last follows the ending;
   - the Mainspring's core takes no harm while its organs live, the Twain answers it, a fleet of frigates, destroyers, lances and escorts kills it, and the battle is deterministic;
   - the final jump needs the Heartstone and the Mainspring dead; the escape and true endings, with the true ending's three choices; the new peoples;
-  - the test captain reaches the true ending on every seed tried.
+  - the test captain reaches the true ending on every seed tried, dying and waking on the way.
 - **The tech demons** (`tools/demontest.js`): checks that:
   - all eight types are in the rules, and each counter works both ways round in cost-matched fights (Pickets beat Ticks, Stingers beat Halberds, Chimes beat Darts, Talons beat Hounds, Darts beat a Gnawer, a Gnawer beats Halberds);
   - an Hour grows Chimes against fighters, Stingers against big hulls and its own mix otherwise; Feeders strip wrecks for ichor and starve when the wrecks were salvaged first;
@@ -816,10 +827,11 @@ Runs the headless tests:
   - the same crew wake, the dead among them; the chart keeps every place it knew and marks places visited before; the memorial keeps the lost; the Choir's standing carries over and nobody else's does; hints stay seen; the campaign records how each life ended;
   - the same place has the same name and type in every life, but different contents in life 2, always the same for life 2; the first life keeps its old seeds; random events fall differently in life 2; a map in life 2 is deterministic;
   - a later life saves and loads identically; saves from before campaigns (permanent death, free saves, before named crew) load as a first life;
-  - the test captain plays campaigns of two lives on three seeds: it lets life 1 go, wakes knowing more of the chart, and gets home in life 2.
-- **Whole runs** (`tools/runtest.js`): checks that:
-  - the AI captain (`tools/captain.js`, answering every event, and repairing what is damaged) gets home on eight seeds of each length;
-  - the typical run (the median) takes four to six hours (full) or one to two hours (short) of estimated play, with at least half the runs inside. The estimate is 15 minutes per map visit, three quarters of a minute per stitch and a tenth of a minute per day. The captain plays lean, visiting only when it needs to, and its runs swing by a visit or two with small changes such as a crew's traits;
+  - the test captain lets life 1 go on three seeds, wakes knowing more of the chart, and gets home in a later life.
+- **Whole campaigns** (`tools/runtest.js`): the AI captain (`tools/captain.js`) plays the real loop, answering every event: it can die (it builds warships from its ore, mends the hull, tears free of Hands it can't beat, fights those it can, and loses fights the way a real map shows), wakes, spends its echoes on the Loom and goes further each life. It checks that:
+  - on eight seeds of each size the captain reaches the true ending;
+  - a full galaxy takes 5 to 8 lives and 9 to 13 hours (median), a small one 3 to 5 lives and 5 to 9 hours, and a life typically lasts 60 to 130 minutes. The estimate is 15 minutes per map visit, three quarters of a minute per stitch order and a tenth of a minute per day;
+  - a first-life escape from a full galaxy is possible but rare: a strong captain manages it on at least one seed in eight, a decent one on at most two; on a small galaxy a decent captain escapes the first life on at most half the seeds;
   - saving on frame 1,100 of a map, loading and playing on gives exactly the same game as playing straight through.
 - **Fog and engineering** (`tools/fogtest.js`): checks that:
   - a ship beyond sensor range is hidden and untargetable until one of yours comes close, then hidden again with its last position remembered;

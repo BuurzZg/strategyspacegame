@@ -9,7 +9,7 @@ import { rules as loadCore } from './headless.js';
 import * as V from '../src/galaxy/voyage.js';
 import * as K from '../src/galaxy/crew.js';
 import { generateGalaxy, reach, tiers, anyDrive } from '../src/galaxy/galaxy.js';
-import { captain } from './captain.js';
+import { captain, campaign } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
@@ -152,17 +152,18 @@ function outside(seed, hazard) {
   check(V.drive(rules, t).hazards.includes(g.pockets[0].hazard) && V.plan(rules, t, g.start).route, 'a voyage saved inside a pocket (before pockets) can get out');
 }
 
-// 7. A single life gets home on every seed
+// 7. Every seed can be won, round every pocket (since Milestone 24 by the real loop: the Wound
+// ends long lives, and the captain wakes and goes on)
 {
   const bad = [];
-  let days = [];
+  let lives = [];
   for (const length of ['full', 'short']) for (let seed = 1; seed <= 50; seed++) {
-    const r = captain(rules, seed, { length });
-    if (!r.s.won) bad.push(`${length} ${seed}: ${r.s.over ? r.s.over.reason : 'stuck'} on day ${r.s.day}`);
-    else if (length === 'full') days.push(r.s.day);
+    const c = campaign(rules, seed, { length, mortal: true });
+    if (!c.s.won) bad.push(`${length} ${seed}: ${c.s.over ? c.s.over.reason : 'stuck'} on day ${c.s.day} of life ${c.lives.length}`);
+    else if (length === 'full') lives.push(c.lives.length);
   }
-  days.sort((a, b) => a - b);
-  check(!bad.length, `the captain gets home in a single life on 50 full and 50 short seeds, round every pocket${bad.length ? `; not: ${bad.join(', ')}` : ` (full voyages: median day ${days[days.length >> 1]})`}`);
+  lives.sort((a, b) => a - b);
+  check(!bad.length, `the captain gets home on 50 full and 50 short seeds, round every pocket${bad.length ? `; not: ${bad.join(', ')}` : ` (full galaxies: median ${lives[lives.length >> 1]} lives, most ${lives[lives.length - 1]})`}`);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll hazard checks passed');

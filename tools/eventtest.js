@@ -11,7 +11,7 @@ import * as V from '../src/galaxy/voyage.js';
 import * as C from '../src/galaxy/comms.js';
 import { trigger } from '../src/galaxy/events.js';
 import { meet } from '../src/galaxy/standing.js';
-import { captain, resolveEvents } from './captain.js';
+import { captain, campaign, resolveEvents } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
@@ -212,15 +212,17 @@ async function mapWith(type, extra) {
   check(ch && V.remembers(t, 'spindle'), 'the Ashen Gaunt, at Neutral, sell an Anchor Spindle at their den for 1500 salvage: you remember it');
 }
 
-// 6. A scripted voyage, answering every event as it comes, reaches the ending
+// 6. A scripted voyage, answering every event as it comes, reaches the ending (since Milestone 24
+// over as many lives as it takes: the events heard in every life count)
 {
   const rows = [];
   let ok = true;
   for (const seed of [2, 5]) {
-    const { s, visits, stitches } = captain(rules, seed, { events: true });
-    const ended = s.won && s.seen.includes('Ending') && s.seen.includes('Prologue') && ['coils', 'lens', 'spindle', 'heartstone'].every((id) => s.seen.some((e) => e.toLowerCase().startsWith(id)));
+    const c = campaign(rules, seed, { events: true, mortal: true }), s = c.s, visits = c.visits, stitches = c.stitches;
+    const seen = new Set(c.lives.flatMap((r) => r.s.seen));
+    const ended = s.won && seen.has('Ending') && seen.has('Prologue') && ['coils', 'lens', 'spindle', 'heartstone'].every((id) => [...seen].some((e) => e.toLowerCase().startsWith(id)));
     if (!ended) ok = false;
-    rows.push(`seed ${seed}: ${s.won ? 'home' : s.over ? s.over.reason : 'stuck'} on day ${s.day}, ${visits} visits, ${stitches} stitches, ${s.seen.length} events seen`);
+    rows.push(`seed ${seed}: ${s.won ? `home in life ${c.lives.length}` : s.over ? s.over.reason : 'stuck'} on day ${s.day}, ${visits} visits, ${stitches} stitches, ${seen.size} events seen`);
   }
   check(ok, `a scripted voyage hears the prologue, every drive part's story and the ending: ${rows.join('; ')}`);
 }

@@ -43,7 +43,7 @@ export function galaxyOf(rules, s) {
 // Memories and echoes (PLAN.md §4) last for the whole campaign too, and so do clue circles and
 // the echoes waiting where earlier lives ended.
 export function newCampaign() {
-  return { life: 1, chart: { known: [], visited: [], clues: [] }, lives: [], memorial: [], standing: {}, met: {}, hints: [], memories: {}, echoes: 0, echoAt: [] };
+  return { life: 1, chart: { known: [], visited: [], clues: [], lanes: {} }, lives: [], memorial: [], standing: {}, met: {}, hints: [], memories: {}, echoes: 0, echoAt: [] };
 }
 
 // A new campaign's first life, or (with `campaign`) a later life in the same galaxy.
@@ -237,6 +237,14 @@ export const forgeMaxHp = (rules, s) => Math.trunc((rules.actor('forge').traitIn
 export const stitchCost = (rules, s, len, pct = B.glimPctOf(rules, s), pb = projectBonus(rules, s, 'GlimPct')) => Math.trunc((Math.trunc((stitchGlim(rules.content.voyage, len) * pb + 99) / 100) * pct + 99) / 100);
 // Days a stitch takes: a navigator trained in quick stitching takes a day off the long ones (3+)
 export const stitchTime = (rules, s, len, quick = B.skillSum(rules, s, 'QuickStitch')) => { const d = stitchDays(rules.content.voyage, len, s.length === 'short'); return d >= 3 ? Math.max(1, d - quick) : d; };
+// Charted space (Milestone 24): a lane stitched before, in this life or an earlier one, is quicker
+// and cheaper (voyage.yaml ChartedDays, ChartedGlim). s.charted and campaign.chart.lanes: { lane: 1 }
+export const charted = (s, li) => !!((s.charted && s.charted[li]) || (s.campaign && s.campaign.chart.lanes && s.campaign.chart.lanes[li]));
+export function laneCost(rules, s, g, li, pct, pb) {
+  const c = stitchCost(rules, s, g.lanes[li].len, pct, pb);
+  return charted(s, li) ? Math.max(1, Math.trunc((c * num(rules.content.voyage, 'ChartedGlim', 100)) / 100)) : c;
+}
+export const laneTime = (rules, s, g, li, quick) => (charted(s, li) ? Math.min(num(rules.content.voyage, 'ChartedDays', 99) || 99, stitchTime(rules, s, g.lanes[li].len, quick)) : stitchTime(rules, s, g.lanes[li].len, quick));
 
 // A system's working output in percent: its condition, slowed by a damaged reactor.
 export function output(s, sys) {
@@ -411,6 +419,7 @@ export function newLife(rules, prev) {
   c.echoAt = [...(c.echoAt || []), { place: prev.at, life: c.life, n: 1 + Math.min(2, Math.trunc(prev.day / 40)) }].slice(-3);
   c.chart.known = union(c.chart.known, prev.known);
   c.chart.visited = union(c.chart.visited, Object.keys(prev.visited).map(Number));
+  c.chart.lanes = { ...(c.chart.lanes || {}), ...(prev.charted || {}) };
   for (const f of prev.crew.fallen || []) c.memorial.push({ ...f, life: c.life });
   for (const f of Object.values(rules.content.factions)) {
     if (f.Remembers !== 'true' || !prev.met[f.id]) continue;
@@ -435,8 +444,10 @@ export function plan(rules, s, to) {
   if (s.muster) return no('Settle the muster first: more ships than the hangar berths.');
   const d = drive(rules, s);
   if (d.range <= 0) return no('The Skein Drive is wrecked. Repair it to stitch.');
-  const r = route(g, rules, s.at, to, d), gp = B.glimPctOf(rules, s), pb = projectBonus(rules, s, 'GlimPct'), quick = B.skillSum(rules, s, 'QuickStitch');
-  if (r) { r.glim = r.lanes.reduce((t, li) => t + stitchCost(rules, s, g.lanes[li].len, gp, pb), 0); if (quick) r.days = r.lanes.reduce((t, li) => t + stitchTime(rules, s, g.lanes[li].len, quick), 0); }
+  const gp = B.glimPctOf(rules, s), pb = projectBonus(rules, s, 'GlimPct'), quick = B.skillSum(rules, s, 'QuickStitch');
+  const V0 = rules.content.voyage, cheap = (li) => (charted(s, li) ? Math.max(1, Math.trunc((stitchGlim(V0, g.lanes[li].len) * num(V0, 'ChartedGlim', 100)) / 100)) : stitchGlim(V0, g.lanes[li].len));
+  const r = route(g, rules, s.at, to, d, cheap);
+  if (r) { r.glim = r.lanes.reduce((t, li) => t + laneCost(rules, s, g, li, gp, pb), 0); r.days = r.lanes.reduce((t, li) => t + laneTime(rules, s, g, li, quick), 0); }
   if (!r) {
     // in the way, in this order: a hazard (the officer at its post says why), the Veil, the
     // drive's reach (the navigator says those)
@@ -463,11 +474,15 @@ export function stitch(rules, s, to) {
   if (!p.ok) { if (p.hazard) turnedAway(rules, s, to); return p; }
   const g = galaxyOf(rules, s), V = rules.content.voyage;
   // a Hand has the Forge here: tearing free costs
-  if (Wd.caughtBy(rules, s)) Wd.escape(rules, s, SYSTEMS, note);
+  if (Wd.caughtBy(rules, s)) {
+    Wd.escape(rules, s, SYSTEMS, note, forgeMaxHp(rules, s));
+    if (s.forge.hp <= 0) { end(s, 'forge', `The Forge came apart tearing free of the Hand at ${galaxyOf(rules, s).points[s.at].name}.`); return { ok: true }; }
+  }
   for (let i = 0; i < p.route.hops.length; i++) {
-    const l = g.lanes[p.route.lanes[i]];
-    s.stores.glim = Math.max(0, s.stores.glim - stitchCost(rules, s, l.len));
-    passDays(rules, s, stitchTime(rules, s, l.len), { transit: true });
+    const li = p.route.lanes[i], days = laneTime(rules, s, g, li);
+    s.stores.glim = Math.max(0, s.stores.glim - laneCost(rules, s, g, li));
+    (s.charted ||= {})[li] = 1; // charted from now on, in every life
+    passDays(rules, s, days, { transit: true });
     if (s.over) return { ok: true };
     s.at = p.route.hops[i];
     reveal(rules, s);
@@ -516,7 +531,10 @@ export function drift(rules, s, to) {
   if (s.over) return no('The voyage is over.');
   const p = driftPlan(rules, s, to);
   if (!p.ok) return p;
-  if (Wd.caughtBy(rules, s)) Wd.escape(rules, s, SYSTEMS, note);
+  if (Wd.caughtBy(rules, s)) {
+    Wd.escape(rules, s, SYSTEMS, note, forgeMaxHp(rules, s));
+    if (s.forge.hp <= 0) { end(s, 'forge', `The Forge came apart tearing free of the Hand at ${galaxyOf(rules, s).points[s.at].name}.`); return { ok: true }; }
+  }
   passDays(rules, s, p.days, { transit: true });
   if (s.over) return { ok: true };
   s.at = to;
@@ -997,7 +1015,7 @@ export function visitSettings(rules, s) {
   if (!wound && L.encounters.some((e) => e.side === 'wound')) wound = { hand: 0, infested: false, roam: false, encounters: [], haze: 100, slot: { ichor: 0, plant: 0, hand: 'lair', delay: 0, grow: 'feeder, tick' } };
   if (wound) for (const e of wound.encounters) {
     const at = e.at ? [Math.trunc((W * e.at[0]) / 100), Math.trunc((D * e.at[1]) / 100), 0] : e.behaviour === 'hand' ? [Math.trunc((W * 88) / 100), Math.trunc((D * (30 + prng.int(40))) / 100), 0] : [Math.trunc((W * (60 + prng.int(25))) / 100), Math.trunc((D * (20 + prng.int(60))) / 100), 0];
-    L.encounters.push({ side: 'wound', ships: [...e.ships], at, behaviour: e.behaviour, delay: (e.delay | 0) * 25 });
+    L.encounters.push({ side: 'wound', ships: [...e.ships], at, behaviour: e.behaviour, delay: (e.delay | 0) * 25, ...(e.hpPct && e.hpPct !== 100 ? { hpPct: e.hpPct } : {}) });
   }
   for (const e of L.encounters) if (F[e.side]) present.add(e.side);
   const factions = [...present].sort();

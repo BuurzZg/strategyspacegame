@@ -1,40 +1,56 @@
 // Whole runs, no browser needed:  npm test
-// The AI captain (tools/captain.js) plays many seeded voyages, full and short, answering every
-// event, and gets home; the estimated play time of a typical run is inside the target for each length. Saving in
-// the middle of a map and continuing gives exactly the same game as playing straight on.
+// The AI captain (tools/captain.js) plays whole campaigns, full and short, answering every event:
+// it dies, wakes and goes further, to the true ending, in the targeted lives and hours; a first
+// life can be escaped, rarely. Saving in the middle of a map and continuing gives exactly the
+// same game as playing straight on.
 import { rules as loadCore, makeWorld } from './headless.js';
 import { makeOrder } from '../src/engine/order.js';
 import { OrderManager, LocalConnection } from '../src/engine/ordermanager.js';
 import { CELL } from '../src/engine/math.js';
 import { replayInto } from '../src/engine/replay.js';
 import * as V from '../src/galaxy/voyage.js';
-import { captain, playMinutes } from './captain.js';
+import { captain, campaign, playMinutes } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
 const rules = await loadCore();
 const SEEDS = (process.env.SEEDS || '1,2,3,4,5,6,7,8').split(',').map(Number);
 
-// 1. Many runs, both lengths
-// (full voyages: 4 to 6.5 hours since Milestone 22 added the final battle at the Mainspring's lair;
-// Milestone 24 rebalances to the campaign targets)
-for (const [length, lo, hi] of [['full', 240, 390], ['short', 60, 120]]) {
-  const rows = [], mins = [];
-  let home = 0, inside = 0;
+// 1. Whole campaigns, the real loop (Milestone 24; the one-life run length is gone). The captain
+// plays mortal campaigns in story mode, events answered: it dies when the Wound gets the Forge,
+// wakes with its memories, spends its echoes on the Loom, and goes further each life, to the
+// true ending. Targets (decided with the designer): a full galaxy in 5 to 8 lives and 9 to 13
+// hours, a small one in 3 to 5 lives and 5 to 9 hours, a life typically 60 to 130 minutes.
+// (Before Milestone 24 the targets were 5-8 lives, 40-90 minutes and 6-10 hours: out of reach of
+// the story's own length; see PLAN.md section 12.)
+const median = (a) => { const b = [...a].sort((x, y) => x - y); return (b[(b.length - 1) >> 1] + b[b.length >> 1]) / 2; };
+for (const [length, livesLo, livesHi, hLo, hHi] of [['full', 5, 8, 9, 13], ['short', 3, 5, 5, 9]]) {
+  const rows = [], lives = [], mins = [], hours = [];
+  let done = 0;
   for (const seed of SEEDS) {
-    const r = captain(rules, seed, { events: true, length });
-    const min = playMinutes(r);
-    if (r.s.won) home++;
-    if (r.s.won && min >= lo && min <= hi) inside++;
-    mins.push(min);
-    rows.push(`${seed}:${r.s.won ? '' : `(${r.s.over ? r.s.over.reason : 'stuck'}) `}${Math.round(min)}m/${r.s.day}d`);
+    const c = campaign(rules, seed, { events: true, story: true, mortal: true, length });
+    const h = c.lives.reduce((t, r) => t + playMinutes(r), 0) / 60;
+    if (c.s.won && c.s.over.ending === 'true') done++;
+    lives.push(c.lives.length); hours.push(h);
+    for (const r of c.lives) mins.push(playMinutes(r));
+    rows.push(`${seed}:${c.lives.length}/${h.toFixed(1)}h${c.s.won ? '' : `(${c.s.over ? c.s.over.reason : 'stuck'})`}`);
   }
-  check(home === SEEDS.length, `${length} voyages: the AI captain gets home on all ${SEEDS.length} seeds (${rows.join(' ')})`);
-  // the captain's runs swing by a visit or two with small changes (a crew's traits, an event's
-  // roll), so the target is for the typical run: the median inside it, and at least half
-  mins.sort((a, b) => a - b);
-  const median = (mins[(mins.length - 1) >> 1] + mins[mins.length >> 1]) / 2;
-  check(median >= lo && median <= hi && inside * 2 >= SEEDS.length, `${length} voyages: typically ${lo / 60 >= 1 ? `${lo / 60} to ${hi / 60} hours` : `${lo} to ${hi} minutes`} of estimated play (median ${Math.round(median)} min; ${inside} of ${SEEDS.length} inside)`);
+  check(done === SEEDS.length, `${length} campaigns: the captain reaches the true ending on all ${SEEDS.length} seeds, dying and waking on the way (lives/hours: ${rows.join(' ')})`);
+  check(median(lives) >= livesLo && median(lives) <= livesHi, `${length} campaigns: typically ${livesLo} to ${livesHi} lives (median ${median(lives)})`);
+  check(median(mins) >= 60 && median(mins) <= 130, `${length} campaigns: a life typically lasts 60 to 130 minutes of play (median ${Math.round(median(mins))}, ${Math.round(Math.min(...mins))} to ${Math.round(Math.max(...mins))})`);
+  check(median(hours) >= hLo && median(hours) <= hHi, `${length} campaigns: typically ${hLo} to ${hHi} hours to the true ending (median ${median(hours).toFixed(1)})`);
+}
+// A strong player can still escape in the first life: rare and hard, but possible. On a full
+// galaxy, the strong captain (arms early, fights the Hands it can beat, mends sooner) escapes on
+// some seeds, a decent one on hardly any. (A small galaxy is quicker to cross: there the first life
+// is escaped more often; see PLAN.md section 12.)
+{
+  const runs = (strong) => SEEDS.map((seed) => captain(rules, seed, { events: true, mortal: true, strong, length: 'full' }));
+  const strong = runs(true), decent = runs(false), esc = (list) => list.filter((r) => r.s.won).length;
+  const row = (list) => list.map((r) => (r.s.won ? `escaped d${r.s.day}` : `d${r.s.day}`)).join(' ');
+  check(esc(strong) >= 1 && esc(decent) <= 2, `a first-life escape from a full galaxy is possible but rare: a strong captain ${esc(strong)} of ${SEEDS.length} (${row(strong)}), a decent one ${esc(decent)} of ${SEEDS.length}`);
+  const small = SEEDS.map((seed) => captain(rules, seed, { events: true, mortal: true, length: 'short' }));
+  check(esc(small) <= SEEDS.length >> 1, `on a small galaxy a decent captain escapes the first life on at most half the seeds (${esc(small)} of ${SEEDS.length})`);
 }
 
 // 2. Save in the middle of a map, continue: the same game

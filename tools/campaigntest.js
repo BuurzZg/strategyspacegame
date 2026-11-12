@@ -93,18 +93,19 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
   check(after.campaign.life === 2, 'and its next life is life 2');
 }
 
-// 5. Whole campaigns: the captain lets its first life go, wakes, and gets home
+// 5. Whole campaigns: the captain lets its first life go, wakes, and gets home (since Milestone 24
+// in as many more lives as it takes: the Wound ends long lives)
 {
   const rows = [];
   let ok = true;
   for (const seed of [1, 2, 3]) {
-    const r = campaign(rules, seed, { events: true, giveUps: [25] });
+    const r = campaign(rules, seed, { events: true, giveUps: [25], mortal: true });
     const first = r.lives[0].s, second = r.lives[1] && r.lives[1].s;
     const wakeKnown = second ? second.campaign.chart.known.length : 0;
-    if (!(r.s.won && r.lives.length === 2 && second.campaign.life === 2 && wakeKnown >= first.known.length)) ok = false;
-    rows.push(`seed ${seed}: life 1 let go on day ${first.over && first.over.day}, life 2 ${r.s.won ? `home on day ${r.s.day}` : r.s.over ? r.s.over.reason : 'stuck'}, waking with ${wakeKnown} places known`);
+    if (!(r.s.won && r.lives.length >= 2 && first.over.reason === 'letgo' && second.campaign.life === 2 && wakeKnown >= first.known.length)) ok = false;
+    rows.push(`seed ${seed}: life 1 let go on day ${first.over && first.over.day}, ${r.s.won ? `home in life ${r.lives.length} on day ${r.s.day}` : r.s.over ? r.s.over.reason : 'stuck'}, waking with ${wakeKnown} places known`);
   }
-  check(ok, `campaigns of two lives: ${rows.join('; ')}`);
+  check(ok, `campaigns that let a life go: ${rows.join('; ')}`);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll campaign checks passed');

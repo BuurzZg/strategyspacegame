@@ -40,6 +40,21 @@ export function attention(rules, s) {
   const L = C[LEVELS[i]] || {};
   return { id: LEVELS[i].toLowerCase(), name: LEVELS[i], text: L.Text || '', index: i, points: wd.att, hands: num(L, 'Hands'), strong: L.Strong === 'true' };
 }
+// A long life (Milestone 24): how much a day's point is worth this far into the life, how much
+// bigger and tougher a Hand's pack is (percent), whether the Hands keep the trail, and how many
+// Hands the life itself calls for
+// (a small galaxy's life ages faster: ShortLifePct percent of the days)
+// (every Hour killed buys a reprieve: the life counts KillReprieve days younger)
+export const lifeAge = (rules, s) => Math.max(0, (s.length === 'short' ? Math.trunc(((s.day | 0) * num(W(rules), 'ShortLifePct', 100)) / 100) : s.day | 0) - ((s.wound && s.wound.reprieve) | 0));
+export function lifeMult(rules, s) {
+  let m = 1;
+  for (const [day, k] of Object.entries(pairs(W(rules).LifeDays)).map(([d, k]) => [+d, k])) if (lifeAge(rules, s) >= day) m = Math.max(m, k);
+  return m;
+}
+export const handAgePct = (rules, s) => { const C = W(rules); return 100 + num(C, 'HandAgePct') * Math.trunc(lifeAge(rules, s) / Math.max(1, num(C, 'HandAgeDays', 30))); };
+export const keepTrail = (rules, s) => num(W(rules), 'KeepTrail') > 0 && lifeAge(rules, s) >= num(W(rules), 'KeepTrail');
+const restDays = (rules, s) => (keepTrail(rules, s) ? num(W(rules), 'TrailRest', 2) : num(W(rules), 'Rest', 5));
+const lifeHands = (rules, s) => (num(W(rules), 'SecondHand') > 0 && lifeAge(rules, s) >= num(W(rules), 'SecondHand') ? 2 : s.length === 'short' && num(W(rules), 'ShortFirstHand') > 0 && lifeAge(rules, s) >= num(W(rules), 'ShortFirstHand') ? 1 : 0);
 const clampAtt = (rules, n) => Math.max(0, Math.min(num(W(rules), 'Max', 100), n));
 // Attention changes; returns the new level if it crossed one.
 export function raise(rules, s, n, note) {
@@ -79,7 +94,8 @@ function hopsAny(g, from, max) {
   return out;
 }
 const rngFor = (s, salt) => new Random(hashMix(hashMix(lifeMix(s, s.seed | 0), (s.day | 0) * 7 + salt), 0x3d10) || 1);
-const moveDays = (rules, h, rng) => { const C = W(rules); if (h.strong) return Math.max(1, num(C, 'StrongDays', 2)); const [a, b] = range(C.MoveDays, '2-3'); return a + rng.int(Math.max(1, b - a + 1)); };
+// (late in a long life, once they keep the trail, they come a lane every TrailDays)
+const moveDays = (rules, h, rng, s = null) => { const C = W(rules); if (s && keepTrail(rules, s)) return Math.max(1, num(C, 'TrailDays', 1)); if (h.strong) return Math.max(1, num(C, 'StrongDays', 2)); const [a, b] = range(C.MoveDays, '2-3'); return a + rng.int(Math.max(1, b - a + 1)); };
 
 // A Hand sets out from the Shore (from a place far from the Forge).
 function spawnHand(rules, s, g, strong, note) {
@@ -92,7 +108,7 @@ function spawnHand(rules, s, g, strong, note) {
   // the far half of them
   cand.sort((a, b) => hops[b.id] - hops[a.id] || a.id - b.id);
   const p = cand[rng.int(Math.max(1, (cand.length + 1) >> 1))];
-  const h = { id: wd.next++, at: p.id, power: Math.trunc((num(C, 'Power', 100) * (strong ? num(C, 'StrongPct', 150) : 100)) / 100), strong: !!strong, next: s.day + moveDays(rules, { strong }, rng), caught: false, born: s.day };
+  const h = { id: wd.next++, at: p.id, power: Math.trunc((num(C, 'Power', 100) * (strong ? num(C, 'StrongPct', 150) : 100)) / 100), strong: !!strong, next: s.day + moveDays(rules, { strong }, rng, s), caught: false, born: s.day };
   wd.hands.push(h);
   if (note) note(s, strong ? 'The bell-ringer swears he heard a second bell, out past the Shore. Another Hand has set out, and this one is hungry.' : 'Something out past the Shore has started to move. The sensors officer calls it a Hand: an Hour and its pack, following where the Forge was last heard.', 'bad');
   return h;
@@ -112,15 +128,18 @@ export function woundDay(rules, s, g, { transit = false, note = null } = {}) {
   if (wd.stay.at !== s.at) wd.stay = { at: s.at, days: 0 };
   wd.stay.days++;
   let d = 0;
-  if (num(C, 'DaysPer') && s.day % num(C, 'DaysPer') === 0) d++;
+  if (num(C, 'DaysPer') && s.day % num(C, 'DaysPer') === 0) d += lifeMult(rules, s);
   if (!transit && wd.stay.days > num(C, 'StayFrom', 4)) d++;
   // silent running, and the Choir's hiding
   if (silentRunning(rules, s)) d -= num(C, 'Silent');
   if (!transit && p.owner === 'choir') d -= num(C, 'Choir');
   if (d) raise(rules, s, d, note);
-  // the Hands this level calls for (one destroyed stays gone: the next level's comes instead)
-  const a = attention(rules, s);
-  while (wd.hands.length + wd.gone < a.hands) if (!spawnHand(rules, s, g, a.strong && wd.hands.length + wd.gone >= 1, note)) break;
+  // the Hands this level calls for (one destroyed stays gone: the next level's comes instead);
+  // late in a long life, a second, strong one whatever the level
+  const a = attention(rules, s), want = Math.max(a.hands, lifeHands(rules, s)), late = lifeHands(rules, s) >= 2;
+  while (wd.hands.length + wd.gone < want) if (!spawnHand(rules, s, g, (a.strong || late) && wd.hands.length + wd.gone >= 1, note)) break;
+  // late in a long life the Hands follow the Forge itself, heard or not
+  if (keepTrail(rules, s)) wd.heard = s.at;
   // they grow, and move
   const rng = rngFor(s, 7);
   for (const h of wd.hands) {
@@ -132,11 +151,11 @@ export function woundDay(rules, s, g, { transit = false, note = null } = {}) {
       continue;
     }
     if (s.day < h.next) continue;
-    h.next = s.day + moveDays(rules, h, rng);
+    h.next = s.day + moveDays(rules, h, rng, s);
     const hops = handHops(g, wd.heard), opts = g.adj[h.at].map((li) => g.lanes[li]).filter((l) => l.hazard !== 'static').map((l) => (l.a === h.at ? l.b : l.a));
     if (!opts.length) continue;
     let to;
-    if (h.at === wd.heard || rng.int(100) < num(C, 'LosePct')) to = opts[rng.int(opts.length)]; // lost the trail
+    if (h.at === wd.heard || (!keepTrail(rules, s) && rng.int(100) < num(C, 'LosePct'))) to = opts[rng.int(opts.length)]; // lost the trail
     else to = opts.reduce((b, j) => (hops[j] < hops[b] || (hops[j] === hops[b] && j < b) ? j : b), opts[0]);
     const left = h.at;
     h.at = to;
@@ -173,13 +192,16 @@ export function escapePlan(rules, s) {
   const e = pairs(W(rules).Escape);
   return { hull: e.hull | 0, morale: e.morale | 0, wear: e.wear | 0, hand: h.id };
 }
-export function escape(rules, s, systems, note) {
+export function escape(rules, s, systems, note, maxHp = s.forge.hp) {
   const e = escapePlan(rules, s);
   if (!e) return;
   const h = woundOf(rules, s).hands.find((x) => x.id === e.hand);
   h.caught = false;
-  h.next = h.rest = s.day + num(W(rules), 'Rest', 5);
-  s.forge.hp = Math.max(1, s.forge.hp - Math.trunc((s.forge.hp * e.hull) / 100));
+  h.next = h.rest = s.day + restDays(rules, s);
+  // under fire, the loss is of the whole hull (Milestone 24): with less left than that, the Forge
+  // comes apart as it tears free (voyage.js ends the life)
+  s.forge.hp -= Math.trunc((maxHp * e.hull) / 100);
+  if (s.forge.hp <= 0) { s.forge.hp = 0; return; }
   s.morale = Math.max(0, s.morale - e.morale);
   const rng = rngFor(s, 13), k = systems[rng.int(systems.length)];
   s.systems[k] = Math.max(0, s.systems[k] - e.wear);
@@ -202,12 +224,14 @@ export function mapWound(rules, s, g, pid) {
   const encounters = [];
   let ichor = 0, plant = 0, grow = '';
   if (h) {
+    // a long life's Hands bring more Hounds and Ticks, and every ship tougher (Milestone 24)
+    const age = handAgePct(rules, s), more = (k) => Math.trunc((k * age) / 100);
     const ships = ['hour'];
-    for (let k = 0; k < 1 + Math.trunc(h.power / Math.max(1, num(C, 'PackHound', 120))); k++) ships.push('hound');
-    for (let k = 0; k < 3 + Math.trunc(h.power / Math.max(1, num(C, 'PackTick', 35))); k++) ships.push('tick');
+    for (let k = 0; k < more(1 + Math.trunc(h.power / Math.max(1, num(C, 'PackHound', 120)))); k++) ships.push('hound');
+    for (let k = 0; k < more(3 + Math.trunc(h.power / Math.max(1, num(C, 'PackTick', 35)))); k++) ships.push('tick');
     ships.push('feeder', 'feeder');
     if (h.strong) ships.push('stinger', 'stinger', 'gnawer');
-    encounters.push({ ships, behaviour: 'hand' });
+    encounters.push({ ships, behaviour: 'hand', hpPct: age });
     ichor += h.power * num(C, 'IchorPer', 3);
     grow = h.strong ? 'feeder, tick, chime, stinger, hound, gnawer' : 'feeder, tick, chime, stinger, hound';
   }
@@ -252,13 +276,14 @@ export function afterMap(rules, s, g, pid, r, { note = null, gain = null } = {})
     if (r.hours > 0) {
       wd.hands = wd.hands.filter((x) => x !== h);
       wd.gone++;
+      wd.reprieve = (wd.reprieve | 0) + num(C, 'KillReprieve');
       if (note) note(s, 'The Hour is dead, and its Hand with it. Whatever was listening lost a finger tonight. It will not come back in this life.', 'good');
       stepDown(rules, s, note);
     } else {
       // shaken off: it regrows (as hurt as its Hour), and loses the Forge for a while
       h.caught = false;
       h.power = Math.max(num(C, 'Power', 100) >> 1, Math.trunc((h.power * Math.max(40, r.hourPct | 0)) / 100));
-      h.next = h.rest = s.day + num(C, 'Rest', 5);
+      h.next = h.rest = s.day + restDays(rules, s);
       if (note) note(s, 'The Forge got out from under the Hand. It is still out there, licking its wounds.', 'info');
     }
   }

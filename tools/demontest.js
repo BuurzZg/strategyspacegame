@@ -179,7 +179,7 @@ async function handMap(seed = 4, extra = [], secs = 420) {
   check(wd.att === a0 + +W.Memory, `every memory recovered raises it (+${W.Memory}): the more Jacob remembers, the louder the Twain sings`);
   const a1 = wd.att, d = +W.DaysPer;
   V.passDays(rules, s, d, { transit: true });
-  check(wd.att === a1 + 1, `days passing raise it, slowly (a point every ${d} days)`);
+  check(wd.att === a1 + Wd.lifeMult(rules, s), `days passing raise it (a point every ${d} days, times ${Wd.lifeMult(rules, s)} this early in a life)`);
   const a2 = wd.att; wd.stay = { at: s.at, days: 0 };
   for (let k = 0; k < +W.StayFrom + 3; k++) V.rest(rules, s);
   check(wd.att - a2 >= 3, `staying long at one place raises it (+${wd.att - a2} over ${+W.StayFrom + 3} days)`);
@@ -260,6 +260,36 @@ async function handMap(seed = 4, extra = [], secs = 420) {
   // on the chart: what the sensors can see
   const seen = Wd.handsSeen(rules, t, V.galaxyOf(rules, t));
   check(seen.every((x) => x.hops <= +W.SeeHops), `the chart shows only the Hands within ${W.SeeHops} lanes (${seen.length} now)`);
+}
+
+// ---------------------------------------------------------------- 7b. a long life is a loud one (Milestone 24)
+{
+  const life = (day, length = 'full') => { const s = V.newVoyage(rules, { seed: 4, length }); s.queue = []; s.day = day; return s; };
+  const mult = [1, 25, 45].map((d) => Wd.lifeMult(rules, life(d)));
+  check(mult[0] < mult[1] && mult[1] < mult[2], `the days count for more the longer a life lasts: a day's point times ${mult.join(', then ')} (voyage.yaml LifeDays: ${W.LifeDays})`);
+  // the Hands grow with the life: more Hounds and Ticks, and tougher, in a long life
+  const pack = (day) => { const s = life(day), g = V.galaxyOf(rules, s); s.wound.att = +W.Hunted.At; s.wound.hands.push({ id: 1, at: s.at, power: 160, strong: false, next: 999, caught: true }); return Wd.mapWound(rules, s, g, s.at).encounters[0]; };
+  const young = pack(5), old = pack(95);
+  check(old.ships.length > young.ships.length && old.hpPct > (young.hpPct || 100), `a Hand in a long life brings more ships, every one tougher: ${young.ships.length} ships at ${young.hpPct || 100}% hull on day 5, ${old.ships.length} at ${old.hpPct}% on day 95`);
+  // late in a life: a second, strong Hand whatever the attention; then they keep the trail
+  const s2 = life(+W.SecondHand - 1); s2.wound.att = 0;
+  V.passDays(rules, s2, 2, { transit: true });
+  check(s2.wound.hands.length === 2 && s2.wound.hands.some((h) => h.strong), `from day ${W.SecondHand} of a life two Hands hunt, one of them strong, even unheard (${s2.wound.hands.length} on day ${s2.day})`);
+  const s3 = life(+W.KeepTrail + 1);
+  check(Wd.keepTrail(rules, s3) && !Wd.keepTrail(rules, life(+W.KeepTrail - 1)), `from day ${W.KeepTrail} the Hands keep the trail: they follow the Forge itself, a lane a day, resting only ${W.TrailRest} days`);
+  // killing an Hour buys a reprieve; a small galaxy's life ages faster, and is hunted from its first day
+  const s4 = life(70); const g4 = V.galaxyOf(rules, s4); s4.wound.hands.push({ id: 7, at: s4.at, power: 100, strong: false, next: 999, caught: true });
+  const age0 = Wd.lifeAge(rules, s4);
+  Wd.afterMap(rules, s4, g4, s4.at, { hand: 1, hours: 1, burned: 0, planted: 0, nurseries: 0 });
+  check(Wd.lifeAge(rules, s4) === age0 - +W.KillReprieve, `every Hour killed buys a reprieve: the life counts ${W.KillReprieve} days younger (${age0} → ${Wd.lifeAge(rules, s4)})`);
+  const sm = life(1, 'short'); sm.wound.att = 0; V.passDays(rules, sm, 1, { transit: true });
+  check(sm.wound.hands.length >= 1 && Wd.lifeAge(rules, life(30, 'short')) === Math.trunc((30 * +W.ShortLifePct) / 100), `a small galaxy's life ages ${W.ShortLifePct / 100} times as fast, and a Hand hunts it from day ${W.ShortFirstHand}`);
+  // tearing free with too little hull left: the Forge comes apart
+  const s5 = life(10), g5 = V.galaxyOf(rules, s5); s5.wound.hands.push({ id: 3, at: s5.at, power: 100, strong: false, next: 999, caught: true });
+  s5.forge.hp = Math.trunc(V.forgeMaxHp(rules, s5) / 20);
+  const to = g5.adj[s5.at].map((li) => (g5.lanes[li].a === s5.at ? g5.lanes[li].b : g5.lanes[li].a)).find((j) => V.plan(rules, s5, j).ok);
+  V.stitch(rules, s5, to);
+  check(s5.over && s5.over.reason === 'forge' && /tearing free/.test(s5.over.text), `tearing free under fire with only 5% of the hull left: "${s5.over && s5.over.text}"`);
 }
 
 // ---------------------------------------------------------------- 8. old saves, and roaming packs

@@ -10,7 +10,7 @@ import * as V from '../src/galaxy/voyage.js';
 import * as N from '../src/galaxy/narration.js';
 import { parseEffect } from '../src/galaxy/comms.js';
 import { generateGalaxy, tiers, reach } from '../src/galaxy/galaxy.js';
-import { captain, resolveEvents } from './captain.js';
+import { captain, campaign, resolveEvents } from './captain.js';
 
 let failures = 0;
 const check = (ok, msg) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${msg}`); if (!ok) failures++; };
@@ -176,22 +176,18 @@ async function lair(fleet, secs = 900) {
 }
 
 // ---------------------------------------------------------------- 7. the bot reaches the true ending
+// (Milestone 24: by the real loop, over several lives: it dies, wakes with its memories and goes
+// further; tools/runtest.js holds the numbers for lives and hours)
 {
   const rows = [];
   let all = true;
   for (const seed of [1, 2, 3]) {
-    let s = V.newVoyage(rules, { seed, length: 'short' }), lives = 0;
-    for (; lives < 8; lives++) {
-      const r = captain(rules, seed, { events: true, story: true, length: 'short', start: s });
-      s = r.s;
-      if (s.won || !s.over) break;
-      s = V.newLife(rules, s);
-    }
-    const ok = s.won && s.over.ending === 'true' && STORY.every((m) => V.remembers(s, m));
+    const c = campaign(rules, seed, { events: true, story: true, mortal: true, length: 'short' }), s = c.s;
+    const ok = s.won && s.over.ending === 'true' && STORY.every((m) => V.remembers(s, m)) && c.lives.length > 1;
     if (!ok) all = false;
-    rows.push(`${seed}: ${ok ? `the true ending in life ${lives + 1}, day ${s.day}` : s.over ? s.over.reason : 'stuck'}`);
+    rows.push(`${seed}: ${ok ? `the true ending in life ${c.lives.length}, day ${s.day}` : s.over ? s.over.reason : 'stuck'}`);
   }
-  check(all, `the test captain reaches the true ending on every seed tried (short campaigns ${rows.join('; ')})`);
+  check(all, `the test captain reaches the true ending on every seed tried, dying and waking on the way (short campaigns ${rows.join('; ')})`);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll story checks passed');

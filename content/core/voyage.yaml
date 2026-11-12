@@ -8,14 +8,16 @@ Voyage:
 	DayTicks: 6000
 	# what a new voyage starts with
 	Crew: engineers 30, pilots 24, miners 30, hands 66
-	Stores: ore 1500, ice 2400, salvage 150, glim 700, spores 120, food 1600, air 900, cogmarks 60
+	# (Milestone 24: every life wakes with full tanks; it was ice 2400, glim 700, spores 120, food 1600, air 900)
+	Stores: ore 1500, ice 7000, salvage 150, glim 2200, spores 300, food 2400, air 1000, cogmarks 60
 	# a short voyage starts better supplied, and fitting drive parts costs this percent
 	ShortStores: ore 2500, ice 7000, salvage 600, glim 2200, spores 500, food 3000, air 1000, cogmarks 120
 	ShortInstallPct: 60
 	Morale: 70
 	# per 10 crew per day
+	# (Milestone 24 halved Water, from 6: water runs were two map visits in three)
 	Need:
-		Water: 6
+		Water: 3
 		Food: 8
 		Air: 10
 	# life support makes air from water; the tank holds this much
@@ -40,6 +42,10 @@ Voyage:
 	DaySpan: 90
 	# a short voyage: every stitch a day
 	ShortDaySpan: 1000
+	# charted space (Milestone 24): a lane the Forge has stitched along before, in this life or
+	# an earlier one, takes ChartedDays days and ChartedGlim percent of the Glim
+	ChartedDays: 1
+	ChartedGlim: 50
 	# drifting without Glim, at sub-light: days per 10 spans
 	DriftDaysPer10: 1
 	# levels (Milestone 19): a ship gains a level for each map it launched on, survived and came
@@ -240,6 +246,28 @@ Wound:
 	Grow: 4
 	StrongPct: 150
 	SeeHops: 2
+	# a long life is a loud one (Milestone 24): from each LifeDays day of a life, the point that
+	# days passing bring (every DaysPer days) is multiplied: 4 from the start, 8 from day 20, 12
+	# from day 40, so a Hand sets out around day 25 to 30 even in a first life
+	LifeDays: 0 4, 20 8, 40 12
+	# the Hands grow with the life: a Hand's pack has HandAgePct percent more Hounds and Ticks,
+	# and every ship in it as much more hull, for every HandAgeDays days of the life
+	HandAgeDays: 30
+	HandAgePct: 15
+	# from day SecondHand of a life a second Hand, a strong one, sets out whatever the attention;
+	# from day KeepTrail the Hands follow the Forge itself (running silent or not), never lose
+	# the trail, come a lane every TrailDays, and rest only TrailRest days after being shaken off
+	# or torn free of
+	SecondHand: 60
+	KeepTrail: 42
+	TrailDays: 1
+	TrailRest: 2
+	# a small galaxy's life ages faster: its days count this percent for all of the above
+	ShortLifePct: 200
+	# and in a small galaxy the first Hand sets out on this day of every life, whatever the attention
+	ShortFirstHand: 1
+	# every Hour killed buys a reprieve: the life counts this many days younger for all of the above
+	KillReprieve: 45
 	# caught: each day the Hand's pickets cost the Forge Harass percent hull; stitching away
 	# without a fight costs Escape (hull percent, morale, system wear)
 	Harass: 3
@@ -276,4 +304,4 @@ Wound:
 	LairGrowPct: 160
 	LairIchor: 400
 	# on a short voyage the Mainspring and its pack are this much of themselves (percent)
-	ShortLairPct: 60
+	ShortLairPct: 100

@@ -411,7 +411,8 @@ function hopsFrom(n, lanes, from, drive = null) {
 // The cheapest route (in Glim, then days) from `from` to `to` along lanes this drive can use:
 // { hops: [place ids, from first stitch to destination], lanes: [lane indices], len, glim, days }
 // or null if there is none.
-export function route(galaxy, rules, from, to, drive) {
+// glimOf(li): what a lane costs this voyage (charted lanes are cheaper); base Glim if not given.
+export function route(galaxy, rules, from, to, drive, glimOf = null) {
   const V = rules.content.voyage, n = galaxy.points.length;
   const cost = new Array(n).fill(Infinity), prev = new Array(n).fill(-1), done = new Array(n).fill(false);
   cost[from] = 0;
@@ -425,7 +426,7 @@ export function route(galaxy, rules, from, to, drive) {
       if (!laneOpen(l, drive)) continue;
       const j = l.a === i ? l.b : l.a;
       // Glim first; a small charge per hop prefers fewer stitches when Glim is equal
-      const c = cost[i] + stitchGlim(V, l.len) * 64 + 1;
+      const c = cost[i] + (glimOf ? glimOf(li) : stitchGlim(V, l.len)) * 64 + 1;
       if (c < cost[j]) { cost[j] = c; prev[j] = li; }
     }
   }
