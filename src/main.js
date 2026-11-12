@@ -17,7 +17,7 @@ import { LoomScreen } from './ui/loom.js';
 import { BridgeScreen } from './ui/bridge.js';
 import { NarrationScreen } from './ui/narration.js';
 import { replayInto } from './engine/replay.js';
-import { watchErrors, initBugReport } from './ui/bugreport.js';
+import { watchErrors, initBugReport, noteFrame, frameRate } from './ui/bugreport.js';
 
 const $ = (id) => document.getElementById(id);
 watchErrors(); // keep the last errors for a bug report (F8)
@@ -309,6 +309,7 @@ setInterval(pump, 10);
 let last = performance.now(), elapsed = 0;
 function frame(now) {
   requestAnimationFrame(frame);
+  noteFrame(now); // the frame rate, for bug reports
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now; elapsed += dt;
   if (narration) { narration.frame(dt, renderer); return; }
@@ -367,6 +368,7 @@ $('help-close').addEventListener('click', () => hud.toggleHelp(false));
 // Reporting a bug (F8): what the game is doing, and the save to replay it
 initBugReport({
   renderer,
+  screen: () => (session ? (session.onVoyage ? 'map' : 'practice') : chart ? 'chart' : 'title'),
   save: () => (voyage ? snapshot() : null),
   state: () => {
     const v = voyage, w = session && session.world;
@@ -382,5 +384,5 @@ initBugReport({
 window.driftforge = {
   get session() { return session; }, get world() { return session && session.world; }, get input() { return input; },
   get run() { return run; }, get rules() { return rules; }, get voyage() { return voyage; }, get chart() { return chart; }, get bridge() { return bridge; },
-  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData, loadReport,
+  startVisit, startProvingGrounds, showLauncher, newVoyage, startChart, goIn, V, hud, snapshot, loadData, loadReport, frameRate,
 };

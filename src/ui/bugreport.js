@@ -7,6 +7,37 @@
 import { VERSION, BUILD } from '../version.js';
 
 const $ = (id) => document.getElementById(id);
+// where reports go: shown in the report window (the tester guide says the same)
+export const REPORT_TO = 'to whoever gave you the game, by Discord, email or WhatsApp, whichever you use with them';
+
+// The frame rate, one count per second for the last five minutes, with the screen it was on, so a
+// report says how the game really ran on the tester's machine. A gap (a hidden tab) is skipped.
+const secs = [];
+let frames = 0, t0 = 0, screenOf = () => '';
+export function noteFrame(now) {
+  if (!t0) t0 = now;
+  frames++;
+  const dt = now - t0;
+  if (dt < 1000) return;
+  if (dt < 2500) { secs.push({ fps: (frames * 1000) / dt, screen: screenOf() }); if (secs.length > 300) secs.shift(); }
+  frames = 0; t0 = now;
+}
+export function frameRate() {
+  const sum = (list) => {
+    if (!list.length) return null;
+    const f = list.map((s) => s.fps);
+    return { avg: Math.round(f.reduce((a, b) => a + b, 0) / f.length), low: Math.round(Math.min(...f)), secs: f.length };
+  };
+  const by = {};
+  for (const s of secs) (by[s.screen] ||= []).push(s);
+  return { last: sum(secs.slice(-60)), all: sum(secs), screens: Object.fromEntries(Object.entries(by).map(([k, v]) => [k, sum(v)])) };
+}
+function fpsLine() {
+  const r = frameRate();
+  if (!r.all) return 'not measured yet';
+  const f = (x) => `average ${x.avg} fps, lowest ${x.low}`;
+  return `last ${r.last.secs} s: ${f(r.last)}; last ${Math.round(r.all.secs / 60 * 10) / 10} min: ${f(r.all)}` + (Object.keys(r.screens).length > 1 ? ` (${Object.entries(r.screens).map(([k, v]) => `${k} ${v.avg}/${v.low}`).join(', ')})` : '');
+}
 const log = [];
 const keep = (kind, text) => { log.push(`${new Date().toISOString().slice(11, 19)} ${kind}: ${String(text).slice(0, 400)}`); if (log.length > 30) log.shift(); };
 
@@ -22,7 +53,8 @@ export function watchErrors() {
 function safeJson(x) { try { return JSON.stringify(x).slice(0, 300); } catch { return String(x); } }
 
 // state(): a few words on what the game is doing; save(): the save, or null; gl: the renderer
-export function initBugReport({ state, save, renderer }) {
+export function initBugReport({ state, save, renderer, screen }) {
+  if (screen) screenOf = screen;
   const open = () => {
     $('bugreport').hidden = false;
     $('br-what').focus();
@@ -42,7 +74,9 @@ export function initBugReport({ state, save, renderer }) {
       `Build: ${VERSION} ${BUILD}`,
       `When: ${new Date().toISOString()}`,
       `Browser: ${navigator.userAgent}`,
-      `Screen: ${innerWidth} x ${innerHeight} at ${devicePixelRatio || 1}x; graphics: ${gpu}`,
+      `Screen: ${innerWidth} x ${innerHeight} at ${devicePixelRatio || 1}x (drawn at ${renderer.domElement.width} x ${renderer.domElement.height})`,
+      `Graphics card: ${gpu}`,
+      `Frame rate: ${fpsLine()}`,
       `Game: ${Object.entries(st).map(([k, v]) => `${k} ${v}`).join(', ') || 'title screen'}`,
       '',
       'WHAT HAPPENED',
@@ -66,7 +100,7 @@ export function initBugReport({ state, save, renderer }) {
   $('br-save').addEventListener('change', build);
   $('br-copy').addEventListener('click', async () => {
     build();
-    try { await navigator.clipboard.writeText(text); say('Copied. Paste it into a message to whoever gave you the game.'); }
+    try { await navigator.clipboard.writeText(text); say(`Copied. Paste it into a message and send it ${REPORT_TO}.`); }
     catch { $('br-text').select(); say('Your browser would not let the page copy it: the report is selected below, press Ctrl+C (Cmd+C on a Mac).'); }
   });
   $('br-download').addEventListener('click', () => {
@@ -76,7 +110,7 @@ export function initBugReport({ state, save, renderer }) {
       a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
       a.download = `driftforge-bug-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.txt`;
       document.body.appendChild(a); a.click(); a.remove();
-      say('Saved as a text file: send it to whoever gave you the game.');
+      say(`Saved as a text file: send it ${REPORT_TO}.`);
     } catch { $('br-text').select(); say('Your browser would not save a file here: the report is selected below, press Ctrl+C to copy it.'); }
   });
   $('br-close').addEventListener('click', close);
