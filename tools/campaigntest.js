@@ -99,7 +99,7 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
   const rows = [];
   let ok = true;
   for (const seed of [1, 2, 3]) {
-    const r = campaign(rules, seed, { events: true, giveUps: [25], mortal: true });
+    const r = campaign(rules, seed, { events: true, giveUps: [25], mortal: true, story: true });
     const first = r.lives[0].s, second = r.lives[1] && r.lives[1].s;
     const wakeKnown = second ? second.campaign.chart.known.length : 0;
     if (!(r.s.won && r.lives.length >= 2 && first.over.reason === 'letgo' && second.campaign.life === 2 && wakeKnown >= first.known.length)) ok = false;

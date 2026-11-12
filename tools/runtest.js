@@ -40,17 +40,14 @@ for (const [length, livesLo, livesHi, hLo, hHi] of [['full', 5, 8, 9, 13], ['sho
   check(median(mins) >= 60 && median(mins) <= 130, `${length} campaigns: a life typically lasts 60 to 130 minutes of play (median ${Math.round(median(mins))}, ${Math.round(Math.min(...mins))} to ${Math.round(Math.max(...mins))})`);
   check(median(hours) >= hLo && median(hours) <= hHi, `${length} campaigns: typically ${hLo} to ${hHi} hours to the true ending (median ${median(hours).toFixed(1)})`);
 }
-// A strong player can still escape in the first life: rare and hard, but possible. On a full
-// galaxy, the strong captain (arms early, fights the Hands it can beat, mends sooner) escapes on
-// some seeds, a decent one on hardly any. (A small galaxy is quicker to cross: there the first life
-// is escaped more often; see PLAN.md section 12.)
-{
-  const runs = (strong) => SEEDS.map((seed) => captain(rules, seed, { events: true, mortal: true, strong, length: 'full' }));
+// A strong player can still escape in the first life: rare and hard, but possible. The strong
+// captain (arms early, fights the Hands it can beat, mends sooner) escapes on some seeds, a decent
+// one on hardly any, on both sizes of galaxy (every Hand alive comes home to defend the lair).
+for (const length of ['full', 'short']) {
+  const runs = (strong) => SEEDS.map((seed) => captain(rules, seed, { events: true, mortal: true, strong, length }));
   const strong = runs(true), decent = runs(false), esc = (list) => list.filter((r) => r.s.won).length;
   const row = (list) => list.map((r) => (r.s.won ? `escaped d${r.s.day}` : `d${r.s.day}`)).join(' ');
-  check(esc(strong) >= 1 && esc(decent) <= 2, `a first-life escape from a full galaxy is possible but rare: a strong captain ${esc(strong)} of ${SEEDS.length} (${row(strong)}), a decent one ${esc(decent)} of ${SEEDS.length}`);
-  const small = SEEDS.map((seed) => captain(rules, seed, { events: true, mortal: true, length: 'short' }));
-  check(esc(small) <= SEEDS.length >> 1, `on a small galaxy a decent captain escapes the first life on at most half the seeds (${esc(small)} of ${SEEDS.length})`);
+  check(esc(strong) >= 1 && esc(decent) <= 2, `a first-life escape from a ${length === 'full' ? 'full' : 'small'} galaxy is possible but rare: a strong captain ${esc(strong)} of ${SEEDS.length} (${row(strong)}), a decent one ${esc(decent)} of ${SEEDS.length}`);
 }
 
 // 2. Save in the middle of a map, continue: the same game

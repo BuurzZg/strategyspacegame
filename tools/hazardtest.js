@@ -152,13 +152,13 @@ function outside(seed, hazard) {
   check(V.drive(rules, t).hazards.includes(g.pockets[0].hazard) && V.plan(rules, t, g.start).route, 'a voyage saved inside a pocket (before pockets) can get out');
 }
 
-// 7. Every seed can be won, round every pocket (since Milestone 24 by the real loop: the Wound
-// ends long lives, and the captain wakes and goes on)
+// 7. Every seed can be won, round every pocket (since Milestone 24 by the real loop, to the true
+// ending: the Wound ends long lives, and the captain wakes and goes on)
 {
   const bad = [];
   let lives = [];
   for (const length of ['full', 'short']) for (let seed = 1; seed <= 50; seed++) {
-    const c = campaign(rules, seed, { length, mortal: true });
+    const c = campaign(rules, seed, { length, mortal: true, story: true, events: true });
     if (!c.s.won) bad.push(`${length} ${seed}: ${c.s.over ? c.s.over.reason : 'stuck'} on day ${c.s.day} of life ${c.lives.length}`);
     else if (length === 'full') lives.push(c.lives.length);
   }

@@ -58,10 +58,12 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
   // what the Wound brings to a fight here: its ships, tougher in a long life (hpPct)
   const woundWorth = (wm) => (wm ? wm.encounters.filter((e) => e.behaviour !== 'hunt').reduce((t, e) => t + Math.trunc((worth(e.ships) * (e.hpPct || 100)) / 100), 0) : 0);
   const ours = (fleet = s.fleet) => fleetPower(rules, fleet) + FORGE_WORTH;
+  // every Hand still alive comes home to defend the lair (Milestone 24): what they bring to it
+  const homeWorth = () => Wd.handsHome(rules, s).reduce((t, h) => { const pk = Wd.homePack(rules, s, h); return t + Math.trunc((worth(pk.ships) * pk.hpPct) / 100); }, 0);
   // a decent player builds warships from the ore aboard: Halberds where it can, then Pickets and
   // Darts, keeping some ore for repairs, as many as there are berths and time for in a visit
   const build = (ore) => {
-    const out = [], reserve = strong ? 300 : 600, budget = strong ? 2400 : 1500;
+    const out = [], last = mortal && lair >= 0 && order.every((id) => done(id) || where(id) === undefined), reserve = strong || last ? 300 : 600, budget = strong || last ? 2400 : 1500;
     let spent = 0;
     while (s.fleet.length + out.length < V.berthsOf(rules, s)) {
       const x = ['halberd', 'picket', 'dart'].find((y) => (s.blueprints || []).includes(y) && cost(y) <= ore - reserve && spent + cost(y) <= budget);
@@ -93,11 +95,11 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     // the Mainspring's lair: the player builds what the fight needs from the ore aboard, and wins
     // if the fleet, the Forge and the ore together outweigh it (LAIR_WORTH); every warship is lost
     if (p.relic && V.isLair(rules, p.relic)) {
-      const short = Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) - fleetPower(rules, aboard) - FORGE_WORTH;
+      const short = Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) + homeWorth() - fleetPower(rules, aboard) - FORGE_WORTH;
       if (short > (mortal ? stores.ore.end : s.stores.ore | 0)) { wound = { lair: { dead: false, core: 60 }, hand: 0, hours: 0, burned: 0, nurseries: 1, planted: 1 }; hp = mortal ? hp - Math.trunc((V.forgeMaxHp(rules, s) * 15) / 100) : Math.max(1, hp - Math.trunc((hp * 15) / 100)); destroyed = hp <= 0; }
       else {
         if (short > 0) stores.ore.end -= short;
-        wound = { lair: { dead: true, core: 0 }, hand: 0, hours: 1, burned: 1, nurseries: 0, planted: 1 };
+        wound = { lair: { dead: true, core: 0 }, hand: 0, hours: 1 + Wd.handsHome(rules, s).length, burned: 1, nurseries: 0, planted: 1 };
         aboard = s.fleet.filter((e) => !rules.actor(e.type).traitInfo('Armament'));
       }
     } else if (wm && (wm.hand || wm.infested)) {
@@ -183,12 +185,16 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     if (giveUp && s.day >= giveUp) { V.letGo(rules, s); break; }
     // the Mainspring is dead and the way is open: go now (the jump needs no stores)
     if (s.at === lair && V.canJumpHome(rules, s).ok && (!story || V.trueEnding(s))) { V.jumpHome(rules, s); settle(); break; }
-    // caught by a Hand it can beat: go in and kill its Hour (the Hand is gone for the life)
-    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) >= woundWorth(Wd.mapWound(rules, s, g, s.at)) * (strong ? 1 : 1.3) && V.daysLeft(rules, s).ice >= 3) { visit(); goal = null; continue; }
+    // caught by a Hand it can beat: go in and kill its Hour (the Hand is gone for the life). On the
+    // last stretch to the lair, where every Hand alive would come home to defend it, even a decent
+    // captain takes them on at even odds
+    const finale = mortal && !order.some((id) => !done(id) && where(id) !== undefined) && lair >= 0 && !(s.flags || []).includes('mainspring');
+    const nerve = strong || finale ? 1 : 1.3;
+    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) >= woundWorth(Wd.mapWound(rules, s, g, s.at)) * nerve && V.daysLeft(rules, s).ice >= 3) { visit(); goal = null; continue; }
     // caught by a Hand it can't beat: tear free (it costs hull) toward the goal, or anywhere
     // (not if the hull can't take the tearing free: then it fights)
     // (a decent captain only takes on a Hand it clearly outguns; a strong one fights any it can beat)
-    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) < woundWorth(Wd.mapWound(rules, s, g, s.at)) * (strong ? 1 : 1.3) && s.forge.hp * 100 > V.forgeMaxHp(rules, s) * ((Wd.escapePlan(rules, s) || { hull: 0 }).hull + 1)) {
+    if (mortal && Wd.caughtBy(rules, s) && ours() * (strong ? 1.25 : 1) < woundWorth(Wd.mapWound(rules, s, g, s.at)) * nerve && s.forge.hp * 100 > V.forgeMaxHp(rules, s) * ((Wd.escapePlan(rules, s) || { hull: 0 }).hull + 1)) {
       const to = (goal && goal.id !== s.at && V.plan(rules, s, goal.id).ok ? [V.plan(rules, s, goal.id).route.hops[0]] : []).concat(g.adj[s.at].map((li) => { const l = g.lanes[li]; return l.a === s.at ? l.b : l.a; }));
       const hop = to.find((j) => V.plan(rules, s, j).ok);
       if (hop !== undefined && V.stitch(rules, s, hop).ok) { stitches++; fights.fled++; continue; }
@@ -214,7 +220,7 @@ export function captain(rules, seed, { events = false, length = 'full', start = 
     const trip = Math.max(goal && goal.days ? goal.days : 6, objDays) + 3;
     // before the last fight, a sensible captain gathers the ore it needs (mortal: a failed attack
     // costs hull, and can cost the life)
-    const lairShort = mortal && next === 'lair' ? Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) - fleetPower(rules, s.fleet) - FORGE_WORTH + 300 : 0;
+    const lairShort = mortal && next === 'lair' ? Math.trunc((LAIR_WORTH * (s.length === 'short' ? +(rules.content.wound || {}).ShortLairPct || 60 : 100)) / 100) + homeWorth() - fleetPower(rules, s.fleet) - FORGE_WORTH + 300 : 0;
     // a strong captain arms ahead of the Hands: a fleet to beat one, growing with the life
     const armUp = strong && fleetPower(rules, s.fleet) + FORGE_WORTH < 3200 + 45 * s.day && fleetPower(rules, s.fleet) + 450 <= 450 * (V.berthsOf(rules, s) - 4) && (s.stores.ore | 0) < 1200;
     const urgent = left.ice < 5 ? 'IceTail' : goal && (goal.kind === 'IceTail' || goal.kind === 'LanternMist' || goal.kind === 'OreReef') ? goal.kind : left.ice < Math.max(10, trip) ? 'IceTail' : lowGlim ? 'LanternMist' : lairShort > (s.stores.ore | 0) || armUp ? 'OreReef' : null;

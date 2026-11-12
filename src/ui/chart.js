@@ -370,7 +370,11 @@ export class ChartScreen {
       const Tr = p.trader ? this.rules.content.traders[p.trader] : null;
       if (Tr) { const hc0 = V.canHail(this.rules, s); btns.push(['trade', `Trade with ${Tr.Name} <kbd>C</kbd>`, !hc0.ok, hc0.ok ? `${Tr.Keeper ? `${Tr.Keeper}: ` : ''}their own stock, at your standing with the ${this.rules.content.factions[Tr.Faction].Name}` : hc0.why]); }
       else if (p.wayhouse) { const dp = V.driftersPlan(this.rules, s); btns.push(['drifters', dp.ok ? `Take ${dp.n} drifters aboard: a day` : 'Take the drifters aboard', !dp.ok, dp.ok ? (dp.n < dp.want ? `${dp.want} ask, and there are berths for ${dp.n}` : 'They need berths: crew quarters add more') : dp.why]); if (!dp.ok) why = dp.why; }
-      else if (id === V.lairAt(this.rules, s) && !(s.flags || []).includes('mainspring')) btns.push(['go', `Go in and face the Mainspring <kbd>Enter</kbd>`, false, 'The final battle: break its hearts and its coil, then its core. Bring frigates, destroyers and lances']);
+      else if (id === V.lairAt(this.rules, s) && !(s.flags || []).includes('mainspring')) {
+        // every Hand still alive comes home to defend it (unless the Twain drowns the call)
+        const home = Wd.handsHome(this.rules, s).length;
+        btns.push(['go', `Go in and face the Mainspring <kbd>Enter</kbd>`, false, `The final battle: break its hearts and its coil, then its core. Bring frigates, destroyers and lances.${home ? ` ${home === 1 ? 'The Hand still alive will come' : `All ${home} Hands still alive will come`} home to defend it: kill ${home === 1 ? 'it' : 'them'} first, or bring more.` : ''}`]);
+      }
       else if (Wd.caughtBy(this.rules, s)) btns.push(['go', `Go in and fight the Hand <kbd>Enter</kbd>`, false, 'Its Hour comes on with its pack, and grows more the longer the fight lasts. Kill it fast, or spool the Skein and run']);
       else btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);
       if (p.owner && this.rules.content.factions[p.owner] && !(this.comms && this.comms.isOpen)) this.hint('faction');

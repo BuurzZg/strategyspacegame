@@ -208,6 +208,24 @@ export function escape(rules, s, systems, note, maxHp = s.forge.hp) {
   if (note) note(s, `The Forge tears free of the Hand: −${e.hull}% hull, morale −${e.morale}, and the ${k} took a hit as the Skein spooled under fire.`, 'bad');
 }
 
+// A Hand's pack as it fights: its Hour, a Hound for every PackHound of power and a Tick for every
+// PackTick (more of both in a long life, every ship tougher: Milestone 24), two Feeders, and
+// Stingers and a Gnawer when it is strong. { ships, hpPct }
+export function handPack(rules, s, h) {
+  const C = W(rules), age = handAgePct(rules, s), more = (k) => Math.trunc((k * age) / 100);
+  const ships = ['hour'];
+  for (let k = 0; k < more(1 + Math.trunc(h.power / Math.max(1, num(C, 'PackHound', 120)))); k++) ships.push('hound');
+  for (let k = 0; k < more(3 + Math.trunc(h.power / Math.max(1, num(C, 'PackTick', 35)))); k++) ships.push('tick');
+  ships.push('feeder', 'feeder');
+  if (h.strong) ships.push('stinger', 'stinger', 'gnawer');
+  return { ships, hpPct: age };
+}
+// A Hand come home from the hunt: battered, its ships at HomePct of their hull
+export const homePack = (rules, s, h) => { const pk = handPack(rules, s, h); return { ships: pk.ships, hpPct: Math.max(1, Math.trunc((pk.hpPct * num(W(rules), 'HomePct', 100)) / 100)) }; };
+// The Hands that would come home to the lair (all still alive, but the one already there, `w`)
+// (unless Jacob remembers HomeUnless, the whole truth: then the Twain sings over the call)
+export const handsHome = (rules, s, w = null) => (W(rules).HomeUnless && remembers(s, String(W(rules).HomeUnless)) ? [] : woundOf(rules, s).hands.filter((h) => !w || h.id !== w.hand));
+
 // What a map at place `p` holds of the Wound: { hand, infested, roam } (any may be null), and
 // the slot for the Wound's player. pid: the place.
 export function mapWound(rules, s, g, pid) {
@@ -224,14 +242,8 @@ export function mapWound(rules, s, g, pid) {
   const encounters = [];
   let ichor = 0, plant = 0, grow = '';
   if (h) {
-    // a long life's Hands bring more Hounds and Ticks, and every ship tougher (Milestone 24)
-    const age = handAgePct(rules, s), more = (k) => Math.trunc((k * age) / 100);
-    const ships = ['hour'];
-    for (let k = 0; k < more(1 + Math.trunc(h.power / Math.max(1, num(C, 'PackHound', 120)))); k++) ships.push('hound');
-    for (let k = 0; k < more(3 + Math.trunc(h.power / Math.max(1, num(C, 'PackTick', 35)))); k++) ships.push('tick');
-    ships.push('feeder', 'feeder');
-    if (h.strong) ships.push('stinger', 'stinger', 'gnawer');
-    encounters.push({ ships, behaviour: 'hand', hpPct: age });
+    const pk = handPack(rules, s, h);
+    encounters.push({ ships: pk.ships, behaviour: 'hand', hpPct: pk.hpPct });
     ichor += h.power * num(C, 'IchorPer', 3);
     grow = h.strong ? 'feeder, tick, chime, stinger, hound, gnawer' : 'feeder, tick, chime, stinger, hound';
   }
@@ -251,15 +263,20 @@ export function mapWound(rules, s, g, pid) {
 
 // The Mainspring's lair (Milestone 22): the demon lord at the far end of the map, its pack
 // beside it, Nurseries on the rocks, and ichor to grow more (voyage.yaml Wound: Lair*). A Hand
-// that happens to be there joins it.
+// that happens to be there joins it, and (Milestone 24) every other Hand still alive comes home
+// to defend it: their packs stand beside the lair. Kill the Hands first, and the last battle is
+// smaller.
 export function lairWound(rules, s, g, pid, w = null) {
   const C = W(rules), list2 = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean);
   const pct = s.length === 'short' ? num(C, 'ShortLairPct', 100) : 100, pack = list2(C.LairPack);
   const encounters = [{ ships: ['mainspring'], behaviour: 'lair', at: [82, 50] }, { ships: pack.slice(0, Math.max(1, Math.trunc((pack.length * pct) / 100))), behaviour: 'lair', at: [70, 38] }];
   if (w) for (const e of w.encounters) encounters.push(e);
+  let ichor = 0;
+  const home = handsHome(rules, s, w);
+  home.forEach((h, i) => { const pk = homePack(rules, s, h); encounters.push({ ships: pk.ships, behaviour: 'lair', at: [74, i % 2 ? 68 : 24], hpPct: pk.hpPct }); ichor += h.power * num(C, 'IchorPer', 3); });
   return {
-    hand: w ? w.hand : 0, infested: false, roam: false, lair: true, encounters, haze: 100,
-    slot: { lairPct: pct, ichor: Math.trunc((num(C, 'LairIchor', 1200) * pct) / 100) + (w ? w.slot.ichor : 0), plant: num(C, 'LairNurseries', 2), hand: 'lair', delay: 0, grow: 'feeder, tick, chime, stinger, hound, gnawer', growPct: num(C, 'LairGrowPct', 100), nurseries: num(C, 'LairNurseries', 2) },
+    hand: w ? w.hand : 0, home: home.map((h) => h.id), infested: false, roam: false, lair: true, encounters, haze: 100,
+    slot: { lairPct: pct, ichor: Math.trunc((num(C, 'LairIchor', 1200) * pct) / 100) + (w ? w.slot.ichor : 0) + ichor, plant: num(C, 'LairNurseries', 2), hand: 'lair', delay: 0, grow: 'feeder, tick, chime, stinger, hound, gnawer', growPct: num(C, 'LairGrowPct', 100), nurseries: num(C, 'LairNurseries', 2) },
   };
 }
 
@@ -272,6 +289,17 @@ export function afterMap(rules, s, g, pid, r, { note = null, gain = null } = {})
   const up = (r.burned | 0) * num(C, 'Burned') + (r.hours | 0) * num(C, 'HourKilled');
   if (up) raise(rules, s, up, note);
   const h = wd.hands.find((x) => x.at === pid);
+  // at the lair, the Hours killed beyond the Hand that was there were Hands that came home
+  if (r.lair) {
+    let extra = (r.hours | 0) - (h && r.hand ? 1 : 0);
+    for (const x of [...wd.hands]) {
+      if (extra <= 0) break;
+      if (x === h) continue;
+      wd.hands = wd.hands.filter((y) => y !== x); wd.gone++; extra--;
+      wd.reprieve = (wd.reprieve | 0) + num(C, 'KillReprieve');
+      if (note) note(s, 'A Hand that came home to the lair died there with its Hour. It will not come back in this life.', 'good');
+    }
+  }
   if (h && r.hand) {
     if (r.hours > 0) {
       wd.hands = wd.hands.filter((x) => x !== h);

@@ -218,9 +218,9 @@ async function mapWith(type, extra) {
   const rows = [];
   let ok = true;
   for (const seed of [2, 5]) {
-    const c = campaign(rules, seed, { events: true, mortal: true }), s = c.s, visits = c.visits, stitches = c.stitches;
+    const c = campaign(rules, seed, { events: true, mortal: true, story: true }), s = c.s, visits = c.visits, stitches = c.stitches;
     const seen = new Set(c.lives.flatMap((r) => r.s.seen));
-    const ended = s.won && seen.has('Ending') && seen.has('Prologue') && ['coils', 'lens', 'spindle', 'heartstone'].every((id) => [...seen].some((e) => e.toLowerCase().startsWith(id)));
+    const ended = s.won && (seen.has('Ending') || seen.has('TrueEnding')) && seen.has('Prologue') && ['coils', 'lens', 'spindle', 'heartstone'].every((id) => [...seen].some((e) => e.toLowerCase().startsWith(id)));
     if (!ended) ok = false;
     rows.push(`seed ${seed}: ${s.won ? `home in life ${c.lives.length}` : s.over ? s.over.reason : 'stuck'} on day ${s.day}, ${visits} visits, ${stitches} stitches, ${seen.size} events seen`);
   }

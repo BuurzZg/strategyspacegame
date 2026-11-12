@@ -290,6 +290,16 @@ async function handMap(seed = 4, extra = [], secs = 420) {
   const to = g5.adj[s5.at].map((li) => (g5.lanes[li].a === s5.at ? g5.lanes[li].b : g5.lanes[li].a)).find((j) => V.plan(rules, s5, j).ok);
   V.stitch(rules, s5, to);
   check(s5.over && s5.over.reason === 'forge' && /tearing free/.test(s5.over.text), `tearing free under fire with only 5% of the hull left: "${s5.over && s5.over.text}"`);
+  // every Hand still alive comes home to defend the lair, unless Jacob knows the whole truth
+  const s6 = life(50), g6 = V.galaxyOf(rules, s6), lair = V.lairAt(rules, s6);
+  s6.wound.hands.push({ id: 11, at: g6.start, power: 200, strong: false, next: 999, caught: false }, { id: 12, at: g6.start, power: 260, strong: true, next: 999, caught: false });
+  const lw = Wd.lairWound(rules, s6, g6, lair, null);
+  const homes = lw.encounters.filter((e) => e.ships[0] === 'hour');
+  check(homes.length === 2 && lw.home.length === 2, `at the lair, every Hand still alive comes home to defend it: ${homes.length} Hours and their packs beside the Mainspring (${homes.map((e) => e.ships.length).join(' and ')} ships)`);
+  Wd.afterMap(rules, s6, g6, lair, { lair: { dead: false }, hand: 0, hours: 1, burned: 0, planted: 0, nurseries: 0 });
+  check(s6.wound.hands.length === 1 && s6.wound.gone === 1, 'an Hour killed at the lair is one of the Hands that came home: gone for the life');
+  V.remember(rules, s6, String(W.HomeUnless), { quiet: true });
+  check(Wd.lairWound(rules, s6, g6, lair, null).encounters.every((e) => e.ships[0] !== 'hour'), 'once Jacob knows the whole truth, the Twain sings over the call: no Hand comes home');
 }
 
 // ---------------------------------------------------------------- 8. old saves, and roaming packs

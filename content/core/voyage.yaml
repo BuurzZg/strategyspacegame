@@ -303,5 +303,10 @@ Wound:
 	# (its pods are slower than an Hour's: percent of each ship's growing time)
 	LairGrowPct: 160
 	LairIchor: 400
+	# every Hand still alive comes home to defend the lair (Milestone 24), its ships at HomePct
+	# percent of their hull; unless Jacob remembers HomeUnless (the whole truth, from Deck 9): then
+	# the Twain sings over the Mainspring's call, and the Hands never hear it
+	HomePct: 100
+	HomeUnless: truth
 	# on a short voyage the Mainspring and its pack are this much of themselves (percent)
 	ShortLairPct: 100

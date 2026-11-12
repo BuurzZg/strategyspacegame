@@ -245,12 +245,13 @@ const clone = (s) => JSON.parse(JSON.stringify(s));
 // 9. The abstract captain: plays the galaxy layer to the end with simple rules, and visits that
 // yield what a short stay at that kind of place would (no maps are played). It shows the voyage
 // can be won, and roughly how long it takes. Since Milestone 24 it plays the real loop: a life
-// ends when the Wound gets the Forge, and it wakes and goes on (drive parts only, no story).
+// ends when the Wound gets the Forge, and it wakes and goes on, to the true ending (without the
+// whole truth, every Hand alive defends the lair, and the lesser escape is rare).
 {
   const rows = [];
   let allWon = true;
   for (const seed of [1, 2, 3]) {
-    const c = runCampaign(rules, seed, { mortal: true }), s = c.s, visits = c.visits, stitches = c.stitches;
+    const c = runCampaign(rules, seed, { mortal: true, story: true, events: true }), s = c.s, visits = c.visits, stitches = c.stitches;
     if (!s.won) allWon = false;
     // a rough play time: ten minutes a map, half a minute per stitch on the chart
     rows.push(`seed ${seed}: ${s.won ? `home in life ${c.lives.length}` : `lost (${s.over ? s.over.reason : 'stuck'})`} on day ${s.day}, ${visits} visits, ${stitches} stitches, ~${Math.round((visits * 10 + stitches * 0.5) / 6) / 10} h, crew ${count(s.crew)}`);
