@@ -338,6 +338,11 @@ body.at-chart #cgroups, body.at-chart #move-hint, body.at-chart #skein { display
 #pc-class { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 #pc-class i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: 0; }
 #pc-desc { margin: 8px 0 0; font-size: 13px; }
+#pc-lair { margin: 8px 0 0; padding: 7px 10px 6px; border: 1px solid var(--line); border-left: 3px solid var(--hostile); background: rgba(0, 0, 0, 0.2); font-size: 13px; }
+#pc-lair p { margin: 0; }
+#pc-lair h3 { margin: 6px 0 2px; font: 500 11px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--height); }
+#pc-lair ol { margin: 0; padding-left: 18px; }
+#pc-lair li { margin: 3px 0; }
 #pc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 6px 12px; margin: 10px 0 0; }
 #pc-stats div { display: flex; flex-direction: column; }
 #pc-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -848,6 +853,7 @@ body.at-narration #chart, body.at-narration #overlay { visibility: hidden; }
       <header><h2 id="pc-name"></h2><span id="pc-status"></span></header>
       <p id="pc-class"></p>
       <p id="pc-desc"></p>
+      <div id="pc-lair" hidden></div>
       <dl id="pc-stats"></dl>
       <div id="pc-btns"></div>
       <p id="pc-why"></p>

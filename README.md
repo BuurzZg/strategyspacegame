@@ -5,6 +5,8 @@ You command the **Forge**, a kilometre-long foundry-city of the Meridian Hollow,
 
 See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions behind it.
 
+**Story update (after Milestone 24):** the Company is an order of faith and technology, and its emblem a cross (a placeholder design for now); the opening wakes the crew under the emblem and ends with Jacob's status report, which names every ship's system he remembers; Erik's refusal reads the same in his memories and the narration; the lair's card spells out its choice: hunt the Hands down first, or remember the whole truth. See [The story](#the-story).
+
 **Status: Milestone 24, whole campaigns.** The death loop is the game now. A long life gets dangerous through play, and the test captain plays the real loop: it dies, wakes with its memories and goes further each life.
 
 - **A long life is a loud one.** The days count for more the longer a life lasts (a day's attention times 4, then 8 from day 20, then 12 from day 40), so a Hand sets out around day 25 to 30 even in a first life. Hands grow with the life: 15% more Hounds and Ticks, every ship 15% tougher, for every 30 days. From day 60 a second, strong Hand hunts whatever the attention. From day 42 the Hands keep the trail: they follow the Forge itself, a lane a day, and rest only two days after you tear free.
@@ -30,7 +32,7 @@ See [PLAN.md](PLAN.md) for the full design, the milestone plan and the decisions
 **Milestone 22, the story:** The story is in, from the waking to the Shore:
 
 - **Twelve story memories, act by act,** each at a story place on the chart, found by cutting into its hulk or given by the people who remember: the Anchorage and the Steward in the Drift; a research hulk, a Moot tally-barge, a prison barge and the Tallow Bell's Deacon in the Middens; the Knotfolk's reliquary-ship, the Choir, the Meridian Horologe and the Tithe Barge in the Hush; the Cinder Pact's Founding Hall at the Shore. **Deck 9** opens at the Shore once every other one is known. Each story memory raises the Mainspring's attention. A chain of clues and events leads from one to the next.
-- **New peoples:** the **Wardens of Ninefold** (the Knotfolk, who fire on the hammer-and-cog on sight), the **Ragged Clans**, the **Brass Reavers**, and the **Hollowkin** holds, visited from the chart: **the Waiting**, who kept a beacon lit for six generations, and **the Unforgiving**, whose children skip to a rhyme about you.
+- **New peoples:** the **Wardens of Ninefold** (the Knotfolk, who fire on the cross-and-orbit on sight), the **Ragged Clans**, the **Brass Reavers**, and the **Hollowkin** holds, visited from the chart: **the Waiting**, who kept a beacon lit for six generations, and **the Unforgiving**, whose children skip to a rhyme about you.
 - **The date:** the bridge and the chart say **Meridian date: UNKNOWN** until the Horologe is remembered. After the Anchorage they show its last record. From the Horologe on, the Empire's running clock: 147 years, 3 months and 15 days since the last record.
 - **The Mainspring,** the demon lord, waits in its **lair** at the Shore's edge, near the Heartstone. Its **two hearts and its coil** ward its core; it regrows from the battle's dead, gestates its pack and drags time. Every minute **the Twain** answers it, holding the Wound near the Forge still for a few seconds. Kill it, and the final jump opens. (Ships no longer waste fire on a warded target, and a great hull is seen through the fog by its flank, not its middle.)
 - **Two endings:** escape with gaps in the story, or, with every memory, **the true ending and a final choice**: pay the debt, part the halves, or keep the Twain whole (decision 38: all three, the player's choice).
@@ -498,6 +500,10 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 
 ### The story
 
+- **The Company** is the Smith Foundry Company, and also an order of faith and technology, Christian-inspired. It looks like a far-future ship's crew, not a church; its faith shows only in small things: the cross emblem, a pendant, a painted icon tucked into a station's frame. The emblem is a cross joined with a scientific symbol. Its final design is open: the text uses a placeholder, *a cross with an orbit drawn through its arms*.
+- **The opening:** dark, then the emblem above the helm catching the first light; the bridge lamps flicker and hold; the crew wake asking what happened, and Jacob asks for a status report. In the first life: "Nothing's working, Captain." In later lives: "Nothing's working, Captain, except the radar...", naming every ship's system Jacob remembers (the radar, the drive parts, the hazard gear, silent running).
+- **Erik:** the Company was the tech demons' hostage. For years it fed the Mainspring captives on Erik's orders; when he saw each offering made the Mainspring stronger, he refused to send another, and the Anchorage burned for it.
+
 | Act | Region | Story places (and who remembers) | Memories |
 | --- | --- | --- | --- |
 | I | the Drift | the Anchorage; the Steward, Erik's yacht; the first fight with the Wardens of Ninefold | the emblem (and the radar); "We are here to help"; the old man's ship |
@@ -508,6 +514,7 @@ The engineers have a fix on one part at a time: first a circle, then the gold ri
 - **Finding them:** each place's events point to the next with a clue circle on the chart, and the Shearers cut each memory out of its hulk. Their memories stay in every life. The Hollowkin holds, the Waiting and the Unforgiving, are in the Middens; hail them with `C`.
 - **The date:** UNKNOWN; after the emblem, the Anchorage's last record (Year 4324, Month 3, Day 2); after the Horologe, the running Meridian date (it wakes each life at Year 4471, Month 6, Day 17, 06:42:19).
 - **The final battle:** go in at the lair. Break the two **hearts** and the **coil** and the core opens. Bring frigates, destroyers and lances: the Mainspring grows Stingers against big hulls and Chimes against fighters. The final jump needs the Heartstone and the Mainspring dead. On a short voyage it is 60% of itself.
+- **The lair's choice** (on its card): every Hand still alive comes home to defend the Mainspring. Hunt them down first and the Forge can break it and escape without the whole truth (the lesser ending: rare, and hard). Or remember the whole truth first: the Twain sings over the call, no Hand comes, and the end is the true one.
 - **The endings:** without the whole truth, the escape. With it, the true ending and a final choice: give the Twain to the Mainspring, give the stolen half back to the Knotfolk, or keep it whole. Then the narration plays (`Space` or a click for the next line, `Esc` to skip).
 - **Where the words live:** `content/core/memories.yaml` (memories and story places), `content/core/events/story.yaml` (their events and the endings), `content/core/dialogs/` (the peoples), `content/core/narration.yaml` (Jacob's narration).
 

@@ -4,10 +4,10 @@
 ragged:
 	Start: hello
 	Node@hello:
-		Say: Cog. Cog-ship. Our grandmothers' grandmothers told us your shape. You came with cages.
-		Say@Wary: Cog-ship. You speak, we listen. Slowly.
-		Say@Neutral: Cog-ship. You are not what the stories said. Or not only.
-		Say@Friendly: Old cog. The clans will trade with you. Some of us.
+		Say: Cross. Cross-ship. Our grandmothers' grandmothers told us your shape. You came with cages.
+		Say@Wary: Cross-ship. You speak, we listen. Slowly.
+		Say@Neutral: Cross-ship. You are not what the stories said. Or not only.
+		Say@Friendly: Old cross. The clans will trade with you. Some of us.
 		Choice@trade:
 			Text: We'd trade.
 			If: tier >= Neutral, where chart

@@ -122,15 +122,18 @@ Targets, all measured by the test bot:
 
 ### The opening (short, and confusing on purpose)
 
-- **Only the awakening.** Jacob and his crew wake on the Forge's bridge. White light, alarms, hot brass.
-- **Bodies remember, minds don't.** Their hands know the helm and their habits know the ship, but nobody knows where they are, what happened, or why they're here.
-- **The crew's names:** they read them off their uniforms.
-- **Then control passes to the player.** The opening is a few lines, not a cutscene. It replaces today's prologue in Milestone 15.
+- **The emblem first.** Dark; the view passes over the Company's emblem on the plate above the helm as it catches the first light. Then the bridge lamps flicker, die, flicker again, and hold. For now this is told in the opening's text; a real camera pass over a modelled emblem can come later, once the emblem's final design is chosen.
+- **The crew wake.** People stir at their stations and ask what happened. Nobody knows.
+- **"Status report."** Jacob's first words are a call for a ship status report. The answer depends on what he remembers:
+  - first life: *"Nothing's working, Captain."*
+  - later lives: *"Nothing's working, Captain, except the radar"*, listing every ship's system Jacob remembers (the radar, the drive parts, the hazard gear, silent running), in the Loom's order. Each such memory carries a `Status` name in `memories.yaml`, and the content lint makes sure none is missing.
+- **Bodies remember, minds don't.** Their hands know the helm and their habits know the ship, but nobody knows where they are, what happened, or why they're here. The crew read their names off their uniforms.
+- **Then control passes to the player.** The opening is a few lines, not a cutscene: the prologue event in the first life (then the signal and the dark chart), the waking event in every life after.
 - **The first guess is wrong.** At first everyone assumes they have been out for hours, or days.
 
 ### What happened before the game
 
-1. **The Company.** The Smith Foundry Company (proposed name; "the Company" in speech) is a powerful family House of a great empire, the Meridian Hollow. It comes to the Wrack, the galaxy without worlds, on a mission to study **Ninefold**, the only planet in it.
+1. **The Company.** The Smith Foundry Company (proposed name; "the Company" in speech) is a powerful family House of a great empire, the Meridian Hollow. It is also an **order of faith and technology**, Christian-inspired, but it looks like a far-future spaceship crew, not a church: uniforms, ranks, a bridge, a foundry. Its faith shows only in small details: the cross emblem, a pendant on a chain, a small painted icon tucked into a station's frame. **The emblem** is a cross joined with a scientific symbol. Its final design is open; until it is chosen, the game's text uses a placeholder: *a cross with an orbit drawn through its arms* ("the cross and orbit", and "Cross-ship" in the mouths of those who hate it). It comes to the Wrack, the galaxy without worlds, on a mission to study **Ninefold**, the only planet in it.
 2. **The mission was good.** It was meant to cure **the Fray**, a sickness of people who travel through folded space. Not everyone believed that.
 3. **The Anchorage.** The Company builds the Anchorage, a station in the Drift within sight of Ninefold and the dead star Orrin.
 4. **Erik and Jacob.** Dr. Erik Smith, head of the family and the Company's chief, leads the mission. He lets his grandfather, Dr. Jacob Smith, run a private "retirement project" aboard his own mothership, the Forge, under the Company's protection.
@@ -298,7 +301,7 @@ No one is sure.
 ### The havens
 
 - **Who they are:** the Company's survivors settled moons, large asteroids and wrecks. After 147 years their descendants, the **Hollowkin** (proposed name, from the Meridian Hollow), have gone different ways:
-  - **Tribes:** primitive wreck-dwellers who paint the hammer-and-cog emblem on their hulls as a tribal sign, not knowing what it means;
+  - **Tribes:** primitive wreck-dwellers who paint the Company's cross emblem on their hulls as a tribal sign, not knowing what it means;
   - **Holds:** havens on small moons with some industry, but no spaceflight. You visit them from the chart, and they trade, offer crew and tell legends;
   - **Raiders:** **the Brass Reavers** (proposed name), descendants who stripped Company wrecks for brass and turned pirate.
 - **The legend:** every haven has a version of "the old man with the great ship".
@@ -341,7 +344,7 @@ Each one is darker than the last. Each is found at a story location placed by th
 
 | # | Act | Memory | Where it is found | What it reveals |
 | --- | --- | --- | --- | --- |
-| 1 | I | **The emblem** | The Anchorage's hulk, with the radar | The hammer-in-cog of the Smith Foundry Company is on the station, the Forge and the uniforms. The skeletons are old. The last log gives the **last record** date |
+| 1 | I | **The emblem** | The Anchorage's hulk, with the radar | The cross emblem of the Smith Foundry Company is on the station, the Forge and the uniforms, and on a pendant round a dead woman's neck: a faith and a foundry on one badge. The skeletons are old. The last log gives the **last record** date |
 | 2 | I | **"We are here to help"** | The Steward, Erik's wrecked yacht | Erik's recording opening the Anchorage: "We are here to help." After the Knotfolk's attacks and a tribal ship wearing our emblem, it sounds hollow |
 | 3 | I | **The old man's ship** | The Forge's registry, after the first fight with the Knotfolk | The Forge is the private ship of Dr. Jacob Smith, Erik's grandfather. You are Jacob, and you are the old man in the havens' legend. Deck 9 is sealed |
 | 4 | II | **The Fray** | A Company research hulk | The Fray is killing the empire, and it killed Erik's mother. Ninefold does not fray. The mission was a cure |
@@ -351,8 +354,8 @@ Each one is darker than the last. Each is found at a story location placed by th
 | 8 | III | **The other half** | The Knotfolk's reliquary-ship in the Hush, still guarding an empty case | Jacob's life's work: half of the Twain, carried for decades, and the other half here. The retirement project was the search, and the mission was his way in. The Knotfolk were right about him |
 | 9 | III | **The waking** | The Choir, who felt the two halves meet | Jacob stole the other half. When the halves met, everything that keeps time flinched, and the Mainspring woke and wound the galaxy shut. Whether he knew is not said |
 | — | III | **The Meridian Horologe** (knowledge, not a story memory) | The clock station in the Hush | The official date, running from then on: 147 years since the last record |
-| 10 | III | **The offering** | The tithe barge, where the captives were given | The Company was the demons' hostage: feed the Mainspring, or lose the Anchorage. Its ships took captives from the clans and gave them to it, on Erik's orders, with Jacob beside him. Erik signed every order and kept every name. Each offering made it stronger |
-| 11 | IV | **Enough** | The Cinder Pact's founding hall, at the Shore | Erik saw that the offerings were feeding the demon lord, not calming it, and refused. As punishment the Hands fell on the Anchorage, and it burned for three days. Erik held the line so the evacuation ships could get away (the havens' ancestors), and stayed to the end. The Pact keep his story, and blame the old man |
+| 10 | III | **The offering** | The tithe barge, where the captives were given | The Company was the tech demons' hostage: feed the Mainspring, or lose the Anchorage. For years its ships took captives from the clans and gave them to it, on Erik's orders, with Jacob beside him. Erik signed every order and kept every name, believing each one bought the Anchorage time. Each offering made it stronger |
+| 11 | IV | **Enough** | The Cinder Pact's founding hall, at the Shore | Erik saw that the offerings were feeding the demon lord, making the Mainspring stronger, not calming it, and finally refused to send another. As punishment the Hands fell on the Anchorage, and it burned for three days. Erik held the line so the evacuation ships could get away (the havens' ancestors), and stayed to the end. The Pact keep his story, and blame the old man |
 | 12 | IV | **The whole truth** | Deck 9, which opens at the Shore once every other memory is known | The Twain stopped time around Jacob and the Forge, and saved him; he did not deserve it. Why it did, and what it is, nobody knows. Why he woke now, and why he keeps coming back (decisions 29 and 30). Then the confrontation |
 
 ### Who plays which part
@@ -373,7 +376,7 @@ Each one is darker than the last. Each is found at a story location placed by th
 
 ### Strong moments (proposals)
 
-1. **Our mark on their hull** (Act I). A Hollowkin tribal skiff limps into view with the hammer-in-cog painted on its hull, crudely, upside down. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
+1. **Our mark on their hull** (Act I). A Hollowkin tribal skiff limps into view with the cross emblem painted on its hull, crudely, upside down. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
 2. **The ones who waited** (Act II). A Hollowkin hold has kept a landing beacon lit for six generations. When the Forge arrives they kneel, and their elder says their ritual brought him back. Then she asks Jacob to keep a promise he doesn't remember making. What the promise was is left open for a later memory or an add-on.
 3. **The ones who curse** (Act II). At an Unforgiving haven, children chant a skipping rhyme: "Old man, old man, great black ship, took the clans and fed the coil." The player hears it long before knowing it's true.
 4. **Smaller moments:**
@@ -1163,7 +1166,8 @@ The decisions made after the story update:
 | 39 | Making long lives dangerous (Milestone 24) | **Approved:** attention grows with the length of a life; the Hands grow with the life; the bot plays the real death loop. The galaxy thins out only mildly: the stripped-places rule (already in: −35% a return, floor 30%); faster wear and slower restocks only if the numbers called for them (they did not) |
 | 40 | Campaign length (Milestone 24) | The first measurements showed the story itself took 10–15 hours of play even in one flawless life, so 6–10 hours could not be reached by dying sooner. **Shorten the campaign:** the crew's water need halved; charted space (a lane stitched before, in any life, takes a day and half the Glim); then the Hands tuned so lives end around day 80–100. Also: every life wakes with full tanks; tearing free with too little hull destroys the Forge; a killed Hour buys 45 days; small galaxies age twice as fast, are hunted from day 1, and fight a full-strength Mainspring |
 | 41 | Campaign targets (Milestone 24) | Proposed 5–8 lives, 40–90 minutes a life, 6–10 hours. Measured with lighter logistics, still about 11 hours at best: **adjusted** (the designer had no preference between the options; the recommended one was taken) to 5–8 lives and 9–13 hours on a full galaxy, 3–5 lives and 5–9 hours on a small one, 60–130 minutes a life. Approved for now, to be retuned from testers' feedback. A first-life escape: possible but rare on both sizes (decision 42) |
-| 42 | A small galaxy's first life was escaped too often | **Approved:** surviving Hands come home to defend the Mainspring's lair (at full strength). So that the true-ending battle stays as it was (and the campaign targets hold), they don't come once Jacob remembers the whole truth: the Twain sings over the call. Measured: a first-life escape by a strong player 1 seed in 8, by an ordinary one 0 in 8, on both sizes; campaigns unchanged (full 6.5 lives, 12.8 hours; small 5 lives, 8.2 hours). Consequence: without the whole truth every attack on the lair meets the Hands, so the escape ending is rare in every life (a drive-only campaign escapes on about a third of seeds for a strong player within 14 lives); the reachability tests now play to the true ending |
+| 42 | A small galaxy's first life was escaped too often | **Approved, with the whole-truth exception:** surviving Hands come home to defend the Mainspring's lair (at full strength). So that the true-ending battle stays as it was (and the campaign targets hold), they don't come once Jacob remembers the whole truth: the Twain sings over the call. Measured: a first-life escape by a strong player 1 seed in 8, by an ordinary one 0 in 8, on both sizes; campaigns unchanged (full 6.5 lives, 12.8 hours; small 5 lives, 8.2 hours). Consequence: without the whole truth every attack on the lair meets the Hands, so the escape ending is rare in every life (a drive-only campaign escapes on about a third of seeds for a strong player within 14 lives); the reachability tests now play to the true ending. The designer keeps the lesser escape rare but possible, for players who hunt the Hands down before the lair; the lair's card spells out the choice (hunt the Hands down first, or remember the whole truth) |
+| 43 | The Company's faith, the emblem and the opening (story update) | **The designer's update:** the Company is an order of faith and technology, Christian-inspired, that looks like a far-future crew, not a church; faith shows only in small details (the cross emblem, a pendant, a small icon at a station). The emblem is a cross joined with a scientific symbol, its final design open (placeholder: a cross with an orbit drawn through its arms). The opening passes over the emblem, the lamps flicker, the crew wake asking what happened, and Jacob asks for a status report: "Nothing's working, Captain", and in later lives "... except the radar", naming every system he remembers. Erik: the Company was the tech demons' hostage; he finally refused to keep sacrificing when he saw it made the Mainspring stronger (memories 10 and 11, the events and the narration all say so) |
 | — | The style guide | **Approved as shown**: palette, type, the chart on parchment, instruments, ships |
 | — | The force | **A real RTS faction: the tech demons.** Their lord is a living mothership (the Mainspring), their fleets are the Hands, and the final battle is mothership against mothership |
 

@@ -19,6 +19,8 @@
 #   Seen         a hazard (hazards.yaml): it can be recalled only once you have been turned away by it
 #   By           event: a story event gives it (events/story.yaml), not a place or the Loom
 #   Ready        false: its system comes in a later milestone; until then it stays a question mark
+#   Status       a ship's system: what the crew call it when it is working (the waking status
+#                report lists every one Jacob remembers: "Nothing's working, Captain, except ...")
 #
 # Anchors: where story memories wait. The generator places each one in its region, a number of
 # stitches (Hops) from the wake-up point, and turns that place into the given Type. Clue is the
@@ -110,6 +112,7 @@ radar:
 	Order: 1
 	Found: anchorage
 	Gives: radar
+	Status: the radar
 	Text: The sensor array's long watch. The chart lights up as far as the sensors reach, and deep scans work.
 	Hint: The chart is dark. Somewhere there is a way to light it.
 
@@ -120,7 +123,7 @@ emblem:
 	Order: 2
 	Found: anchorage
 	Echoes: 1
-	Text: A hammer inside a cog, on the station, on the Forge's own hull plates, on every uniform aboard. It belonged to a company. It still belongs to us. The station's last dated log is a hundred years of dust deep.
+	Text: A cross with an orbit drawn through its arms, on the station, on the Forge's own hull plates, on every uniform aboard, and small, on a pendant round a dead woman's neck. A faith and a foundry on one badge. It belonged to a company. It still belongs to us. The station's last dated log is a hundred years of dust deep.
 	Hint: A mark on the hull that nobody aboard can explain.
 
 help:
@@ -221,7 +224,7 @@ offering:
 	Hint: What was the price?
 	Found: tithe
 	Echoes: 1
-	Text: The Company was the demons' hostage: feed the Mainspring, or watch the Anchorage unmade. So its ships took captives from the clans and gave them to it, here, on this barge. On Erik's orders, with you beside him. Erik signed every order and kept every name. Each offering made it stronger.
+	Text: The Company was the demons' hostage: feed the Mainspring, or watch the Anchorage unmade. So its ships took captives from the clans and gave them to it, here, on this barge. On Erik's orders, with you beside him, for years. Erik signed every order and kept every name, believing each one bought the Anchorage another season. Each offering made it stronger.
 
 enough:
 	Name: Enough
@@ -231,7 +234,7 @@ enough:
 	Hint: Who said no?
 	Found: hall
 	Echoes: 1
-	Text: Erik saw it first: the offerings were feeding the thing, not calming it. He said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days. Erik held the docks while the evacuation ships got away, and then he did not get away. Every haven out there is alive because of him. The Cinder Pact keep his story, and blame the old man.
+	Text: Erik saw it first: the offerings were feeding the thing, not calming it. Every one made the Mainspring stronger. So he refused to send another. He said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days. Erik held the docks while the evacuation ships got away, and then he did not get away. Every haven out there is alive because of him. The Cinder Pact keep his story, and blame the old man.
 
 truth:
 	Name: The whole truth
@@ -252,6 +255,7 @@ coils:
 	Found: coils
 	Echoes: 1
 	Gives: drive coils
+	Status: the thread coils
 	Text: Spools of thread-metal that hold a stitch open longer. The engineers' hands knew how to wind them before their heads did. The drive reaches the Middens.
 	Hint: The drive stitches short. It used to reach further.
 
@@ -264,6 +268,7 @@ lens:
 	Needs: coils
 	Echoes: 1
 	Gives: drive lens
+	Status: the lens
 	Text: A lens of something that is not quite glass. Through it, the Veil looks like an open door, and the drive can stitch through it into the Hush.
 	Hint: There is a wall of light the drive cannot thread.
 
@@ -276,6 +281,7 @@ spindle:
 	Needs: lens
 	Echoes: 1
 	Gives: drive spindle
+	Status: the anchor spindle
 	Text: The heavy core that keeps a long stitch from fraying. The drive makes long stitches now, out to the Shore.
 	Hint: Some gaps are too long to stitch.
 
@@ -288,6 +294,7 @@ heartstone:
 	Needs: spindle
 	Echoes: 1
 	Gives: drive heartstone
+	Status: the heartstone
 	Text: A warm stone the size of a house, the drive's heart. From the Shore's edge, the Forge can make the final jump.
 	Hint: The way out, if there is one.
 
@@ -300,6 +307,7 @@ shields:
 	Seen: shoals
 	Cost: 2
 	Gives: open shoals
+	Status: the shields
 	Text: The shield generators hum awake. The asteroid shoals open.
 	Hint: Turned away from a shoal, the engineers can't stop talking about the shields. Two echoes, and someone remembers how they worked.
 
@@ -311,6 +319,7 @@ baffles:
 	Seen: embers
 	Cost: 2
 	Gives: open embers
+	Status: the heat baffles
 	Text: The boilers' heat baffles, rebuilt from memory. The ember lanes near Orrin open.
 	Hint: Close to the dead star, the hull would cook. Someone once knew how to shed that heat.
 
@@ -322,6 +331,7 @@ rods:
 	Seen: static
 	Cost: 2
 	Gives: open static
+	Status: the lightning rods
 	Text: Brass rods along the spine to bleed the storms off. The static fields open.
 	Hint: Every needle spins in the storms. There used to be rods for that.
 
@@ -333,6 +343,7 @@ lead:
 	Seen: glare
 	Cost: 2
 	Gives: open glare
+	Status: the lead in the decks
 	Text: The crew line the decks with lead, and the surgeon stops looking worried. The Glare opens.
 	Hint: A light that makes people sick. The old decks had lead in them for a reason.
 
@@ -344,6 +355,7 @@ silent:
 	Needs: rods
 	Cost: 2
 	Gives: silent
+	Status: silent running
 	Text: Baffled stacks, banked boilers, no chatter on the open bands. The Forge goes quiet, and whatever was listening loses it: the Wound's attention falls a little every day, and the Hands only hear the Forge where it fights.
 	Hint: Something out there is listening.
 

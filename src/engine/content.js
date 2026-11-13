@@ -163,6 +163,13 @@ export function lintContent(rules) {
       else if (!['radar', 'drive', 'hull', 'echoes', 'open', 'room', 'silent'].includes(op)) errs.push(`memories: ${id}.Gives: unknown effect "${g}"`);
     }
   }
+  // a ship's system (the radar, a drive part, hazard gear, silent running) has a Status: what the
+  // crew call it in the waking status report; nothing else does
+  for (const [id, m] of Object.entries(M)) {
+    const system = list(m.Gives).some((g) => ['radar', 'drive', 'open', 'silent'].includes(g.split(/\s+/)[0]));
+    if (system && !m.Status) errs.push(`memories: ${id}: a ship's system needs a Status (its name in the status report)`);
+    if (!system && m.Status) errs.push(`memories: ${id}.Status: only a ship's system (Gives radar, drive, open or silent) has one`);
+  }
   for (const [id, m] of Object.entries(M)) if (m.Seen && !(rules.content.hazards || {})[m.Seen]) errs.push(`memories: ${id}.Seen: unknown hazard "${m.Seen}"`);
   for (const [id, h] of Object.entries(rules.content.hazards || {})) {
     if (!M[h.Opens]) errs.push(`hazards: ${id}.Opens: unknown memory "${h.Opens}"`);

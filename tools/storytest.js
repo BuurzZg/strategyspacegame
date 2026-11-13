@@ -8,7 +8,9 @@ import { rules as loadCore, makeWorld } from './headless.js';
 import { makeOrder } from '../src/engine/order.js';
 import * as V from '../src/galaxy/voyage.js';
 import * as N from '../src/galaxy/narration.js';
-import { parseEffect } from '../src/galaxy/comms.js';
+import { parseEffect, nodeView } from '../src/galaxy/comms.js';
+import { eventContext } from '../src/galaxy/events.js';
+import { givesOf } from '../src/galaxy/life.js';
 import { generateGalaxy, tiers, reach } from '../src/galaxy/galaxy.js';
 import { captain, campaign, resolveEvents } from './captain.js';
 
@@ -171,8 +173,26 @@ async function lair(fleet, secs = 900) {
   const st = V.visitSettings(rules, s);
   const wi = st.players.findIndex((p) => p.faction === 'wardens');
   const rel = st.relations.find(([x, y]) => (x === 0 && y === wi) || (y === 0 && x === wi));
-  check(wi > 0 && rel && rel[2] === 'enemy', 'the Wardens of Ninefold guard the Reliquary, and fire on the hammer-and-cog on sight');
+  check(wi > 0 && rel && rel[2] === 'enemy', 'the Wardens of Ninefold guard the Reliquary, and fire on the cross-and-orbit on sight');
   check(['wardens', 'ragged', 'reavers', 'hollowkin'].every((f) => rules.content.factions[f] && rules.content.dialogs[rules.content.factions[f].Dialog]), 'four new peoples, each with their own voice: the Wardens of Ninefold, the Ragged Clans, the Brass Reavers and the Hollowkin');
+}
+
+// ---------------------------------------------------------------- 6b. the opening and the emblem
+// The opening passes over the emblem; the crew wake and Jacob asks for a status report, which
+// names every ship's system he remembers. The emblem is a placeholder cross (decision 43).
+{
+  const s = V.newVoyage(rules, { seed: 4 }), g = V.galaxyOf(rules, s), E = rules.content.events;
+  const say = (ev, node) => nodeView(eventContext(rules, s, g, E[ev]), node).say;
+  const wake = say('Prologue', 'wake'), first = say('Prologue', 'status');
+  check(/cross with an orbit/.test(wake) && /flicker/.test(wake) && /What happened\?/.test(wake) && nodeView(eventContext(rules, s, g, E.Prologue), 'wake').choices[0].text === 'Status report.', 'the first life opens on the emblem, the lamps flicker, the crew ask what happened, and Jacob asks for a status report');
+  check(/"Nothing's working, Captain\."/.test(first), `first life: ${first.match(/"[^"]*"/)[0]}`);
+  s.campaign.memories = { radar: 1, emblem: 1, coils: 1, shields: 1, silent: 1, owner: 1 };
+  const later = say('Waking', 'status');
+  check(/"Nothing's working, Captain, except the radar, the thread coils, the shields and silent running\."/.test(later), `a later life lists every system remembered, and nothing else: ${later.match(/"[^"]*"/)[0]}`);
+  const systems = Object.values(M).filter((m) => givesOf(m).some(([op]) => ['radar', 'drive', 'open', 'silent'].includes(op)));
+  check(systems.length >= 10 && systems.every((m) => m.Status), `every ship's system has a name for the report (${systems.length})`);
+  const all = JSON.stringify([rules.content.events, rules.content.memories, rules.content.factions, rules.content.dialogs || {}, rules.content.narration || {}]);
+  check(!/hammer inside|hammer-and-cog|hammer and cog|Cog-ship|cog-marked/i.test(all), 'the old hammer-and-cog emblem is gone from the game\'s text');
 }
 
 // ---------------------------------------------------------------- 7. the bot reaches the true ending

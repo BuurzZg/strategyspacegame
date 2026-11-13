@@ -23,7 +23,7 @@ ledger:
 			Text: Another time, Wicket.
 			Do: close
 	Node@gossip:
-		Say: Talk? Talk is all there is. Somebody saw a station with your mark on it, the hammer in the cog, burnt out, years back. Somebody else says there's a light near the dead star that eats ships. Somebody says you've been here before. Not you, obviously. A ship like you.
+		Say: Talk? Talk is all there is. Somebody saw a station with your mark on it, the cross in its orbit, burnt out, years back. Somebody else says there's a light near the dead star that eats ships. Somebody says you've been here before. Not you, obviously. A ship like you.
 		Choice@back:
 			Text: A ship like us?
 			Goto: like

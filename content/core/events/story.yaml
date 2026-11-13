@@ -20,17 +20,22 @@ Prologue:
 	Title: Waking
 	Start: wake
 	Node@wake:
-		Say: White. Then a bridge, all brass and ticking, and alarms going off somewhere behind your eyes. Your hands are already on the helm. They know it. You don't.
+		Say: Dark. Then, slowly, one thing in it: a cross with an orbit drawn through its arms, cast in brass on the plate above the helm, catching a light that isn't there yet. The bridge lamps flicker, die, flicker again, and hold. All round you people stir at their stations, blinking. "What happened?" someone asks. Nobody answers. Your hands are already on the helm. They know it. You don't.
+		Choice@on:
+			Text: Status report.
+			Goto: status
+	Node@status:
+		Say: The engineer leans over a board of dead lamps, a little pendant of the same mark swinging on its chain, and taps the glass twice. "{status}"
 		Choice@on:
 			Text: Where are we?
 			Goto: who
 	Node@who:
-		Say: Nobody knows. A dozen people at a dozen stations look up at you, and then down at the names stitched on their own uniforms. One engineer reads theirs out loud, slowly, like a word in a foreign language. The ship hums. The chart is dark.
+		Say: Nobody knows. A dozen people at a dozen stations look up at you, and then down at the names stitched on their own uniforms. One engineer reads theirs out loud, slowly, like a word in a foreign language. Someone has tucked a small painted icon into the frame of the watch station's glass, and nobody can say who. The ship hums. The chart is dark.
 		Choice@on:
 			Text: Then we start with the chart.
 			Goto: signal
 	Node@signal:
-		Say: One thing on it, very faint: a signal, a few stitches out, repeating. The watch officer turns it up. There is a picture in it, of a hammer inside a cog. The same mark is on the plate above the helm, and on your sleeve.
+		Say: One thing on it, very faint: a signal, a few stitches out, repeating. The watch officer turns it up. There is a picture in it: the cross with the orbit through it. The same mark is on the plate above the helm, and on your sleeve.
 		Choice@on:
 			Text: Find it.
 			Do: clue anchorage, close
@@ -41,7 +46,7 @@ AnchorageHere:
 	Title: The station
 	Start: here
 	Node@here:
-		Say: A station, torn open and gone cold. The hammer and cog are painted on every plate that is still attached. The signal is coming from its core, sealed somewhere deep in the wreck.
+		Say: A station, torn open and gone cold. The cross and its orbit are painted on every plate that is still attached. The signal is coming from its core, sealed somewhere deep in the wreck.
 		Choice@ok:
 			Text: Get the Shearers ready. Cut into the core.
 			Do: close
@@ -52,7 +57,7 @@ EmblemFound:
 	Title: The emblem
 	Start: core
 	Node@core:
-		Say: The core opens on dust a finger deep, and on people still at their stations: skeletons in the same uniforms as yours. The surgeon kneels by one of them for a long time. "These aren't days old, Captain. Not years, either." The station's last log is dated. Nobody knows what today's date is.
+		Say: The core opens on dust a finger deep, and on people still at their stations: skeletons in the same uniforms as yours, one with the mark on a pendant still round her neck. The surgeon kneels by one of them for a long time. "These aren't days old, Captain. Not years, either." The station's last log is dated. Nobody knows what today's date is.
 		Choice@on:
 			Text: What else is in there?
 			Goto: radar
@@ -211,7 +216,12 @@ Waking:
 	Title: Again
 	Start: wake
 	Node@wake:
-		Say: White light, then the bridge. The same alarms, the same smell of hot brass, the same crew blinking at the same instruments, reading their names off their uniforms. You know this moment. You have been here before, and something in you remembers how it ended.
+		Say: Dark, and the cross and its orbit above the helm, catching the first light. The lamps flicker and hold. The same alarms, the same smell of hot brass, the same crew stirring at the same stations. "What happened?" You know this moment. You have been here before, and something in you remembers how it ended.
+		Choice@on:
+			Text: Status report.
+			Goto: status
+	Node@status:
+		Say: The engineer leans over the boards and taps the glass twice. "{status}" They frown at the lamps that are lit, as if they hadn't expected any.
 		Choice@again:
 			Text: Again, then.
 			Do: close
@@ -272,7 +282,7 @@ MarkOnTheirHull:
 	Title: Our mark on their hull
 	Start: skiff
 	Node@skiff:
-		Say: A little tribal skiff limps into view, patched from three different wrecks. Painted on its side, crudely, upside down, is the hammer inside the cog. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
+		Say: A little tribal skiff limps into view, patched from three different wrecks. Painted on its side, crudely, upside down, is the cross with its orbit. The watch officer puts it on screen next to the Forge's own hull plate. Nobody says anything.
 		Choice@hail:
 			Text: Hail them.
 			Goto: hail
@@ -473,7 +483,7 @@ EnoughFound:
 	Title: Enough
 	Start: book
 	Node@book:
-		Say: The book of names, and at the front, the Pact's own story. Erik worked it out before anyone: every offering fed the thing. So he said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days.
+		Say: The book of names, and at the front, the Pact's own story. Erik worked it out before anyone: every offering fed the thing, and made the Mainspring stronger. So he refused to send another. He said "enough", to a god, in front of everyone. The Hands fell on the Anchorage, and it burned for three days.
 		Choice@on:
 			Text: And Erik?
 			Goto: erik

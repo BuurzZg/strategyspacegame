@@ -4,7 +4,7 @@
 laststop:
 	Start: hello
 	Node@hello:
-		Say: Last Stop. Last chart of the Shore, last Sabre plans this side of the edge, last crews who'll fly for a cog-marked hull. Ossory Vell. Don't make me regret it.
+		Say: Last Stop. Last chart of the Shore, last Sabre plans this side of the edge, last crews who'll fly for a cross-marked hull. Ossory Vell. Don't make me regret it.
 		Say@Wary: Another Forge. My grandmother came in on one of those. Say what you want and go.
 		Say@Hostile: The Pact remembers. So do I. Get off my band.
 		Choice@trade:

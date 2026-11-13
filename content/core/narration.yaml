@@ -21,8 +21,8 @@ Scene@i:
 	Camera: push
 	Sound: wind
 	Line@1: I was born in the Meridian Hollow, in the years when it still believed in itself. An empire of foundries and folded roads, held together by brass, and by people too stubborn to let it fall apart.
-	Line@2: The Smiths had a company. Then the company had us. A hammer inside a cog, on every hull and every sleeve. I wore it for eighty years before I thought to ask what it meant.
-	Line@3: It meant we built things. Mostly, we did.
+	Line@2: The Smiths had a company, and the company kept a faith. Then the company had us. A cross with an orbit through it, on every hull and every sleeve. I wore it for eighty years before I thought to ask what it meant.
+	Line@3: It meant we built things, and gave thanks for them. Mostly, we did.
 	Gap@1: There was an empire. I know there was. I can feel the shape of it, like a word on the tip of my tongue.
 	Gap@2: ...I don't remember this part.
 
@@ -93,7 +93,7 @@ Scene@vii:
 	Camera: pull
 	Sound: fire
 	Line@1: Erik worked it out before I did. He was always quicker than me at the things that matter. Every offering fed it. We weren't buying time; we were paying for its teeth.
-	Line@2: So my grandson said "enough", to a god, in front of everyone. It answered with fire. The Anchorage burned for three days.
+	Line@2: So my grandson refused to send another. He said "enough", to a god, in front of everyone. It answered with fire. The Anchorage burned for three days.
 	Line@3: Erik held the docks while the last ships got away, and then he did not get away. Everyone you will meet out there, every haven, every child who curses my name, is alive because of him. I'd like him to have known that.
 	Gap@1: There was a fire. A long one. Someone stayed behind in it.
 	Gap@2: ...I should remember who. I should, of all people.

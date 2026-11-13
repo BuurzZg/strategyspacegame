@@ -27,7 +27,7 @@ bell:
 			Text: Peace on the Bell.
 			Do: close
 	Node@vow:
-		Say: That no Glim leaves this chapel short-weighted, and none goes to the hulls that bear the cog. We broke the second part, once, long ago, and the Synod has never forgiven itself. You will not ask me how long ago.
+		Say: That no Glim leaves this chapel short-weighted, and none goes to the hulls that bear the cross. We broke the second part, once, long ago, and the Synod has never forgiven itself. You will not ask me how long ago.
 		Choice@bye:
 			Text: We won't.
 			Do: standing 1, close

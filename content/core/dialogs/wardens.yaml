@@ -4,8 +4,8 @@
 wardens:
 	Start: hello
 	Node@hello:
-		Say: Cog-ship. We have watched for your mark for a hundred and forty-seven years. We have not grown tired of watching.
-		Say@Wary: Cog-ship. You may speak. We are listening, and we have not lowered anything.
+		Say: Cross-ship. We have watched for your mark for a hundred and forty-seven years. We have not grown tired of watching.
+		Say@Wary: Cross-ship. You may speak. We are listening, and we have not lowered anything.
 		Say@Neutral: Old man. Speak.
 		Say@Friendly: Old man. You came back to answer for it. Few do.
 		Choice@why:

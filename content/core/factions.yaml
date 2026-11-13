@@ -131,7 +131,7 @@ wardens:
 	Name: Wardens of Ninefold
 	Race: knotfolk
 	Standing: -80
-	Description: The Knotfolk's guardian ships. They attack the hammer-and-cog on sight, and have for a hundred and forty-seven years. They were wrong about the Company. They were right about you.
+	Description: The Knotfolk's guardian ships. They attack the cross-and-orbit on sight, and have for a hundred and forty-seven years. They were wrong about the Company. They were right about you.
 	Regions: Drift 2, Hush 3
 	Reach: 0
 	Patrol: dart, dart, talon, picket, halberd
@@ -157,7 +157,7 @@ reavers:
 	Name: Brass Reavers
 	Race: humans
 	Standing: -70
-	Description: The Company's grandchildren, turned pirate. They strip its wrecks for brass, and to them the hammer-and-cog means loot.
+	Description: The Company's grandchildren, turned pirate. They strip its wrecks for brass, and to them the cross-and-orbit means loot.
 	Regions: Middens 2, Hush 1, Shore 2
 	Reach: 0
 	Patrol: dart, dart, talon, talon, picket, halberd

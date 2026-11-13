@@ -362,6 +362,19 @@ export class ChartScreen {
     const wd = Wd.woundOf(this.rules, s), hand = Wd.handsSeen(this.rules, s, this.g).find((h) => h.at === id);
     const inf = known && wd.infested[id] !== undefined, clean = known && wd.cleansed.includes(id);
     const wound = (hand ? (hand.caught && here ? ' A Hand has caught the Forge here: its Hour and its pack are waiting out in the dark. Go in and fight it (kill the Hour and the Hand is gone for this life), or stitch away and pay for tearing free.' : ` A Hand is here: an Hour and its pack${hand.strong ? ', a strong one' : ''}. It will catch the Forge if it comes here.`) : '') + (inf ? ' Infested: the Wound has settled here. Nurseries on the rocks, red veins in the wrecks, a spore haze that cuts the sensors. Burn every Nursery to clean it out.' : '') + (clean ? ' Burned clean in this life.' : '');
+    // the Mainspring's lair: the choice between hunting the Hands down first (the escape ending)
+    // and remembering the whole truth first (the Twain drowns their call; the true ending)
+    const lairBox = $('pc-lair');
+    lairBox.hidden = true;
+    if (known && id === V.lairAt(this.rules, s) && !(s.flags || []).includes('mainspring')) {
+      const home = Wd.handsHome(this.rules, s).length, truth = 'Remember the whole truth first</b> (Deck 9 opens at the Shore once everything else is remembered)';
+      lairBox.innerHTML = V.trueEnding(s)
+        ? '<p>You remember the whole truth, and the Twain sings over the Mainspring\'s call: no Hand will come home to defend it. Break it, and the end is yours to choose.</p>'
+        : `<p>${home ? `Every Hand still alive in this life (${home} now) will come home to defend it.` : 'No Hand is left alive in this life to come home to it.'}</p><h3>Two ways to face it</h3><ol>`
+          + `<li>${home ? '<b>Hunt the Hands down first</b>: kill their Hours before you come, then break it' : '<b>Break it now</b>'}. The Forge escapes, but without the whole truth: the story stays unfinished.</li>`
+          + `<li><b>${truth}${home ? ': the Twain will sing over their call, and no Hand will come' : ''}. Then the end is the true one.</li></ol>`;
+      lairBox.hidden = false;
+    }
     $('pc-desc').textContent = relic + (known ? T.Description : 'The sensors cannot make it out from here. Get closer to see what it is.') + (times && known ? ' Picked over: it will yield less than before.' : '') + (!times && V.visitedBefore(s, p.id) ? ' You came here in an earlier life.' : '') + pocket + tradeNote + claim + wound;
     const stats = [], btns = [];
     let why = '';
@@ -373,7 +386,7 @@ export class ChartScreen {
       else if (id === V.lairAt(this.rules, s) && !(s.flags || []).includes('mainspring')) {
         // every Hand still alive comes home to defend it (unless the Twain drowns the call)
         const home = Wd.handsHome(this.rules, s).length;
-        btns.push(['go', `Go in and face the Mainspring <kbd>Enter</kbd>`, false, `The final battle: break its hearts and its coil, then its core. Bring frigates, destroyers and lances.${home ? ` ${home === 1 ? 'The Hand still alive will come' : `All ${home} Hands still alive will come`} home to defend it: kill ${home === 1 ? 'it' : 'them'} first, or bring more.` : ''}`]);
+        btns.push(['go', `Go in and face the Mainspring <kbd>Enter</kbd>`, false, `The final battle: break its hearts and its coil, then its core. Bring frigates, destroyers and lances.${home ? ` ${home === 1 ? 'The Hand still alive will come' : `All ${home} Hands still alive will come`} home to defend it: hunt ${home === 1 ? 'it' : 'them'} down first, bring more, or remember the whole truth.` : ''}`]);
       }
       else if (Wd.caughtBy(this.rules, s)) btns.push(['go', `Go in and fight the Hand <kbd>Enter</kbd>`, false, 'Its Hour comes on with its pack, and grows more the longer the fight lasts. Kill it fast, or spool the Skein and run']);
       else btns.push(['go', `Go in <kbd>Enter</kbd>`, false, 'Play this place: gather, build, fight; one day passes for every four minutes there']);

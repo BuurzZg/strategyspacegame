@@ -117,7 +117,7 @@ export function lintDialog(rules, d) {
   return errs;
 }
 // Names of people, posts and traits in conditions, effects and {placeholders}.
-const REFS = ['place', 'region', 'faction', 'pilot', 'pilotship', 'fallen'];
+const REFS = ['place', 'region', 'faction', 'pilot', 'pilotship', 'fallen', 'status'];
 function lintCrew(rules, where, conds, effects, texts) {
   const C = rules.content.crew || { posts: {}, traits: {} }, errs = [];
   const who = (x) => x === 'pilot' || !!C.posts[x];
@@ -177,12 +177,20 @@ export function whoIs(s, ref) {
   for (const e of s.fleet) { const p = e.lead && personById(s.crew, e.lead); if (p && (!best || (e.xp | 0) > (best.e.xp | 0) || ((e.xp | 0) === (best.e.xp | 0) && p.id < best.p.id))) best = { e, p }; }
   return best ? best.p : null;
 }
+// The waking status report: every ship's system Jacob remembers (a memory with a Status),
+// in the Loom's order. "Nothing's working, Captain", or "..., except the radar and the shields."
+export function statusReport(rules, s) {
+  const on = Object.values(rules.content.memories || {}).filter((m) => m.Status && remembers(s, m.id)).map((m) => String(m.Status));
+  if (!on.length) return "Nothing's working, Captain.";
+  return `Nothing's working, Captain, except ${on.length === 1 ? on[0] : `${on.slice(0, -1).join(', ')} and ${on[on.length - 1]}`}.`;
+}
 function fill(ctx, t) {
   return String(t).replace(/\{(\w+)\}/g, (m, k) => {
     if (k === 'place') return ctx.place || '';
     if (k === 'region') return ctx.region || '';
     if (k === 'faction') return ctx.factionName || '';
     const s = ctx.s;
+    if (k === 'status') return statusReport(ctx.rules, s);
     if (k === 'fallen') { const f = s && s.crew.fallen?.length ? s.crew.fallen[s.crew.fallen.length - 1] : null; return f ? f.name : 'the dead'; }
     if (k === 'pilotship') { const p = whoIs(s, 'pilot'), e = p && s.fleet.find((x) => x.lead === p.id); return e ? ctx.rules.actor(e.type).traitInfo('Tooltip').Name : 'ship'; }
     const p = whoIs(s, k);
